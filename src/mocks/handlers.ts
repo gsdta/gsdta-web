@@ -18,8 +18,8 @@ interface Student {
   photoConsent: boolean;
 }
 
-const db = {
-  user: { id: "u1", name: "Priya", email: "priya@example.com", role: "parent" as Role },
+const db: { user: User | null; students: Student[] } = {
+  user: null,
   students: [
     {
       id: "s1",
@@ -39,14 +39,34 @@ const db = {
       medicalNotes: "Peanut allergy",
       photoConsent: false,
     },
-  ] as Student[],
+  ],
 };
 
 export const handlers = [
+  // Auth
   http.get("/auth/session", () => {
-    return HttpResponse.json({ user: db.user satisfies User });
+    if (!db.user) return HttpResponse.json({ message: "Unauthorized" }, { status: 401 });
+    return HttpResponse.json({ user: db.user });
+  }),
+  http.post("/auth/login", async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as Partial<User> & { role?: Role };
+    const role: Role = (body.role as Role) || "parent";
+    db.user = { id: "u1", name: "Priya", email: "priya@example.com", role };
+    return HttpResponse.json({ user: db.user });
+  }),
+  http.post("/auth/logout", () => {
+    db.user = null;
+    return HttpResponse.json({ ok: true });
+  }),
+  http.post("/auth/role", async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as { role?: Role };
+    if (!db.user) return HttpResponse.json({ message: "Unauthorized" }, { status: 401 });
+    if (!body.role) return HttpResponse.json({ message: "Bad Request" }, { status: 400 });
+    db.user = { ...db.user, role: body.role };
+    return HttpResponse.json({ user: db.user });
   }),
 
+  // Students
   http.get("/students", () => {
     return HttpResponse.json(db.students as Student[]);
   }),
