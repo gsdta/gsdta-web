@@ -67,16 +67,16 @@ Goals: Role-based navigation and route protection with mocked session.
 
 Tasks
 
-- [ ] Implement `AuthProvider` with session context from `/auth/session` (MSW)
-- [ ] Routes: `/login`, `/logout`, `/dashboard`; guard `(app)` routes by role
-- [ ] Role-based nav (Admin, Teacher, Parent); header shows user + role
-- [ ] MSW handlers for login/logout/session; error cases (401, 500)
-- [ ] E2E: unauth → login redirect; role changes nav visibility
+- [x] Implement `AuthProvider` with session context from `/auth/session` (MSW)
+- [x] Routes: `/login`, `/logout`, `/dashboard`; guard `(app)` routes by role
+- [x] Role-based nav (Admin, Teacher, Parent); header shows user + role
+- [x] MSW handlers for login/logout/session; error cases (401, 500)
+- [x] E2E: unauth → login redirect; role changes nav visibility
 
 Acceptance criteria
 
-- [ ] Visiting protected route redirects to `/login`
-- [ ] Switching mocked role updates nav & access without reload
+- [x] Visiting protected route redirects to `/login`
+- [x] Switching mocked role updates nav & access without reload
 
 ---
 
