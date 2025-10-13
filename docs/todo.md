@@ -86,16 +86,16 @@ Goals: CRUD student profiles; parent can manage multiple students.
 
 Tasks
 
-- [ ] Pages: `/students` (list), `/students/new`, `/students/[id]`
-- [ ] Forms: react-hook-form + zod; validation and errors
-- [ ] MSW: GET/POST/PATCH `/students`; fixtures with 2 students
-- [ ] Avatar/initials component; phone/email formatting helpers
-- [ ] Unit tests: form validation and list rendering; E2E happy flow
+- [x] Pages: `/students` (list), `/students/new`, `/students/[id]`
+- [x] Forms: react-hook-form + zod; validation and errors
+- [x] MSW: GET/POST/PATCH `/students`; fixtures with 2 students
+- [x] Avatar/initials component; phone/email formatting helpers
+- [x] Unit tests: form validation and list rendering; E2E happy flow
 
 Acceptance criteria
 
-- [ ] Create/edit student; changes persist via MSW store
-- [ ] Validation errors surfaced accessibly (aria-describedby)
+- [x] Create/edit student; changes persist via MSW store
+- [x] Validation errors surfaced accessibly (aria-describedby)
 
 ---
 

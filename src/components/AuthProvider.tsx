@@ -16,6 +16,8 @@ declare global {
   }
 }
 
+const STORAGE_KEY = "auth:user";
+
 async function waitForMsw() {
   if (typeof window === "undefined") return;
   const maxWaitMs = 2000;
@@ -49,6 +51,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const hasManualAuth = useRef(false);
 
+  // Hydrate from sessionStorage synchronously on first render
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as User;
+        setUser(parsed);
+      }
+    } catch {}
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -57,12 +71,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const res = await fetch("/auth/session", { credentials: "include" });
         if (res.ok) {
           const data = (await res.json()) as { user: User };
-          if (!cancelled && !hasManualAuth.current) setUser(data.user);
+          if (!cancelled && !hasManualAuth.current) {
+            setUser(data.user);
+            try {
+              sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
+            } catch {}
+          }
         } else {
-          if (!cancelled && !hasManualAuth.current) setUser(null);
+          if (!cancelled && !hasManualAuth.current) {
+            setUser(null);
+            try {
+              sessionStorage.removeItem(STORAGE_KEY);
+            } catch {}
+          }
         }
       } catch {
-        if (!cancelled && !hasManualAuth.current) setUser(null);
+        if (!cancelled && !hasManualAuth.current) {
+          setUser(null);
+          try {
+            sessionStorage.removeItem(STORAGE_KEY);
+          } catch {}
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -85,8 +114,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!res.ok) throw new Error("Login failed");
       const data = (await res.json()) as { user: User };
       setUser(data.user);
+      try {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
+      } catch {}
     } catch {
-      setUser({ id: "local", name: "Priya", email: "priya@example.com", role });
+      const fallback = {
+        id: "local",
+        name: "Priya",
+        email: "priya@example.com",
+        role,
+      } satisfies User;
+      setUser(fallback);
+      try {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(fallback));
+      } catch {}
     }
   }, []);
 
@@ -97,6 +138,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await fetch("/auth/logout", { method: "POST" });
     } catch {}
     setUser(null);
+    try {
+      sessionStorage.removeItem(STORAGE_KEY);
+    } catch {}
   }, []);
 
   const setRole = useCallback(async (role: Role) => {
@@ -111,8 +155,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!res.ok) throw new Error("Role change failed");
       const data = (await res.json()) as { user: User };
       setUser(data.user);
+      try {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
+      } catch {}
     } catch {
-      setUser((u) => (u ? { ...u, role } : u));
+      setUser((u) => {
+        const next = u ? { ...u, role } : u;
+        try {
+          if (next) sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
     }
   }, []);
 

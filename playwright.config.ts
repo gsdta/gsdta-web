@@ -6,10 +6,10 @@ export default defineConfig({
   testMatch: ["**/*.spec.ts"],
   timeout: 60_000,
   expect: { timeout: 10_000 },
-  fullyParallel: true,
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 2 : undefined,
+  workers: 1,
   reporter: [["list"], ["html", { outputFolder: "playwright-report", open: "never" }]],
   use: {
     baseURL: "http://localhost:3000",
@@ -18,7 +18,7 @@ export default defineConfig({
     video: "retain-on-failure",
   },
   webServer: {
-    command: "npm start",
+    command: "npm run start:e2e",
     port: 3000,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
