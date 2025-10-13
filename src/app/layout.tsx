@@ -4,6 +4,7 @@ import "./globals.css";
 import { Header } from "@/components/Header";
 import { MockProvider } from "@/components/MockProvider";
 import { DevStatus } from "@/components/DevStatus";
+import { AuthProvider } from "@/components/AuthProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,11 +30,13 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <MockProvider>
-          <Header />
-          <main className="mx-auto max-w-6xl px-4 py-6">
-            {children}
-            <DevStatus />
-          </main>
+          <AuthProvider>
+            <Header />
+            <main className="mx-auto max-w-6xl px-4 py-6">
+              {children}
+              <DevStatus />
+            </main>
+          </AuthProvider>
         </MockProvider>
       </body>
     </html>
