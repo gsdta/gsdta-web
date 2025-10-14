@@ -2,7 +2,26 @@ import type { Enrollment, EnrollmentWithDetails, Class } from "./enrollment-type
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
+// Ensure MSW worker is ready in the browser before making API calls to mocked endpoints
+async function waitForMswIfBrowser() {
+  if (typeof window === "undefined") return;
+  const w = window as unknown as { __mswReady?: Promise<void> };
+  const maxWaitMs = 5000;
+  const intervalMs = 50;
+  let waited = 0;
+  while (!w.__mswReady && waited < maxWaitMs) {
+    await new Promise((r) => setTimeout(r, intervalMs));
+    waited += intervalMs;
+  }
+  if (w.__mswReady) {
+    try {
+      await w.__mswReady;
+    } catch {}
+  }
+}
+
 export async function getClasses(): Promise<Class[]> {
+  await waitForMswIfBrowser();
   const res = await fetch(`${BASE_URL}/classes`);
   if (!res.ok) throw new Error("Failed to fetch classes");
   return res.json();
@@ -12,6 +31,7 @@ export async function getEnrollments(params?: {
   status?: string;
   studentId?: string;
 }): Promise<EnrollmentWithDetails[]> {
+  await waitForMswIfBrowser();
   const query = new URLSearchParams();
   if (params?.status) query.set("status", params.status);
   if (params?.studentId) query.set("studentId", params.studentId);
@@ -25,6 +45,7 @@ export async function createEnrollment(data: {
   classId: string;
   notes?: string;
 }): Promise<Enrollment> {
+  await waitForMswIfBrowser();
   const res = await fetch(`${BASE_URL}/enrollments`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -42,6 +63,7 @@ export async function updateEnrollmentStatus(
   status: string,
   notes?: string,
 ): Promise<Enrollment> {
+  await waitForMswIfBrowser();
   const res = await fetch(`${BASE_URL}/enrollments/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },

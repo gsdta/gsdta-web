@@ -20,7 +20,7 @@ const STORAGE_KEY = "auth:user";
 
 async function waitForMsw() {
   if (typeof window === "undefined") return;
-  const maxWaitMs = 2000;
+  const maxWaitMs = 5000; // increased to reduce races on initial mount/navigation
   const intervalMs = 50;
   let waited = 0;
   while (!window.__mswReady && waited < maxWaitMs) {
@@ -78,20 +78,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } catch {}
           }
         } else {
-          if (!cancelled && !hasManualAuth.current) {
-            setUser(null);
-            try {
-              sessionStorage.removeItem(STORAGE_KEY);
-            } catch {}
-          }
+          // Do not clear session or override existing user on transient errors during MSW startup
+          // Leave current user/sessionStorage as-is unless it's an explicit auth action
         }
       } catch {
-        if (!cancelled && !hasManualAuth.current) {
-          setUser(null);
-          try {
-            sessionStorage.removeItem(STORAGE_KEY);
-          } catch {}
-        }
+        // Same as above: avoid clearing session on network errors/MSW races
       } finally {
         if (!cancelled) setLoading(false);
       }

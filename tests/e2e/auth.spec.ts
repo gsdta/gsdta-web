@@ -29,7 +29,7 @@ test.describe("Auth & RBAC (mocked)", () => {
     // Check if we're still on login page first, then wait for redirect
     try {
       await expect(page).toHaveURL(/\/dashboard/, { timeout: 20000 });
-    } catch (error) {
+    } catch {
       // If redirect fails, check if login actually worked by looking for error states
       const currentUrl = page.url();
       console.log("Login redirect failed. Current URL:", currentUrl);
