@@ -43,3 +43,8 @@ next-env.d.ts
 #JetBrains
 .idea
 *.iml
+
+
+# testing
+playwright-report
+test-results
