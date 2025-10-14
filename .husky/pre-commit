@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+# Run lint-staged on staged files
+npx --no -- lint-staged
