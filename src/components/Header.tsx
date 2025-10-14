@@ -8,7 +8,7 @@ const roleNav: Record<Role, { href: string; label: string }[]> = {
     { href: "/dashboard", label: "Dashboard" },
     { href: "/students", label: "Students" },
     { href: "/classes", label: "Classes" },
-    { href: "/enrollment", label: "Enrollment" },
+    { href: "/enrollment/review", label: "Enrollment" },
   ],
   teacher: [
     { href: "/dashboard", label: "Dashboard" },

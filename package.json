@@ -17,7 +17,14 @@
     "test:e2e": "playwright test --config=playwright.config.ts",
     "test:e2e:headed": "playwright test --config=playwright.config.ts --headed --browser=chromium",
     "pw:install": "playwright install",
-    "e2e:ci": "playwright install --with-deps && npm run build && playwright test --config=playwright.config.ts"
+    "e2e:ci": "playwright install --with-deps && npm run build && playwright test --config=playwright.config.ts",
+    "docker:build": "docker build -t gsdta-ui:latest .",
+    "docker:build-dev": "docker build -f Dockerfile.dev -t gsdta-ui:dev .",
+    "docker:run": "docker-compose up -d ui",
+    "docker:run-dev": "docker-compose --profile dev up -d ui-dev",
+    "docker:stop": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:clean": "docker-compose down --rmi all --volumes --remove-orphans"
   },
   "dependencies": {
     "next": "15.5.4",

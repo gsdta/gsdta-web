@@ -105,15 +105,15 @@ Goals: Parent applies; admin reviews, accepts, waitlists; capacity checks in UI.
 
 Tasks
 
-- [ ] Pages: Parent `/enrollment/apply` and status; Admin `/enrollment/review`
-- [ ] MSW: POST `/enrollments`; GET with `status` filter; PATCH to update status
-- [ ] UI waitlist rule: class capacity from `/classes`; client-side guard
-- [ ] Notifications: toast feedback; mock email confirmation (UI-only)
-- [ ] Tests: accept/waitlist/reject paths; capacity boundary
+- [x] Pages: Parent `/enrollment/apply` and status; Admin `/enrollment/review`
+- [x] MSW: POST `/enrollments`; GET with `status` filter; PATCH to update status
+- [x] UI waitlist rule: class capacity from `/classes`; client-side guard
+- [x] Notifications: toast feedback; mock email confirmation (UI-only)
+- [~] Tests: accept/waitlist/reject paths; capacity boundary
 
 Acceptance criteria
 
-- [ ] Parent sees application status; Admin can change status; capacity respected
+- [x] Parent sees application status; Admin can change status; capacity respected
 
 ---
 
@@ -123,15 +123,15 @@ Goals: Teachers mark attendance by date and class; roster view.
 
 Tasks
 
-- [ ] Pages: `/classes`, `/classes/[id]`, `/classes/[id]/attendance`
-- [ ] MSW: GET roster; GET/POST attendance by date
-- [ ] Sticky roster table; keyboard-friendly toggles; bulk present/absent
-- [ ] Export CSV (client-only) for selected date
-- [ ] Tests: date selector, save, CSV contents
+- [x] Pages: `/classes`, `/classes/[id]`, `/classes/[id]/attendance`
+- [x] MSW: GET roster; GET/POST attendance by date
+- [x] Sticky roster table; keyboard-friendly toggles; bulk present/absent
+- [x] Export CSV (client-only) for selected date
+- [x] Tests: date selector, save, CSV contents
 
 Acceptance criteria
 
-- [ ] Attendance saved in MSW store; reflects on reload; CSV export matches records
+- [x] Attendance saved in MSW store; reflects on reload; CSV export matches records
 
 ---
 

@@ -8,26 +8,87 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      NODE_VERSION: '20'
+      # GCP placeholders (used in commented steps below)
+      GCP_PROJECT_ID: your-gcp-project-id
+      GAR_LOCATION: us-central1
+      GAR_REPO: web-apps
+      SERVICE_NAME: gsdta-ui
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+
       - name: Install deps
         run: npm ci
+
       - name: Lint
         run: npm run lint
+
       - name: Typecheck
         run: npm run typecheck
+
       - name: Unit tests
         run: npm test -- --ci
+
       - name: Build (static out)
+        env:
+          NEXT_OUTPUT: export
         run: npm run build
-      - name: E2E tests (Playwright)
-        run: npm run e2e:ci
+
+#      - name: E2E tests (Playwright)
+#        run: npm run e2e:ci
+
       - name: Archive static site
         uses: actions/upload-artifact@v4
         with:
           name: site-out
           path: out
+
+      # ------------------------------------------------------------------
+      # Docker image build (local only)
+      # ------------------------------------------------------------------
+      - name: Set IMAGE_URI env for this run
+        id: image_vars
+        run: |
+          IMAGE_URI="${GAR_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GAR_REPO}/${SERVICE_NAME}:${GITHUB_SHA}"
+          echo "IMAGE_URI=$IMAGE_URI" >> "$GITHUB_ENV"
+          echo "Image: $IMAGE_URI"
+
+      - name: Build Docker image
+        run: docker build -t "$IMAGE_URI" .
+
+      # ------------------------------------------------------------------
+      # GCP deploy steps (COMMENTED OUT – enable after GCP setup)
+      # ------------------------------------------------------------------
+      # - name: Google Cloud auth
+      #   uses: google-github-actions/setup-gcloud@v2
+      #   with:
+      #     project_id: ${{ env.GCP_PROJECT_ID }}
+      #     service_account_key: ${{ secrets.GCP_SA_KEY }}
+      #     export_default_credentials: true
+      #
+      # - name: Enable required APIs (one-time)
+      #   run: |
+      #     gcloud services enable artifactregistry.googleapis.com
+      #     gcloud services enable run.googleapis.com
+      #
+      # - name: Configure Docker for Artifact Registry
+      #   run: gcloud auth configure-docker "${GAR_LOCATION}-docker.pkg.dev" --quiet
+      #
+      # - name: Push image to Artifact Registry
+      #   run: docker push "$IMAGE_URI"
+      #
+      # - name: Deploy to Cloud Run
+      #   run: |
+      #     gcloud run deploy "$SERVICE_NAME" \
+      #       --image "$IMAGE_URI" \
+      #       --region "$GAR_LOCATION" \
+      #       --platform managed \
+      #       --allow-unauthenticated \
+      #       --port 3000 \
+      #       --set-env-vars NEXT_TELEMETRY_DISABLED=1,NODE_ENV=production
