@@ -1,17 +1,15 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { listStudents } from "@/lib/student-api";
 import type { Student } from "@/lib/student-types";
 
 export function StudentsList() {
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
 
-  async function waitForMsw() {
+  const waitForMsw = useCallback(async () => {
     if (typeof window === "undefined") return;
     const anyWin = window as unknown as { __mswReady?: Promise<void> };
     if (anyWin.__mswReady) {
@@ -19,9 +17,9 @@ export function StudentsList() {
         await anyWin.__mswReady;
       } catch {}
     }
-  }
+  }, []);
 
-  async function fetchStudents() {
+  const fetchStudents = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -33,11 +31,11 @@ export function StudentsList() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [waitForMsw]);
 
   useEffect(() => {
     fetchStudents();
-  }, []);
+  }, [fetchStudents]);
 
   // Refresh data when the window regains focus (for better UX after navigation)
   useEffect(() => {
@@ -47,7 +45,7 @@ export function StudentsList() {
 
     window.addEventListener("focus", handleFocus);
     return () => window.removeEventListener("focus", handleFocus);
-  }, []);
+  }, [fetchStudents]);
 
   return (
     <div className="prose">
