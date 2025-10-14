@@ -1,8 +1,10 @@
 import type { NextConfig } from "next";
 
+// Output mode is controlled via NEXT_OUTPUT env var when needed (e.g., 'standalone' for Docker or 'export' for static CI artifact)
+const resolvedOutput = process.env.NEXT_OUTPUT as NextConfig["output"] | undefined;
+
 const nextConfig: NextConfig = {
-  // Temporarily disable static export for E2E testing
-  // output: "export",
+  output: resolvedOutput,
   images: { unoptimized: true },
   trailingSlash: true,
 };

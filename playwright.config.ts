@@ -4,12 +4,12 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: path.join(__dirname, "tests", "e2e"),
   testMatch: ["**/*.spec.ts"],
-  timeout: 60_000,
+  timeout: 15_000, // Reduced from 60s to 15s
   expect: { timeout: 10_000 },
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: 1,
+  workers: 1, // Already set to 1 (runs one at a time)
   reporter: [["list"], ["html", { outputFolder: "playwright-report", open: "never" }]],
   use: {
     baseURL: "http://localhost:3000",
