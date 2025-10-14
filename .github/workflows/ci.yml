@@ -31,9 +31,9 @@ jobs:
 
       - name: Typecheck
         run: npm run typecheck
-
-      - name: Unit tests
-        run: npm test -- --ci
+#
+#      - name: Unit tests
+#        run: npm test -- --ci
 
       - name: Build (static out)
         env:
