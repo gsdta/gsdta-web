@@ -15,7 +15,7 @@ export default defineConfig({
     baseURL: "http://localhost:3000",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
-    video: "retain-on-failure",
+    video: "off", // Disabled to avoid ffmpeg dependency
   },
   webServer: {
     command: "npm run start:e2e",
@@ -23,5 +23,13 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    {
+      name: "chromium",
+      use: {
+        ...devices["Desktop Chrome"],
+        channel: "chrome", // Use system Chrome instead of downloading Chromium
+      },
+    },
+  ],
 });
