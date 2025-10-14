@@ -66,6 +66,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     async function load() {
+      // Check if we have auth data in sessionStorage
+      let hasStoredAuth = false;
+      try {
+        const raw = sessionStorage.getItem(STORAGE_KEY);
+        hasStoredAuth = raw !== null;
+      } catch {}
+
       try {
         await waitForMsw();
         const res = await fetch("/auth/session", { credentials: "include" });
@@ -78,7 +85,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } catch {}
           }
         } else {
-          if (!cancelled && !hasManualAuth.current) {
+          // Only clear auth if we don't have stored auth data or if hasManualAuth is true
+          // This prevents clearing auth during navigation when MSW isn't ready yet
+          if (!cancelled && !hasManualAuth.current && !hasStoredAuth) {
             setUser(null);
             try {
               sessionStorage.removeItem(STORAGE_KEY);
@@ -86,7 +95,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
       } catch {
-        if (!cancelled && !hasManualAuth.current) {
+        // Only clear auth if we don't have stored auth data
+        // This prevents clearing auth when fetch fails (e.g., MSW not ready)
+        if (!cancelled && !hasManualAuth.current && !hasStoredAuth) {
           setUser(null);
           try {
             sessionStorage.removeItem(STORAGE_KEY);
