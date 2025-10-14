@@ -67,7 +67,7 @@ test.describe("Teacher Attendance (mocked)", () => {
     const authAfter = await page.evaluate(() => sessionStorage.getItem("auth:user"));
     console.log("Auth after navigation:", authAfter);
 
-    await expect(page).toHaveURL(/\/classes$/, { timeout: 5000 });
+    await expect(page).toHaveURL(/\/classes\/?$/, { timeout: 5000 });
     await page.waitForLoadState("networkidle");
 
     // Should see classes

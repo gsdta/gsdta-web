@@ -5,21 +5,52 @@ import { Protected } from "@/components/Protected";
 import { getClasses } from "@/lib/enrollment-api";
 import type { Class } from "@/lib/enrollment-types";
 
+declare global {
+  interface Window {
+    __mswReady?: Promise<void>;
+  }
+}
+
+async function waitForMsw() {
+  if (typeof window === "undefined") return;
+  const useMsw = process.env.NEXT_PUBLIC_USE_MSW !== "false";
+  if (!useMsw) return;
+
+  const maxWaitMs = 2000;
+  const intervalMs = 50;
+  let waited = 0;
+  while (!window.__mswReady && waited < maxWaitMs) {
+    await new Promise((r) => setTimeout(r, intervalMs));
+    waited += intervalMs;
+  }
+  if (window.__mswReady) {
+    try {
+      await window.__mswReady;
+    } catch {
+      // ignore
+    }
+  }
+}
+
 export default function ClassesPage() {
   const [classes, setClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getClasses()
-      .then((data) => {
-        setClasses(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : "Failed to load classes");
-        setLoading(false);
-      });
+    async function loadClasses() {
+      await waitForMsw();
+      getClasses()
+        .then((data) => {
+          setClasses(data);
+          setLoading(false);
+        })
+        .catch((err) => {
+          setError(err instanceof Error ? err.message : "Failed to load classes");
+          setLoading(false);
+        });
+    }
+    loadClasses();
   }, []);
 
   return (
