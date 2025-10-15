@@ -1,8 +1,12 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# =============================================================================
+# Monorepo: UI (Next.js/Node) and API (Go)
+# =============================================================================
+# UI / Node.js (apply anywhere in the repo)
 # dependencies
-/node_modules
-/.pnp
+node_modules
+.pnp
 .pnp.*
 .yarn/*
 !.yarn/patches
@@ -11,17 +15,63 @@
 !.yarn/versions
 
 # testing
-/coverage
+coverage
 
 # next.js
-/.next/
-/out/
+.next/
+out/
+.swc/
+# Turborepo (if used)
+.turbo/
 
 # production
-/build
+build
 
-# misc
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# testing artifacts (e2e, browser)
+playwright-report
+test-results
+
+# optional caches
+.eslintcache
+
+# =============================================================================
+# API / Go
+# =============================================================================
+# Binaries for programs and plugins
+api/bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.out
+
+# Go workspace file
+go.work
+
+# =============================================================================
+# Environment and Config
+# =============================================================================
+# env files (can opt-in for committing if needed)
+.env*
+!.env.example
+
+# =============================================================================
+# Misc
+# =============================================================================
 .DS_Store
+Thumbs.db
+desktop.ini
 *.pem
 
 # debug
@@ -30,21 +80,15 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
-
 # vercel
 .vercel
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-#JetBrains
+# =============================================================================
+# IDE
+# =============================================================================
+# JetBrains
 .idea
 *.iml
 
-
-# testing
-playwright-report
-test-results
+# VSCode
+.vscode
