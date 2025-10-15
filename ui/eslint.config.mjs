@@ -22,6 +22,7 @@ const eslintConfig = [
             "test-results/**",
             "next-env.d.ts",
             "jest.config.cjs",
+            "public/**",
         ],
     },
 ];

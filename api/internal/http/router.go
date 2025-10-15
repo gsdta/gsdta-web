@@ -72,9 +72,14 @@ func NewRouter(cfg config.Config, logger zerolog.Logger, st store.Accessor) http
 	})
 
 	r.Route("/v1", func(r chi.Router) {
+		// Version and health alias under /v1 for convenience
 		r.Get("/version", func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			_ = json.NewEncoder(w).Encode(version.Info())
+		})
+		r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("ok"))
 		})
 
 		// OpenAPI minimal spec
