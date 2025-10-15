@@ -1,0 +1,178 @@
+[
+  {
+    "name": ".eslintrc.json",
+    "path": ".eslintrc.json",
+    "sha": "37224185490e6db2d26a574d66d4d476336bf644",
+    "size": 61,
+    "url": "https://api.github.com/repos/nramc/thirukkural-api/contents/.eslintrc.json?ref=main",
+    "html_url": "https://github.com/nramc/thirukkural-api/blob/main/.eslintrc.json",
+    "git_url": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/37224185490e6db2d26a574d66d4d476336bf644",
+    "download_url": "https://raw.githubusercontent.com/nramc/thirukkural-api/main/.eslintrc.json",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/nramc/thirukkural-api/contents/.eslintrc.json?ref=main",
+      "git": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/37224185490e6db2d26a574d66d4d476336bf644",
+      "html": "https://github.com/nramc/thirukkural-api/blob/main/.eslintrc.json"
+    }
+  },
+  {
+    "name": ".gitignore",
+    "path": ".gitignore",
+    "sha": "9e76261436fcf0f68c6cdfd2a0fed9c87e2ba8ce",
+    "size": 470,
+    "url": "https://api.github.com/repos/nramc/thirukkural-api/contents/.gitignore?ref=main",
+    "html_url": "https://github.com/nramc/thirukkural-api/blob/main/.gitignore",
+    "git_url": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/9e76261436fcf0f68c6cdfd2a0fed9c87e2ba8ce",
+    "download_url": "https://raw.githubusercontent.com/nramc/thirukkural-api/main/.gitignore",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/nramc/thirukkural-api/contents/.gitignore?ref=main",
+      "git": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/9e76261436fcf0f68c6cdfd2a0fed9c87e2ba8ce",
+      "html": "https://github.com/nramc/thirukkural-api/blob/main/.gitignore"
+    }
+  },
+  {
+    "name": ".npmrc",
+    "path": ".npmrc",
+    "sha": "7e8ea47b34033d4a12362e5ead49326b1ce631b0",
+    "size": 55,
+    "url": "https://api.github.com/repos/nramc/thirukkural-api/contents/.npmrc?ref=main",
+    "html_url": "https://github.com/nramc/thirukkural-api/blob/main/.npmrc",
+    "git_url": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/7e8ea47b34033d4a12362e5ead49326b1ce631b0",
+    "download_url": "https://raw.githubusercontent.com/nramc/thirukkural-api/main/.npmrc",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/nramc/thirukkural-api/contents/.npmrc?ref=main",
+      "git": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/7e8ea47b34033d4a12362e5ead49326b1ce631b0",
+      "html": "https://github.com/nramc/thirukkural-api/blob/main/.npmrc"
+    }
+  },
+  {
+    "name": "README.md",
+    "path": "README.md",
+    "sha": "c8c401253c55830e4f7bd4fe5b9a11c583e52b94",
+    "size": 7356,
+    "url": "https://api.github.com/repos/nramc/thirukkural-api/contents/README.md?ref=main",
+    "html_url": "https://github.com/nramc/thirukkural-api/blob/main/README.md",
+    "git_url": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/c8c401253c55830e4f7bd4fe5b9a11c583e52b94",
+    "download_url": "https://raw.githubusercontent.com/nramc/thirukkural-api/main/README.md",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/nramc/thirukkural-api/contents/README.md?ref=main",
+      "git": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/c8c401253c55830e4f7bd4fe5b9a11c583e52b94",
+      "html": "https://github.com/nramc/thirukkural-api/blob/main/README.md"
+    }
+  },
+  {
+    "name": "app",
+    "path": "app",
+    "sha": "bb701208ef02c2b72996d94a547d9e0a6d626481",
+    "size": 0,
+    "url": "https://api.github.com/repos/nramc/thirukkural-api/contents/app?ref=main",
+    "html_url": "https://github.com/nramc/thirukkural-api/tree/main/app",
+    "git_url": "https://api.github.com/repos/nramc/thirukkural-api/git/trees/bb701208ef02c2b72996d94a547d9e0a6d626481",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/nramc/thirukkural-api/contents/app?ref=main",
+      "git": "https://api.github.com/repos/nramc/thirukkural-api/git/trees/bb701208ef02c2b72996d94a547d9e0a6d626481",
+      "html": "https://github.com/nramc/thirukkural-api/tree/main/app"
+    }
+  },
+  {
+    "name": "next.config.ts",
+    "path": "next.config.ts",
+    "sha": "8fd28816190514d0fbef822c3f730fcf05f79ce7",
+    "size": 696,
+    "url": "https://api.github.com/repos/nramc/thirukkural-api/contents/next.config.ts?ref=main",
+    "html_url": "https://github.com/nramc/thirukkural-api/blob/main/next.config.ts",
+    "git_url": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/8fd28816190514d0fbef822c3f730fcf05f79ce7",
+    "download_url": "https://raw.githubusercontent.com/nramc/thirukkural-api/main/next.config.ts",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/nramc/thirukkural-api/contents/next.config.ts?ref=main",
+      "git": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/8fd28816190514d0fbef822c3f730fcf05f79ce7",
+      "html": "https://github.com/nramc/thirukkural-api/blob/main/next.config.ts"
+    }
+  },
+  {
+    "name": "package-lock.json",
+    "path": "package-lock.json",
+    "sha": "bbbe812ea6b19abf4c78b4760317168dd5e6e37c",
+    "size": 244643,
+    "url": "https://api.github.com/repos/nramc/thirukkural-api/contents/package-lock.json?ref=main",
+    "html_url": "https://github.com/nramc/thirukkural-api/blob/main/package-lock.json",
+    "git_url": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/bbbe812ea6b19abf4c78b4760317168dd5e6e37c",
+    "download_url": "https://raw.githubusercontent.com/nramc/thirukkural-api/main/package-lock.json",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/nramc/thirukkural-api/contents/package-lock.json?ref=main",
+      "git": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/bbbe812ea6b19abf4c78b4760317168dd5e6e37c",
+      "html": "https://github.com/nramc/thirukkural-api/blob/main/package-lock.json"
+    }
+  },
+  {
+    "name": "package.json",
+    "path": "package.json",
+    "sha": "deb0dbe2b36cd3821f1b349399eac4c4a637d2f4",
+    "size": 604,
+    "url": "https://api.github.com/repos/nramc/thirukkural-api/contents/package.json?ref=main",
+    "html_url": "https://github.com/nramc/thirukkural-api/blob/main/package.json",
+    "git_url": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/deb0dbe2b36cd3821f1b349399eac4c4a637d2f4",
+    "download_url": "https://raw.githubusercontent.com/nramc/thirukkural-api/main/package.json",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/nramc/thirukkural-api/contents/package.json?ref=main",
+      "git": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/deb0dbe2b36cd3821f1b349399eac4c4a637d2f4",
+      "html": "https://github.com/nramc/thirukkural-api/blob/main/package.json"
+    }
+  },
+  {
+    "name": "public",
+    "path": "public",
+    "sha": "a3a71ea66f6b5071ea75ee2e84138a391528ee91",
+    "size": 0,
+    "url": "https://api.github.com/repos/nramc/thirukkural-api/contents/public?ref=main",
+    "html_url": "https://github.com/nramc/thirukkural-api/tree/main/public",
+    "git_url": "https://api.github.com/repos/nramc/thirukkural-api/git/trees/a3a71ea66f6b5071ea75ee2e84138a391528ee91",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/nramc/thirukkural-api/contents/public?ref=main",
+      "git": "https://api.github.com/repos/nramc/thirukkural-api/git/trees/a3a71ea66f6b5071ea75ee2e84138a391528ee91",
+      "html": "https://github.com/nramc/thirukkural-api/tree/main/public"
+    }
+  },
+  {
+    "name": "renovate.json",
+    "path": "renovate.json",
+    "sha": "178408b5b98edb83942f7075a7c5dd89a8342803",
+    "size": 140,
+    "url": "https://api.github.com/repos/nramc/thirukkural-api/contents/renovate.json?ref=main",
+    "html_url": "https://github.com/nramc/thirukkural-api/blob/main/renovate.json",
+    "git_url": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/178408b5b98edb83942f7075a7c5dd89a8342803",
+    "download_url": "https://raw.githubusercontent.com/nramc/thirukkural-api/main/renovate.json",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/nramc/thirukkural-api/contents/renovate.json?ref=main",
+      "git": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/178408b5b98edb83942f7075a7c5dd89a8342803",
+      "html": "https://github.com/nramc/thirukkural-api/blob/main/renovate.json"
+    }
+  },
+  {
+    "name": "tsconfig.json",
+    "path": "tsconfig.json",
+    "sha": "d8b93235f205efbea6e8fceb1c9ddb57ddddf28d",
+    "size": 598,
+    "url": "https://api.github.com/repos/nramc/thirukkural-api/contents/tsconfig.json?ref=main",
+    "html_url": "https://github.com/nramc/thirukkural-api/blob/main/tsconfig.json",
+    "git_url": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/d8b93235f205efbea6e8fceb1c9ddb57ddddf28d",
+    "download_url": "https://raw.githubusercontent.com/nramc/thirukkural-api/main/tsconfig.json",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/nramc/thirukkural-api/contents/tsconfig.json?ref=main",
+      "git": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/d8b93235f205efbea6e8fceb1c9ddb57ddddf28d",
+      "html": "https://github.com/nramc/thirukkural-api/blob/main/tsconfig.json"
+    }
+  }
+]

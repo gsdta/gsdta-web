@@ -1,3 +1,6 @@
+# =============================================================================
+# UI exclusions
+# =============================================================================
 # Dependencies
 node_modules
 npm-debug.log*
@@ -11,14 +14,39 @@ out/
 # Production
 build
 
+# Testing
+coverage
+test-results/
+playwright-report/
+
+# =============================================================================
+# API exclusions
+# =============================================================================
+# Go binaries and build artifacts
+api/bin/
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# API local env and data files
+api/.env
+api/.env.*
+api/seeds.sql
+
+# API docs and scripts (not needed in build)
+api/docs/
+api/scripts/
+api/e2e/
+
+# =============================================================================
+# Common exclusions
+# =============================================================================
 # Misc
 .DS_Store
 *.tsbuildinfo
-
-# Debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
 # Local env files
 .env*.local
@@ -26,11 +54,6 @@ yarn-error.log*
 
 # Vercel
 .vercel
-
-# Testing
-coverage
-test-results/
-playwright-report/
 
 # IDE
 .vscode
@@ -42,6 +65,7 @@ Thumbs.db
 # Git
 .git
 .gitignore
+.gitattributes
 
 # CI/CD
 .github
@@ -49,18 +73,8 @@ Thumbs.db
 # Documentation
 *.md
 docs/
-
-# Linting and formatting
-.eslintrc*
-.prettierrc*
-.prettierignore
-
-# Husky
-.husky
-
-# TypeScript
-*.tsbuildinfo
-
-# Playwright
-playwright.config.ts
-tests/
+README.md
+LICENSE
+TODO.md
+RESTRUCTURE_COMPLETE.md
+RESTRUCTURE_GUIDE.md

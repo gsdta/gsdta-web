@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+@theme {
+    --color-rose-50: #fff1f2;
+    --color-rose-100: #ffe4e6;
+    --color-rose-200: #fecdd3;
+    --color-rose-500: #f43f5e;
+    --color-rose-600: #e11d48;
+    --color-rose-700: #be123c;
+    --color-pink-50: #fdf2f8;
+    --color-amber-50: #fffbeb;
+}
+
+:root {
+    --background: #ffffff;
+    --foreground: #171717;
+    /* Prefer a font stack that supports both Latin and Tamil out of the box */
+    --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Nirmala UI", "Latha", "Arial Unicode MS", Arial, Helvetica, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background: #0a0a0a;
+        --foreground: #ededed;
+    }
+}
+
+html {
+    /* Better text rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    /* Help long non-Latin words wrap instead of overflowing */
+    overflow-wrap: anywhere;
+}
+
+/* When the document language is Tamil, strongly prefer Tamil-capable fonts */
+:lang(ta) body {
+    font-family: "Noto Sans Tamil", "Nirmala UI", "Latha", "Arial Unicode MS", "Noto Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
+}

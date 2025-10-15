@@ -1,0 +1,76 @@
+{
+  "name": "ui",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "start:e2e": "npm run build && npm start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "jest --config jest.config.cjs --passWithNoTests",
+    "test:watch": "jest --config jest.config.cjs --watch",
+    "format": "prettier --check .",
+    "format:write": "prettier --write .",
+    "prepare": "husky install",
+    "test:e2e": "playwright test --config=playwright.config.ts",
+    "test:e2e:headed": "playwright test --config=playwright.config.ts --headed --browser=chromium",
+    "pw:install": "playwright install",
+    "e2e:ci": "playwright install --with-deps && npm run build && playwright test --config=playwright.config.ts",
+    "docker:build": "docker build -t gsdta-ui:latest .",
+    "docker:build-dev": "docker build -f Dockerfile.dev -t gsdta-ui:dev .",
+    "docker:run": "docker-compose up -d ui",
+    "docker:run-dev": "docker-compose --profile dev up -d ui-dev",
+    "docker:stop": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:clean": "docker-compose down --rmi all --volumes --remove-orphans",
+    "generate:thirukkural": "node scripts/generate-thirukkural.js"
+  },
+  "dependencies": {
+    "next": "15.5.4",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-hook-form": "^7.53.0",
+    "zod": "^3.23.8",
+    "@hookform/resolvers": "^3.9.0"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.5.0",
+    "@commitlint/config-conventional": "^19.5.0",
+    "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.48.2",
+    "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.5.0",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.5.4",
+    "eslint-config-prettier": "^9.1.0",
+    "husky": "^9.1.6",
+    "http-server": "^14.1.1",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "lint-staged": "^15.2.10",
+    "msw": "^2.6.5",
+    "prettier": "^3.3.3",
+    "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,css,md}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
+  }
+}
