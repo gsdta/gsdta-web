@@ -1,185 +1,302 @@
-# Docker Setup for GSDTA UI Application
+# Docker Setup for GSDTA Web (Monorepo: UI + API)
 
-This document provides instructions for containerizing and running the GSDTA UI application using Docker.
+This app ships as a single Docker image that runs two processes:
+
+- **Next.js server** on port 3000 (public)
+- **Go API** on port 8080 (internal)
+
+The build process **builds the API first**, then the UI. Next.js proxies browser requests from `/api/...` to the
+internal Go API at `http://localhost:8080/v1/...`, avoiding CORS.
 
 ## Prerequisites
 
-- Docker installed on your system
-- Docker Compose installed (usually comes with Docker Desktop)
+- Docker Desktop
+- Docker Compose (included in Docker Desktop)
 
 ## Quick Start
 
-### Using Docker Compose (Recommended)
+### Production (Single Container)
 
-1. **Build and run production container:**
-
-   ```bash
-   docker-compose up --build -d ui
-   ```
-
-   The application will be available at http://localhost:3000
-
-2. **Build and run development container with hot reloading:**
-   ```bash
-   docker-compose --profile dev up --build -d ui-dev
-   ```
-   The development server will be available at http://localhost:3001
-
-### Using Management Scripts
-
-For convenience, use the provided management scripts:
-
-**On Linux/macOS:**
-
-```bash
-chmod +x docker.sh
-./docker.sh build    # Build production image
-./docker.sh run      # Run production container
-./docker.sh run-dev  # Run development container
-./docker.sh stop     # Stop all containers
-./docker.sh clean    # Clean up containers and images
-./docker.sh logs     # View container logs
-./docker.sh shell    # Open shell in running container
-```
-
-**On Windows:**
+Build and run the combined image:
 
 ```cmd
-docker.bat build    # Build production image
-docker.bat run      # Run production container
-docker.bat run-dev  # Run development container
-docker.bat stop     # Stop all containers
-docker.bat clean    # Clean up containers and images
-docker.bat logs     # View container logs
-docker.bat shell    # Open shell in running container
+cd /d C:\projects\gsdta\gsdta-web
+docker-compose up --build -d ui
+```
+
+Or use the helper script:
+
+```cmd
+docker.bat build
+docker.bat run
+```
+
+Open http://localhost:3000
+
+Health check endpoints:
+
+- UI: http://localhost:3000/health
+- API (proxied): http://localhost:3000/api/healthz → internally maps to `http://localhost:8080/v1/healthz`
+
+Stop and clean:
+
+```cmd
+docker-compose down
+```
+
+### Development (Hot Reload for Both API + UI)
+
+Run two containers: Next dev server (port 3001) and a Go API dev container with hot reload.
+
+```cmd
+docker-compose --profile dev up --build -d
+```
+
+Or use the helper script:
+
+```cmd
+docker.bat run-dev
+```
+
+- **UI**: http://localhost:3001
+- **API**: internal at `api-dev:8080`
+
+Stop dev:
+
+```cmd
+docker-compose --profile dev down
+```
+
+## Build Process
+
+The Dockerfile uses a multi-stage build that **builds the API first**:
+
+1. **Stage 1**: Build Go API binary with version metadata
+    - Uses `golang:1.21-alpine`
+    - Injects version info via ldflags
+    - Creates static binary at `/out/api`
+    - Copies `gsdta.sql` for migrations
+
+2. **Stage 2**: Install UI dependencies
+    - Uses `node:20-alpine`
+    - Runs `npm ci` in `ui/` folder
+
+3. **Stage 3**: Build UI
+    - Builds Next.js with standalone output
+    - Configured to proxy `/api` to internal Go API
+
+4. **Stage 4**: Production runtime
+    - Copies API binary and schema
+    - Copies Next.js standalone server
+    - Uses `tini` for proper process management
+    - Runs both processes via `entrypoint.sh`
+
+## How It Works
+
+- `ui/next.config.ts` defines a rewrite from `/api/:path*` → `${BACKEND_BASE_URL}/:path*`
+- In the single-image build, `BACKEND_BASE_URL` is set to `http://localhost:8080/v1`
+- Browser request to `/api/students` → Next.js proxies to `http://localhost:8080/v1/students` inside the container
+- The image runs both processes using `tini` and `entrypoint.sh` for supervision
+
+## Files
+
+- `Dockerfile` – Multi-stage build (API first, then UI); final image runs both
+- `entrypoint.sh` – Starts Go API and Next.js, forwards signals, exits if either dies
+- `docker-compose.yml` – Defines:
+    - `ui` (production-like, single container)
+    - `ui-dev` and `api-dev` (development profile)
+- `ui/` – Next.js frontend application
+- `api/` – Go API with full CRUD operations
+
+## Environment Variables
+
+### Build-Time Arguments
+
+These are baked into the Docker image:
+
+```dockerfile
+# UI configuration
+NEXT_PUBLIC_USE_MSW=false
+NEXT_PUBLIC_API_BASE_URL=/api
+BACKEND_BASE_URL=http://localhost:8080/v1
+
+# Version metadata (optional)
+VERSION=dev
+COMMIT=none
+BUILDTIME=unknown
+```
+
+### Runtime Environment (docker-compose.yml)
+
+**Production (`ui` service):**
+
+```yaml
+# Next.js
+- NODE_ENV=production
+- PORT=3000
+- NEXT_PUBLIC_API_BASE_URL=/api
+- BACKEND_BASE_URL=http://localhost:8080/v1
+
+# API
+- API_PORT=8080
+- APP_ENV=production
+- LOG_LEVEL=info
+- CORS_ALLOWED_ORIGINS=*
+- SEED_ON_START=false
+- MIGRATE_ON_START=false
+
+# Optional: PostgreSQL
+# - DATABASE_URL=postgres://user:pass@host:5432/gsdta?sslmode=disable
+```
+
+**Development (`api-dev` + `ui-dev` services):**
+
+```yaml
+# API dev container
+- APP_ENV=development
+- PORT=8080
+- LOG_LEVEL=debug
+- CORS_ALLOWED_ORIGINS=http://localhost:3001
+- SEED_ON_START=true  # Auto-seeds dev data in memory
+
+# UI dev container
+- NODE_ENV=development
+- BACKEND_BASE_URL=http://api-dev:8080/v1
 ```
 
 ## Manual Docker Commands
 
-### Production Build
+Build the production image directly:
 
-1. **Build the production image:**
+```cmd
+cd /d C:\projects\gsdta\gsdta-web
+docker build -t gsdta-web:latest .
+```
 
-   ```bash
-   docker build -t gsdta-ui:latest .
-   ```
+Build with version metadata:
 
-2. **Run the production container:**
-   ```bash
-   docker run -d -p 3000:3000 --name gsdta-ui-prod gsdta-ui:latest
-   ```
+```cmd
+docker build ^
+  --build-arg VERSION=v1.0.0 ^
+  --build-arg COMMIT=%git rev-parse --short HEAD% ^
+  --build-arg BUILDTIME=%date% ^
+  -t gsdta-web:latest .
+```
 
-### Development Build
+Run it:
 
-1. **Build the development image:**
+```cmd
+docker run -d -p 3000:3000 --name gsdta-web gsdta-web:latest
+```
 
-   ```bash
-   docker build -f Dockerfile.dev -t gsdta-ui:dev .
-   ```
+Run with PostgreSQL:
 
-2. **Run the development container with hot reloading:**
-   ```bash
-   docker run -d -p 3001:3000 -v $(pwd):/app -v /app/node_modules -v /app/.next --name gsdta-ui-dev gsdta-ui:dev
-   ```
+```cmd
+docker run -d -p 3000:3000 ^
+  -e DATABASE_URL=postgres://user:pass@host:5432/gsdta?sslmode=disable ^
+  -e MIGRATE_ON_START=true ^
+  --name gsdta-web gsdta-web:latest
+```
 
-## Docker Files Overview
+Logs:
 
-- **`Dockerfile`**: Multi-stage production build optimized for size and security
-- **`Dockerfile.dev`**: Development build with hot reloading support
-- **`docker-compose.yml`**: Orchestrates both production and development containers
-- **`.dockerignore`**: Excludes unnecessary files from Docker build context
-- **`docker.sh`** / **`docker.bat`**: Management scripts for easy container operations
+```cmd
+docker logs -f gsdta-web
+```
 
-## Container Features
+Shell into running container:
 
-### Production Container
+```cmd
+docker exec -it gsdta-web sh
+```
 
-- Multi-stage build for optimized image size
-- Non-root user for security
-- Health checks included
-- Standalone Next.js output for better performance
-- Port 3000 exposed
+## Helper Scripts (Windows)
 
-### Development Container
+```cmd
+docker.bat build      # Build production image
+docker.bat run        # Run production container
+docker.bat run-dev    # Run development containers
+docker.bat stop       # Stop all containers
+docker.bat logs       # View logs
+docker.bat clean      # Stop and remove containers
+```
 
-- Hot reloading support
-- Volume mounting for live code changes
-- All dev dependencies included
-- Port 3000 exposed (mapped to 3001 on host)
+## API Storage Modes
 
-## Environment Variables
+The API supports two storage modes:
 
-The containers support the following environment variables:
+### In-Memory (Default)
 
-- `NODE_ENV`: Set to `production` or `development`
-- `PORT`: Port number (default: 3000)
-- `HOSTNAME`: Hostname (default: 0.0.0.0)
+- Fast, no external dependencies
+- Data resets on restart
+- Auto-seeds dev data when `SEED_ON_START=true`
+- Perfect for development and testing
+
+### PostgreSQL
+
+- Persistent storage
+- Set `DATABASE_URL` environment variable
+- Optionally set `MIGRATE_ON_START=true` to auto-apply schema
+- Example: `postgres://user:pass@host:5432/gsdta?sslmode=disable`
 
 ## Troubleshooting
 
-### Common Issues
+### Container starts but both services don't respond
 
-1. **Port already in use:**
+- Check logs: `docker logs -f gsdta-web-ui-1`
+- Verify healthcheck: `docker inspect gsdta-web-ui-1 | findstr health`
+- The container runs two processes; both must start successfully
 
-   ```bash
-   docker-compose down  # Stop existing containers
-   ```
+### API proxy not working (404 on /api/*)
 
-2. **Build failures:**
+- Verify Next.js rewrite config in `ui/next.config.ts`
+- Check `BACKEND_BASE_URL` is set correctly
+- In container, API should be at `localhost:8080`
+- Test API directly: `docker exec gsdta-web-ui-1 wget -O- localhost:8080/v1/healthz`
 
-   ```bash
-   docker system prune  # Clean up Docker cache
-   docker-compose build --no-cache
-   ```
+### Build fails on API stage
 
-3. **Permission issues on Linux/macOS:**
+- Ensure `api/go.mod` and `api/go.sum` are present
+- Run `go mod tidy` in `api/` folder locally
+- Check Go version matches Dockerfile (1.21+)
 
-   ```bash
-   chmod +x docker.sh
-   ```
+### Build fails on UI stage
 
-4. **View container logs:**
+- Ensure `ui/package-lock.json` exists
+- Run `npm install` in `ui/` folder locally
+- Check Node version matches Dockerfile (20+)
 
-   ```bash
-   docker-compose logs -f ui
-   ```
+### Line ending issues with entrypoint.sh
 
-5. **Access container shell:**
-   ```bash
-   docker-compose exec ui /bin/sh
-   ```
+- The Dockerfile normalizes CRLF → LF automatically
+- If issues persist, ensure git config: `git config core.autocrlf input`
+- Or add to `.gitattributes`: `*.sh text eol=lf`
 
-### Performance Tips
+### Hot reload not working in dev mode
 
-- Use `.dockerignore` to exclude unnecessary files
-- Leverage Docker layer caching by copying package files first
-- Use multi-stage builds to reduce final image size
-- Consider using Docker BuildKit for faster builds:
-  ```bash
-  DOCKER_BUILDKIT=1 docker build .
-  ```
+- Ensure volumes are mounted correctly in `docker-compose.yml`
+- On Windows, Docker Desktop must have access to the drive
+- File watching may be slow on Windows; this is a known Docker limitation
 
 ## Production Deployment
 
-For production deployment, consider:
+For production deployment (e.g., Cloud Run, ECS, Kubernetes):
 
-1. **Using environment-specific configurations**
-2. **Setting up proper logging and monitoring**
-3. **Implementing health checks**
-4. **Using Docker secrets for sensitive data**
-5. **Setting up reverse proxy (nginx, traefik, etc.)**
+1. Build with version tags:
+   ```cmd
+   docker build --build-arg VERSION=v1.0.0 -t gsdta-web:v1.0.0 .
+   ```
 
-## Security Considerations
+2. Tag for registry:
+   ```cmd
+   docker tag gsdta-web:v1.0.0 your-registry/gsdta-web:v1.0.0
+   ```
 
-- The production container runs as a non-root user
-- Minimal Alpine Linux base image
-- No unnecessary packages installed
-- Health checks implemented
-- Proper file permissions set
+3. Push to registry:
+   ```cmd
+   docker push your-registry/gsdta-web:v1.0.0
+   ```
 
-## Next Steps
+4. Deploy with environment variables for your database and any external services.
 
-- Set up CI/CD pipeline for automated builds
-- Consider using Kubernetes for orchestration
-- Implement monitoring and logging solutions
-- Set up automated security scanning
+See [docs/infra.md](./docs/infra.md) for detailed deployment instructions.

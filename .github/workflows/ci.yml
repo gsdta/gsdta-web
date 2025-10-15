@@ -10,59 +10,117 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NODE_VERSION: '20'
+      GO_VERSION: '1.21'
       # GCP placeholders (used in commented steps below)
       GCP_PROJECT_ID: your-gcp-project-id
       GAR_LOCATION: us-central1
       GAR_REPO: web-apps
-      SERVICE_NAME: gsdta-ui
+      SERVICE_NAME: gsdta-web
     steps:
       - uses: actions/checkout@v4
 
+      # =================================================================
+      # Setup both Node.js and Go with caching
+      # =================================================================
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+          cache-dependency-path: ui/package-lock.json
 
-      - name: Install deps
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          cache-dependency-path: api/go.sum
+
+      # =================================================================
+      # API: Build, Lint, and Test (runs first)
+      # =================================================================
+      - name: Download API dependencies
+        working-directory: ./api
+        run: go mod download
+
+      - name: Lint API
+        working-directory: ./api
+        run: |
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+          golangci-lint run
+
+      - name: Test API
+        working-directory: ./api
+        run: go test ./... -v -race -coverprofile=coverage.out
+
+      - name: Build API binary
+        working-directory: ./api
+        run: |
+          VERSION=$(git describe --tags --always 2>/dev/null || echo dev)
+          COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo none)
+          BUILDTIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          PKG=github.com/gsdta/api
+          LDFLAGS="-X ${PKG}/internal/version.Version=${VERSION} -X ${PKG}/internal/version.Commit=${COMMIT} -X ${PKG}/internal/version.BuildTime=${BUILDTIME}"
+          go build -ldflags "${LDFLAGS}" -o bin/api ./cmd/api
+
+      # =================================================================
+      # UI: Install, Lint, Test, and Build
+      # =================================================================
+      - name: Install UI deps
+        working-directory: ./ui
         run: npm ci
 
-      - name: Lint
+      - name: Lint UI
+        working-directory: ./ui
         run: npm run lint
 
-      - name: Typecheck
+      - name: Typecheck UI
+        working-directory: ./ui
         run: npm run typecheck
 
-      - name: Unit tests
+      - name: Unit tests UI
+        working-directory: ./ui
         run: npm test -- --ci
 
-      - name: Build (server)
+      - name: Build UI (server)
+        working-directory: ./ui
         run: npm run build
 
       # - name: E2E tests (Playwright)
+      #   working-directory: ./ui
       #   run: npm run e2e:ci
 
       # - name: Archive static site
       #   uses: actions/upload-artifact@v4
       #   with:
       #     name: site-out
-      #     path: out
+      #     path: ui/out
 
-      # ------------------------------------------------------------------
-      # Docker image build (local only)
-      # ------------------------------------------------------------------
+      # =================================================================
+      # Docker image build (unified API + UI)
+      # =================================================================
       - name: Set IMAGE_URI env for this run
         id: image_vars
         run: |
+          VERSION=$(git describe --tags --always 2>/dev/null || echo dev)
+          COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo none)
+          BUILDTIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           IMAGE_URI="${GAR_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GAR_REPO}/${SERVICE_NAME}:${GITHUB_SHA}"
           echo "IMAGE_URI=$IMAGE_URI" >> "$GITHUB_ENV"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "COMMIT=$COMMIT" >> "$GITHUB_ENV"
+          echo "BUILDTIME=$BUILDTIME" >> "$GITHUB_ENV"
           echo "Image: $IMAGE_URI"
 
       - name: Build Docker image
-        run: docker build -t "$IMAGE_URI" .
+        run: |
+          docker build \
+            --build-arg VERSION="$VERSION" \
+            --build-arg COMMIT="$COMMIT" \
+            --build-arg BUILDTIME="$BUILDTIME" \
+            -t "$IMAGE_URI" .
 
-      # ------------------------------------------------------------------
+      # =================================================================
       # GCP deploy steps (COMMENTED OUT – enable after GCP setup)
-      # ------------------------------------------------------------------
+      # =================================================================
       # - name: Google Cloud auth
       #   uses: google-github-actions/setup-gcloud@v2
       #   with:

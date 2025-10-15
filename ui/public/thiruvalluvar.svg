@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+    <title id="title">Thiruvalluvar - stylized illustration</title>
+    <desc id="desc">A simple, friendly vector illustration of the poet-sage Thiruvalluvar seated with a palm-leaf
+        manuscript and quill, in a circular decorative background.
+    </desc>
+    <defs>
+        <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#ffe4e6"/> <!-- rose-100 -->
+            <stop offset="100%" stop-color="#fef3c7"/> <!-- amber-100 -->
+        </linearGradient>
+        <linearGradient id="robeGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#ffffff"/>
+            <stop offset="100%" stop-color="#f3f4f6"/> <!-- gray-100 -->
+        </linearGradient>
+        <linearGradient id="sashGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#f59e0b"/> <!-- amber-500 -->
+            <stop offset="100%" stop-color="#fbbf24"/> <!-- amber-400 -->
+        </linearGradient>
+        <linearGradient id="seatGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#fecdd3"/> <!-- rose-200 -->
+            <stop offset="100%" stop-color="#fda4af"/> <!-- rose-300 -->
+        </linearGradient>
+        <clipPath id="circleClip">
+            <circle cx="128" cy="128" r="120"/>
+        </clipPath>
+    </defs>
+
+    <!-- Background circle -->
+    <circle cx="128" cy="128" r="120" fill="url(#bgGrad)" stroke="#f4f4f5" stroke-width="2"/>
+
+    <!-- Decorative palm leaves (left/right) -->
+    <g opacity="0.25" stroke="#f43f5e" stroke-width="2" fill="none">
+        <path d="M28 96 C48 88, 60 78, 72 64"/>
+        <path d="M30 110 C48 100, 62 90, 76 74"/>
+        <path d="M226 100 C206 92, 194 82, 182 68"/>
+        <path d="M224 114 C206 104, 192 94, 178 78"/>
+    </g>
+
+    <!-- Cushion seat -->
+    <ellipse cx="128" cy="188" rx="74" ry="22" fill="url(#seatGrad)"/>
+    <ellipse cx="128" cy="194" rx="56" ry="8" fill="#fb7185" opacity="0.2"/>
+
+    <!-- Figure group -->
+    <g transform="translate(0,4)">
+        <!-- Body/robe -->
+        <path d="M108 112 C96 124, 92 146, 96 164 C100 184, 120 196, 128 196 C136 196, 156 184, 160 164 C164 146, 160 124, 148 112 C142 106, 114 106, 108 112 Z"
+              fill="url(#robeGrad)" stroke="#d1d5db" stroke-width="2"/>
+
+        <!-- Sash -->
+        <path d="M100 156 C116 154, 140 154, 156 156 C154 162, 146 170, 128 170 C110 170, 102 162, 100 156 Z"
+              fill="url(#sashGrad)"/>
+
+        <!-- Arms (holding manuscript) -->
+        <path d="M106 146 C100 150, 98 156, 100 160 C106 168, 120 168, 128 164 C120 162, 112 156, 106 146 Z"
+              fill="#f3f4f6"/>
+        <path d="M150 146 C156 150, 158 156, 156 160 C150 168, 136 168, 128 164 C136 162, 144 156, 150 146 Z"
+              fill="#f3f4f6"/>
+
+        <!-- Palm-leaf manuscript -->
+        <rect x="108" y="150" rx="4" ry="4" width="40" height="12" fill="#d97706" stroke="#92400e" stroke-width="1.5"/>
+        <line x1="112" y1="154" x2="144" y2="154" stroke="#fef3c7" stroke-width="1"/>
+        <line x1="112" y1="158" x2="140" y2="158" stroke="#fef3c7" stroke-width="1"/>
+
+        <!-- Quill -->
+        <path d="M150 138 C160 130, 170 126, 176 120 C172 130, 166 140, 156 146 Z" fill="#fde68a" stroke="#f59e0b"
+              stroke-width="1.5"/>
+
+        <!-- Head and features -->
+        <g transform="translate(0,-6)">
+            <!-- Neck -->
+            <rect x="122" y="112" width="12" height="8" rx="3" fill="#f3f4f6"/>
+            <!-- Head -->
+            <circle cx="128" cy="98" r="18" fill="#f5e6d3" stroke="#e5e7eb" stroke-width="2"/>
+            <!-- Hair bun -->
+            <circle cx="128" cy="80" r="8" fill="#1f2937"/>
+            <!-- Beard -->
+            <path d="M116 104 C118 112, 124 116, 128 116 C132 116, 138 112, 140 104 C138 110, 134 112, 128 112 C122 112, 118 110, 116 104 Z"
+                  fill="#1f2937" opacity="0.9"/>
+            <!-- Eyes -->
+            <circle cx="121" cy="98" r="2" fill="#111827"/>
+            <circle cx="135" cy="98" r="2" fill="#111827"/>
+        </g>
+    </g>
+
+    <!-- Subtle sparkles -->
+    <g fill="#f43f5e" opacity="0.25">
+        <circle cx="50" cy="54" r="2"/>
+        <circle cx="206" cy="48" r="2"/>
+        <circle cx="210" cy="200" r="2"/>
+        <circle cx="44" cy="194" r="2"/>
+    </g>
+
+    <!-- Outer ring dots -->
+    <g fill="#f59e0b" opacity="0.65">
+        <circle cx="128" cy="8" r="2"/>
+        <circle cx="248" cy="128" r="2"/>
+        <circle cx="8" cy="128" r="2"/>
+        <circle cx="128" cy="248" r="2"/>
+    </g>
+</svg>
+

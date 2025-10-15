@@ -1,5 +1,5 @@
 @echo off
-REM Docker management script for the UI application (Windows)
+REM Docker management script for GSDTA Web (UI + API) (Windows)
 
 setlocal enabledelayedexpansion
 
@@ -25,10 +25,10 @@ goto usage
 echo Usage: %0 [COMMAND]
 echo.
 echo Commands:
-echo   build       Build the production Docker image
-echo   build-dev   Build the development Docker image
+echo   build       Build the production Docker image (UI + API)
+echo   build-dev   Build the development Docker images
 echo   run         Run the production container
-echo   run-dev     Run the development container with hot reloading
+echo   run-dev     Run the development containers with hot reloading
 echo   stop        Stop all running containers
 echo   clean       Remove all containers and images
 echo   logs        Show container logs
@@ -37,8 +37,8 @@ echo   help        Show this help message
 goto end
 
 :build
-echo [INFO] Building production Docker image...
-docker build -t gsdta-ui:latest .
+echo [INFO] Building production Docker image (UI + API)...
+docker build -t gsdta-web:latest .
 if %errorlevel% equ 0 (
     echo [INFO] Production image built successfully!
 ) else (
@@ -48,79 +48,51 @@ if %errorlevel% equ 0 (
 goto end
 
 :build_dev
-echo [INFO] Building development Docker image...
-docker build -f Dockerfile.dev -t gsdta-ui:dev .
+echo [INFO] Building development Docker images...
+docker-compose --profile dev build
 if %errorlevel% equ 0 (
-    echo [INFO] Development image built successfully!
+    echo [INFO] Development images built successfully!
 ) else (
-    echo [ERROR] Failed to build development image
+    echo [ERROR] Failed to build development images
     exit /b 1
 )
 goto end
 
 :run
-echo [INFO] Starting production container...
+echo [INFO] Running production container...
 docker-compose up -d ui
-if %errorlevel% equ 0 (
-    echo [INFO] Production container started on http://localhost:3000
-) else (
-    echo [ERROR] Failed to start production container
-    exit /b 1
-)
+echo [INFO] Container started! Access at http://localhost:3000
 goto end
 
 :run_dev
-echo [INFO] Starting development container with hot reloading...
-docker-compose --profile dev up -d ui-dev
-if %errorlevel% equ 0 (
-    echo [INFO] Development container started on http://localhost:3001
-) else (
-    echo [ERROR] Failed to start development container
-    exit /b 1
-)
+echo [INFO] Running development containers...
+docker-compose --profile dev up -d
+echo [INFO] Development containers started! Access UI at http://localhost:3001
 goto end
 
 :stop
-echo [INFO] Stopping all containers...
+echo [INFO] Stopping containers...
 docker-compose down
-if %errorlevel% equ 0 (
-    echo [INFO] All containers stopped!
-) else (
-    echo [ERROR] Failed to stop containers
-    exit /b 1
-)
+docker-compose --profile dev down
+echo [INFO] All containers stopped
 goto end
 
 :clean
-echo [WARNING] This will remove all containers and images. Are you sure? (y/N)
-set /p response=
-if /i "!response!"=="y" goto do_clean
-if /i "!response!"=="yes" goto do_clean
-echo [INFO] Cleanup cancelled.
-goto end
-
-:do_clean
 echo [INFO] Cleaning up containers and images...
-docker-compose down --rmi all --volumes --remove-orphans
-if %errorlevel% equ 0 (
-    echo [INFO] Cleanup completed!
-) else (
-    echo [ERROR] Cleanup failed
-    exit /b 1
-)
+docker-compose down -v --rmi local
+docker-compose --profile dev down -v --rmi local
+echo [INFO] Cleanup complete
 goto end
 
 :logs
+echo [INFO] Showing container logs (Ctrl+C to exit)...
 docker-compose logs -f
 goto end
 
 :shell
-for /f %%i in ('docker-compose ps -q ui') do set container_id=%%i
-if "!container_id!"=="" (
-    echo [ERROR] No running production container found. Start it first with: %0 run
-    exit /b 1
-)
-docker exec -it !container_id! /bin/sh
+echo [INFO] Opening shell in running container...
+docker-compose exec ui sh
 goto end
 
 :end
+endlocal
