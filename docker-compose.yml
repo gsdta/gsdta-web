@@ -8,17 +8,18 @@ services:
       args:
         NEXT_PUBLIC_USE_MSW: "false"
         NEXT_PUBLIC_API_BASE_URL: "/api"
-        BACKEND_BASE_URL: "http://localhost:8080/v1"
+        BACKEND_BASE_URL: "http://localhost:8080"
         VERSION: "${VERSION:-dev}"
         COMMIT: "${COMMIT:-none}"
         BUILDTIME: "${BUILDTIME:-unknown}"
     ports:
       - "3000:3000"
+      - "8080:8080"
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_USE_MSW=false
       - NEXT_PUBLIC_API_BASE_URL=/api
-      - BACKEND_BASE_URL=http://localhost:8080/v1
+      - BACKEND_BASE_URL=http://localhost:8080
       - API_PORT=8080
       # API configuration
       - APP_ENV=production
@@ -30,7 +31,7 @@ services:
       # - DATABASE_URL=postgres://user:pass@host:5432/gsdta?sslmode=disable
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD-SHELL", "node -e \"http=require('http');chk=(u,cb)=>{r=http.get(u,x=>cb(x.statusCode===200)).on('error',()=>cb(false));};chk('http://localhost:3000',ok=>{if(!ok)process.exit(1);chk('http://localhost:8080/v1/healthz',ok2=>process.exit(ok2?0:1))});\" " ]
+      test: [ "CMD-SHELL", "node -e \"http=require('http');chk=(u,cb)=>{r=http.get(u,x=>cb(x.statusCode===200)).on('error',()=>cb(false));};chk('http://localhost:3000',ok=>{if(!ok)process.exit(1);chk('http://localhost:8080/healthz',ok2=>process.exit(ok2?0:1))});\" " ]
       interval: 30s
       timeout: 10s
       retries: 3

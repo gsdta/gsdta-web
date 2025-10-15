@@ -5,6 +5,7 @@
     - src/data/thirukkural.ts (model/types + helpers importing the data)
 */
 
+/* eslint-disable @typescript-eslint/no-require-imports */
 const fs = require("fs");
 const path = require("path");
 

@@ -51,7 +51,7 @@ COPY ui/ .
 # Build-time configuration for API and MSW behavior
 ARG NEXT_PUBLIC_USE_MSW=false
 ARG NEXT_PUBLIC_API_BASE_URL=/api
-ARG BACKEND_BASE_URL=http://localhost:8080/v1
+ARG BACKEND_BASE_URL=http://localhost:8080
 
 # Disable telemetry during build and force standalone output
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -117,7 +117,7 @@ ENV HOSTNAME=0.0.0.0
 # API runtime env
 ENV API_PORT=8080
 # Ensure Next proxies to internal API by default at runtime
-ENV BACKEND_BASE_URL=http://localhost:8080/v1
+ENV BACKEND_BASE_URL=http://localhost:8080
 
 # Run the application via tini to manage both processes
 ENTRYPOINT ["/sbin/tini", "--"]
