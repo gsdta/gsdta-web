@@ -11,7 +11,7 @@ jobs:
     env:
       NODE_VERSION: '20'
       GO_VERSION: '1.21'
-      # GCP placeholders (used in commented steps below)
+      # GCP placeholders
       GCP_PROJECT_ID: playground-personal-474821
       GAR_LOCATION: us-central1
       GAR_REPO: web-apps
@@ -135,11 +135,9 @@ jobs:
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
 
-      - name: Enable required APIs (one-time)
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        run: |
-          gcloud services enable artifactregistry.googleapis.com
-          gcloud services enable run.googleapis.com
+      # Enabling services is a one-time, project-level action. Run this manually as a Project Owner.
+      # Kept out of CI to avoid permission failures with limited CI service accounts.
+      # gcloud services enable artifactregistry.googleapis.com run.googleapis.com
 
       - name: Configure Docker for Artifact Registry
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
