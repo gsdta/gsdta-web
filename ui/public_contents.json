@@ -1,0 +1,98 @@
+[
+  {
+    "name": "data",
+    "path": "public/data",
+    "sha": "c8a531d206f27760d09c86a57e8e0c8deab1746a",
+    "size": 0,
+    "url": "https://api.github.com/repos/nramc/thirukkural-api/contents/public/data?ref=main",
+    "html_url": "https://github.com/nramc/thirukkural-api/tree/main/public/data",
+    "git_url": "https://api.github.com/repos/nramc/thirukkural-api/git/trees/c8a531d206f27760d09c86a57e8e0c8deab1746a",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/nramc/thirukkural-api/contents/public/data?ref=main",
+      "git": "https://api.github.com/repos/nramc/thirukkural-api/git/trees/c8a531d206f27760d09c86a57e8e0c8deab1746a",
+      "html": "https://github.com/nramc/thirukkural-api/tree/main/public/data"
+    }
+  },
+  {
+    "name": "file.svg",
+    "path": "public/file.svg",
+    "sha": "004145cddf3f9db91b57b9cb596683c8eb420862",
+    "size": 391,
+    "url": "https://api.github.com/repos/nramc/thirukkural-api/contents/public/file.svg?ref=main",
+    "html_url": "https://github.com/nramc/thirukkural-api/blob/main/public/file.svg",
+    "git_url": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/004145cddf3f9db91b57b9cb596683c8eb420862",
+    "download_url": "https://raw.githubusercontent.com/nramc/thirukkural-api/main/public/file.svg",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/nramc/thirukkural-api/contents/public/file.svg?ref=main",
+      "git": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/004145cddf3f9db91b57b9cb596683c8eb420862",
+      "html": "https://github.com/nramc/thirukkural-api/blob/main/public/file.svg"
+    }
+  },
+  {
+    "name": "globe.svg",
+    "path": "public/globe.svg",
+    "sha": "567f17b0d7c7fb662c16d4357dd74830caf2dccb",
+    "size": 1035,
+    "url": "https://api.github.com/repos/nramc/thirukkural-api/contents/public/globe.svg?ref=main",
+    "html_url": "https://github.com/nramc/thirukkural-api/blob/main/public/globe.svg",
+    "git_url": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/567f17b0d7c7fb662c16d4357dd74830caf2dccb",
+    "download_url": "https://raw.githubusercontent.com/nramc/thirukkural-api/main/public/globe.svg",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/nramc/thirukkural-api/contents/public/globe.svg?ref=main",
+      "git": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/567f17b0d7c7fb662c16d4357dd74830caf2dccb",
+      "html": "https://github.com/nramc/thirukkural-api/blob/main/public/globe.svg"
+    }
+  },
+  {
+    "name": "next.svg",
+    "path": "public/next.svg",
+    "sha": "5174b28c565c285e3e312ec5178be64fbeca8398",
+    "size": 1375,
+    "url": "https://api.github.com/repos/nramc/thirukkural-api/contents/public/next.svg?ref=main",
+    "html_url": "https://github.com/nramc/thirukkural-api/blob/main/public/next.svg",
+    "git_url": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/5174b28c565c285e3e312ec5178be64fbeca8398",
+    "download_url": "https://raw.githubusercontent.com/nramc/thirukkural-api/main/public/next.svg",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/nramc/thirukkural-api/contents/public/next.svg?ref=main",
+      "git": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/5174b28c565c285e3e312ec5178be64fbeca8398",
+      "html": "https://github.com/nramc/thirukkural-api/blob/main/public/next.svg"
+    }
+  },
+  {
+    "name": "vercel.svg",
+    "path": "public/vercel.svg",
+    "sha": "77053960334e2e34dc584dea8019925c3b4ccca9",
+    "size": 128,
+    "url": "https://api.github.com/repos/nramc/thirukkural-api/contents/public/vercel.svg?ref=main",
+    "html_url": "https://github.com/nramc/thirukkural-api/blob/main/public/vercel.svg",
+    "git_url": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/77053960334e2e34dc584dea8019925c3b4ccca9",
+    "download_url": "https://raw.githubusercontent.com/nramc/thirukkural-api/main/public/vercel.svg",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/nramc/thirukkural-api/contents/public/vercel.svg?ref=main",
+      "git": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/77053960334e2e34dc584dea8019925c3b4ccca9",
+      "html": "https://github.com/nramc/thirukkural-api/blob/main/public/vercel.svg"
+    }
+  },
+  {
+    "name": "window.svg",
+    "path": "public/window.svg",
+    "sha": "b2b2a44f6ebc70c450043c05a002e7a93ba5d651",
+    "size": 385,
+    "url": "https://api.github.com/repos/nramc/thirukkural-api/contents/public/window.svg?ref=main",
+    "html_url": "https://github.com/nramc/thirukkural-api/blob/main/public/window.svg",
+    "git_url": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/b2b2a44f6ebc70c450043c05a002e7a93ba5d651",
+    "download_url": "https://raw.githubusercontent.com/nramc/thirukkural-api/main/public/window.svg",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/nramc/thirukkural-api/contents/public/window.svg?ref=main",
+      "git": "https://api.github.com/repos/nramc/thirukkural-api/git/blobs/b2b2a44f6ebc70c450043c05a002e7a93ba5d651",
+      "html": "https://github.com/nramc/thirukkural-api/blob/main/public/window.svg"
+    }
+  }
+]

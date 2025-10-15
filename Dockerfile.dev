@@ -7,13 +7,13 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Copy package files
-COPY package.json package-lock.json* ./
+COPY ui/package.json ui/package-lock.json* ./
 
 # Install all dependencies (including dev dependencies)
 RUN npm ci
 
 # Copy source code
-COPY . .
+COPY ui/ .
 
 # Expose port
 EXPOSE 3000

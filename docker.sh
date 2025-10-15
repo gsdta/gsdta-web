@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Docker management script for the UI application
+# Docker management script for GSDTA Web (UI + API)
 
 set -e
 
@@ -28,10 +28,10 @@ show_usage() {
     echo "Usage: $0 [COMMAND]"
     echo ""
     echo "Commands:"
-    echo "  build       Build the production Docker image"
-    echo "  build-dev   Build the development Docker image"
+    echo "  build       Build the production Docker image (UI + API)"
+    echo "  build-dev   Build the development Docker images"
     echo "  run         Run the production container"
-    echo "  run-dev     Run the development container with hot reloading"
+    echo "  run-dev     Run the development containers with hot reloading"
     echo "  stop        Stop all running containers"
     echo "  clean       Remove all containers and images"
     echo "  logs        Show container logs"
@@ -41,69 +41,62 @@ show_usage() {
 
 # Build production image
 build() {
-    print_status "Building production Docker image..."
-    docker build -t gsdta-ui:latest .
+    print_status "Building production Docker image (UI + API)..."
+    docker build -t gsdta-web:latest .
     print_status "Production image built successfully!"
 }
 
 # Build development image
 build_dev() {
-    print_status "Building development Docker image..."
-    docker build -f Dockerfile.dev -t gsdta-ui:dev .
-    print_status "Development image built successfully!"
+    print_status "Building development Docker images..."
+    docker-compose --profile dev build
+    print_status "Development images built successfully!"
 }
 
 # Run production container
 run() {
-    print_status "Starting production container..."
+    print_status "Running production container..."
     docker-compose up -d ui
-    print_status "Production container started on http://localhost:3000"
+    print_status "Container started! Access at http://localhost:3000"
 }
 
-# Run development container
+# Run development containers
 run_dev() {
-    print_status "Starting development container with hot reloading..."
-    docker-compose --profile dev up -d ui-dev
-    print_status "Development container started on http://localhost:3001"
+    print_status "Running development containers..."
+    docker-compose --profile dev up -d
+    print_status "Development containers started! Access UI at http://localhost:3001"
 }
 
-# Stop containers
+# Stop all containers
 stop() {
-    print_status "Stopping all containers..."
-    docker-compose down
-    print_status "All containers stopped!"
+    print_status "Stopping containers..."
+    docker-compose down || true
+    docker-compose --profile dev down || true
+    print_status "All containers stopped"
 }
 
-# Clean up
+# Clean up everything
 clean() {
-    print_warning "This will remove all containers and images. Are you sure? (y/N)"
-    read -r response
-    if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
-        print_status "Cleaning up containers and images..."
-        docker-compose down --rmi all --volumes --remove-orphans
-        print_status "Cleanup completed!"
-    else
-        print_status "Cleanup cancelled."
-    fi
+    print_status "Cleaning up containers and images..."
+    docker-compose down -v --rmi local || true
+    docker-compose --profile dev down -v --rmi local || true
+    print_status "Cleanup complete"
 }
 
 # Show logs
 logs() {
+    print_status "Showing container logs (Ctrl+C to exit)..."
     docker-compose logs -f
 }
 
-# Open shell
+# Open shell in container
 shell() {
-    container_id=$(docker-compose ps -q ui)
-    if [ -z "$container_id" ]; then
-        print_error "No running production container found. Start it first with: $0 run"
-        exit 1
-    fi
-    docker exec -it "$container_id" /bin/sh
+    print_status "Opening shell in running container..."
+    docker-compose exec ui sh
 }
 
-# Main script logic
-case "${1:-}" in
+# Main command handler
+case "$1" in
     build)
         build
         ;;
@@ -128,11 +121,11 @@ case "${1:-}" in
     shell)
         shell
         ;;
-    help|--help|-h)
+    help|--help|-h|"")
         show_usage
         ;;
     *)
-        print_error "Unknown command: ${1:-}"
+        print_error "Unknown command: $1"
         echo ""
         show_usage
         exit 1

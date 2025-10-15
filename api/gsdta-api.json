@@ -1,0 +1,994 @@
+{
+  "info": {
+    "name": "GSDTA API",
+    "_postman_id": "7a3f3d66-2e2a-4c62-9b83-7d5b77b6b8a1",
+    "description": "Postman collection for the GSDTA API (local dev). Uses X-Debug-User to simulate roles (admin/teacher/parent).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "debugUser",
+      "value": "admin1|admin|a@example.com|Admin"
+    },
+    {
+      "key": "teacherUser",
+      "value": "teacher1|teacher|t@example.com|Teacher"
+    },
+    {
+      "key": "parentUser",
+      "value": "parent1|parent|p@example.com|Parent"
+    },
+    {
+      "key": "termId",
+      "value": ""
+    },
+    {
+      "key": "campusId",
+      "value": ""
+    },
+    {
+      "key": "roomId",
+      "value": ""
+    },
+    {
+      "key": "classId",
+      "value": ""
+    },
+    {
+      "key": "guardianId",
+      "value": ""
+    },
+    {
+      "key": "studentId",
+      "value": ""
+    },
+    {
+      "key": "studentId2",
+      "value": ""
+    },
+    {
+      "key": "assessmentId",
+      "value": ""
+    },
+    {
+      "key": "eventId",
+      "value": ""
+    },
+    {
+      "key": "eventRegId",
+      "value": ""
+    },
+    {
+      "key": "date",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Health & Version",
+      "item": [
+        {
+          "name": "Healthz",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/healthz",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "healthz"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Version",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/version",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "version"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "OpenAPI",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/openapi.json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "openapi.json"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth (stub via X-Debug-User)",
+      "item": [
+        {
+          "name": "Auth: me (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Debug-User",
+                "value": "{{debugUser}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Auth: me (Teacher)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Debug-User",
+                "value": "{{teacherUser}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Auth: me (Parent)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Debug-User",
+                "value": "{{parentUser}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin – Terms/Campuses/Rooms/Classes",
+      "item": [
+        {
+          "name": "Terms: Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Debug-User",
+                "value": "{{debugUser}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"T1\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/terms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "terms"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status 201', function(){ pm.response.to.have.status(201); });",
+                  "var id = pm.response.json().id; if (id) pm.collectionVariables.set('termId', id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Campuses: Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Debug-User",
+                "value": "{{debugUser}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Main\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/campuses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "campuses"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status 201', function(){ pm.response.to.have.status(201); });",
+                  "var id = pm.response.json().id; if (id) pm.collectionVariables.set('campusId', id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rooms: Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Debug-User",
+                "value": "{{debugUser}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"campusId\": \"{{campusId}}\",\n  \"name\": \"R1\",\n  \"capacity\": 10\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rooms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rooms"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status 201', function(){ pm.response.to.have.status(201); });",
+                  "var id = pm.response.json().id; if (id) pm.collectionVariables.set('roomId', id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Classes: Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Debug-User",
+                "value": "{{debugUser}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"termId\": \"{{termId}}\",\n  \"campusId\": \"{{campusId}}\",\n  \"roomId\": \"{{roomId}}\",\n  \"teacherId\": \"teacher1\",\n  \"level\": \"L1\",\n  \"weekday\": 2,\n  \"startHHMM\": \"15:30\",\n  \"endHHMM\": \"16:30\",\n  \"capacity\": 10\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/classes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "classes"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status 201', function(){ pm.response.to.have.status(201); });",
+                  "var id = pm.response.json().id; if (id) pm.collectionVariables.set('classId', id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Classes: List (by term)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Debug-User",
+                "value": "{{debugUser}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/classes?termId={{termId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "classes"
+              ],
+              "query": [
+                {
+                  "key": "termId",
+                  "value": "{{termId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Guardians & Students",
+      "item": [
+        {
+          "name": "Guardians: Create (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Debug-User",
+                "value": "{{debugUser}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"parent1\",\n  \"phone\": \"+1\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/guardians",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "guardians"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status 201', function(){ pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set('guardianId', pm.response.json().id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Students: Create (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Debug-User",
+                "value": "{{debugUser}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"guardianId\": \"{{guardianId}}\",\n  \"firstName\": \"S1\",\n  \"lastName\": \"L\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/students",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "students"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status 201', function(){ pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set('studentId', pm.response.json().id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Students: Create second (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Debug-User",
+                "value": "{{debugUser}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"guardianId\": \"{{guardianId}}\",\n  \"firstName\": \"S2\",\n  \"lastName\": \"L\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/students",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "students"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status 201', function(){ pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set('studentId2', pm.response.json().id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Enrollments",
+      "item": [
+        {
+          "name": "Apply Enrollment (public)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"{{studentId}}\",\n  \"classId\": \"{{classId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/enrollments:apply",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "enrollments:apply"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Attendance (Teacher/Admin)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Ensure date var is set to today (UTC) as YYYY-MM-DD",
+              "if (!pm.collectionVariables.get('date')) {",
+              "  var d = new Date();",
+              "  var y = d.getUTCFullYear(); var m = ('0'+(d.getUTCMonth()+1)).slice(-2); var dd = ('0'+d.getUTCDate()).slice(-2);",
+              "  pm.collectionVariables.set('date', y+'-'+m+'-'+dd);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "item": [
+        {
+          "name": "GET attendance sheet",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Debug-User",
+                "value": "{{teacherUser}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/classes/{{classId}}/attendance/{{date}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "classes",
+                "{{classId}}",
+                "attendance",
+                "{{date}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PUT attendance (mark all present)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Debug-User",
+                "value": "{{teacherUser}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"markAllPresent\": true,\n  \"records\": []\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/classes/{{classId}}/attendance/{{date}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "classes",
+                "{{classId}}",
+                "attendance",
+                "{{date}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Assessments & Scores",
+      "item": [
+        {
+          "name": "Assessments: Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Debug-User",
+                "value": "{{teacherUser}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"classId\": \"{{classId}}\",\n  \"title\": \"Quiz1\",\n  \"date\": \"{{date}}T00:00:00Z\",\n  \"level\": \"L1\",\n  \"maxScore\": 10\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/assessments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "assessments"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status 201', function(){ pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set('assessmentId', pm.response.json().id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Scores: Bulk update",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Debug-User",
+                "value": "{{teacherUser}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  { \"studentId\": \"{{studentId}}\", \"value\": 8 },\n  { \"studentId\": \"{{studentId2}}\", \"value\": 6 }\n]"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/assessments/{{assessmentId}}/scores",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "assessments",
+                "{{assessmentId}}",
+                "scores"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Events & Registrations",
+      "item": [
+        {
+          "name": "Events: Create (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Debug-User",
+                "value": "{{debugUser}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Recital\",\n  \"start\": \"{{date}}T10:00:00Z\",\n  \"end\": \"{{date}}T11:00:00Z\",\n  \"location\": \"Hall\",\n  \"capacity\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "events"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status 201', function(){ pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set('eventId', pm.response.json().id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register student (Parent)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Debug-User",
+                "value": "{{parentUser}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"{{studentId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/events/{{eventId}}/registrations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "events",
+                "{{eventId}}",
+                "registrations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List registrations (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Debug-User",
+                "value": "{{debugUser}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/events/{{eventId}}/registrations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "events",
+                "{{eventId}}",
+                "registrations"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Announcements",
+      "item": [
+        {
+          "name": "Create (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Debug-User",
+                "value": "{{debugUser}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scope\": \"school\",\n  \"title\": \"Welcome\",\n  \"body\": \"Welcome to the school!\",\n  \"publishAt\": \"{{date}}T00:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/announcements",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "announcements"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List public (school scope)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/announcements?scope=school",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "announcements"
+              ],
+              "query": [
+                {
+                  "key": "scope",
+                  "value": "school"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Exports (Admin)",
+      "item": [
+        {
+          "name": "Attendance CSV",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/csv"
+              },
+              {
+                "key": "X-Debug-User",
+                "value": "{{debugUser}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/exports/attendance.csv",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "exports",
+                "attendance.csv"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Scores CSV (by term)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/csv"
+              },
+              {
+                "key": "X-Debug-User",
+                "value": "{{debugUser}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/exports/scores.csv?termId={{termId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "exports",
+                "scores.csv"
+              ],
+              "query": [
+                {
+                  "key": "termId",
+                  "value": "{{termId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Event Registrations CSV",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/csv"
+              },
+              {
+                "key": "X-Debug-User",
+                "value": "{{debugUser}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/exports/eventRegistrations.csv",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "exports",
+                "eventRegistrations.csv"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
+
