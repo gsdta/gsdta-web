@@ -197,6 +197,66 @@ See [DOCKER.md](./DOCKER.md) for detailed Docker instructions.
 - [Docker Setup](./DOCKER.md)
 - [Infrastructure & Deployment](./docs/infra.md)
 - [Restructure Guide](./RESTRUCTURE_COMPLETE.md)
+- [Deploy to GCP (Cloud Run)](./docs/gcp-deploy.md)
+
+## 🚢 Deploy to GCP (Cloud Run)
+
+- This repo builds a single image that runs Next.js (port 3000) and the Go API (port 8080) in one container.
+- Use Cloud Run to host it; see [docs/gcp-deploy.md](./docs/gcp-deploy.md) for step-by-step setup, CI/CD, and manual deployment.
+- Important: Cloud Run must route traffic to port `3000`. The UI internally proxies `/api/*` to the API at `/v1/*`.
+
+## 🌐 Custom Domain on AWS Route 53 (gsdta.com)
+
+If your domain is registered/hosted in AWS Route 53 (e.g., `gsdta.com`), you can point it to your Cloud Run service.
+
+Recommended pattern: use a subdomain like `app.gsdta.com` for the app. Keep the root (`gsdta.com`) free to redirect or host a landing page.
+
+### Steps
+
+1) Prerequisites
+   - Cloud Run service deployed (from CI or manual). Note its region and service name.
+   - Route 53 public hosted zone for `gsdta.com`.
+
+2) Verify domain ownership in Google
+
+```cmd
+REM Replace with your domain
+gcloud domains verify gsdta.com
+```
+
+Alternatively, verify via the Google Search Console UI. You’ll be asked to add a TXT record in Route 53; add it and wait until Google shows the domain as verified.
+
+3) Create a domain mapping in Cloud Run for a subdomain (e.g., `app.gsdta.com`)
+
+```cmd
+REM Replace region and domain as needed
+gcloud run domain-mappings create ^
+  --service gsdta-web ^
+  --domain app.gsdta.com ^
+  --region us-central1
+```
+
+This command outputs the DNS records you must add in Route 53 (typically a CNAME for the subdomain). Copy them.
+
+4) Add DNS records in Route 53
+   - In the hosted zone for `gsdta.com`, create the records exactly as shown by the previous command.
+   - Save changes. DNS propagation may take a while.
+
+5) Wait for HTTPS certificate provisioning
+
+```cmd
+gcloud run domain-mappings describe --domain app.gsdta.com --region us-central1
+```
+
+Proceed once the certificate status is Active. Then visit: `https://app.gsdta.com`
+
+6) Optional: redirect apex root (`gsdta.com`) → `https://app.gsdta.com`
+   - Easiest: create a small redirect using an S3 static website + Route 53, or use your registrar’s URL forwarding.
+   - Avoid pointing the apex directly unless you follow Google’s guidance for apex mappings (you’ll get specific A/AAAA records from Google if supported). Using a subdomain is simpler.
+
+7) Optional: CORS settings (only if exposing API directly)
+   - In this single-container setup, the UI proxies API calls internally, so CORS isn’t needed.
+   - If you expose the API separately, set `CORS_ALLOWED_ORIGINS=https://app.gsdta.com` on the API.
 
 ## 🏗️ Architecture
 
