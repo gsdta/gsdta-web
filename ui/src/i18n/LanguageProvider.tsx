@@ -28,6 +28,9 @@ export function LanguageProvider({children}: { children: React.ReactNode }) {
         setLangState(l);
         try {
             localStorage.setItem(STORAGE_KEY, l);
+            // Also persist as cookie for SSR so <html lang> is correct on first paint
+            const expires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString();
+            document.cookie = `${STORAGE_KEY}=${l}; path=/; expires=${expires}`;
         } catch {
         }
     };
