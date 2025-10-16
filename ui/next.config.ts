@@ -27,6 +27,19 @@ const nextConfig: NextConfig = {
             },
         ];
     },
+    webpack: (config) => {
+        // pdf.js optionally requires 'canvas' when running in Node; we don't need it in the browser build.
+        config.resolve = config.resolve || {};
+        config.resolve.alias = {
+            ...(config.resolve.alias || {}),
+            canvas: false,
+        } as typeof config.resolve.alias;
+        config.resolve.fallback = {
+            ...(config.resolve.fallback || {}),
+            canvas: false,
+        };
+        return config;
+    },
 };
 
 export default nextConfig;

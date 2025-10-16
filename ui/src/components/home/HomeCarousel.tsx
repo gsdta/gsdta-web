@@ -11,15 +11,10 @@ export function HomeCarousel() {
     const clamped = (i + slides.length) % slides.length;
     setIndex(clamped);
     const el = listRef.current?.children[clamped] as HTMLElement | undefined;
-    el?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", inline: "center" });
+    el?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", inline: "center", block: "nearest" });
   };
   const prev = () => goTo(index - 1);
   const next = () => goTo(index + 1);
-
-  useEffect(() => {
-    // Ensure first slide is centered on mount
-    goTo(0);
-  }, []);
 
   return (
     <section

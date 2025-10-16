@@ -65,9 +65,9 @@ export const messages: Record<Lang, Record<string, string>> = {
         "nav.team": "குழு",
         "nav.documents": "ஆவணங்கள்",
         "nav.calendar": "நாட்காட்டி",
-        "nav.textbooks": "பாடப்புத்தகங்கள்",
+        "nav.textbooks": "பாடங்கள்",
         "nav.donate": "நன்கொடை",
-        "nav.contact": "எங்களை தொடர்பு கொள்ள",
+        "nav.contact": "தொடர்பு",
 
         // Footer / Sections
         "footer.quick": "விரைவு இணைப்புகள்",
