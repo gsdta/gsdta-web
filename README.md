@@ -228,31 +228,40 @@ Alternatively, verify via the Google Search Console UI. You’ll be asked to add
 
 3) Create a domain mapping in Cloud Run for a subdomain (e.g., `app.gsdta.com`)
 
+Note: Regional domain mappings may require the `beta` track depending on your gcloud version. If needed, install/update beta:
+
 ```cmd
-REM Replace region and domain as needed
-gcloud run domain-mappings create ^
+gcloud components update
+gcloud components install beta
+```
+
+Then create the mapping (regional):
+
+```cmd
+gcloud beta run domain-mappings create ^
   --service gsdta-web ^
   --domain app.gsdta.com ^
   --region us-central1
 ```
 
-This command outputs the DNS records you must add in Route 53 (typically a CNAME for the subdomain). Copy them.
-
 4) Add DNS records in Route 53
-   - In the hosted zone for `gsdta.com`, create the records exactly as shown by the previous command.
+   - The previous command outputs the DNS records (typically a CNAME) to add for `app.gsdta.com`.
+   - In the hosted zone for `gsdta.com`, create the records exactly as shown.
    - Save changes. DNS propagation may take a while.
 
 5) Wait for HTTPS certificate provisioning
 
 ```cmd
-gcloud run domain-mappings describe --domain app.gsdta.com --region us-central1
+gcloud beta run domain-mappings describe --domain app.gsdta.com --region us-central1
 ```
 
 Proceed once the certificate status is Active. Then visit: `https://app.gsdta.com`
 
+For a detailed, Windows-friendly walkthrough (cmd and PowerShell) with troubleshooting, see [docs/custom-domain.md](./docs/custom-domain.md).
+
 6) Optional: redirect apex root (`gsdta.com`) → `https://app.gsdta.com`
    - Easiest: create a small redirect using an S3 static website + Route 53, or use your registrar’s URL forwarding.
-   - Avoid pointing the apex directly unless you follow Google’s guidance for apex mappings (you’ll get specific A/AAAA records from Google if supported). Using a subdomain is simpler.
+   - Avoid pointing the apex directly unless you follow Google’s guidance for apex mappings. Using a subdomain is simpler.
 
 7) Optional: CORS settings (only if exposing API directly)
    - In this single-container setup, the UI proxies API calls internally, so CORS isn’t needed.
