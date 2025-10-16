@@ -1,27 +1,31 @@
 name: CI
 
 on:
-  pull_request:
   push:
-    branches: [ main ]
+    branches: [ develop ]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '**/*.mdx'
+      - '**/*.txt'
+  pull_request:
+    branches: [ develop, main ]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '**/*.mdx'
+      - '**/*.txt'
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
     env:
       NODE_VERSION: '20'
       GO_VERSION: '1.21'
-      # GCP placeholders
-      GCP_PROJECT_ID: YOUR_PROJECT_ID
-      GAR_LOCATION: us-central1
-      GAR_REPO: web-apps
-      SERVICE_NAME: gsdta-web
     steps:
       - uses: actions/checkout@v4
 
-      # =================================================================
-      # Setup both Node.js and Go with caching
-      # =================================================================
+      # Setup Node and Go with caching
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -34,24 +38,22 @@ jobs:
           cache: true
           cache-dependency-path: api/go.sum
 
-      # =================================================================
-      # API: Build, Lint, and Test (runs first)
-      # =================================================================
-      - name: Download API dependencies
+      # API: deps, lint, test, build
+      - name: API - download deps
         working-directory: ./api
         run: go mod download
 
-      - name: Lint API
+      - name: API - lint
         working-directory: ./api
         run: |
           go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
           golangci-lint run
 
-      - name: Test API
+      - name: API - tests
         working-directory: ./api
         run: go test ./... -v -race -coverprofile=coverage.out
 
-      - name: Build API binary
+      - name: API - build
         working-directory: ./api
         run: |
           VERSION=$(git describe --tags --always 2>/dev/null || echo dev)
@@ -61,100 +63,26 @@ jobs:
           LDFLAGS="-X ${PKG}/internal/version.Version=${VERSION} -X ${PKG}/internal/version.Commit=${COMMIT} -X ${PKG}/internal/version.BuildTime=${BUILDTIME}"
           go build -ldflags "${LDFLAGS}" -o bin/api ./cmd/api
 
-      # =================================================================
-      # UI: Install, Lint, Test, and Build
-      # =================================================================
-      - name: Install UI deps
+      # UI: deps, lint, typecheck, unit tests, build
+      - name: UI - install deps
         working-directory: ./ui
         run: npm ci
 
-      - name: Lint UI
+      - name: UI - lint
         working-directory: ./ui
         run: npm run lint
 
-      - name: Typecheck UI
+      - name: UI - typecheck
         working-directory: ./ui
         run: npm run typecheck
 
-      - name: Unit tests UI
+      - name: UI - tests
         working-directory: ./ui
         run: npm test -- --ci
 
-      - name: Build UI (server)
+      - name: UI - build (server output)
         working-directory: ./ui
+        env:
+          NEXT_OUTPUT: standalone
+          BACKEND_BASE_URL: http://localhost:8080/v1
         run: npm run build
-
-      # - name: E2E tests (Playwright)
-      #   working-directory: ./ui
-      #   run: npm run e2e:ci
-
-      # - name: Archive static site
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: site-out
-      #     path: ui/out
-
-      # =================================================================
-      # Docker image build (unified API + UI)
-      # =================================================================
-      - name: Set IMAGE_URI env for this run
-        id: image_vars
-        run: |
-          VERSION=$(git describe --tags --always 2>/dev/null || echo dev)
-          COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo none)
-          BUILDTIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          IMAGE_URI="${GAR_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GAR_REPO}/${SERVICE_NAME}:${GITHUB_SHA}"
-          echo "IMAGE_URI=$IMAGE_URI" >> "$GITHUB_ENV"
-          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-          echo "COMMIT=$COMMIT" >> "$GITHUB_ENV"
-          echo "BUILDTIME=$BUILDTIME" >> "$GITHUB_ENV"
-          echo "Image: $IMAGE_URI"
-
-      - name: Build Docker image
-        run: |
-          # Ensure Next.js /api rewrite targets the Go API base path (/v1)
-          docker build \
-            --build-arg VERSION="$VERSION" \
-            --build-arg COMMIT="$COMMIT" \
-            --build-arg BUILDTIME="$BUILDTIME" \
-            --build-arg BACKEND_BASE_URL="http://localhost:8080/v1" \
-            -t "$IMAGE_URI" .
-
-      # =================================================================
-      # GCP deploy steps
-      # =================================================================
-      - name: Google Cloud auth (workload credentials)
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      - name: Setup gcloud CLI
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ env.GCP_PROJECT_ID }}
-
-      # Enabling services is a one-time, project-level action. Run this manually as a Project Owner.
-      # Kept out of CI to avoid permission failures with limited CI service accounts.
-      # gcloud services enable artifactregistry.googleapis.com run.googleapis.com
-
-      - name: Configure Docker for Artifact Registry
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        run: gcloud auth configure-docker "${GAR_LOCATION}-docker.pkg.dev" --quiet
-
-      - name: Push image to Artifact Registry
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        run: docker push "$IMAGE_URI"
-
-      - name: Deploy to Cloud Run
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        run: |
-          # Expose Next.js on port 3000 (Cloud Run will send traffic to this port)
-          gcloud run deploy "$SERVICE_NAME" \
-            --image "$IMAGE_URI" \
-            --region "$GAR_LOCATION" \
-            --platform managed \
-            --allow-unauthenticated \
-            --port 3000 \
-            --set-env-vars NEXT_TELEMETRY_DISABLED=1,NODE_ENV=production

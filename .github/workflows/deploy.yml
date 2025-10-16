@@ -1,0 +1,121 @@
+name: Deploy
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [ closed ]
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
+
+jobs:
+  changes:
+    name: Detect code changes
+    if: ${{ github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'develop' }}
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          token: ${{ github.token }}
+          filters: |
+            code:
+              - 'api/**'
+              - 'ui/**'
+              - 'Dockerfile'
+              - 'Dockerfile.dev'
+              - 'api/Dockerfile'
+              - 'docker-compose.yml'
+              - 'entrypoint.sh'
+
+  deploy:
+    name: Build, push, and deploy to Cloud Run
+    needs: changes
+    if: ${{ needs.changes.result == 'success' && needs.changes.outputs.code == 'true' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'develop' }}
+    runs-on: ubuntu-latest
+    env:
+      NODE_VERSION: '20'
+      GO_VERSION: '1.21'
+      GCP_PROJECT_ID: YOUR_PROJECT_ID
+      GAR_LOCATION: us-central1
+      GAR_REPO: web-apps
+      SERVICE_NAME: gsdta-web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ui/package-lock.json
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          cache-dependency-path: api/go.sum
+
+      # Optional: quick sanity build of UI to catch build-time errors prior to container build
+      - name: UI - install and build
+        working-directory: ./ui
+        env:
+          NEXT_OUTPUT: standalone
+          BACKEND_BASE_URL: http://localhost:8080/v1
+        run: |
+          npm ci
+          npm run build
+
+      - name: Google Cloud auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Compute image URI and build metadata
+        id: meta
+        run: |
+          VERSION=$(git describe --tags --always 2>/dev/null || echo dev)
+          COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo none)
+          BUILDTIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          IMAGE_URI="${GAR_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GAR_REPO}/${SERVICE_NAME}:${GITHUB_SHA}"
+          echo "image=$IMAGE_URI" >> $GITHUB_OUTPUT
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "COMMIT=$COMMIT" >> $GITHUB_ENV
+          echo "BUILDTIME=$BUILDTIME" >> $GITHUB_ENV
+          echo "Will build: $IMAGE_URI"
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --build-arg VERSION="$VERSION" \
+            --build-arg COMMIT="$COMMIT" \
+            --build-arg BUILDTIME="$BUILDTIME" \
+            --build-arg BACKEND_BASE_URL="http://localhost:8080/v1" \
+            -t "${{ steps.meta.outputs.image }}" .
+
+      - name: Auth Docker to Artifact Registry
+        run: gcloud auth configure-docker "${GAR_LOCATION}-docker.pkg.dev" --quiet
+
+      - name: Push image
+        run: docker push "${{ steps.meta.outputs.image }}"
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy "$SERVICE_NAME" \
+            --image "${{ steps.meta.outputs.image }}" \
+            --region "$GAR_LOCATION" \
+            --platform managed \
+            --allow-unauthenticated \
+            --port 3000 \
+            --set-env-vars NEXT_TELEMETRY_DISABLED=1,NODE_ENV=production,APP_ENV=production,SEED_ON_START=false
+
