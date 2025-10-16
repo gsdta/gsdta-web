@@ -73,6 +73,14 @@ export function Header() {
                         </>
                     ) : (
                         <>
+                            <Link href="/about/" className="hover:underline">{t("nav.about")}</Link>
+                            <Link href="/register/" className="hover:underline">{t("nav.register")}</Link>
+                            <Link href="/team/" className="hover:underline">{t("nav.team")}</Link>
+                            <Link href="/documents/" className="hover:underline">{t("nav.documents")}</Link>
+                            <Link href="/calendar/" className="hover:underline">{t("nav.calendar")}</Link>
+                            <Link href="/textbooks/" className="hover:underline">{t("nav.textbooks")}</Link>
+                            <Link href="/donate/" className="hover:underline">{t("nav.donate")}</Link>
+                            <Link href="/contact/" className="hover:underline">{t("nav.contact")}</Link>
                             <LanguageSwitcher/>
                             <Link href="/login" className="hover:underline">
                                 {t("nav.login")}

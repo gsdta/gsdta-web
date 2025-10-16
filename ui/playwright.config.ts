@@ -21,7 +21,10 @@ export default defineConfig({
         command: "npm run start:e2e",
         port: 3000,
         reuseExistingServer: !process.env.CI,
-        timeout: 120_000,
+        timeout: 180_000,
+        env: {
+            NEXT_PUBLIC_USE_MSW: "false",
+        },
     },
     projects: [
         {
