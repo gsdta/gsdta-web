@@ -132,10 +132,10 @@ jobs:
           BUILDTIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           IMAGE_URI="${GAR_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GAR_REPO}/${SERVICE_NAME}:${GITHUB_SHA}"
           echo "image=$IMAGE_URI" >> $GITHUB_OUTPUT
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "COMMIT=$COMMIT" >> $GITHUB_ENV
-          echo "BUILDTIME=$BUILDTIME" >> $GITHUB_ENV
-          echo "Will build: $IMAGE_URI"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "commit=$COMMIT" >> $GITHUB_OUTPUT
+          echo "buildtime=$BUILDTIME" >> $GITHUB_OUTPUT
+          echo "Will build: $IMAGE_URI (version=$VERSION commit=$COMMIT buildtime=$BUILDTIME)"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -150,9 +150,9 @@ jobs:
           context: .
           file: ./Dockerfile
           build-args: |
-            VERSION=${{ env.VERSION }}
-            COMMIT=${{ env.COMMIT }}
-            BUILDTIME=${{ env.BUILDTIME }}
+            VERSION=${{ steps.meta.outputs.version }}
+            COMMIT=${{ steps.meta.outputs.commit }}
+            BUILDTIME=${{ steps.meta.outputs.buildtime }}
             BACKEND_BASE_URL=http://localhost:8080/v1
           tags: ${{ steps.meta.outputs.image }}
           cache-from: type=gha
