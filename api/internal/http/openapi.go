@@ -9,6 +9,7 @@ import (
 var minimalOpenAPI = []byte(`{
   "openapi": "3.0.3",
   "info": {"title": "GSDTA API", "version": "0.1.0", "description": "API for classes, enrollments, attendance, assessments, events, and more."},
+  "servers": [{"url": "/api"}],
   "components": {
     "schemas": {
       "Meta": {
@@ -259,7 +260,7 @@ var minimalOpenAPI = []byte(`{
   }
 }`)
 
-// Lightweight Swagger UI page loading the OpenAPI spec from /v1/openapi.json
+// Lightweight Swagger UI page loading the OpenAPI spec with a path-aware URL
 var swaggerDocsHTML = []byte(`<!DOCTYPE html>
 <html>
 <head>
@@ -273,12 +274,26 @@ var swaggerDocsHTML = []byte(`<!DOCTYPE html>
   <div id="swagger-ui"></div>
   <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
   <script>
-    window.ui = SwaggerUIBundle({
-      url: '/v1/openapi.json',
-      dom_id: '#swagger-ui',
-      presets: [SwaggerUIBundle.presets.apis],
-      layout: 'BaseLayout'
-    });
+    (function() {
+      const qs = new URLSearchParams(window.location.search);
+      let specURL = qs.get('url');
+      if (!specURL) {
+        // If accessed at /v1/docs or /api/docs, request sibling openapi.json
+        const p = window.location.pathname;
+        if (/\/?docs\/?$/.test(p)) {
+          specURL = p.replace(/\/?docs\/?$/, '/openapi.json');
+        } else {
+          // Fallback for direct access
+          specURL = '/v1/openapi.json';
+        }
+      }
+      window.ui = SwaggerUIBundle({
+        url: specURL,
+        dom_id: '#swagger-ui',
+        presets: [SwaggerUIBundle.presets.apis],
+        layout: 'BaseLayout'
+      });
+    })();
   </script>
 </body>
 </html>`)
