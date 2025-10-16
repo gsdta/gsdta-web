@@ -1,0 +1,147 @@
+{
+  "title": "People",
+  "board": [
+    {
+      "id": "bala-jayaseelan",
+      "name": "Bala Jayaseelan",
+      "role": "Board Member",
+      "gender": "male",
+      "locales": ["en"],
+      "location": "Poway, CA",
+      "bio": "Bala Jayaseelan, a Poway resident, is a dedicated leader with extensive experience in both professional and nonprofit sectors. Passionate about community service and development, he has been actively involved in the San Diego Tamil community, focusing on cultural enrichment, education, and community building. With a strong leadership background, Bala has played a key role in strengthening community ties and driving impactful initiatives. His ability to blend professional excellence with a commitment to service highlights his dedication to creating meaningful change and supporting organizations that make a lasting difference."
+    },
+    {
+      "id": "karthikeyan-nk",
+      "name": "Karthikeyan N.K",
+      "role": "Board Member",
+      "gender": "male",
+      "locales": ["en"],
+      "bio": "As a proud Tamilan and a member of the vibrant San Diego Tamil community for over 10 years, if I had to choose one attribute that I value most in myself, it would be that I am a community builder. To me, the foundation of any strong community lies in fostering deep connections and creating a sense of belonging for all. Communities are the building blocks of great civilizations and cultures. They evolve and thrive through the collective efforts of individuals who come together with shared values. This is celebrated in Tamil literature, which highlights the importance of community in shaping societies, from ancient times to the present day. No better place to begin this than the place of \"learning\". By working together to build a supportive and inclusive environment, we are not only strengthening our own community but also providing a legacy for future generations. When done right, the impact of our actions will be felt with our children and grandchildren learning from our example, without needing to be taught. None of this would be possible without each one of you. Together, we build something lasting, something meaningful. I am always honored to play my small part in this process. After all, it's all about the \"Spirit of the Squirrel\"—doing \"Worthwhile Work.\""
+    },
+    {
+      "id": "padma-swaminathan",
+      "name": "Padma Swaminathan",
+      "role": "Board Member",
+      "gender": "female",
+      "locales": ["en"],
+      "bio": "I am a finance professional with extensive experience in the industry. For the past 20 years, I have been actively involved in the San Diego Tamil community, contributing to various cultural, educational, and social initiatives. I am deeply passionate about preserving and promoting the Tamil language, particularly by teaching it to the next generation. My goal is to instill a strong linguistic and cultural foundation in young learners, ensuring that they stay connected to their Tamil heritage while thriving in a multicultural environment."
+    },
+    {
+      "id": "devi-kumaradev",
+      "name": "Devi Kumaradev",
+      "role": "Board Member",
+      "gender": "female",
+      "locales": ["en"],
+      "bio": "I, Devi Kumaradev, one of the board members of GSDTA, have been serving this Tamil community for over a decade. I started to teach Tamil as Assistant Teacher and got interest to teach almost all grade levels. Basically, I want to be a teacher but somehow got pushed into corporate world, but teaching in Tamil school quenched the thirst of being a teacher. I really enjoy teaching very small children as creating a passion for them to learn the language was an awesome experience. I also started to co-ordinate for Tamil Theni and Kural Theni. Training our school children to take part on those National level competition was so rewarding despite the hours of work it takes to prepare them. I wish good health and happy life to everyone around me!!!"
+    },
+    {
+      "id": "rajaraman-krishnan",
+      "name": "Rajaraman Krishnan",
+      "role": "Board Member",
+      "gender": "male",
+      "locales": ["ta"],
+      "bio": "வணக்கம்! நான் இராஜாராமன் கிருஷ்ணன். கடந்த 20 ஆண்டுகளாக சான் டியாகோவில் வசித்து வருகிறேன். தகவல் தொழில்நுட்பத் துறையில் குவால்காம் நிறுவனத்தில் மேலாளராக பணியாற்றுகிறேன். கிட்டத்தட்ட 17 ஆண்டுகளாக சான் டியாகோவில் நம் பிள்ளைகளுக்கு தமிழ் கற்பிக்கிறேன். அதே சமயத்தில், 10 ஆண்டுகளுக்கும் மேலாக தமிழ்ப்பள்ளியின் முதல்வராக பணியாற்றிய அனுபவம் பெற்றுள்ளேன். பெரிய ஆசிரிய குடும்பத்தில் இருந்து வந்ததால் என்னவோ ஆசிரியப்பணி மீதும் தமிழ் மொழியின் மீதும் தனிப்பட்ட ஆர்வம் உண்டு. ஊடாடும் கற்பித்தல் மூலம், தமிழ் கற்பதை ஒரு மகிழ்ச்சியான அனுபவமாக மாற்றி, மாணவர்கள் தன்னார்வத்துடன் தமிழ் கற்க வரவைப்பது என்னுடைய நோக்கம். மாணவர்களுக்கு தமிழ் கற்பிக்கும் அதே வேளையில் நானும் தொடர்ந்து தமிழ் பயின்று வருகிறேன். கற்போம் கற்பிப்போம்!"
+    }
+  ],
+  "committees": [
+    {
+      "id": "technology-committee",
+      "name": "Technology Committee",
+      "members": [
+        { "id": "sriram-hariharan", "name": "Sriram Hariharan", "gender": "male" },
+        { "id": "gunasekaran-pasupathy", "name": "Gunasekaran Pasupathy", "gender": "male" },
+        { "id": "ashok-annamalai", "name": "Ashok Annamalai", "gender": "male" },
+        { "id": "vinoth-deivasigamani", "name": "Vinoth Deivasigamani", "gender": "male" }
+      ]
+    },
+    {
+      "id": "administration-committee",
+      "name": "Administration Committee",
+      "members": [
+        { "id": "nachiappan-panchanathan", "name": "Nachiappan Panchanathan", "gender": "male" }
+      ]
+    },
+    {
+      "id": "facilities-committee",
+      "name": "Facilities Committee",
+      "members": [
+        { "id": "ramesh-marudharaju", "name": "Ramesh Marudharaju", "gender": "male" },
+        { "id": "elango-krishna", "name": "Elango Krishna", "gender": "male" },
+        { "id": "santhosh-rajathayalan", "name": "Santhosh Rajathayalan", "gender": "male" }
+      ]
+    },
+    {
+      "id": "marketing-fundraising-committee",
+      "name": "Marketing & Fund-raising Committee",
+      "members": [
+        { "id": "rajasekar-gandhi", "name": "Rajasekar Gandhi", "gender": "male" },
+        { "id": "satish-thirunethram", "name": "Satish Thirunethram", "gender": "male" },
+        { "id": "sundaresan-kailasam", "name": "Sundaresan Kailasam", "gender": "male" },
+        { "id": "priya-subramanian", "name": "Priya Subramanian", "gender": "female" },
+        { "id": "vallikkannu-muthiah", "name": "Vallikkannu Muthiah", "gender": "female" },
+        { "id": "chandra-bhat", "name": "Chandra Bhat", "gender": "male" }
+      ]
+    },
+    {
+      "id": "high-school-students-award-committee",
+      "name": "High School Students Award Committee",
+      "members": [
+        { "id": "kohila-arunachalam", "name": "Kohila Arunachalam", "gender": "female" },
+        { "id": "saranya-ramakrishnan", "name": "Saranya Ramakrishnan", "gender": "female" }
+      ]
+    },
+    {
+      "id": "events-cultural-committee",
+      "name": "Events & Cultural Committee",
+      "members": [
+        { "id": "arthi-nachiappan", "name": "Arthi Nachiappan", "gender": "female" },
+        { "id": "kurshith-thameen", "name": "Kurshith Thameen", "gender": "female" }
+      ]
+    }
+  ],
+  "teachers": [
+    { "id": "rajini-j", "name": "Rajini J", "gender": "female", "grade": "Basic-2/A" },
+    { "id": "udayakumar-rajendran", "name": "Udayakumar Rajendran", "gender": "male", "grade": "Basic-1/B" },
+    { "id": "bavya-anand", "name": "Bavya Anand", "gender": "female", "grade": "Grade-7 (Intermediate High-1)" },
+    { "id": "agila-vimal", "name": "Agila Vimal", "gender": "female", "grade": "Grade-4 (Intermediate Beginner -2)" },
+    { "id": "poornima-karthik", "name": "Poornima Karthik", "gender": "female", "grade": "Grade-4 (Intermediate Beginner -2)" },
+    { "id": "prabha", "name": "Prabha", "gender": "female", "grade": "Mazhalai-2/B" },
+    { "id": "saraswathy", "name": "Saraswathy", "gender": "female", "grade": "InterHigh-2" },
+    { "id": "vinodhini-elangovan", "name": "Vinodhini Elangovan", "gender": "female", "grade": "Grade-2 (Basic-3)" },
+    { "id": "anithashamali-selvaraj", "name": "AnithaShamali Selvaraj", "gender": "female", "grade": "PS-2 (Mazhalai-2)" },
+    { "id": "preethi-subbaraman", "name": "Preethi Subbaraman", "gender": "female", "grade": "Grade-3 (Intermediate Beginner -1)" },
+    { "id": "nivedha", "name": "Nivedha", "gender": "female", "grade": "InterBegin-1/C" },
+    { "id": "prakash", "name": "Prakash", "gender": "male", "grade": "InterMid-2/B" },
+    { "id": "devaki-radhakrishnan", "name": "Devaki Radhakrishnan", "gender": "female", "grade": "PS-1 (Mazhalai-1)" },
+    { "id": "vallikkannu-muthiah", "name": "Vallikkannu Muthiah", "gender": "female", "grade": "Grade-1 (Basic-2)" },
+    { "id": "ruba-nallasivam", "name": "Ruba Nallasivam", "gender": "female", "grade": "Grade-1 (Basic-2)" },
+    { "id": "sri-gayathiri-kamatchinathan", "name": "Sri Gayathiri Kamatchinathan", "gender": "female", "grade": "KG (Basic-1)" },
+    { "id": "chandra-bhat", "name": "Chandra Bhat", "gender": "female", "grade": "Grade-7 (Intermediate High-1)" },
+    { "id": "poornima-balasubramanian", "name": "Poornima Balasubramanian", "gender": "female", "grade": "Grade-2 (Basic-3)" },
+    { "id": "saranya", "name": "Saranya", "gender": "female", "grade": "Basic-3/A" },
+    { "id": "ramya-bala-subramanian", "name": "Ramya Bala Subramanian", "gender": "female", "grade": "Grade-3 (Intermediate Beginner -1)" },
+    { "id": "srini", "name": "Srini", "gender": "male", "grade": "InterMid-1" },
+    { "id": "srividhya-shanmugam", "name": "Srividhya Shanmugam", "gender": "female", "grade": "Grade-2 (Basic-3)" },
+    { "id": "usha-rani-varatharajan-shanmugam", "name": "Usha Rani Varatharajan Shanmugam", "gender": "female", "grade": "PS-1 (Mazhalai-1)" },
+    { "id": "kokila", "name": "Kokila", "gender": "female", "grade": "InterBegin-2/A" },
+    { "id": "asha-iyer", "name": "Asha Iyer", "gender": "female", "grade": "Grade-6 (Intermediate Mid-2)" },
+    { "id": "indhumathi", "name": "Indhumathi", "gender": "female", "grade": "AdvBasic1" }
+  ],
+  "assistantTeachers": [
+    { "id": "sujatha-karthikeyan", "name": "Sujatha Karthikeyan", "gender": "female", "grade": "Basic-3/A" },
+    { "id": "swasthika-rajendran", "name": "Swasthika Rajendran", "gender": "female", "grade": "Grade-3 (Intermediate Beginner -1)" },
+    { "id": "padma-swaminathan", "name": "Padma Swaminathan", "gender": "female", "grade": "KG (Basic-1)" },
+    { "id": "vaishnavi", "name": "Vaishnavi", "gender": "female", "grade": "Mazhalai-2/B" },
+    { "id": "anitha-baskaran", "name": "Anitha Baskaran", "gender": "female", "grade": "KG (Basic-1)" },
+    { "id": "sangeetha-ashok", "name": "Sangeetha Ashok", "gender": "female", "grade": "Grade-4 (Intermediate Beginner -2)" },
+    { "id": "santhiya-rajaraman", "name": "Santhiya Rajaraman", "gender": "female", "grade": "Grade-6 (Intermediate Mid-2)" },
+    { "id": "anita", "name": "Anita", "gender": "female", "grade": "Basic-1/A" },
+    { "id": "kurshith-banu", "name": "Kurshith Banu", "gender": "female", "grade": "InterMid-1" },
+    { "id": "ponnalagu", "name": "Ponnalagu", "gender": "female", "grade": "Mazhalai-1/A" },
+    { "id": "sowmya", "name": "Sowmya", "gender": "female", "grade": "Basic-3/B" },
+    { "id": "sathya", "name": "Sathya", "gender": "female", "grade": "InterMid-1/B" },
+    { "id": "shanthi", "name": "Shanthi", "gender": "female", "grade": "InterBegin-2/A" },
+    { "id": "priya", "name": "Priya", "gender": "female", "grade": "InterMid-2/B" },
+    { "id": "sangeetha-chandran", "name": "Sangeetha Chandran", "gender": "female", "grade": "Grade-2 (Basic-3)" }
+  ]
+}
