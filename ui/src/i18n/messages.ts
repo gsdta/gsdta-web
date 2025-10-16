@@ -11,6 +11,15 @@ export const messages: Record<Lang, Record<string, string>> = {
         "nav.logout": "Logout",
         "nav.login": "Login",
         "nav.role": "Switch role",
+        // New public nav
+        "nav.about": "About us",
+        "nav.register": "Register",
+        "nav.team": "Team",
+        "nav.documents": "Documents",
+        "nav.calendar": "Calendar",
+        "nav.textbooks": "Text books",
+        "nav.donate": "Donate",
+        "nav.contact": "Contact Us",
 
         // Footer / Sections
         "footer.quick": "Quick links",
@@ -50,6 +59,15 @@ export const messages: Record<Lang, Record<string, string>> = {
         "nav.logout": "வெளியேறு",
         "nav.login": "உள்நுழைவு",
         "nav.role": "பங்கை மாற்றவும்",
+        // New public nav
+        "nav.about": "எங்களைப் பற்றி",
+        "nav.register": "பதிவுசெய்க",
+        "nav.team": "குழு",
+        "nav.documents": "ஆவணங்கள்",
+        "nav.calendar": "நாட்காட்டி",
+        "nav.textbooks": "பாடங்கள்",
+        "nav.donate": "நன்கொடை",
+        "nav.contact": "தொடர்பு",
 
         // Footer / Sections
         "footer.quick": "விரைவு இணைப்புகள்",

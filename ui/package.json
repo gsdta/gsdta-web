@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "postinstall": "node scripts/copy-pdf-worker.js",
+    "prebuild": "node scripts/copy-pdf-worker.js",
     "build": "next build",
     "start": "next start",
     "start:e2e": "npm run build && npm start",
@@ -28,12 +30,14 @@
     "generate:thirukkural": "node scripts/generate-thirukkural.js"
   },
   "dependencies": {
+    "@hookform/resolvers": "^3.9.0",
+    "@react-pdf-viewer/core": "^3.12.0",
     "next": "15.5.4",
+    "pdfjs-dist": "^3.11.174",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.53.0",
-    "zod": "^3.23.8",
-    "@hookform/resolvers": "^3.9.0"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.5.0",
@@ -51,8 +55,8 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
     "eslint-config-prettier": "^9.1.0",
-    "husky": "^9.1.6",
     "http-server": "^14.1.1",
+    "husky": "^9.1.6",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "lint-staged": "^15.2.10",
