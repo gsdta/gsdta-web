@@ -124,10 +124,10 @@ jobs:
       GAR_LOCATION: us-central1
       GAR_REPO: web-apps
       SERVICE_NAME: gsdta-web
-      # Effective values resolved from inputs when manual-run, else fallbacks to envs above
-      PROJECT_ID: ${{ inputs.project_id || env.GCP_PROJECT_ID }}
-      REGION: ${{ inputs.region || env.GAR_LOCATION }}
-      RUN_SERVICE_NAME: ${{ inputs.service_name || env.SERVICE_NAME }}
+      # Effective values resolved from inputs when manual-run, else fallbacks to defaults above
+      PROJECT_ID: ${{ inputs.project_id || 'playground-personal-474821' }}
+      REGION: ${{ inputs.region || 'us-central1' }}
+      RUN_SERVICE_NAME: ${{ inputs.service_name || 'gsdta-web' }}
       BACKEND_BASE_URL: ${{ inputs.backend_base_url || 'http://localhost:8080/v1' }}
     steps:
       - uses: actions/checkout@v4
