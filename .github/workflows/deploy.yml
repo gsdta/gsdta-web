@@ -3,14 +3,6 @@ name: Deploy
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'api/**'
-      - 'ui/**'
-      - 'Dockerfile'
-      - 'Dockerfile.dev'
-      - 'api/Dockerfile'
-      - 'docker-compose.yml'
-      - 'entrypoint.sh'
   pull_request:
     branches: [ main ]
     paths:
@@ -21,7 +13,38 @@ on:
       - 'api/Dockerfile'
       - 'docker-compose.yml'
       - 'entrypoint.sh'
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      run_deploy:
+        description: 'On manual run, push image and deploy to Cloud Run? (false = build only)'
+        type: boolean
+        default: true
+        required: false
+      image_tag:
+        description: 'Optional image tag (defaults to current commit SHA)'
+        type: string
+        default: ''
+        required: false
+      project_id:
+        description: 'Override GCP project ID (defaults to env.GCP_PROJECT_ID)'
+        type: string
+        default: ''
+        required: false
+      region:
+        description: 'Override region (defaults to env.GAR_LOCATION)'
+        type: string
+        default: ''
+        required: false
+      service_name:
+        description: 'Override Cloud Run service name (defaults to env.SERVICE_NAME)'
+        type: string
+        default: ''
+        required: false
+      backend_base_url:
+        description: 'Backend base URL used at build-time'
+        type: string
+        default: 'http://localhost:8080/v1'
+        required: false
 
 permissions:
   contents: read
@@ -33,8 +56,7 @@ concurrency:
 
 jobs:
   changes:
-    name: Detect code changes (PRs only)
-    # Run on all events; filter step runs only for PRs
+    name: Detect code changes
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -64,16 +86,30 @@ jobs:
       - name: Decide whether to run deploy steps
         id: decide
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            if [ "${{ steps.filter.outputs.ui }}" = "true" ] || [ "${{ steps.filter.outputs.api }}" = "true" ] || [ "${{ steps.filter.outputs.infra }}" = "true" ]; then
+          case "${{ github.event_name }}" in
+            workflow_dispatch)
               echo "run=true" >> $GITHUB_OUTPUT
-            else
+              ;;
+            push)
+              # Always deploy on push to main
+              echo "run=true" >> $GITHUB_OUTPUT
+              ;;
+            pull_request)
+              if [ -n "${{ steps.filter.outputs.ui }}${{ steps.filter.outputs.api }}${{ steps.filter.outputs.infra }}" ]; then
+                if [ "${{ steps.filter.outputs.ui }}" = "true" ] || [ "${{ steps.filter.outputs.api }}" = "true" ] || [ "${{ steps.filter.outputs.infra }}" = "true" ]; then
+                  echo "run=true" >> $GITHUB_OUTPUT
+                else
+                  echo "run=false" >> $GITHUB_OUTPUT
+                fi
+              else
+                # forked PR: filter step skipped => do not deploy
+                echo "run=false" >> $GITHUB_OUTPUT
+              fi
+              ;;
+            *)
               echo "run=false" >> $GITHUB_OUTPUT
-            fi
-          else
-            # For push/workflow_dispatch, always run the deploy job
-            echo "run=true" >> $GITHUB_OUTPUT
-          fi
+              ;;
+          esac
 
   deploy:
     name: Build, push, and deploy to Cloud Run
@@ -83,10 +119,16 @@ jobs:
     env:
       NODE_VERSION: '20'
       GO_VERSION: '1.21'
+      # Defaults; can be overridden via workflow_dispatch inputs below
       GCP_PROJECT_ID: playground-personal-474821
       GAR_LOCATION: us-central1
       GAR_REPO: web-apps
       SERVICE_NAME: gsdta-web
+      # Effective values resolved from inputs when manual-run, else fallbacks to envs above
+      PROJECT_ID: ${{ inputs.project_id || env.GCP_PROJECT_ID }}
+      REGION: ${{ inputs.region || env.GAR_LOCATION }}
+      RUN_SERVICE_NAME: ${{ inputs.service_name || env.SERVICE_NAME }}
+      BACKEND_BASE_URL: ${{ inputs.backend_base_url || 'http://localhost:8080/v1' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -107,7 +149,7 @@ jobs:
         working-directory: ./ui
         env:
           NEXT_OUTPUT: standalone
-          BACKEND_BASE_URL: http://localhost:8080/v1
+          BACKEND_BASE_URL: ${{ env.BACKEND_BASE_URL }}
         run: |
           npm ci
           npm run build
@@ -122,15 +164,18 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: ${{ env.GCP_PROJECT_ID }}
+          project_id: ${{ env.PROJECT_ID }}
 
       - name: Compute image URI and build metadata
         id: meta
+        env:
+          INPUT_IMAGE_TAG: ${{ inputs.image_tag }}
         run: |
           VERSION=$(git describe --tags --always 2>/dev/null || echo dev)
           COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo none)
           BUILDTIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          IMAGE_URI="${GAR_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GAR_REPO}/${SERVICE_NAME}:${GITHUB_SHA}"
+          TAG="$INPUT_IMAGE_TAG"; [ -z "$TAG" ] && TAG="$GITHUB_SHA"
+          IMAGE_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/${GAR_REPO}/${RUN_SERVICE_NAME}:${TAG}"
           echo "image=$IMAGE_URI" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "commit=$COMMIT" >> $GITHUB_OUTPUT
@@ -141,8 +186,8 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Auth Docker to Artifact Registry
-        if: github.event_name != 'pull_request'
-        run: gcloud auth configure-docker "${GAR_LOCATION}-docker.pkg.dev" --quiet
+        if: github.event_name != 'pull_request' && (github.event_name != 'workflow_dispatch' || inputs.run_deploy)
+        run: gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
 
       - name: Build image (and push on non-PR) with cache
         uses: docker/build-push-action@v6
@@ -153,19 +198,19 @@ jobs:
             VERSION=${{ steps.meta.outputs.version }}
             COMMIT=${{ steps.meta.outputs.commit }}
             BUILDTIME=${{ steps.meta.outputs.buildtime }}
-            BACKEND_BASE_URL=http://localhost:8080/v1
+            BACKEND_BASE_URL=${{ env.BACKEND_BASE_URL }}
           tags: ${{ steps.meta.outputs.image }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          push: ${{ github.event_name != 'pull_request' }}
-          load: ${{ github.event_name == 'pull_request' }}
+          push: ${{ github.event_name != 'pull_request' && (github.event_name != 'workflow_dispatch' || inputs.run_deploy) }}
+          load: ${{ github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && !inputs.run_deploy) }}
 
       - name: Deploy to Cloud Run
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && (github.event_name != 'workflow_dispatch' || inputs.run_deploy)
         run: |
-          gcloud run deploy "$SERVICE_NAME" \
+          gcloud run deploy "$RUN_SERVICE_NAME" \
             --image "${{ steps.meta.outputs.image }}" \
-            --region "$GAR_LOCATION" \
+            --region "$REGION" \
             --platform managed \
             --allow-unauthenticated \
             --port 3000 \
