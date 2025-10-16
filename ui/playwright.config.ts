@@ -6,10 +6,10 @@ export default defineConfig({
     testMatch: ["**/*.spec.ts"],
     timeout: 5_000, // Reduced from 60s to 5s
     expect: {timeout: 10_000},
-    fullyParallel: false,
+    fullyParallel: true,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 0,
-    workers: 5, // Already set to 1 (runs one at a time)
+    workers: 5, // Runs tests concurrently
     reporter: [["list"], ["html", {outputFolder: "playwright-report", open: "never"}]],
     use: {
         baseURL: "http://localhost:3000",

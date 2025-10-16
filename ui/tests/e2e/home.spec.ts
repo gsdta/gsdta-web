@@ -49,19 +49,20 @@ test("public nav (en) shows all links and routes resolve", async ({ page, contex
   for (const l of links) {
     const link = nav.getByRole("link", { name: l.name, exact: true });
     await expect(link).toBeVisible();
-    await Promise.all([
-      page.waitForURL((url) => {
-        const u = url.toString();
-        const want = l.path.endsWith("/") ? l.path.slice(0, -1) : l.path;
-        return u.endsWith(want) || u.endsWith(want + "/");
-      }),
-      link.click(),
-    ]);
-    if (l.expectTitle) {
-      await expect(page.getByTestId("page-title")).toHaveText(l.expectTitle);
-    } else {
-      // Home: brand visible is sufficient
+    if (l.path === "/") {
+      // Already on home; clicking Home may not trigger a navigation event
+      await link.click();
       await expect(page.getByText("GSDTA").first()).toBeVisible();
+    } else {
+      await Promise.all([
+        page.waitForURL((url) => {
+          const u = url.toString();
+          const want = l.path.endsWith("/") ? l.path.slice(0, -1) : l.path;
+          return u.endsWith(want) || u.endsWith(want + "/");
+        }),
+        link.click(),
+      ]);
+      await expect(page.getByTestId("page-title")).toHaveText(l.expectTitle!);
     }
     // Navigate back to home before next link
     await page.goto("/");
