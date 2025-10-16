@@ -34,21 +34,30 @@ export function ThirukkuralDisplay({intervalMs = 10000, className = ""}: Thirukk
         return null;
     }
 
+    const { number, theme, kural, english_explanation, tamil_explanation } = currentVerse;
+
     return (
         <div className={`${className}`}>
             <div
                 className={`transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
             >
-                <div className="text-center space-y-2">
+                <div className="text-center space-y-3">
                     <div className="text-sm font-medium text-amber-800 bg-amber-50 px-3 py-1 rounded-full inline-block">
-                        திருக்குறள் {currentVerse.number} - {currentVerse.theme}
+                        திருக்குறள் {number} - {theme}
                     </div>
                     <blockquote className="text-lg font-semibold text-gray-800 leading-relaxed">
-                        &ldquo;{currentVerse.kural}&rdquo;
+                        &ldquo;{kural}&rdquo;
                     </blockquote>
-                    <p className="text-sm text-gray-600 italic">
-                        {currentVerse.english_explanation}
-                    </p>
+                    {tamil_explanation && (
+                        <p className="text-sm text-gray-800">
+                            {tamil_explanation}
+                        </p>
+                    )}
+                    {english_explanation && (
+                        <p className="text-sm text-gray-600 italic">
+                            {english_explanation}
+                        </p>
+                    )}
                 </div>
             </div>
         </div>
