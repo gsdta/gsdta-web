@@ -276,23 +276,41 @@ var swaggerDocsHTML = []byte(`<!DOCTYPE html>
   <script>
     (function() {
       const qs = new URLSearchParams(window.location.search);
-      let specURL = qs.get('url');
-      if (!specURL) {
-        // If accessed at /v1/docs or /api/docs, request sibling openapi.json
-        const p = window.location.pathname;
-        if (/\/?docs\/?$/.test(p)) {
-          specURL = p.replace(/\/?docs\/?$/, '/openapi.json');
-        } else {
-          // Fallback for direct access
-          specURL = '/v1/openapi.json';
+      const overrideURL = qs.get('url');
+
+      // Derive a sibling URL when at /v1/docs or /api/docs
+      const pathname = window.location.pathname;
+      const siblingURL = /\/?docs\/?$/.test(pathname)
+        ? pathname.replace(/\/?docs\/?$/, '/openapi.json')
+        : null;
+      const fallbackURL = '/v1/openapi.json';
+
+      const candidateURLs = [overrideURL, siblingURL, fallbackURL].filter(Boolean);
+
+      function tryLoad(urls) {
+        if (!urls.length) {
+          document.getElementById('swagger-ui').innerText = 'Unable to load OpenAPI spec.';
+          return;
         }
+        const [u, ...rest] = urls;
+        fetch(u, { headers: { 'Accept': 'application/json' } })
+          .then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+          })
+          .then(spec => {
+            if (!spec || (!spec.openapi && !spec.swagger)) throw new Error('Missing version field');
+            window.ui = SwaggerUIBundle({
+              spec: spec,
+              dom_id: '#swagger-ui',
+              presets: [SwaggerUIBundle.presets.apis],
+              layout: 'BaseLayout'
+            });
+          })
+          .catch(() => tryLoad(rest));
       }
-      window.ui = SwaggerUIBundle({
-        url: specURL,
-        dom_id: '#swagger-ui',
-        presets: [SwaggerUIBundle.presets.apis],
-        layout: 'BaseLayout'
-      });
+
+      tryLoad(candidateURLs);
     })();
   </script>
 </body>
