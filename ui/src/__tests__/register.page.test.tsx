@@ -103,6 +103,7 @@ describe("RegisterPage - multi-step behavior", () => {
       status: 200,
       json: async () => ({ ok: true }),
     } as unknown as Response;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const mockFetch = jest.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => mockResponse) as jest.MockedFunction<typeof fetch>;
     (global as unknown as { fetch: typeof fetch }).fetch = mockFetch;
 
