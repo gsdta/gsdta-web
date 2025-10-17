@@ -98,6 +98,69 @@ This document lists small, low-risk improvements that would further polish the s
 - Spacing and container width
   - What: Confirm `max-w-6xl` works well on common viewports for both themes; adjust if hero feels cramped.
 
+## 8) SEO optional enhancements
+
+- Page-specific Open Graph/Twitter images
+  - What: Add unique social preview images per key page (Home, About, Donate, Team) and reference them in metadata.
+  - Why: Improves share previews and CTR on social platforms.
+  - How: Place images in `public/images/social/` (e.g., `home-og.png`, `about-og.png`). Update each route layout’s `openGraph.images` and `twitter.images`.
+    - Files: `src/app/about/layout.tsx`, `src/app/donate/layout.tsx`, `src/app/team/layout.tsx`, `src/app/page.tsx` (Home metadata)
+
+- Rich results via JSON-LD (Events, Breadcrumbs, Search)
+  - Events (Calendar)
+    - What: Add `schema.org/Event` for upcoming events/terms.
+    - Why: Eligibility for event-rich results in search.
+    - How: Generate a JSON-LD array from calendar data and inject a `<script type="application/ld+json">` on Calendar pages.
+      - Files: `src/app/calendar/layout.tsx` or `src/app/calendar/page.tsx`, data in `src/data/calendar-*.json`
+  - Breadcrumbs
+    - What: Add `schema.org/BreadcrumbList` for deep pages.
+    - Why: Helps Google understand site hierarchy; can render breadcrumb rich results.
+    - How: Add a small helper to output breadcrumb JSON-LD and include on nested pages (e.g., class details under `/classes/[id]/`).
+      - Files: `src/app/classes/[id]/page.tsx`
+  - Site Search (optional)
+    - What: Add `WebSite` JSON-LD with `SearchAction` if a site search is available.
+    - Why: Enables sitelinks search box in Google results.
+    - How: After adding a `/search` route, include a `SearchAction` in the site-level JSON-LD.
+      - Files: `src/app/head.tsx` (extend existing Organization JSON-LD or add a separate WebSite JSON-LD)
+
+- hreflang alternates (if adopting i18n routing)
+  - What: Add `alternates.languages` to metadata for `/en` and `/ta` routes.
+  - Why: Helps search engines serve the right locale; avoids duplicate content.
+  - How: When/if moving from cookie-based i18n to route-based i18n, set per-page `alternates.languages`.
+    - Files: route `layout.tsx` files (e.g., `src/app/about/layout.tsx`) once `/en` and `/ta` are introduced
+
+- Organization JSON-LD: social profiles
+  - What: Add `sameAs` links (Facebook, YouTube, etc.).
+  - Why: Increases entity confidence and brand presence.
+  - How: Update the `orgLd` object to include `sameAs`.
+    - Files: `src/app/head.tsx`
+
+- Sitemap tuning
+  - What: Include dynamic routes (e.g., class detail pages) if meant to be public, and keep lastModified up to date.
+  - Why: Helps discovery and freshness signals.
+  - How: Expand the routes in `sitemap.ts` (or generate from data/API at build time). Exclude protected routes.
+    - Files: `src/app/sitemap.ts`
+
+- Robots fine-tuning
+  - What: Ensure utility/auth pages are `noindex` and disallowed in `robots.txt`; confirm error pages aren’t indexed.
+  - Why: Prevents thin/irrelevant pages from being indexed.
+  - How: Continue using per-route `robots` metadata and `robots.txt` disallows.
+    - Files: `src/app/robots.ts`, route `layout.tsx` for `/dashboard/`, `/login/`, `/logout/`, `/students/`, `/classes/`, `/health/`
+
+- Favicons and PWA meta (optional)
+  - What: Provide a full set of icons and related meta (`mask-icon`, `theme-color`, `manifest`).
+  - Why: Better installability and platform integration.
+  - How: Use the existing scripts to generate icons, add a web manifest, and reference in metadata.
+    - Files: `public/` for icons/manifest, `src/app/head.tsx` for `<link>`/`<meta>`
+
+### Quick SEO file pointers
+
+- Global metadata defaults: `src/app/layout.tsx`
+- Global head entries & Organization JSON-LD: `src/app/head.tsx`
+- SEO routes: `src/app/robots.ts`, `src/app/sitemap.ts`
+- Team Person JSON-LD: `src/app/team/page.tsx`
+- Per-route metadata examples: `src/app/{about,contact,donate,documents,calendar,enrollment,textbooks,team}/layout.tsx`
+
 ## Quick references (files touched recently)
 
 - Global theme setup: `src/app/globals.css`
@@ -118,4 +181,3 @@ npm run build
 ```
 
 If you want me to tackle any of the above now, I can start with the zero-warning lint cleanup and migrating any remaining page-level themeColor to viewport.
-
