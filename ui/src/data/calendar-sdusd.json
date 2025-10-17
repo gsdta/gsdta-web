@@ -1,0 +1,32 @@
+{
+  "events": [
+    {
+      "date": "2025-08-15",
+      "sdusd": "08/11 - First day"
+    },
+    {
+      "date": "2025-11-28",
+      "sdusd": "Thanks giving"
+    },
+    {
+      "date": "2025-12-26",
+      "sdusd": "Christmas"
+    },
+    {
+      "date": "2026-01-02",
+      "sdusd": "New year"
+    },
+    {
+      "date": "2026-02-13",
+      "sdusd": "Holiday"
+    },
+    {
+      "date": "2026-04-03",
+      "sdusd": "Spring Break"
+    },
+    {
+      "date": "2026-05-29",
+      "sdusd": "05/28 Last day"
+    }
+  ]
+}

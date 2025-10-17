@@ -1,0 +1,32 @@
+{
+  "events": [
+    {
+      "date": "2025-08-15",
+      "pusd": "08/13 - First day"
+    },
+    {
+      "date": "2025-11-28",
+      "pusd": "Thanks giving"
+    },
+    {
+      "date": "2025-12-26",
+      "pusd": "Christmas"
+    },
+    {
+      "date": "2026-01-02",
+      "pusd": "New year"
+    },
+    {
+      "date": "2026-02-20",
+      "pusd": "District recess"
+    },
+    {
+      "date": "2026-04-10",
+      "pusd": "Spring Break"
+    },
+    {
+      "date": "2026-06-05",
+      "pusd": "06/04 Last day"
+    }
+  ]
+}
