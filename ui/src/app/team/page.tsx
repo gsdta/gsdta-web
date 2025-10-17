@@ -14,6 +14,9 @@ const SECTIONS = [
   { key: "faq" as const, labelKey: "team.faq", available: false },
 ];
 
+// Public site URL for absolute links in JSON-LD
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/+$/, "");
+
 type SectionKey = (typeof SECTIONS)[number]["key"];
 
 // Known photos in /public/images mapped by id
@@ -28,6 +31,8 @@ const IMAGE_MAP: Record<string, string> = {
   "nachiappan-panchanathan": "/images/Nachiappan.jpeg",
   // Assistants/others
   "sujatha-karthikeyan": "/images/SujathaK.jpeg",
+  // Fix: actual file name uses underscore, not hyphen
+  "gunasekaran-pasupathy": "/images/gunasekaran_pasupathy.png",
 };
 
 const PLACEHOLDER_MALE = "/images/male_dummy.png";
@@ -119,6 +124,25 @@ function PersonDetailView({
   const { t } = useI18n();
   const src = getPhotoSrc(id, gender);
 
+  // JSON-LD for Person rich results
+  const absoluteImage = `${SITE_URL}${src}`;
+  const personLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name,
+    jobTitle: role,
+    description: bio?.slice(0, 300),
+    gender,
+    image: absoluteImage,
+    affiliation: {
+      "@type": "Organization",
+      name: "GSDTA Tamil School",
+      url: SITE_URL,
+    },
+    homeLocation: location,
+    url: `${SITE_URL}/team/`,
+  };
+
   return (
     <article className="rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm">
       <div className="p-6">
@@ -145,6 +169,13 @@ function PersonDetailView({
         <div className="prose prose-sm max-w-none">
           <p className="text-gray-700 whitespace-pre-wrap">{bio}</p>
         </div>
+
+        {/* Structured data for the person */}
+        <script
+          type="application/ld+json"
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(personLd) }}
+        />
 
         <button
           type="button"
