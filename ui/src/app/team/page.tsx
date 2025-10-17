@@ -28,6 +28,8 @@ const IMAGE_MAP: Record<string, string> = {
   "nachiappan-panchanathan": "/images/Nachiappan.jpeg",
   // Assistants/others
   "sujatha-karthikeyan": "/images/SujathaK.jpeg",
+  // Fix: actual file name uses underscore, not hyphen
+  "gunasekaran-pasupathy": "/images/gunasekaran_pasupathy.png",
 };
 
 const PLACEHOLDER_MALE = "/images/male_dummy.png";
