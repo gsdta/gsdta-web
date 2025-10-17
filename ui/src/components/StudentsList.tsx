@@ -3,8 +3,10 @@ import React, {useCallback, useEffect, useState} from "react";
 import Link from "next/link";
 import {listStudents} from "@/lib/student-api";
 import type {Student} from "@/lib/student-types";
+import { useI18n } from "@/i18n/LanguageProvider";
 
 export function StudentsList() {
+    const { t } = useI18n();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [students, setStudents] = useState<Student[]>([]);
@@ -51,17 +53,17 @@ export function StudentsList() {
     return (
         <div className="prose">
             <div className="flex items-center justify-between">
-                <h1>Students</h1>
+                <h1>{t("students.title")}</h1>
                 <Link
                     data-testid="add-student-link"
                     href="/students/new"
                     className="border rounded px-3 py-1"
                 >
-                    Add student
+                    {t("students.add")}
                 </Link>
             </div>
             {loading ? (
-                <p>Loading students…</p>
+                <p>{t("students.loading")}</p>
             ) : error ? (
                 <p role="alert" className="text-red-600">
                     {error}
@@ -70,10 +72,10 @@ export function StudentsList() {
                 <table className="table-auto w-full text-sm">
                     <thead>
                     <tr>
-                        <th className="text-left p-2">Name</th>
-                        <th className="text-left p-2">DOB</th>
-                        <th className="text-left p-2">Prior level</th>
-                        <th className="text-left p-2">Actions</th>
+                        <th className="text-left p-2">{t("students.name")}</th>
+                        <th className="text-left p-2">{t("students.dob")}</th>
+                        <th className="text-left p-2">{t("students.priorLevel")}</th>
+                        <th className="text-left p-2">{t("students.actions")}</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -86,7 +88,7 @@ export function StudentsList() {
                             <td className="p-2">{s.priorLevel || "—"}</td>
                             <td className="p-2">
                                 <Link href={`/students/${s.id}`} className="text-blue-600 hover:underline">
-                                    Edit
+                                    {t("students.edit")}
                                 </Link>
                             </td>
                         </tr>

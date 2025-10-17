@@ -103,7 +103,7 @@ describe("RegisterPage - multi-step behavior", () => {
       status: 200,
       json: async () => ({ ok: true }),
     } as unknown as Response;
-    const mockFetch = jest.fn(async (..._args: Parameters<typeof fetch>) => mockResponse) as jest.MockedFunction<typeof fetch>;
+    const mockFetch = jest.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => mockResponse) as jest.MockedFunction<typeof fetch>;
     (global as unknown as { fetch: typeof fetch }).fetch = mockFetch;
 
     render(<RegisterPage />);
