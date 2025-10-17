@@ -1,3 +1,4 @@
+"use client";
 import { useI18n } from "@/i18n/LanguageProvider";
 
 export default function ContactPage() {
