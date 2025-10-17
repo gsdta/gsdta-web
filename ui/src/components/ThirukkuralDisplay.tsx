@@ -7,6 +7,14 @@ interface ThirukkuralDisplayProps {
     className?: string;
 }
 
+// Helper function to format kural: 4 words on first line, 3 on second
+function formatKural(kural: string): { firstLine: string; secondLine: string } {
+    const words = kural.trim().split(/\s+/);
+    const firstLine = words.slice(0, 4).join(' ');
+    const secondLine = words.slice(4, 7).join(' ');
+    return { firstLine, secondLine };
+}
+
 export function ThirukkuralDisplay({intervalMs = 10000, className = ""}: ThirukkuralDisplayProps) {
     const [currentVerse, setCurrentVerse] = useState<ThirukkuralVerse | null>(null);
     const [isVisible, setIsVisible] = useState(true);
@@ -35,6 +43,7 @@ export function ThirukkuralDisplay({intervalMs = 10000, className = ""}: Thirukk
     }
 
     const { number, theme, kural, english_explanation, tamil_explanation } = currentVerse;
+    const { firstLine, secondLine } = formatKural(kural);
 
     return (
         <div className={`${className}`}>
@@ -46,7 +55,8 @@ export function ThirukkuralDisplay({intervalMs = 10000, className = ""}: Thirukk
                         திருக்குறள் {number} - {theme}
                     </div>
                     <blockquote className="text-lg font-semibold text-gray-800 dark:text-gray-100 leading-relaxed">
-                        &ldquo;{kural}&rdquo;
+                        <div>&ldquo;{firstLine}</div>
+                        <div>{secondLine}&rdquo;</div>
                     </blockquote>
                     {tamil_explanation && (
                         <p className="text-sm text-gray-800 dark:text-gray-200">

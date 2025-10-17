@@ -23,7 +23,7 @@ export function HeroThirukkural() {
               </div>
             </div>
           </Link>
-          <div className="flex-1 max-w-lg">
+          <div className="flex-1 max-w-2xl">
             <ThirukkuralDisplay
               intervalMs={8000}
               className="bg-white/60 dark:bg-white/5 backdrop-blur-sm rounded-lg p-6 shadow-sm border border-white/40 dark:border-white/10"
