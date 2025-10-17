@@ -3,14 +3,15 @@
 import { useMemo, useState, useEffect } from "react";
 import Image from "next/image";
 import people from "@/data/people.json";
+import { useI18n } from "@/i18n/LanguageProvider";
 
 // Section config similar to Documents
 const SECTIONS = [
-  { key: "board" as const, label: "Board" },
-  { key: "executives" as const, label: "Executives" },
-  { key: "teachers" as const, label: "Teachers" },
-  { key: "volunteers" as const, label: "Volunteers", available: false },
-  { key: "faq" as const, label: "FAQ", available: false },
+  { key: "board" as const, labelKey: "team.board" },
+  { key: "executives" as const, labelKey: "team.executives" },
+  { key: "teachers" as const, labelKey: "team.teachers" },
+  { key: "volunteers" as const, labelKey: "team.volunteers", available: false },
+  { key: "faq" as const, labelKey: "team.faq", available: false },
 ];
 
 type SectionKey = (typeof SECTIONS)[number]["key"];
@@ -57,6 +58,7 @@ function PersonTile({
   gender?: string;
   onExpand?: () => void;
 }) {
+  const { t } = useI18n();
   const src = getPhotoSrc(id, gender);
   const bioPreview = bio ? bio.substring(0, 100) + "..." : null;
 
@@ -87,7 +89,7 @@ function PersonTile({
                 onClick={onExpand}
                 className="mt-1 text-sm text-green-700 font-medium hover:underline"
               >
-                More...
+                {t("team.more")}
               </button>
             </div>
           ) : null}
@@ -114,6 +116,7 @@ function PersonDetailView({
   gender?: string;
   onClose: () => void;
 }) {
+  const { t } = useI18n();
   const src = getPhotoSrc(id, gender);
 
   return (
@@ -148,7 +151,7 @@ function PersonDetailView({
           onClick={onClose}
           className="mt-4 px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800 transition-colors"
         >
-          Close
+          {t("team.close")}
         </button>
       </div>
     </article>
@@ -201,6 +204,7 @@ function readTabFromUrl<T extends string>(allowed: readonly T[]): T | null {
 }
 
 export default function TeamPage() {
+  const { t } = useI18n();
   const keys = useMemo(() => SECTIONS.map((s) => s.key) as readonly SectionKey[], []);
   const [active, setActive] = useState<SectionKey>(() => readTabFromUrl(keys) || SECTIONS[0].key);
   const [expandedPersonId, setExpandedPersonId] = useState<string | null>(null);
@@ -233,25 +237,22 @@ export default function TeamPage() {
     }
   };
 
-  const current = useMemo(
-    () => SECTIONS.find((s) => s.key === active)!,
-    [active]
-  );
-
   const expandedPerson = useMemo(() => {
     if (!expandedPersonId) return null;
     return people.board.find((p) => p.id === expandedPersonId);
   }, [expandedPersonId]);
 
+  const labelFor = (k: SectionKey) => t(SECTIONS.find((s) => s.key === k)!.labelKey);
+
   return (
     <section className="flex flex-col gap-6">
       <h1 data-testid="page-title" className="text-2xl font-semibold">
-        Team
+        {t("team.title")}
       </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left navigation */}
-        <nav aria-label="Team" className="lg:col-span-3">
+        <nav aria-label={t("team.title")} className="lg:col-span-3">
           <ul className="flex flex-wrap lg:flex-col gap-2">
             {SECTIONS.map((s) => {
               const isActive = s.key === active;
@@ -270,7 +271,7 @@ export default function TeamPage() {
                     ].join(" ")}
                     aria-current={isActive ? "page" : undefined}
                   >
-                    {s.label}
+                    {t(s.labelKey)}
                   </button>
                 </li>
               );
@@ -287,7 +288,7 @@ export default function TeamPage() {
             ))}
           </div>
 
-          <h2 className="sr-only">{current.label}</h2>
+          <h2 className="sr-only">{labelFor(active)}</h2>
 
           {active === "board" && (
             <>
@@ -331,30 +332,30 @@ export default function TeamPage() {
           {active === "teachers" && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Our Teachers</h3>
+                <h3 className="text-lg font-semibold text-gray-900">{t("team.ourTeachers")}</h3>
                 <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {people.teachers.map((t) => (
+                  {people.teachers.map((tch) => (
                     <PersonTile
-                      key={t.id}
-                      id={t.id}
-                      name={t.name}
-                      subtitle={t.grade}
-                      gender={t.gender}
+                      key={tch.id}
+                      id={tch.id}
+                      name={tch.name}
+                      subtitle={tch.grade}
+                      gender={tch.gender}
                     />
                   ))}
                 </div>
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Assistant Teachers</h3>
+                <h3 className="text-lg font-semibold text-gray-900">{t("team.assistantTeachers")}</h3>
                 <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {people.assistantTeachers.map((t) => (
+                  {people.assistantTeachers.map((tch) => (
                     <PersonTile
-                      key={t.id}
-                      id={t.id}
-                      name={t.name}
-                      subtitle={t.grade}
-                      gender={t.gender}
+                      key={tch.id}
+                      id={tch.id}
+                      name={tch.name}
+                      subtitle={tch.grade}
+                      gender={tch.gender}
                     />
                   ))}
                 </div>
@@ -364,7 +365,7 @@ export default function TeamPage() {
 
           {(active === "volunteers" || active === "faq") && (
             <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-900">
-              <p>{current.label} are not available yet. We&apos;ll publish them here soon.</p>
+              <p>{t(SECTIONS.find(s => s.key === active)!.labelKey)} are not available yet.</p>
             </div>
           )}
         </div>

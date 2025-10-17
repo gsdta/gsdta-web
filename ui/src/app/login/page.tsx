@@ -3,8 +3,10 @@ import React, {useEffect, useState} from "react";
 import {useRouter} from "next/navigation";
 import {useAuth} from "@/components/AuthProvider";
 import type {Role} from "@/lib/auth-types";
+import { useI18n } from "@/i18n/LanguageProvider";
 
 export default function LoginPage() {
+    const { t } = useI18n();
     const {user, login} = useAuth();
     const router = useRouter();
     const [role, setRole] = useState<Role>("parent");
@@ -31,22 +33,22 @@ export default function LoginPage() {
 
     return (
         <div className="prose">
-            <h1>Login</h1>
-            <p>Select a role to sign in (mocked):</p>
+            <h1>{t("login.title")}</h1>
+            <p>{t("login.selectRole")}</p>
             <form onSubmit={onSubmit} className="not-prose flex items-center gap-3">
-                <label htmlFor="role">Role</label>
+                <label htmlFor="role">{t("login.role")}</label>
                 <select
                     id="role"
                     value={role}
                     onChange={(e) => setRole(e.target.value as Role)}
                     className="border rounded px-2 py-1"
                 >
-                    <option value="parent">Parent</option>
-                    <option value="teacher">Teacher</option>
-                    <option value="admin">Admin</option>
+                    <option value="parent">{t("login.parent")}</option>
+                    <option value="teacher">{t("login.teacher")}</option>
+                    <option value="admin">{t("login.admin")}</option>
                 </select>
                 <button type="submit" disabled={submitting} className="border rounded px-3 py-1">
-                    {submitting ? "Signing in…" : "Sign in"}
+                    {submitting ? t("login.signingIn") : t("login.signIn")}
                 </button>
             </form>
             {error && (

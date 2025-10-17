@@ -1,11 +1,13 @@
 "use client";
 import { HeroThirukkural } from "@/components/home/HeroThirukkural";
 import { HomeCarousel } from "@/components/home/HomeCarousel";
+import { useI18n } from "@/i18n/LanguageProvider";
 
 export function HomeContent() {
+  const { t } = useI18n();
   return (
     <div className="space-y-12">
-      <h1 className="sr-only">Greater San Diego Tamil Academy</h1>
+      <h1 className="sr-only">{t("brand.full")}</h1>
       <HeroThirukkural />
       <HomeCarousel />
     </div>
