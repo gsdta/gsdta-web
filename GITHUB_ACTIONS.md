@@ -38,6 +38,7 @@ Single job that performs all build and test operations sequentially:
    - Type check with TypeScript
    - Run unit tests
    - Build Next.js application (standalone server output)
+   - Run Playwright e2e tests
 
 **Failure Behavior**: Any step failure stops the workflow. If linting, tests, or build fails, the workflow is marked as failed.
 
@@ -82,6 +83,7 @@ Runs comprehensive quality checks and tests:
   - Lint with ESLint
   - Type check with TypeScript
   - Run unit tests in CI mode
+  - Run Playwright e2e tests (installs Playwright browsers, builds app, runs tests)
 
 **Failure Behavior**: If any test or lint check fails, workflow stops here. Deploy stage is skipped.
 

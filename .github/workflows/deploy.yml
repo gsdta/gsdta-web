@@ -147,6 +147,10 @@ jobs:
         working-directory: ./ui
         run: npm test -- --ci
 
+      - name: UI - e2e tests
+        working-directory: ./ui
+        run: npm run e2e:ci
+
   deploy:
     name: Deploy to GCP
     runs-on: ubuntu-latest
