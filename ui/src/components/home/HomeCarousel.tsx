@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { slides } from "@/data/home";
 import { useI18n } from "@/i18n/LanguageProvider";
@@ -17,8 +17,8 @@ export function HomeCarousel() {
     const el = listRef.current?.children[clamped] as HTMLElement | undefined;
     el?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", inline: "center", block: "nearest" });
   };
-  const prev = () => goTo(index - 1);
-  const next = () => goTo(index + 1);
+  const prev = useCallback(() => goTo(index - 1), [index]);
+  const next = useCallback(() => goTo(index + 1), [index]);
 
   // Auto-advance carousel
   useEffect(() => {
