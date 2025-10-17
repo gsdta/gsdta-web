@@ -21,6 +21,14 @@ const notoTamil = Noto_Sans_Tamil({
 export const metadata: Metadata = {
     title: "GSDTA தமிழ் பள்ளி",
     description: "குழந்தைகளுக்கான தமிழ்ப் பயிற்சி — எழுத்து, வாசிப்பு, பேச்சு, எழுத்துத்தல்",
+    // Use the GSDTA logo for browser tab icon(s)
+    icons: {
+        icon: [
+            { url: "/images/logo.png", type: "image/png" },
+        ],
+        shortcut: "/images/logo.png",
+        apple: "/images/logo.png",
+    },
 };
 
 export const viewport = {
@@ -54,6 +62,7 @@ export default async function RootLayout({
     return (
         <html lang={initialLang} className={htmlClass} data-theme={htmlDataTheme}>
         <head>
+            <title>GSDTA தமிழ் பள்ளி</title>
             {/* Allow both light and dark native UI/scrollbars across browsers */}
             <meta name="color-scheme" content="light dark" />
         </head>
