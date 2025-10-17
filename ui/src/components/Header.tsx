@@ -40,8 +40,9 @@ export function Header() {
     return (
         <header className="border-b border-gray-200 dark:border-gray-800 bg-white/70 supports-[backdrop-filter]:bg-white/50 dark:bg-black/40 supports-[backdrop-filter]:dark:bg-black/30 backdrop-blur sticky top-0 z-10">
             <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-4">
-                <Link href="/" className="font-semibold text-gray-900 dark:text-gray-100" onClick={close}>
-                    GSDTA
+                <Link href="/" className="font-semibold text-gray-900 dark:text-gray-100 max-w-[50vw] lg:max-w-none truncate" onClick={close} title={t("brand.full")} aria-label={t("brand.full")}>
+                    <span className="inline xl:hidden whitespace-nowrap">{t("brand.short")}</span>
+                    <span className="hidden xl:inline whitespace-nowrap">{t("brand.full")}</span>
                 </Link>
 
                 {/* Desktop nav */}
@@ -96,21 +97,24 @@ export function Header() {
                     )}
                 </nav>
 
-                {/* Mobile hamburger */}
-                <button
-                    type="button"
-                    className="sm:hidden inline-flex items-center justify-center rounded-md border px-2 py-1 text-sm shadow-sm ring-1 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 ring-black/10 dark:ring-white/10 hover:bg-white dark:hover:bg-gray-800"
-                    aria-label={open ? "Close menu" : "Open menu"}
-                    aria-controls="mobile-menu"
-                    aria-expanded={open}
-                    onClick={toggle}
-                >
-                    {open ? (
-                        <span aria-hidden>✕</span>
-                    ) : (
-                        <span aria-hidden>☰</span>
-                    )}
-                </button>
+                {/* Mobile controls: show language + hamburger */}
+                <div className="sm:hidden inline-flex items-center gap-2">
+                    <LanguageSwitcher/>
+                    <button
+                        type="button"
+                        className="inline-flex items-center justify-center rounded-md border px-2 py-1 text-sm shadow-sm ring-1 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 ring-black/10 dark:ring-white/10 hover:bg-white dark:hover:bg-gray-800"
+                        aria-label={open ? "Close menu" : "Open menu"}
+                        aria-controls="mobile-menu"
+                        aria-expanded={open}
+                        onClick={toggle}
+                    >
+                        {open ? (
+                            <span aria-hidden>✕</span>
+                        ) : (
+                            <span aria-hidden>☰</span>
+                        )}
+                    </button>
+                </div>
             </div>
 
             {/* Mobile panel */}
@@ -132,7 +136,6 @@ export function Header() {
                                     </Link>
                                 ))}
                                 <div className="flex items-center gap-2">
-                                    <LanguageSwitcher/>
                                     <span className="text-gray-600 dark:text-gray-300">{user.name} ({user.role})</span>
                                 </div>
                                 <label className="sr-only" htmlFor="role-select-mobile">
@@ -163,12 +166,9 @@ export function Header() {
                                 <Link href="/textbooks/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.textbooks")}</Link>
                                 <Link href="/donate/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.donate")}</Link>
                                 <Link href="/contact/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.contact")}</Link>
-                                <div className="flex items-center gap-2">
-                                    <LanguageSwitcher/>
-                                    <Link href="/login" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>
-                                        {t("nav.login")}
-                                    </Link>
-                                </div>
+                                <Link href="/login" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>
+                                    {t("nav.login")}
+                                </Link>
                             </>
                         )}
                     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Image from "next/image";
 import people from "@/data/people.json";
 
@@ -186,9 +186,52 @@ function CommitteeTile({
   );
 }
 
+function readTabFromUrl<T extends string>(allowed: readonly T[]): T | null {
+  if (typeof window === "undefined") return null;
+  // In test environment, avoid reading from URL to prevent cross-test bleed
+  if (process.env.NODE_ENV === "test") return null;
+  try {
+    const url = new URL(window.location.href);
+    const hash = url.hash?.slice(1).toLowerCase();
+    const qp = (url.searchParams.get("tab") || url.searchParams.get("section") || "").toLowerCase();
+    const candidate = (hash || qp) as T | "";
+    if (candidate && (allowed as readonly string[]).includes(candidate)) return candidate as T;
+  } catch {}
+  return null;
+}
+
 export default function TeamPage() {
-  const [active, setActive] = useState<SectionKey>(SECTIONS[0].key);
+  const keys = useMemo(() => SECTIONS.map((s) => s.key) as readonly SectionKey[], []);
+  const [active, setActive] = useState<SectionKey>(() => readTabFromUrl(keys) || SECTIONS[0].key);
   const [expandedPersonId, setExpandedPersonId] = useState<string | null>(null);
+
+  // Initialize from URL and listen to URL changes
+  useEffect(() => {
+    const applyFromUrl = () => {
+      const from = readTabFromUrl(keys);
+      if (from) setActive(from);
+    };
+    applyFromUrl();
+    window.addEventListener("hashchange", applyFromUrl);
+    window.addEventListener("popstate", applyFromUrl);
+    return () => {
+      window.removeEventListener("hashchange", applyFromUrl);
+      window.removeEventListener("popstate", applyFromUrl);
+    };
+  }, [keys]);
+
+  const onTabClick = (k: SectionKey) => {
+    setActive(k);
+    if (typeof window !== "undefined") {
+      // Don't mutate URL during unit tests to avoid affecting other tests
+      if (process.env.NODE_ENV !== "test") {
+        const url = new URL(window.location.href);
+        url.searchParams.set("tab", k);
+        url.hash = `#${k}`;
+        window.history.replaceState(null, "", url.toString());
+      }
+    }
+  };
 
   const current = useMemo(
     () => SECTIONS.find((s) => s.key === active)!,
@@ -217,7 +260,7 @@ export default function TeamPage() {
                 <li key={s.key} className="flex-shrink-0">
                   <button
                     type="button"
-                    onClick={() => setActive(s.key)}
+                    onClick={() => onTabClick(s.key)}
                     className={[
                       "w-full text-left rounded-md px-3 py-2 border whitespace-nowrap",
                       isActive
@@ -237,6 +280,13 @@ export default function TeamPage() {
 
         {/* Content area */}
         <div className="lg:col-span-9">
+          {/* Hidden anchors for hash navigation and static analysis */}
+          <div aria-hidden="true" className="sr-only">
+            {SECTIONS.map((s) => (
+              <div key={`anchor-${s.key}`} id={s.key} />
+            ))}
+          </div>
+
           <h2 className="sr-only">{current.label}</h2>
 
           {active === "board" && (
