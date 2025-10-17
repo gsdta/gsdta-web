@@ -15,7 +15,7 @@ function formatKural(kural: string): { firstLine: string; secondLine: string } {
     return { firstLine, secondLine };
 }
 
-export function ThirukkuralDisplay({intervalMs = 10000, className = ""}: ThirukkuralDisplayProps) {
+export function ThirukkuralDisplay({intervalMs = 13000, className = ""}: ThirukkuralDisplayProps) {
     const [currentVerse, setCurrentVerse] = useState<ThirukkuralVerse | null>(null);
     const [isVisible, setIsVisible] = useState(true);
 

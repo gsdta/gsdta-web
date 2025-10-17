@@ -4149,14 +4149,14 @@ export const thirukkuralVerses = [
     },
     {
         "number": 593,
-        "kural": "க்கம் இழந்தேமென்று அல்லாவார் ஊக்கம் ஒருவந்தம் கைத்துடை யார்.",
+        "kural": "ஊக்கம் இழந்தேமென்று அல்லாவார் ஊக்கம் ஒருவந்தம் கைத்துடை யார்.",
         "english_explanation": "They who are possessed of enduring energy will not trouble themselves, saying, “we have lost our property.”",
         "theme": "ஊக்கம் உடைமை",
         "tamil_explanation": "மு.வ : ஊக்கத்தை உறுதியாகத் தம்கைப் பொருளாக உடையவர், ஆக்கம்( இழந்து விட்டக்காலத்திலும்) இழந்து விட்டோம் என்று கலங்க மாட்டார்."
     },
     {
         "number": 594,
-        "kural": "க்கம் அதர்வினாய்ச் செல்லும் அசைவிலா ஊக்க முடையா னுழை.",
+        "kural": "ஊக்கம் அதர்வினாய்ச் செல்லும் அசைவிலா ஊக்க முடையா னுழை.",
         "english_explanation": "Wealth will find its own way to the man of unfailing energy.",
         "theme": "ஊக்கம் உடைமை",
         "tamil_explanation": "மு.வ : சோர்வு இல்லாத ஊக்கம் உடையவனிடத்தில் ஆக்கமானது தானே அவன் உள்ள இடத்திற்கு வழிக் கேட்டுக்கொண்டு போய்ச் சேரும்."
