@@ -21,6 +21,10 @@ export const messages: Record<Lang, Record<string, string>> = {
         "nav.donate": "Donate",
         "nav.contact": "Contact Us",
 
+        // Brand
+        "brand.full": "Greater San Diego Tamil Academy",
+        "brand.short": "GSDTA",
+
         // Footer / Sections
         "footer.quick": "Quick links",
         "footer.contact": "Contact",
@@ -84,6 +88,29 @@ export const messages: Record<Lang, Record<string, string>> = {
         "home.carousel.cta.title": "Ready to Join Us?",
         "home.carousel.cta.description": "Enroll today and become part of our Tamil learning community",
         "home.carousel.cta.button": "Enroll Now",
+
+        // Motto
+        "motto.title": "Let's Learn, Let's Teach!",
+
+        // Flashcards
+        "flashcards.card1": "Join our Language Classes to learn Tamil with ease.",
+        "flashcards.card2": "Support our community and grow with Tamil heritage.",
+        "flashcards.card3": "Welcome to Tamil Academy - Promoting Tamil Culture and Language.",
+        "flashcards.card4": "Celebrate Tamil Culture through vibrant events and workshops.",
+
+        // Footer (extended)
+        "footer.orgTitle": "Organization",
+        "footer.teamTitle": "Team",
+        "footer.documentsTitle": "Documents",
+        "footer.contactTitle": "Contact",
+        "footer.aboutUs": "About Us",
+        "footer.registerNow": "Registration Open Now",
+        "footer.board": "Board Members",
+        "footer.executives": "Executive Committee",
+        "footer.teachers": "Teachers",
+        "footer.taxExempt": "501(c)(3) Tax Exempt",
+        "footer.bylaws": "Bylaws",
+        "footer.rights": "All rights reserved.",
     },
     ta: {
         // Nav
@@ -104,6 +131,10 @@ export const messages: Record<Lang, Record<string, string>> = {
         "nav.textbooks": "பாடங்கள்",
         "nav.donate": "நன்கொடை",
         "nav.contact": "தொடர்பு",
+
+        // Brand
+        "brand.full": "GSDTA",
+        "brand.short": "GSDTA",
 
         // Footer / Sections
         "footer.quick": "விரைவு இணைப்புகள்",
@@ -168,5 +199,28 @@ export const messages: Record<Lang, Record<string, string>> = {
         "home.carousel.cta.title": "எங்களுடன் சேர தயாரா?",
         "home.carousel.cta.description": "இன்றே சேருங்கள், எங்கள் தமிழ் கற்கும் சமூகத்தின் பகுதியாகுங்கள்",
         "home.carousel.cta.button": "உடனே சேருங்கள்",
+
+        // Motto
+        "motto.title": "கற்போம் கற்பிப்போம்!",
+
+        // Flashcards
+        "flashcards.card1": "எளிதாக தமிழ் கற்க எங்கள் மொழி வகுப்புகளில் சேருங்கள்.",
+        "flashcards.card2": "எங்கள் சமூகத்தை ஆதரித்து தமிழ் பாரம்பரியத்துடன் வளருங்கள்.",
+        "flashcards.card3": "தமிழ் அகாடமிக்கு வரவேற்கிறோம் - தமிழ் கலாச்சாரத்தையும் மொழியையும் ஊக்குவிக்கிறது.",
+        "flashcards.card4": "துடிப்பான நிகழ்வுகள் மற்றும் பட்டறைகள் மூலம் தமிழ் கலாச்சாரத்தைக் கொண்டாடுங்கள்.",
+
+        // Footer (extended)
+        "footer.orgTitle": "அமைப்பு",
+        "footer.teamTitle": "குழு",
+        "footer.documentsTitle": "ஆவணங்கள்",
+        "footer.contactTitle": "தொடர்பு",
+        "footer.aboutUs": "எங்களைப் பற்றி",
+        "footer.registerNow": "பதிவுகள் திறக்கப்பட்டுள்ளன",
+        "footer.board": "குழு உறுப்பினர்கள்",
+        "footer.executives": "நிர்வாகக் குழு",
+        "footer.teachers": "ஆசிரியர்கள்",
+        "footer.taxExempt": "501(c)(3) வரிவிலக்கு",
+        "footer.bylaws": "நியம விதிகள்",
+        "footer.rights": "அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை.",
     },
 };

@@ -2,12 +2,25 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ThirukkuralDisplay } from "@/components/ThirukkuralDisplay";
+import { useI18n } from "@/i18n/LanguageProvider";
 
 export function HeroThirukkural() {
+  const { t } = useI18n();
   return (
     <section className="relative isolate overflow-hidden rounded-xl bg-gradient-to-br from-pink-50 via-rose-50 to-amber-50 dark:from-gray-900 dark:via-gray-950 dark:to-black ring-1 ring-black/5 dark:ring-white/5 px-6 py-12 sm:px-10">
       <div className="mx-auto max-w-4xl">
-        <div className="flex flex-col lg:flex-row items-center justify-center gap-8">
+        {/* Subtitle + Motto inside hero */}
+        <div className="text-center">
+          <p className="text-[12px] md:text-sm text-gray-500 dark:text-gray-400">
+            {t("flashcards.card4")}
+          </p>
+          <h2 className="mt-2 text-xl md:text-2xl font-semibold text-gray-900 dark:text-gray-100">
+            {t("motto.title")}
+          </h2>
+          <span className="mt-2 inline-block h-0.5 w-14 bg-orange-500 rounded" />
+        </div>
+
+        <div className="mt-6 flex flex-col lg:flex-row items-center justify-center gap-8">
           <Link href="/" aria-label="Go to Home" className="flex-shrink-0">
             <div className="relative">
               <Image
@@ -19,7 +32,7 @@ export function HeroThirukkural() {
                 priority
               />
               <div className="absolute -top-2 -right-2 bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200 text-xs px-2 py-1 rounded-full font-medium">
-                GSDTA
+                {t("brand.short")}
               </div>
             </div>
           </Link>

@@ -4,8 +4,8 @@ import { HomeCarousel } from "@/components/home/HomeCarousel";
 
 export function HomeContent() {
   return (
-    <div className="space-y-16">
-      <h1 className="sr-only">GSDTA Tamil School</h1>
+    <div className="space-y-12">
+      <h1 className="sr-only">Greater San Diego Tamil Academy</h1>
       <HeroThirukkural />
       <HomeCarousel />
     </div>
