@@ -27,6 +27,16 @@
     }
 }
 
+/* Forced theme overrides (take precedence over OS preference) */
+:root[data-theme="light"] {
+    --background: #ffffff;
+    --foreground: #171717;
+}
+:root[data-theme="dark"] {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+}
+
 html {
     /* Better text rendering */
     -webkit-font-smoothing: antialiased;

@@ -9,6 +9,7 @@ import {Footer} from "@/components/Footer";
 import {LanguageProvider} from "@/i18n/LanguageProvider";
 import { Noto_Sans_Tamil } from "next/font/google";
 import { cookies, headers } from "next/headers";
+import { FORCED_THEME } from "@/config/theme";
 
 const notoTamil = Noto_Sans_Tamil({
     weight: ["400", "500", "700"],
@@ -45,8 +46,13 @@ export default async function RootLayout({
     children: React.ReactNode;
 }>) {
     const initialLang = await detectInitialLang();
+    // Force theme based on config/environment: add class="dark" to enable dark variants when forced dark
+    const forced = FORCED_THEME; // "light" | "dark" | null
+    const htmlClass = forced === "dark" ? "dark" : undefined;
+    const htmlDataTheme = forced ?? undefined;
+
     return (
-        <html lang={initialLang}>
+        <html lang={initialLang} className={htmlClass} data-theme={htmlDataTheme}>
         <head>
             {/* Allow both light and dark native UI/scrollbars across browsers */}
             <meta name="color-scheme" content="light dark" />
