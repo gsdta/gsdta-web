@@ -95,3 +95,13 @@ body {
     letter-spacing: 0 !important;
     word-spacing: 0 !important;
 }
+
+/* Hide scrollbar for carousel - supports all browsers */
+.scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+}
