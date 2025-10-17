@@ -4,6 +4,7 @@ import Link from "next/link";
 import {Protected} from "@/components/Protected";
 import {getClasses} from "@/lib/enrollment-api";
 import type {Class} from "@/lib/enrollment-types";
+import { useI18n } from "@/i18n/LanguageProvider";
 
 declare global {
     interface Window {
@@ -33,6 +34,7 @@ async function waitForMsw() {
 }
 
 export default function ClassesPage() {
+    const { t } = useI18n();
     const [classes, setClasses] = useState<Class[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -58,11 +60,11 @@ export default function ClassesPage() {
         <Protected roles={["teacher", "parent", "admin"]}>
             <div className="mx-auto max-w-6xl space-y-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Classes</h1>
-                    <p className="mt-2 text-gray-600">View class schedules and rosters.</p>
+                    <h1 className="text-3xl font-bold text-gray-900">{t("classes.title")}</h1>
+                    <p className="mt-2 text-gray-600">{t("classes.subtitle")}</p>
                 </div>
 
-                {loading && <div className="text-gray-600">Loading classes...</div>}
+                {loading && <div className="text-gray-600">{t("common.loading.classes")}</div>}
 
                 {error && (
                     <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">{error}</div>
@@ -79,16 +81,16 @@ export default function ClassesPage() {
                                 <h2 className="text-xl font-semibold text-gray-900">{cls.name}</h2>
                                 <div className="mt-3 space-y-1 text-sm text-gray-600">
                                     <p>
-                                        <strong>Level:</strong> {cls.level}
+                                        <strong>{t("classes.level")}</strong> {cls.level}
                                     </p>
                                     <p>
-                                        <strong>Schedule:</strong> {cls.day} {cls.time}
+                                        <strong>{t("classes.schedule")}</strong> {cls.day} {cls.time}
                                     </p>
                                     <p>
-                                        <strong>Teacher:</strong> {cls.teacher}
+                                        <strong>{t("classes.teacher")}</strong> {cls.teacher}
                                     </p>
                                     <p>
-                                        <strong>Enrollment:</strong> {cls.enrolled}/{cls.capacity} students
+                                        <strong>{t("classes.enrollment")}</strong> {cls.enrolled}/{cls.capacity} {t("classes.students")}
                                     </p>
                                 </div>
                             </Link>
