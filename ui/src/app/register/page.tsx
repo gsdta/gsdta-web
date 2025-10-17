@@ -95,7 +95,7 @@ export default function RegisterPage() {
     reset,
     watch,
     trigger,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, touchedFields },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     mode: "onChange",
@@ -109,6 +109,7 @@ export default function RegisterPage() {
   const [step, setStep] = useState<number>(0);
   const [maxReached, setMaxReached] = useState<number>(0);
   const [stepValid, setStepValid] = useState<boolean>(false);
+  const [showStepErrors, setShowStepErrors] = useState<boolean>(false);
 
   const TOTAL_STEPS = STEPS.length;
 
@@ -192,6 +193,8 @@ export default function RegisterPage() {
       const fields = STEP_FIELDS[step] as FieldPath<FormValues>[];
       const ok = await trigger(fields);
       setStepValid(ok);
+      // reset error reveal when step changes
+      setShowStepErrors(false);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
@@ -203,13 +206,21 @@ export default function RegisterPage() {
     const fields = STEP_FIELDS[step] as FieldPath<FormValues>[];
     const ok = await trigger(fields);
     setStepValid(ok);
-    if (ok && step < TOTAL_STEPS - 1) {
+    if (!ok) {
+      setShowStepErrors(true);
+      return;
+    }
+    if (step < TOTAL_STEPS - 1) {
       const next = step + 1;
       setStep(next);
+      setShowStepErrors(false);
       setMaxReached((m) => Math.max(m, next));
     }
   };
-  const goBack = () => setStep((s) => Math.max(0, s - 1));
+  const goBack = () => {
+    setStep((s) => Math.max(0, s - 1));
+    setShowStepErrors(false);
+  };
 
   const goToStep = async (target: number) => {
     if (target < 0 || target >= TOTAL_STEPS) return;
@@ -298,6 +309,11 @@ export default function RegisterPage() {
     }
   };
 
+  // Helper: show error only when field touched or user attempted to proceed
+  const showError = (name: FieldPath<FormValues>) => {
+    return Boolean((errors as Record<string, unknown>)[name]) && (Boolean((touchedFields as Record<string, boolean | undefined>)[name]) || showStepErrors);
+  };
+
   return (
     <section className="flex flex-col gap-6">
       <h1 data-testid="page-title" className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Register</h1>
@@ -361,7 +377,7 @@ export default function RegisterPage() {
         </ul>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-4">
         <style jsx>{`
           @keyframes fadeStep { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
           .fade-step { animation: fadeStep 200ms ease both; }
@@ -372,46 +388,48 @@ export default function RegisterPage() {
             <div className="col-span-1 md:col-span-2"><h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Student Information</h2></div>
 
             <div className="col-span-1">
-              <label htmlFor="studentName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Student Name (First Last)</label>
+              <label htmlFor="studentName" className="block text-sm font-medium text-gray-800 dark:text-gray-300">Student Name (First Last)</label>
               <input
                 id="studentName"
                 type="text"
                 {...register("studentName")}
-                className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:border-green-600 focus:ring-green-600"
+                aria-invalid={showError("studentName")}
+                className="mt-1 w-full rounded-md border border-gray-300 hover:border-gray-400 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-600 dark:border-gray-700 dark:hover:border-gray-600 dark:bg-gray-950 dark:text-gray-100 dark:placeholder:text-gray-500"
                 placeholder="First Last"
                 autoComplete="off"
               />
-              {errors.studentName && (
-                <p className="mt-1 text-xs text-red-600">{errors.studentName.message}</p>
+              {showError("studentName") && (
+                <p className="mt-1 text-xs text-red-600">{errors.studentName?.message as string}</p>
               )}
             </div>
 
             <div className="col-span-1">
-              <label htmlFor="studentDob" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Student DOB</label>
+              <label htmlFor="studentDob" className="block text-sm font-medium text-gray-800 dark:text-gray-300">Student DOB</label>
               <input
                 id="studentDob"
                 type="date"
                 {...register("studentDob")}
-                className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:border-green-600 focus:ring-green-600"
+                aria-invalid={showError("studentDob")}
+                className="mt-1 w-full rounded-md border border-gray-300 hover:border-gray-400 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-600 dark:border-gray-700 dark:hover:border-gray-600 dark:bg-gray-950 dark:text-gray-100 dark:placeholder:text-gray-500"
                 placeholder="YYYY-MM-DD"
               />
-              {errors.studentDob && (
-                <p className="mt-1 text-xs text-red-600">{errors.studentDob.message}</p>
+              {showError("studentDob") && (
+                <p className="mt-1 text-xs text-red-600">{errors.studentDob?.message as string}</p>
               )}
             </div>
 
             <div className="col-span-1">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Student Gender</label>
+              <label className="block text-sm font-medium text-gray-800 dark:text-gray-300">Student Gender</label>
               <div className="mt-2 flex gap-6">
                 {GENDERS.map((g) => (
                   <label key={g} className="inline-flex items-center gap-2 text-sm">
-                    <input type="radio" value={g} {...register("studentGender")} />
+                    <input className="accent-green-700 dark:accent-green-600" type="radio" value={g} {...register("studentGender")} />
                     <span className="text-gray-900 dark:text-gray-100">{g}</span>
                   </label>
                 ))}
               </div>
-              {errors.studentGender && (
-                <p className="mt-1 text-xs text-red-600">{errors.studentGender.message}</p>
+              {showError("studentGender") && (
+                <p className="mt-1 text-xs text-red-600">{errors.studentGender?.message as string}</p>
               )}
             </div>
           </div>
@@ -423,12 +441,13 @@ export default function RegisterPage() {
             <div className="col-span-1 md:col-span-2"><h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">School Information</h2></div>
 
             <div className="col-span-1">
-              <label htmlFor="currentPublicSchool" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Current Public School Name</label>
+              <label htmlFor="currentPublicSchool" className="block text-sm font-medium text-gray-800 dark:text-gray-300">Current Public School Name</label>
               <input
                 id="currentPublicSchool"
                 type="text"
                 {...register("currentPublicSchool")}
-                className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:border-green-600 focus:ring-green-600"
+                aria-invalid={showError("currentPublicSchool")}
+                className="mt-1 w-full rounded-md border border-gray-300 hover:border-gray-400 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-600 dark:border-gray-700 dark:hover:border-gray-600 dark:bg-gray-950 dark:text-gray-100 dark:placeholder:text-gray-500"
                 placeholder="Type or paste exact school name"
                 list="schools-list"
               />
@@ -490,17 +509,18 @@ export default function RegisterPage() {
                 <option>Not in School Yet</option>
                 <option>My School is not in the list.</option>
               </datalist>
-              {errors.currentPublicSchool && (
-                <p className="mt-1 text-xs text-red-600">{errors.currentPublicSchool.message}</p>
+              {showError("currentPublicSchool") && (
+                <p className="mt-1 text-xs text-red-600">{errors.currentPublicSchool?.message as string}</p>
               )}
             </div>
 
             <div className="col-span-1">
-              <label htmlFor="schoolDistrict" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Your School District</label>
+              <label htmlFor="schoolDistrict" className="block text-sm font-medium text-gray-800 dark:text-gray-300">Your School District</label>
               <select
                 id="schoolDistrict"
                 {...register("schoolDistrict")}
-                className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:border-green-600 focus:ring-green-600"
+                aria-invalid={showError("schoolDistrict")}
+                className="mt-1 w-full rounded-md border border-gray-300 hover:border-gray-400 bg-gray-50 text-gray-900 focus:border-green-600 focus:ring-2 focus:ring-green-600 dark:border-gray-700 dark:hover:border-gray-600 dark:bg-gray-950 dark:text-gray-100"
                 defaultValue={""}
               >
                 <option value="" disabled>Select district</option>
@@ -513,24 +533,26 @@ export default function RegisterPage() {
                   id="schoolDistrictOther"
                   type="text"
                   {...register("schoolDistrictOther")}
-                  className="mt-2 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:border-green-600 focus:ring-green-600"
+                  aria-invalid={showError("schoolDistrictOther")}
+                  className="mt-2 w-full rounded-md border border-gray-300 hover:border-gray-400 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-600 dark:border-gray-700 dark:hover:border-gray-600 dark:bg-gray-950 dark:text-gray-100 dark:placeholder:text-gray-500"
                   placeholder="If Other, please specify"
                 />
               )}
-              {errors.schoolDistrict && (
-                <p className="mt-1 text-xs text-red-600">{errors.schoolDistrict.message}</p>
+              {showError("schoolDistrict") && (
+                <p className="mt-1 text-xs text-red-600">{errors.schoolDistrict?.message as string}</p>
               )}
-              {errors.schoolDistrictOther && (
-                <p className="mt-1 text-xs text-red-600">{errors.schoolDistrictOther.message}</p>
+              {showError("schoolDistrictOther") && (
+                <p className="mt-1 text-xs text-red-600">{errors.schoolDistrictOther?.message as string}</p>
               )}
             </div>
 
             <div className="col-span-1">
-              <label htmlFor="currentPublicGrade" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Current Grade in Public School (2025-26)</label>
+              <label htmlFor="currentPublicGrade" className="block text-sm font-medium text-gray-800 dark:text-gray-300">Current Grade in Public School (2025-26)</label>
               <select
                 id="currentPublicGrade"
                 {...register("currentPublicGrade")}
-                className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:border-green-600 focus:ring-green-600"
+                aria-invalid={showError("currentPublicGrade")}
+                className="mt-1 w-full rounded-md border border-gray-300 hover:border-gray-400 bg-gray-50 text-gray-900 focus:border-green-600 focus:ring-2 focus:ring-green-600 dark:border-gray-700 dark:hover:border-gray-600 dark:bg-gray-950 dark:text-gray-100"
                 defaultValue={""}
               >
                 <option value="" disabled>Select grade</option>
@@ -538,17 +560,18 @@ export default function RegisterPage() {
                   <option key={g} value={g}>{g}</option>
                 ))}
               </select>
-              {errors.currentPublicGrade && (
-                <p className="mt-1 text-xs text-red-600">{errors.currentPublicGrade.message}</p>
+              {showError("currentPublicGrade") && (
+                <p className="mt-1 text-xs text-red-600">{errors.currentPublicGrade?.message as string}</p>
               )}
             </div>
 
             <div className="col-span-1">
-              <label htmlFor="lastTamilGrade" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Last year grade in Tamil School (2024-25)</label>
+              <label htmlFor="lastTamilGrade" className="block text-sm font-medium text-gray-800 dark:text-gray-300">Last year grade in Tamil School (2024-25)</label>
               <select
                 id="lastTamilGrade"
                 {...register("lastTamilGrade")}
-                className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:border-green-600 focus:ring-green-600"
+                aria-invalid={showError("lastTamilGrade")}
+                className="mt-1 w-full rounded-md border border-gray-300 hover:border-gray-400 bg-gray-50 text-gray-900 focus:border-green-600 focus:ring-2 focus:ring-green-600 dark:border-gray-700 dark:hover:border-gray-600 dark:bg-gray-950 dark:text-gray-100"
                 defaultValue={""}
               >
                 <option value="" disabled>Select grade</option>
@@ -556,17 +579,18 @@ export default function RegisterPage() {
                   <option key={g} value={g}>{g}</option>
                 ))}
               </select>
-              {errors.lastTamilGrade && (
-                <p className="mt-1 text-xs text-red-600">{errors.lastTamilGrade.message}</p>
+              {showError("lastTamilGrade") && (
+                <p className="mt-1 text-xs text-red-600">{errors.lastTamilGrade?.message as string}</p>
               )}
             </div>
 
             <div className="col-span-1">
-              <label htmlFor="enrollingTamilGrade" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Enrolling Grade in Tamil School (2025-26)</label>
+              <label htmlFor="enrollingTamilGrade" className="block text-sm font-medium text-gray-800 dark:text-gray-300">Enrolling Grade in Tamil School (2025-26)</label>
               <select
                 id="enrollingTamilGrade"
                 {...register("enrollingTamilGrade")}
-                className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:border-green-600 focus:ring-green-600"
+                aria-invalid={showError("enrollingTamilGrade")}
+                className="mt-1 w-full rounded-md border border-gray-300 hover:border-gray-400 bg-gray-50 text-gray-900 focus:border-green-600 focus:ring-2 focus:ring-green-600 dark:border-gray-700 dark:hover:border-gray-600 dark:bg-gray-950 dark:text-gray-100"
                 defaultValue={""}
               >
                 <option value="" disabled>Select grade</option>
@@ -574,8 +598,8 @@ export default function RegisterPage() {
                   <option key={g} value={g}>{g}</option>
                 ))}
               </select>
-              {errors.enrollingTamilGrade && (
-                <p className="mt-1 text-xs text-red-600">{errors.enrollingTamilGrade.message}</p>
+              {showError("enrollingTamilGrade") && (
+                <p className="mt-1 text-xs text-red-600">{errors.enrollingTamilGrade?.message as string}</p>
               )}
             </div>
           </div>
@@ -587,43 +611,43 @@ export default function RegisterPage() {
             <div className="col-span-1 md:col-span-2 mt-2"><h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Parent/Guardian Information</h2></div>
 
             <div className="col-span-1">
-              <label htmlFor="motherName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Mother&apos;s Name (First Last)</label>
-              <input id="motherName" type="text" {...register("motherName")} className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:border-green-600 focus:ring-green-600" />
-              {errors.motherName && <p className="mt-1 text-xs text-red-600">{errors.motherName.message}</p>}
+              <label htmlFor="motherName" className="block text-sm font-medium text-gray-800 dark:text-gray-300">Mother&apos;s Name (First Last)</label>
+              <input id="motherName" type="text" {...register("motherName")} aria-invalid={showError("motherName")} className="mt-1 w-full rounded-md border border-gray-300 hover:border-gray-400 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-600 dark:border-gray-700 dark:hover:border-gray-600 dark:bg-gray-950 dark:text-gray-100 dark:placeholder:text-gray-500" />
+              {showError("motherName") && <p className="mt-1 text-xs text-red-600">{errors.motherName?.message as string}</p>}
             </div>
             <div className="col-span-1">
-              <label htmlFor="motherEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Mother&apos;s email</label>
-              <input id="motherEmail" type="email" {...register("motherEmail")} className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:border-green-600 focus:ring-green-600" />
-              {errors.motherEmail && <p className="mt-1 text-xs text-red-600">{errors.motherEmail.message}</p>}
+              <label htmlFor="motherEmail" className="block text-sm font-medium text-gray-800 dark:text-gray-300">Mother&apos;s email</label>
+              <input id="motherEmail" type="email" {...register("motherEmail")} aria-invalid={showError("motherEmail")} className="mt-1 w-full rounded-md border border-gray-300 hover:border-gray-400 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-600 dark:border-gray-700 dark:hover:border-gray-600 dark:bg-gray-950 dark:text-gray-100 dark:placeholder:text-gray-500" />
+              {showError("motherEmail") && <p className="mt-1 text-xs text-red-600">{errors.motherEmail?.message as string}</p>}
             </div>
             <div className="col-span-1">
-              <label htmlFor="motherMobile" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Mother&apos;s Mobile (10 digits)</label>
-              <input id="motherMobile" type="tel" inputMode="numeric" {...register("motherMobile")} className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:border-green-600 focus:ring-green-600" placeholder="1234567890" />
-              {errors.motherMobile && <p className="mt-1 text-xs text-red-600">{errors.motherMobile.message}</p>}
+              <label htmlFor="motherMobile" className="block text-sm font-medium text-gray-800 dark:text-gray-300">Mother&apos;s Mobile (10 digits)</label>
+              <input id="motherMobile" type="tel" inputMode="numeric" {...register("motherMobile")} aria-invalid={showError("motherMobile")} className="mt-1 w-full rounded-md border border-gray-300 hover:border-gray-400 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-600 dark:border-gray-700 dark:hover:border-gray-600 dark:bg-gray-950 dark:text-gray-100 dark:placeholder:text-gray-500" placeholder="1234567890" />
+              {showError("motherMobile") && <p className="mt-1 text-xs text-red-600">{errors.motherMobile?.message as string}</p>}
             </div>
             <div className="col-span-1">
-              <label htmlFor="motherEmployer" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Mother&apos;s Employer (optional)</label>
-              <input id="motherEmployer" type="text" {...register("motherEmployer")} className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:border-green-600 focus:ring-green-600" />
+              <label htmlFor="motherEmployer" className="block text-sm font-medium text-gray-800 dark:text-gray-300">Mother&apos;s Employer (optional)</label>
+              <input id="motherEmployer" type="text" {...register("motherEmployer")} className="mt-1 w-full rounded-md border border-gray-300 hover:border-gray-400 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-600 dark:border-gray-700 dark:hover:border-gray-600 dark:bg-gray-950 dark:text-gray-100 dark:placeholder:text-gray-500" />
             </div>
 
             <div className="col-span-1">
-              <label htmlFor="fatherName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Father&apos;s Name (First Last)</label>
-              <input id="fatherName" type="text" {...register("fatherName")} className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:border-green-600 focus:ring-green-600" />
-              {errors.fatherName && <p className="mt-1 text-xs text-red-600">{errors.fatherName.message}</p>}
+              <label htmlFor="fatherName" className="block text-sm font-medium text-gray-800 dark:text-gray-300">Father&apos;s Name (First Last)</label>
+              <input id="fatherName" type="text" {...register("fatherName")} aria-invalid={showError("fatherName")} className="mt-1 w-full rounded-md border border-gray-300 hover:border-gray-400 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-600 dark:border-gray-700 dark:hover:border-gray-600 dark:bg-gray-950 dark:text-gray-100 dark:placeholder:text-gray-500" />
+              {showError("fatherName") && <p className="mt-1 text-xs text-red-600">{errors.fatherName?.message as string}</p>}
             </div>
             <div className="col-span-1">
-              <label htmlFor="fatherEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Father&apos;s email</label>
-              <input id="fatherEmail" type="email" {...register("fatherEmail")} className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:border-green-600 focus:ring-green-600" />
-              {errors.fatherEmail && <p className="mt-1 text-xs text-red-600">{errors.fatherEmail.message}</p>}
+              <label htmlFor="fatherEmail" className="block text-sm font-medium text-gray-800 dark:text-gray-300">Father&apos;s email</label>
+              <input id="fatherEmail" type="email" {...register("fatherEmail")} aria-invalid={showError("fatherEmail")} className="mt-1 w-full rounded-md border border-gray-300 hover:border-gray-400 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-600 dark:border-gray-700 dark:hover:border-gray-600 dark:bg-gray-950 dark:text-gray-100 dark:placeholder:text-gray-500" />
+              {showError("fatherEmail") && <p className="mt-1 text-xs text-red-600">{errors.fatherEmail?.message as string}</p>}
             </div>
             <div className="col-span-1">
-              <label htmlFor="fatherMobile" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Father&apos;s Mobile (10 digits)</label>
-              <input id="fatherMobile" type="tel" inputMode="numeric" {...register("fatherMobile")} className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:border-green-600 focus:ring-green-600" placeholder="1234567890" />
-              {errors.fatherMobile && <p className="mt-1 text-xs text-red-600">{errors.fatherMobile.message}</p>}
+              <label htmlFor="fatherMobile" className="block text-sm font-medium text-gray-800 dark:text-gray-300">Father&apos;s Mobile (10 digits)</label>
+              <input id="fatherMobile" type="tel" inputMode="numeric" {...register("fatherMobile")} aria-invalid={showError("fatherMobile")} className="mt-1 w-full rounded-md border border-gray-300 hover:border-gray-400 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-600 dark:border-gray-700 dark:hover:border-gray-600 dark:bg-gray-950 dark:text-gray-100 dark:placeholder:text-gray-500" placeholder="1234567890" />
+              {showError("fatherMobile") && <p className="mt-1 text-xs text-red-600">{errors.fatherMobile?.message as string}</p>}
             </div>
             <div className="col-span-1">
-              <label htmlFor="fatherEmployer" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Father&apos;s Employer (optional)</label>
-              <input id="fatherEmployer" type="text" {...register("fatherEmployer")} className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:border-green-600 focus:ring-green-600" />
+              <label htmlFor="fatherEmployer" className="block text-sm font-medium text-gray-800 dark:text-gray-300">Father&apos;s Employer (optional)</label>
+              <input id="fatherEmployer" type="text" {...register("fatherEmployer")} className="mt-1 w-full rounded-md border border-gray-300 hover:border-gray-400 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-600 dark:border-gray-700 dark:hover:border-gray-600 dark:bg-gray-950 dark:text-gray-100 dark:placeholder:text-gray-500" />
             </div>
           </div>
         )}
@@ -634,19 +658,19 @@ export default function RegisterPage() {
             <div className="col-span-1 md:col-span-2 mt-2"><h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Home Address</h2></div>
 
             <div className="col-span-1 md:col-span-2">
-              <label htmlFor="homeStreet" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Street name and Unit</label>
-              <input id="homeStreet" type="text" {...register("homeStreet")} className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:border-green-600 focus:ring-green-600" />
-              {errors.homeStreet && <p className="mt-1 text-xs text-red-600">{errors.homeStreet.message}</p>}
+              <label htmlFor="homeStreet" className="block text-sm font-medium text-gray-800 dark:text-gray-300">Street name and Unit</label>
+              <input id="homeStreet" type="text" {...register("homeStreet")} aria-invalid={showError("homeStreet")} className="mt-1 w-full rounded-md border border-gray-300 hover:border-gray-400 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-600 dark:border-gray-700 dark:hover:border-gray-600 dark:bg-gray-950 dark:text-gray-100 dark:placeholder:text-gray-500" />
+              {showError("homeStreet") && <p className="mt-1 text-xs text-red-600">{errors.homeStreet?.message as string}</p>}
             </div>
             <div className="col-span-1">
-              <label htmlFor="homeCity" className="block text-sm font-medium text-gray-700 dark:text-gray-300">City</label>
-              <input id="homeCity" type="text" {...register("homeCity")} className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:border-green-600 focus:ring-green-600" />
-              {errors.homeCity && <p className="mt-1 text-xs text-red-600">{errors.homeCity.message}</p>}
+              <label htmlFor="homeCity" className="block text-sm font-medium text-gray-800 dark:text-gray-300">City</label>
+              <input id="homeCity" type="text" {...register("homeCity")} aria-invalid={showError("homeCity")} className="mt-1 w-full rounded-md border border-gray-300 hover:border-gray-400 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-600 dark:border-gray-700 dark:hover:border-gray-600 dark:bg-gray-950 dark:text-gray-100 dark:placeholder:text-gray-500" />
+              {showError("homeCity") && <p className="mt-1 text-xs text-red-600">{errors.homeCity?.message as string}</p>}
             </div>
             <div className="col-span-1">
-              <label htmlFor="homeZip" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Zip</label>
-              <input id="homeZip" type="text" inputMode="numeric" {...register("homeZip")} className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:border-green-600 focus:ring-green-600" />
-              {errors.homeZip && <p className="mt-1 text-xs text-red-600">{errors.homeZip.message}</p>}
+              <label htmlFor="homeZip" className="block text-sm font-medium text-gray-800 dark:text-gray-300">Zip</label>
+              <input id="homeZip" type="text" inputMode="numeric" {...register("homeZip")} aria-invalid={showError("homeZip")} className="mt-1 w-full rounded-md border border-gray-300 hover:border-gray-400 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-600 dark:border-gray-700 dark:hover:border-gray-600 dark:bg-gray-950 dark:text-gray-100 dark:placeholder:text-gray-500" />
+              {showError("homeZip") && <p className="mt-1 text-xs text-red-600">{errors.homeZip?.message as string}</p>}
             </div>
           </div>
         )}
