@@ -22,6 +22,13 @@ export const metadata: Metadata = {
     description: "குழந்தைகளுக்கான தமிழ்ப் பயிற்சி — எழுத்து, வாசிப்பு, பேச்சு, எழுத்துத்தல்",
 };
 
+export const viewport = {
+    themeColor: [
+        { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+        { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+    ],
+};
+
 async function detectInitialLang(): Promise<"en" | "ta"> {
     const jar = await cookies();
     const cookieLang = jar.get("i18n:lang")?.value;
@@ -40,6 +47,10 @@ export default async function RootLayout({
     const initialLang = await detectInitialLang();
     return (
         <html lang={initialLang}>
+        <head>
+            {/* Allow both light and dark native UI/scrollbars across browsers */}
+            <meta name="color-scheme" content="light dark" />
+        </head>
         <body className={["antialiased", notoTamil.variable].join(" ") }>
         <MockProvider>
             <LanguageProvider>

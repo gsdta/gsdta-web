@@ -1,0 +1,132 @@
+{
+  "events": [
+    {
+      "date": "2025-08-15",
+      "semester": "Week-0"
+    },
+    {
+      "date": "2025-08-22",
+      "semester": "Week-1"
+    },
+    {
+      "date": "2025-08-29",
+      "semester": "Week-2"
+    },
+    {
+      "date": "2025-09-05",
+      "semester": "Week-3"
+    },
+    {
+      "date": "2025-09-12",
+      "semester": "Week-4"
+    },
+    {
+      "date": "2025-09-19",
+      "semester": "Week-5"
+    },
+    {
+      "date": "2025-10-03",
+      "semester": "Week-6"
+    },
+    {
+      "date": "2025-10-10",
+      "semester": "Week-7 (Mid-Term Test)"
+    },
+    {
+      "date": "2025-10-17",
+      "semester": "Week-8"
+    },
+    {
+      "date": "2025-10-24",
+      "semester": "Week-9"
+    },
+    {
+      "date": "2025-11-07",
+      "semester": "Week-10"
+    },
+    {
+      "date": "2025-11-14",
+      "semester": "Week-11"
+    },
+    {
+      "date": "2025-11-21",
+      "semester": "Week-12"
+    },
+    {
+      "date": "2025-12-05",
+      "semester": "Week-13"
+    },
+    {
+      "date": "2025-12-12",
+      "semester": "Week-14\n(Revision / Final Test)"
+    },
+    {
+      "date": "2025-12-19",
+      "semester": "Week-15\n(Semester -1 Final Test)"
+    },
+    {
+      "date": "2026-01-09",
+      "semester": "Week-1"
+    },
+    {
+      "date": "2026-01-16",
+      "semester": "Week-2"
+    },
+    {
+      "date": "2026-01-23",
+      "semester": "Week-3"
+    },
+    {
+      "date": "2026-01-30",
+      "semester": "Week-4"
+    },
+    {
+      "date": "2026-02-06",
+      "semester": "Week-5"
+    },
+    {
+      "date": "2026-02-27",
+      "semester": "Week-6"
+    },
+    {
+      "date": "2026-03-06",
+      "semester": "Week-7 (Mid-Term Test)"
+    },
+    {
+      "date": "2026-03-13",
+      "semester": "Week-8"
+    },
+    {
+      "date": "2026-03-20",
+      "semester": "Week-9"
+    },
+    {
+      "date": "2026-03-27",
+      "semester": "Week-10"
+    },
+    {
+      "date": "2026-04-17",
+      "semester": "Week-11"
+    },
+    {
+      "date": "2026-05-01",
+      "semester": "Week-12"
+    },
+    {
+      "date": "2026-05-08",
+      "semester": "Week-13"
+    },
+    {
+      "date": "2026-05-15",
+      "semester": "Week-14\n(Revision / Final Test)"
+    },
+    {
+      "date": "2026-05-22",
+      "semester": "Week-15\n(Semester-2 Final Test)"
+    },
+    {
+      "date": "2026-05-29",
+      "semester": "Test make up day"
+    }
+  ]
+}
