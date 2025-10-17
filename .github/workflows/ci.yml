@@ -8,13 +8,6 @@ on:
       - 'docs/**'
       - '**/*.mdx'
       - '**/*.txt'
-  pull_request:
-    branches: [ develop, main ]
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-      - '**/*.mdx'
-      - '**/*.txt'
 
 jobs:
   build-and-test:
