@@ -3,16 +3,6 @@ name: Deploy
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
-    paths:
-      - 'api/**'
-      - 'ui/**'
-      - 'Dockerfile'
-      - 'Dockerfile.dev'
-      - 'api/Dockerfile'
-      - 'docker-compose.yml'
-      - 'entrypoint.sh'
   workflow_dispatch:
     inputs:
       run_deploy:
@@ -48,74 +38,119 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read
 
 concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  changes:
-    name: Detect code changes
+  build:
+    name: Build and verify
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: read
-    outputs:
-      run: ${{ steps.decide.outputs.run }}
-      ui: ${{ steps.filter.outputs.ui }}
-      api: ${{ steps.filter.outputs.api }}
-      infra: ${{ steps.filter.outputs.infra }}
+    env:
+      NODE_VERSION: '20'
+      GO_VERSION: '1.21'
+      BACKEND_BASE_URL: ${{ inputs.backend_base_url || 'http://localhost:8080/v1' }}
     steps:
-      - name: Determine changed paths
-        id: filter
-        if: github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork
-        uses: dorny/paths-filter@v3
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          filters: |
-            ui:
-              - 'ui/**'
-              - 'Dockerfile'
-              - 'Dockerfile.dev'
-            api:
-              - 'api/**'
-              - 'api/Dockerfile'
-            infra:
-              - 'docker-compose.yml'
-              - 'entrypoint.sh'
-      - name: Decide whether to run deploy steps
-        id: decide
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ui/package-lock.json
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          cache-dependency-path: api/go.sum
+
+      # API: download dependencies and build
+      - name: API - download deps
+        working-directory: ./api
+        run: go mod download
+
+      - name: API - build
+        working-directory: ./api
         run: |
-          case "${{ github.event_name }}" in
-            workflow_dispatch)
-              echo "run=true" >> $GITHUB_OUTPUT
-              ;;
-            push)
-              # Always deploy on push to main
-              echo "run=true" >> $GITHUB_OUTPUT
-              ;;
-            pull_request)
-              if [ -n "${{ steps.filter.outputs.ui }}${{ steps.filter.outputs.api }}${{ steps.filter.outputs.infra }}" ]; then
-                if [ "${{ steps.filter.outputs.ui }}" = "true" ] || [ "${{ steps.filter.outputs.api }}" = "true" ] || [ "${{ steps.filter.outputs.infra }}" = "true" ]; then
-                  echo "run=true" >> $GITHUB_OUTPUT
-                else
-                  echo "run=false" >> $GITHUB_OUTPUT
-                fi
-              else
-                # forked PR: filter step skipped => do not deploy
-                echo "run=false" >> $GITHUB_OUTPUT
-              fi
-              ;;
-            *)
-              echo "run=false" >> $GITHUB_OUTPUT
-              ;;
-          esac
+          VERSION=$(git describe --tags --always 2>/dev/null || echo dev)
+          COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo none)
+          BUILDTIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          PKG=github.com/gsdta/api
+          LDFLAGS="-X ${PKG}/internal/version.Version=${VERSION} -X ${PKG}/internal/version.Commit=${COMMIT} -X ${PKG}/internal/version.BuildTime=${BUILDTIME}"
+          go build -ldflags "${LDFLAGS}" -o bin/api ./cmd/api
+
+      # UI: install and build
+      - name: UI - install deps
+        working-directory: ./ui
+        run: npm ci
+
+      - name: UI - build
+        working-directory: ./ui
+        env:
+          NEXT_OUTPUT: standalone
+          BACKEND_BASE_URL: ${{ env.BACKEND_BASE_URL }}
+        run: npm run build
+
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    env:
+      NODE_VERSION: '20'
+      GO_VERSION: '1.21'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ui/package-lock.json
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          cache-dependency-path: api/go.sum
+
+      # API: lint and test
+      - name: API - download deps
+        working-directory: ./api
+        run: go mod download
+
+      - name: API - lint
+        working-directory: ./api
+        run: |
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+          golangci-lint run
+
+      - name: API - tests
+        working-directory: ./api
+        run: go test ./... -v -race -coverprofile=coverage.out
+
+      # UI: lint, typecheck, and test
+      - name: UI - install deps
+        working-directory: ./ui
+        run: npm ci
+
+      - name: UI - lint
+        working-directory: ./ui
+        run: npm run lint
+
+      - name: UI - typecheck
+        working-directory: ./ui
+        run: npm run typecheck
+
+      - name: UI - tests
+        working-directory: ./ui
+        run: npm test -- --ci
 
   deploy:
-    name: Build, push, and deploy to Cloud Run
-    needs: [changes]
-    if: needs.changes.outputs.run == 'true'
+    name: Deploy to GCP
     runs-on: ubuntu-latest
+    needs: [build, test]
     env:
       NODE_VERSION: '20'
       GO_VERSION: '1.21'
@@ -144,24 +179,12 @@ jobs:
           cache: true
           cache-dependency-path: api/go.sum
 
-      # Optional: quick sanity build of UI to catch build-time errors prior to container build
-      - name: UI - install and build
-        working-directory: ./ui
-        env:
-          NEXT_OUTPUT: standalone
-          BACKEND_BASE_URL: ${{ env.BACKEND_BASE_URL }}
-        run: |
-          npm ci
-          npm run build
-
       - name: Google Cloud auth
-        if: github.event_name != 'pull_request'
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Setup gcloud CLI
-        if: github.event_name != 'pull_request'
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.PROJECT_ID }}
@@ -186,10 +209,10 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Auth Docker to Artifact Registry
-        if: github.event_name != 'pull_request' && (github.event_name != 'workflow_dispatch' || inputs.run_deploy)
+        if: github.event_name != 'workflow_dispatch' || inputs.run_deploy
         run: gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
 
-      - name: Build image (and push on non-PR) with cache
+      - name: Build image (and push on deploy) with cache
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -202,11 +225,11 @@ jobs:
           tags: ${{ steps.meta.outputs.image }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          push: ${{ github.event_name != 'pull_request' && (github.event_name != 'workflow_dispatch' || inputs.run_deploy) }}
-          load: ${{ github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && !inputs.run_deploy) }}
+          push: ${{ github.event_name != 'workflow_dispatch' || inputs.run_deploy }}
+          load: ${{ github.event_name == 'workflow_dispatch' && !inputs.run_deploy }}
 
       - name: Deploy to Cloud Run
-        if: github.event_name != 'pull_request' && (github.event_name != 'workflow_dispatch' || inputs.run_deploy)
+        if: github.event_name != 'workflow_dispatch' || inputs.run_deploy
         run: |
           gcloud run deploy "$RUN_SERVICE_NAME" \
             --image "${{ steps.meta.outputs.image }}" \
@@ -215,3 +238,44 @@ jobs:
             --allow-unauthenticated \
             --port 3000 \
             --set-env-vars NEXT_TELEMETRY_DISABLED=1,NODE_ENV=production,APP_ENV=production,SEED_ON_START=false
+
+  cleanup:
+    name: Cleanup old images
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: always() && needs.deploy.result == 'success'
+    env:
+      PROJECT_ID: ${{ inputs.project_id || 'YOUR_PROJECT_ID' }}
+      REGION: ${{ inputs.region || 'us-central1' }}
+      GAR_REPO: web-apps
+      RUN_SERVICE_NAME: ${{ inputs.service_name || 'gsdta-web' }}
+    steps:
+      - name: Google Cloud auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Delete old untagged images
+        continue-on-error: true
+        run: |
+          echo "Cleaning up old images from ${REGION}-docker.pkg.dev/${PROJECT_ID}/${GAR_REPO}/${RUN_SERVICE_NAME}"
+          # List all digests and keep only the latest 10 tagged images
+          gcloud artifacts docker images list \
+            "${REGION}-docker.pkg.dev/${PROJECT_ID}/${GAR_REPO}/${RUN_SERVICE_NAME}" \
+            --include-tags \
+            --format="get(digest)" \
+            --sort-by="~UPDATE_TIME" \
+            --limit=999 | tail -n +11 | while read digest; do
+              if [ -n "$digest" ]; then
+                echo "Deleting old image: $digest"
+                gcloud artifacts docker images delete \
+                  "${REGION}-docker.pkg.dev/${PROJECT_ID}/${GAR_REPO}/${RUN_SERVICE_NAME}@${digest}" \
+                  --quiet || true
+              fi
+            done
+          echo "Cleanup complete"

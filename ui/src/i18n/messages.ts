@@ -24,6 +24,7 @@ export const messages: Record<Lang, Record<string, string>> = {
         // Brand
         "brand.full": "Greater San Diego Tamil Academy",
         "brand.short": "GSDTA",
+        "brand.tagline": "Non-profit 501(c)(3) Tax Exempt Organization",
 
         // Footer / Sections
         "footer.quick": "Quick links",
@@ -225,6 +226,7 @@ export const messages: Record<Lang, Record<string, string>> = {
         // Brand
         "brand.full": "GSDTA",
         "brand.short": "GSDTA",
+        "brand.tagline": "Non-profit 501(c)(3) Tax Exempt Organization",
 
         // Footer / Sections
         "footer.quick": "விரைவு இணைப்புகள்",

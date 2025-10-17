@@ -39,17 +39,21 @@ export function Header() {
 
     return (
         <header className="border-b border-gray-200 dark:border-gray-800 bg-white/70 supports-[backdrop-filter]:bg-white/50 dark:bg-black/40 supports-[backdrop-filter]:dark:bg-black/30 backdrop-blur sticky top-0 z-10">
-            <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-4">
-                <Link href="/" className="font-semibold text-gray-900 dark:text-gray-100 max-w-[50vw] lg:max-w-none truncate" onClick={close} title={t("brand.full")} aria-label={t("brand.full")}>
-                    <span className="inline xl:hidden whitespace-nowrap">{t("brand.short")}</span>
-                    <span className="hidden xl:inline whitespace-nowrap">{t("brand.full")}</span>
+            <div className="mx-auto max-w-6xl px-4 py-2 flex items-center justify-between gap-4">
+                <Link href="/" className="text-gray-900 dark:text-gray-100 max-w-[60vw] lg:max-w-none truncate" onClick={close} title={t("brand.full")} aria-label={t("brand.full")}>
+                    {/* Brand title + compact tagline (tagline hidden on small screens to avoid extra height) */}
+                    <span className="block whitespace-nowrap leading-tight">
+                        <span className="inline md:hidden font-semibold">{t("brand.short")}</span>
+                        <span className="hidden md:inline font-semibold">{t("brand.full")}</span>
+                    </span>
+                    <span className="hidden md:block text-[10px] leading-tight text-gray-600 dark:text-gray-300 -mt-0.5">
+                        {t("brand.tagline")}
+                    </span>
                 </Link>
 
                 {/* Desktop nav */}
                 <nav className="hidden sm:flex items-center gap-4 text-sm">
-                    <Link href="/" className="hover:underline text-gray-900 dark:text-gray-100">
-                        {t("nav.home")}
-                    </Link>
+                    {/* Removed explicit Home link (brand already links home) */}
                     {user ? (
                         <>
                             {roleNav[user.role].map((item) => (
@@ -88,7 +92,7 @@ export function Header() {
                             <Link href="/calendar/" className="hover:underline text-gray-900 dark:text-gray-100">{t("nav.calendar")}</Link>
                             <Link href="/textbooks/" className="hover:underline text-gray-900 dark:text-gray-100">{t("nav.textbooks")}</Link>
                             <Link href="/donate/" className="hover:underline text-gray-900 dark:text-gray-100">{t("nav.donate")}</Link>
-                            <Link href="/contact/" className="hover:underline text-gray-900 dark:text-gray-100">{t("nav.contact")}</Link>
+                            {/* Contact intentionally removed from header */}
                             <LanguageSwitcher/>
                             <Link href="/login" className="hover:underline text-gray-900 dark:text-gray-100">
                                 {t("nav.login")}
@@ -125,9 +129,7 @@ export function Header() {
                     className="sm:hidden border-t border-gray-200 dark:border-gray-800 bg-white/90 supports-[backdrop-filter]:bg-white/70 dark:bg-black/50 supports-[backdrop-filter]:dark:bg-black/40 backdrop-blur"
                 >
                     <div className="mx-auto max-w-6xl px-4 py-3 flex flex-col gap-3 text-sm">
-                        <Link href="/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>
-                            {t("nav.home")}
-                        </Link>
+                        {/* Removed explicit Home link */}
                         {user ? (
                             <>
                                 {roleNav[user.role].map((item) => (
@@ -165,7 +167,7 @@ export function Header() {
                                 <Link href="/calendar/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.calendar")}</Link>
                                 <Link href="/textbooks/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.textbooks")}</Link>
                                 <Link href="/donate/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.donate")}</Link>
-                                <Link href="/contact/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.contact")}</Link>
+                                {/* Contact intentionally removed from header */}
                                 <Link href="/login" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>
                                     {t("nav.login")}
                                 </Link>
