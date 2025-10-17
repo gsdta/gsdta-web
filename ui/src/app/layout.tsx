@@ -18,9 +18,57 @@ const notoTamil = Noto_Sans_Tamil({
     variable: "--font-noto-tamil",
 });
 
+// Derive the absolute site URL for metadata and structured data
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/+$/, "");
+
 export const metadata: Metadata = {
-    title: "GSDTA தமிழ் பள்ளி",
+    // Set a base for generating absolute URLs (canonical, OG images, etc.)
+    metadataBase: new URL(SITE_URL),
+    title: {
+        default: "GSDTA தமிழ் பள்ளி",
+        template: "%s | GSDTA தமிழ் பள்ளி",
+    },
     description: "குழந்தைகளுக்கான தமிழ்ப் பயிற்சி — எழுத்து, வாசிப்பு, பேச்சு, எழுத்துத்தல்",
+    keywords: [
+        "GSDTA",
+        "Tamil School",
+        "தமிழ்",
+        "Tamil Education",
+        "Weekend School",
+        "Georgetown",
+        "Saraswathi",
+        "Language School",
+    ],
+    // Use the GSDTA logo for browser tab icon(s)
+    icons: {
+        icon: [
+            { url: "/images/logo.png", type: "image/png" },
+        ],
+        shortcut: "/images/logo.png",
+        apple: "/images/logo.png",
+    },
+    openGraph: {
+        type: "website",
+        url: "/",
+        title: "GSDTA தமிழ் பள்ளி",
+        siteName: "GSDTA Tamil School",
+        description: "குழந்தைகளுக்கான தமிழ்ப் பயிற்சி — எழுத்து, வாசிப்பு, பேச்சு, எழுத்துத்தல்",
+        images: [
+            {
+                url: "/images/logo.png",
+                width: 512,
+                height: 512,
+                alt: "GSDTA Logo",
+            },
+        ],
+        locale: "en_US",
+    },
+    twitter: {
+        card: "summary",
+        title: "GSDTA தமிழ் பள்ளி",
+        description: "குழந்தைகளுக்கான தமிழ்ப் பயிற்சி — எழுத்து, வாசிப்பு, பேச்சு, எழுத்துத்தல்",
+        images: ["/images/logo.png"],
+    },
 };
 
 export const viewport = {
@@ -53,10 +101,6 @@ export default async function RootLayout({
 
     return (
         <html lang={initialLang} className={htmlClass} data-theme={htmlDataTheme}>
-        <head>
-            {/* Allow both light and dark native UI/scrollbars across browsers */}
-            <meta name="color-scheme" content="light dark" />
-        </head>
         <body className={["antialiased", notoTamil.variable].join(" ") }>
         <MockProvider>
             <LanguageProvider>
