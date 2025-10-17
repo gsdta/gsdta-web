@@ -23,7 +23,7 @@ export function HomeCarousel() {
       aria-roledescription="carousel"
       aria-label="Highlights"
     >
-      <h2 className="text-xl font-semibold text-gray-900 mb-3">Highlights</h2>
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">Highlights</h2>
       <div className="relative">
         <ul
           ref={listRef}
@@ -36,14 +36,14 @@ export function HomeCarousel() {
               aria-roledescription="slide"
               aria-label={`${i + 1} of ${slides.length}`}
             >
-              <article className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden h-full flex flex-col">
+              <article className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm overflow-hidden h-full flex flex-col">
                 <div className="relative aspect-[16/9]">
                   <Image src={s.image} alt={s.alt} fill className="object-cover" />
                 </div>
                 <div className="p-4">
-                  <h3 className="text-base font-semibold text-gray-900">{s.title}</h3>
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">{s.title}</h3>
                   {s.description && (
-                    <p className="mt-1 text-sm text-gray-600">{s.description}</p>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">{s.description}</p>
                   )}
                 </div>
               </article>
@@ -53,7 +53,7 @@ export function HomeCarousel() {
         <div className="pointer-events-none absolute inset-y-0 left-0 right-0 flex items-center justify-between">
           <button
             type="button"
-            className="pointer-events-auto m-2 rounded-full bg-white/80 p-2 shadow ring-1 ring-black/10 hover:bg-white"
+            className="pointer-events-auto m-2 rounded-full bg-white/80 dark:bg-gray-800/80 p-2 shadow ring-1 ring-black/10 dark:ring-white/10 hover:bg-white dark:hover:bg-gray-800"
             aria-label="Previous slide"
             onClick={prev}
           >
@@ -61,7 +61,7 @@ export function HomeCarousel() {
           </button>
           <button
             type="button"
-            className="pointer-events-auto m-2 rounded-full bg-white/80 p-2 shadow ring-1 ring-black/10 hover:bg-white"
+            className="pointer-events-auto m-2 rounded-full bg-white/80 dark:bg-gray-800/80 p-2 shadow ring-1 ring-black/10 dark:ring-white/10 hover:bg-white dark:hover:bg-gray-800"
             aria-label="Next slide"
             onClick={next}
           >
@@ -74,7 +74,7 @@ export function HomeCarousel() {
               key={i}
               aria-label={`Go to slide ${i + 1}`}
               aria-current={index === i}
-              className={`h-2 w-2 rounded-full ${index === i ? "bg-rose-600" : "bg-gray-300"}`}
+              className={`h-2 w-2 rounded-full ${index === i ? "bg-rose-600" : "bg-gray-300 dark:bg-gray-700"}`}
               onClick={() => goTo(i)}
             />
           ))}

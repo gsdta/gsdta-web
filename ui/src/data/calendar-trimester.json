@@ -1,0 +1,132 @@
+{
+  "events": [
+    {
+      "date": "2025-08-15",
+      "trimester": "Week-0"
+    },
+    {
+      "date": "2025-08-22",
+      "trimester": "Week-1"
+    },
+    {
+      "date": "2025-08-29",
+      "trimester": "Week-2"
+    },
+    {
+      "date": "2025-09-05",
+      "trimester": "Week-3"
+    },
+    {
+      "date": "2025-09-12",
+      "trimester": "Week-4"
+    },
+    {
+      "date": "2025-09-19",
+      "trimester": "Week-5"
+    },
+    {
+      "date": "2025-10-03",
+      "trimester": "Week-6"
+    },
+    {
+      "date": "2025-10-10",
+      "trimester": "Week-7"
+    },
+    {
+      "date": "2025-10-17",
+      "trimester": "Week-8"
+    },
+    {
+      "date": "2025-10-24",
+      "trimester": "Week-9\n(Revision)"
+    },
+    {
+      "date": "2025-11-07",
+      "trimester": "Week-10\n(Semester -1 Test)"
+    },
+    {
+      "date": "2025-11-14",
+      "trimester": "Week-1"
+    },
+    {
+      "date": "2025-11-21",
+      "trimester": "Week-2"
+    },
+    {
+      "date": "2025-12-05",
+      "trimester": "Week-3"
+    },
+    {
+      "date": "2025-12-12",
+      "trimester": "Week-4"
+    },
+    {
+      "date": "2025-12-19",
+      "trimester": "Week-5"
+    },
+    {
+      "date": "2026-01-09",
+      "trimester": "Week-6"
+    },
+    {
+      "date": "2026-01-16",
+      "trimester": "Week-7"
+    },
+    {
+      "date": "2026-01-23",
+      "trimester": "Week-8"
+    },
+    {
+      "date": "2026-01-30",
+      "trimester": "Week-9\n(Revision)"
+    },
+    {
+      "date": "2026-02-06",
+      "trimester": "Week-10\n(Semester -2 Test)"
+    },
+    {
+      "date": "2026-02-27",
+      "trimester": "Week-1"
+    },
+    {
+      "date": "2026-03-06",
+      "trimester": "Week-2"
+    },
+    {
+      "date": "2026-03-13",
+      "trimester": "Week-3"
+    },
+    {
+      "date": "2026-03-20",
+      "trimester": "Week-4"
+    },
+    {
+      "date": "2026-03-27",
+      "trimester": "Week-5"
+    },
+    {
+      "date": "2026-04-17",
+      "trimester": "Week-6"
+    },
+    {
+      "date": "2026-05-01",
+      "trimester": "Week-7"
+    },
+    {
+      "date": "2026-05-08",
+      "trimester": "Week-8"
+    },
+    {
+      "date": "2026-05-15",
+      "trimester": "Week-9\n(Revision)"
+    },
+    {
+      "date": "2026-05-22",
+      "trimester": "Week-10\n(Semester -3 Test)"
+    },
+    {
+      "date": "2026-05-29",
+      "trimester": "Test make up day"
+    }
+  ]
+}

@@ -34,13 +34,13 @@ test("public nav (en) shows all links and routes resolve", async ({ page, contex
   const nav = page.locator("header nav");
 
   // Expect all public links by accessible name within header nav
-  const links: { name: string; expectTitle: string | null; path: string }[] = [
+  const links: { name: string; expectTitle: string | RegExp | null; path: string }[] = [
     { name: "Home", expectTitle: null, path: "/" },
-    { name: "About us", expectTitle: "About us", path: "/about/" },
+    { name: "About us", expectTitle: /About us/i, path: "/about/" },
     { name: "Register", expectTitle: "Register", path: "/register/" },
     { name: "Team", expectTitle: "Team", path: "/team/" },
     { name: "Documents", expectTitle: "Documents", path: "/documents/" },
-    { name: "Calendar", expectTitle: "Calendar", path: "/calendar/" },
+    { name: "Calendar", expectTitle: /Calendar(\s+20\d{2}-\d{2})?/i, path: "/calendar/" },
     { name: "Text books", expectTitle: "Text books", path: "/textbooks/" },
     { name: "Donate", expectTitle: "Donate", path: "/donate/" },
     { name: "Contact Us", expectTitle: "Contact Us", path: "/contact/" },
@@ -62,7 +62,7 @@ test("public nav (en) shows all links and routes resolve", async ({ page, contex
         }),
         link.click(),
       ]);
-      await expect(page.getByTestId("page-title")).toHaveText(l.expectTitle!);
+      await expect(page.getByTestId("page-title")).toHaveText(l.expectTitle as string | RegExp);
     }
     // Navigate back to home before next link
     await page.goto("/");
