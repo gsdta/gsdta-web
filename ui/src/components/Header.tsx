@@ -92,7 +92,7 @@ export function Header() {
                             <Link href="/calendar/" className="hover:underline text-gray-900 dark:text-gray-100">{t("nav.calendar")}</Link>
                             <Link href="/textbooks/" className="hover:underline text-gray-900 dark:text-gray-100">{t("nav.textbooks")}</Link>
                             <Link href="/donate/" className="hover:underline text-gray-900 dark:text-gray-100">{t("nav.donate")}</Link>
-                            {/* Removed Contact from main menu */}
+                            {/* Contact intentionally removed from header */}
                             <LanguageSwitcher/>
                             <Link href="/login" className="hover:underline text-gray-900 dark:text-gray-100">
                                 {t("nav.login")}
@@ -167,7 +167,7 @@ export function Header() {
                                 <Link href="/calendar/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.calendar")}</Link>
                                 <Link href="/textbooks/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.textbooks")}</Link>
                                 <Link href="/donate/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.donate")}</Link>
-                                {/* Removed Contact from main menu */}
+                                {/* Contact intentionally removed from header */}
                                 <Link href="/login" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>
                                     {t("nav.login")}
                                 </Link>
