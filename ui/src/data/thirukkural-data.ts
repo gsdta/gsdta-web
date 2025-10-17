@@ -1776,7 +1776,7 @@ export const thirukkuralVerses = [
     },
     {
         "number": 254,
-        "kural": "ருளல்லது யாதெனின் கொல்லாமை கோறல் பொருளல்லது அவ்வூன் தினல்.",
+        "kural": "அருளல்லது யாதெனின் கொல்லாமை கோறல் பொருளல்லது அவ்வூன் தினல்.",
         "english_explanation": "If it be asked what is kindness and what its opposite, the answer would be preservation and destruction of life; and therefore it is not right to feed on the flesh (obtained by taking away life).",
         "theme": "புலால் மறுத்தல்",
         "tamil_explanation": "மு.வ : அருள் எது என்றால் ஓர் உயிரையும் கொல்லாமலிருத்தல் அருளல்லாது எது என்றால் உயிர்களைக்கொள்ளுதல் அதன் உடம்பைத் தின்னுதல் அறம் அல்லாதது."
