@@ -15,11 +15,11 @@ export function StatTiles() {
           {stats.map((s) => (
             <li
               key={s.id}
-              className="min-w-[16rem] md:min-w-0 snap-start rounded-lg border border-gray-200 bg-white p-5 shadow-sm"
+              className="min-w-[16rem] md:min-w-0 snap-start rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-sm"
             >
-              <div className="text-base font-semibold text-gray-900">{s.title}</div>
+              <div className="text-base font-semibold text-gray-900 dark:text-gray-100">{s.title}</div>
               {s.subtitle && (
-                <div className="mt-1 text-sm text-gray-600">{s.subtitle}</div>
+                <div className="mt-1 text-sm text-gray-600 dark:text-gray-300">{s.subtitle}</div>
               )}
             </li>
           ))}
@@ -28,4 +28,3 @@ export function StatTiles() {
     </section>
   );
 }
-

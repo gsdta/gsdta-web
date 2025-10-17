@@ -1,0 +1,24 @@
+{
+  "events": [
+    {
+      "date": "2025-08-29",
+      "indiaHolidays": "08/26-27 Vinayaka chaturthi (Tues, wed)"
+    },
+    {
+      "date": "2025-09-26",
+      "indiaHolidays": "09/22-10/02 Navarathiri"
+    },
+    {
+      "date": "2025-10-24",
+      "indiaHolidays": "10/20 - 10/21 Deepavali (Mon. Tue)"
+    },
+    {
+      "date": "2026-01-16",
+      "indiaHolidays": "01/14 Pongal week"
+    },
+    {
+      "date": "2026-04-03",
+      "indiaHolidays": "Good Friday"
+    }
+  ]
+}

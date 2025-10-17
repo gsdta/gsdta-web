@@ -1,0 +1,40 @@
+{
+  "events": [
+    {
+      "date": "2025-08-29",
+      "longWeekend": "09/01 - Monday Labor day Holiday - BOTH"
+    },
+    {
+      "date": "2025-10-31",
+      "longWeekend": "Halloween"
+    },
+    {
+      "date": "2025-11-21",
+      "longWeekend": "Thanks giving long weekend"
+    },
+    {
+      "date": "2025-12-19",
+      "longWeekend": "Christmas long weekend"
+    },
+    {
+      "date": "2026-01-16",
+      "longWeekend": "01/19 - Monday MLK day Long weekend  BOTH"
+    },
+    {
+      "date": "2026-02-13",
+      "longWeekend": "PUSD Dist. Recess Long weekend"
+    },
+    {
+      "date": "2026-04-03",
+      "longWeekend": "PUSD Sping break Long weekend"
+    },
+    {
+      "date": "2026-04-24",
+      "longWeekend": "Annual Day Break"
+    },
+    {
+      "date": "2026-05-22",
+      "longWeekend": "05/25 Memorial day Long weekend - Both"
+    }
+  ]
+}

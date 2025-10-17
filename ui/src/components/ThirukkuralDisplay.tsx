@@ -42,19 +42,19 @@ export function ThirukkuralDisplay({intervalMs = 10000, className = ""}: Thirukk
                 className={`transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
             >
                 <div className="text-center space-y-3">
-                    <div className="text-sm font-medium text-amber-800 bg-amber-50 px-3 py-1 rounded-full inline-block">
+                    <div className="text-sm font-medium text-amber-800 bg-amber-50 dark:text-amber-200 dark:bg-amber-900/30 px-3 py-1 rounded-full inline-block">
                         திருக்குறள் {number} - {theme}
                     </div>
-                    <blockquote className="text-lg font-semibold text-gray-800 leading-relaxed">
+                    <blockquote className="text-lg font-semibold text-gray-800 dark:text-gray-100 leading-relaxed">
                         &ldquo;{kural}&rdquo;
                     </blockquote>
                     {tamil_explanation && (
-                        <p className="text-sm text-gray-800">
+                        <p className="text-sm text-gray-800 dark:text-gray-200">
                             {tamil_explanation}
                         </p>
                     )}
                     {english_explanation && (
-                        <p className="text-sm text-gray-600 italic">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 italic">
                             {english_explanation}
                         </p>
                     )}
