@@ -54,10 +54,10 @@ export function LanguageProvider({children}: { children: React.ReactNode }) {
 export function useI18n(): I18nContextValue {
     const ctx = useContext(Ctx);
     if (ctx) return ctx;
-    // Fallback (no provider): Tamil default, no-op setter
-    const t = (key: string) => messages.ta[key] ?? messages.en[key] ?? key;
+    // Fallback (no provider): default to English for tests and consistency
+    const t = (key: string) => messages.en[key] ?? key;
     return {
-        lang: "ta", setLang: () => {
+        lang: "en", setLang: () => {
         }, t
     };
 }
