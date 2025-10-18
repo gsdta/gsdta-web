@@ -249,7 +249,7 @@ export default function CalendarPage() {
             <button
               onClick={goToPrevious}
               className="p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
-              aria-label="Previous"
+              aria-label={t("calendar.controls.previous")}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -258,7 +258,7 @@ export default function CalendarPage() {
             <button
               onClick={goToNext}
               className="p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
-              aria-label="Next"
+              aria-label={t("calendar.controls.next")}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -347,38 +347,38 @@ export default function CalendarPage() {
                       {events.map((event, eventIndex) => (
                         <div key={eventIndex} className="text-xs">
                           {event.gsdtaEvents && (
-                            <div className="bg-green-100 text-green-800 px-1 py-0.5 rounded truncate border-l-2 border-green-600">
+                            <div data-event="gsdta" className="bg-green-100 text-green-800 px-1 py-0.5 rounded truncate border-l-2 border-green-600">
                               {event.gsdtaEvents}
                             </div>
                           )}
                           {event.indiaHolidays && (
-                            <div className="bg-purple-100 text-purple-800 px-1 py-0.5 rounded truncate border-l-2 border-purple-600">
+                            <div data-event="holiday" className="bg-purple-100 text-purple-800 px-1 py-0.5 rounded truncate border-l-2 border-purple-600">
                               {event.indiaHolidays}
                             </div>
                           )}
                           {event.longWeekend && (
-                            <div className="bg-indigo-100 text-indigo-800 px-1 py-0.5 rounded truncate border-l-2 border-indigo-600">
+                            <div data-event="weekend" className="bg-indigo-100 text-indigo-800 px-1 py-0.5 rounded truncate border-l-2 border-indigo-600">
                               {event.longWeekend}
                             </div>
                           )}
                           {/* Test badges per group, case-insensitive */}
                           {isTrimesterTest(event.trimester) && (
-                            <div className="bg-yellow-100 text-yellow-800 px-1 py-0.5 rounded truncate border-l-2 border-yellow-600">
+                            <div data-event="test" className="bg-yellow-100 text-yellow-800 px-1 py-0.5 rounded truncate border-l-2 border-yellow-600">
                               KG/1 Test Week
                             </div>
                           )}
                           {isSemesterTest(event.semester) && (
-                            <div className="bg-yellow-100 text-yellow-800 px-1 py-0.5 rounded truncate border-l-2 border-yellow-600">
+                            <div data-event="test" className="bg-yellow-100 text-yellow-800 px-1 py-0.5 rounded truncate border-l-2 border-yellow-600">
                               Grades 2-8 Test Week
                             </div>
                           )}
                           {event.trimester && !event.gsdtaEvents && !event.indiaHolidays && !event.longWeekend && !isTrimesterTest(event.trimester) && (
-                            <div className="bg-blue-50 text-blue-700 px-1 py-0.5 rounded truncate text-[10px]">
+                            <div data-event="trimester" className="bg-blue-50 text-blue-700 px-1 py-0.5 rounded truncate text-[10px]">
                               KG-1: {event.trimester.replace('Trimester', 'T')}
                             </div>
                           )}
                           {event.semester && !event.gsdtaEvents && !event.indiaHolidays && !event.longWeekend && !isSemesterTest(event.semester) && (
-                            <div className="bg-teal-50 text-teal-700 px-1 py-0.5 rounded truncate text-[10px]">
+                            <div data-event="semester" className="bg-teal-50 text-teal-700 px-1 py-0.5 rounded truncate text-[10px]">
                               2-8: {event.semester.replace('Semester', 'S')}
                             </div>
                           )}
@@ -428,32 +428,32 @@ export default function CalendarPage() {
                       {events.map((event, eventIndex) => (
                         <div key={eventIndex}>
                           {event.gsdtaEvents && (
-                            <div className="bg-green-100 text-green-800 px-2 py-2 rounded text-sm border-l-4 border-green-600">
+                            <div data-event="gsdta" className="bg-green-100 text-green-800 px-2 py-2 rounded text-sm border-l-4 border-green-600">
                               <div className="font-semibold">{t("calendar.event.gsdta")}</div>
                               <div className="text-xs mt-1">{event.gsdtaEvents}</div>
                             </div>
                           )}
                           {event.indiaHolidays && (
-                            <div className="bg-purple-100 text-purple-800 px-2 py-2 rounded text-sm border-l-4 border-purple-600">
+                            <div data-event="holiday" className="bg-purple-100 text-purple-800 px-2 py-2 rounded text-sm border-l-4 border-purple-600">
                               <div className="font-semibold">{t("calendar.event.indiaHoliday")}</div>
                               <div className="text-xs mt-1">{event.indiaHolidays}</div>
                             </div>
                           )}
                           {event.longWeekend && (
-                            <div className="bg-indigo-100 text-indigo-800 px-2 py-2 rounded text-sm border-l-4 border-indigo-600">
+                            <div data-event="weekend" className="bg-indigo-100 text-indigo-800 px-2 py-2 rounded text-sm border-l-4 border-indigo-600">
                               <div className="font-semibold">{t("calendar.event.longWeekend")}</div>
                               <div className="text-xs mt-1">{event.longWeekend}</div>
                             </div>
                           )}
                           {/* Test badges per group in week view */}
                           {isTrimesterTest(event.trimester) && (
-                            <div className="bg-yellow-100 text-yellow-800 px-2 py-2 rounded text-sm border-l-4 border-yellow-600">
+                            <div data-event="test" className="bg-yellow-100 text-yellow-800 px-2 py-2 rounded text-sm border-l-4 border-yellow-600">
                               <div className="font-semibold">{t("calendar.event.kg1Test")}</div>
                               <div className="text-xs mt-1">{event.trimester}</div>
                             </div>
                           )}
                           {isSemesterTest(event.semester) && (
-                            <div className="bg-yellow-100 text-yellow-800 px-2 py-2 rounded text-sm border-l-4 border-yellow-600">
+                            <div data-event="test" className="bg-yellow-100 text-yellow-800 px-2 py-2 rounded text-sm border-l-4 border-yellow-600">
                               <div className="font-semibold">{t("calendar.event.gradesTest")}</div>
                               <div className="text-xs mt-1">{event.semester}</div>
                             </div>
@@ -490,7 +490,7 @@ export default function CalendarPage() {
 
         {viewMode === "agenda" && (
           <div className="overflow-y-auto h-full">
-            <div className="divide-y divide-gray-200">
+            <div data-testid="agenda-events" className="divide-y divide-gray-200">
               {mergedEvents
                 .filter(event => event.date)
                 .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())

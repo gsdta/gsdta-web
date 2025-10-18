@@ -85,7 +85,7 @@ async function detectInitialLang(): Promise<"en" | "ta"> {
     const hdrs = await headers();
     const accept = hdrs.get("accept-language")?.toLowerCase() ?? "";
     if (accept.startsWith("ta")) return "ta";
-    return "en";
+    return "ta";
 }
 
 export default async function RootLayout({
