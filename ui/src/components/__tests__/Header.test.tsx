@@ -56,6 +56,6 @@ test("renders public nav for anonymous users", () => {
   expect(hasLinkTo("/textbooks/")).toBe(true);
   expect(hasLinkTo("/donate/")).toBe(true);
   // Contact intentionally removed from header
-  // Login link should still be shown
-  expect(hasLinkTo("/login")).toBe(true);
+  // Login temporarily hidden until feature is ready
+  expect(hasLinkTo("/login")).toBe(false);
 });

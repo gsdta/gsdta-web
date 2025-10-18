@@ -21,7 +21,7 @@ export function LanguageProvider({children}: { children: React.ReactNode }) {
             const nav = navigator?.language?.toLowerCase() ?? "";
             if (nav.startsWith("ta")) return "ta";
         }
-        return "en"; // default English
+        return "ta"; // default Tamil
     });
 
     const setLang = (l: Lang) => {

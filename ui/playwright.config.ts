@@ -9,7 +9,7 @@ export default defineConfig({
     fullyParallel: true,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 0,
-    workers: 4, // Slightly reduced for stability
+    workers: 10, // Slightly reduced for stability
     reporter: [["list"], ["html", {outputFolder: "playwright-report", open: "never"}]],
     use: {
         baseURL: "http://localhost:3100",
