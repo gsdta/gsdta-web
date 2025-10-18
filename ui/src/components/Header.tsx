@@ -94,16 +94,26 @@ export function Header() {
                             <Link href="/donate/" className="hover:underline text-gray-900 dark:text-gray-100">{t("nav.donate")}</Link>
                             {/* Contact intentionally removed from header */}
                             <LanguageSwitcher/>
-                            <Link href="/login" className="hover:underline text-gray-900 dark:text-gray-100">
-                                {t("nav.login")}
-                            </Link>
+                            {/* Login hidden for now */}
+                            {/* <Link href="/login" className="hover:underline text-gray-900 dark:text-gray-100">{t("nav.login")}</Link> */}
                         </>
                     )}
                 </nav>
 
-                {/* Mobile controls: show language + hamburger */}
+                {/* Mobile controls: show language + prominent Register + hamburger */}
                 <div className="sm:hidden inline-flex items-center gap-2">
                     <LanguageSwitcher/>
+                    {/* Surface Register outside the mobile menu when logged out */}
+                    {!user && (
+                        <Link
+                            href="/register/"
+                            className="inline-flex items-center justify-center rounded-md bg-rose-600 px-2.5 py-1 text-xs font-medium text-white shadow-sm hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
+                            aria-label={t("nav.register")}
+                            onClick={close}
+                        >
+                            {t("nav.register")}
+                        </Link>
+                    )}
                     <button
                         type="button"
                         className="inline-flex items-center justify-center rounded-md border px-2 py-1 text-sm shadow-sm ring-1 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 ring-black/10 dark:ring-white/10 hover:bg-white dark:hover:bg-gray-800"
@@ -161,16 +171,16 @@ export function Header() {
                         ) : (
                             <>
                                 <Link href="/about/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.about")}</Link>
-                                <Link href="/register/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.register")}</Link>
+                                {/* Register moved to top bar outside the menu */}
+                                {/* <Link href="/register/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.register")}</Link> */}
                                 <Link href="/team/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.team")}</Link>
                                 <Link href="/documents/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.documents")}</Link>
                                 <Link href="/calendar/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.calendar")}</Link>
                                 <Link href="/textbooks/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.textbooks")}</Link>
                                 <Link href="/donate/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.donate")}</Link>
                                 {/* Contact intentionally removed from header */}
-                                <Link href="/login" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>
-                                    {t("nav.login")}
-                                </Link>
+                                {/* Login hidden for now */}
+                                {/* <Link href="/login" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.login")}</Link> */}
                             </>
                         )}
                     </div>

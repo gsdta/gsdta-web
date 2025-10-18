@@ -269,8 +269,8 @@ export const messages: Record<Lang, Record<string, string>> = {
 
         // Home Carousel
         "home.carousel.title": "சிறப்பம்சங்கள்",
-        "home.carousel.hero.title": "கல்வியின் மூலம் தமிழ்ப் பாரம்பரியத்தை வலுப்படுத்துதல்",
-        "home.carousel.hero.description": "எங்கள் துடிப்பான தமிழ் கற்கும் சமூகத்தில் சேருங்கள்",
+        "home.carousel.hero.title": "கல்வியின் மூலம் தமிழ்ப் பாரம்பரியத்தை வலுப்படுத்துவோம்",
+        "home.carousel.hero.description": "வாருங்கள், எங்கள் துடிப்பான தமிழ் கற்கும் சமூகத்தில் சேருங்கள்",
         "home.carousel.impact.title": "உண்மையான தாக்கத்தை உருவாக்குதல்",
         "home.carousel.impact.description": "தமிழ் கல்வி மற்றும் கலாச்சார பாதுகாப்பு மூலம் வாழ்க்கையை மாற்றுதல்",
         "home.carousel.impact.students": "200+ மாணவர்கள்",
@@ -288,7 +288,7 @@ export const messages: Record<Lang, Record<string, string>> = {
         "home.carousel.success.description": "எங்கள் மாணவர்கள் மொழி மற்றும் கலாச்சார அறிவில் சிறந்து விளங்குகின்றனர்",
         "home.carousel.stem.title": "STEM பட்டறைகள்",
         "home.carousel.stem.description": "ஆர்வத்தையும் புதுமையையும் தூண்டும் நேரடி கற்றல்",
-        "home.carousel.cta.title": "எங்களுடன் சேர தயாரா?",
+        "home.carousel.cta.title": "இன்னும் சேரலையா ?",
         "home.carousel.cta.description": "இன்றே சேருங்கள், எங்கள் தமிழ் கற்கும் சமூகத்தின் பகுதியாகுங்கள்",
         "home.carousel.cta.button": "உடனே சேருங்கள்",
 

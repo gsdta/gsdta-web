@@ -40,6 +40,16 @@ export const slides: Slide[] = [
     alt: "Community impact statistics",
   },
   {
+    id: "enrollment-cta",
+    type: "cta",
+    titleKey: "home.carousel.cta.title",
+    descriptionKey: "home.carousel.cta.description",
+    image: "/images/gsdta-registration.jpg",
+    alt: "GSDTA registration and enrollment",
+    link: "/register/",
+    linkTextKey: "home.carousel.cta.button",
+  },
+  {
     id: "programs",
     type: "programs",
     titleKey: "home.carousel.programs.title",
@@ -80,15 +90,5 @@ export const slides: Slide[] = [
     descriptionKey: "home.carousel.stem.description",
     image: "/images/banner-3.png",
     alt: "Children participating in STEM workshop",
-  },
-  {
-    id: "enrollment-cta",
-    type: "cta",
-    titleKey: "home.carousel.cta.title",
-    descriptionKey: "home.carousel.cta.description",
-    image: "/images/gsdta-registration.jpg",
-    alt: "GSDTA registration and enrollment",
-    link: "/enrollment",
-    linkTextKey: "home.carousel.cta.button",
   },
 ];
