@@ -310,3 +310,105 @@ body::after {
 .shadow-soft {
     box-shadow: var(--shadow-soft);
 }
+
+/* --- Legacy Tailwind color helpers -------------------------------------------------------- */
+/*
+ * Many existing components still rely on older Tailwind utility colors (bg-white, border-gray-200, etc.).
+ * To avoid touching every call-site, remap those utilities to the new CSS variables when the document
+ * is in dark mode (either via prefers-color-scheme or a forced theme). We intentionally avoid overriding
+ * elements that already provide an explicit dark: variant so custom component palettes keep working.
+ */
+:root[data-theme="dark"] .bg-white:not([class*="dark:bg"], [class*="dark:bg-"]),
+.dark .bg-white:not([class*="dark:bg"], [class*="dark:bg-"]) {
+    background-color: var(--surface);
+}
+
+:root[data-theme="dark"] .bg-gray-50:not([class*="dark:bg"], [class*="dark:bg-"]),
+.dark .bg-gray-50:not([class*="dark:bg"], [class*="dark:bg-"]) {
+    background-color: color-mix(in srgb, var(--surface-muted) 85%, transparent);
+}
+
+:root[data-theme="dark"] .bg-gray-100:not([class*="dark:bg"], [class*="dark:bg-"]),
+.dark .bg-gray-100:not([class*="dark:bg"], [class*="dark:bg-"]) {
+    background-color: color-mix(in srgb, var(--surface) 75%, transparent);
+}
+
+:root[data-theme="dark"] .bg-gray-200:not([class*="dark:bg"], [class*="dark:bg-"]),
+.dark .bg-gray-200:not([class*="dark:bg"], [class*="dark:bg-"]) {
+    background-color: color-mix(in srgb, var(--surface-muted) 65%, transparent);
+}
+
+:root[data-theme="dark"] .bg-white\/90:not([class*="dark:bg"], [class*="dark:bg-"]),
+.dark .bg-white\/90:not([class*="dark:bg"], [class*="dark:bg-"]) {
+    background-color: color-mix(in srgb, var(--surface) 90%, transparent);
+}
+
+:root[data-theme="dark"] .bg-white\/60:not([class*="dark:bg"], [class*="dark:bg-"]),
+.dark .bg-white\/60:not([class*="dark:bg"], [class*="dark:bg-"]) {
+    background-color: color-mix(in srgb, var(--surface) 60%, transparent);
+}
+
+:root[data-theme="dark"] .bg-white\/50:not([class*="dark:bg"], [class*="dark:bg-"]),
+.dark .bg-white\/50:not([class*="dark:bg"], [class*="dark:bg-"]) {
+    background-color: color-mix(in srgb, var(--surface) 50%, transparent);
+}
+
+:root[data-theme="dark"] .bg-white\/40:not([class*="dark:bg"], [class*="dark:bg-"]),
+.dark .bg-white\/40:not([class*="dark:bg"], [class*="dark:bg-"]) {
+    background-color: color-mix(in srgb, var(--surface) 40%, transparent);
+}
+
+:root[data-theme="dark"] .bg-white\/5:not([class*="dark:bg"], [class*="dark:bg-"]),
+.dark .bg-white\/5:not([class*="dark:bg"], [class*="dark:bg-"]) {
+    background-color: color-mix(in srgb, var(--surface) 5%, transparent);
+}
+
+:root[data-theme="dark"] .border-gray-200:not([class*="dark:border"], [class*="dark:border-"]),
+.dark .border-gray-200:not([class*="dark:border"], [class*="dark:border-"]) {
+    border-color: var(--border);
+}
+
+:root[data-theme="dark"] .border-gray-300:not([class*="dark:border"], [class*="dark:border-"]),
+.dark .border-gray-300:not([class*="dark:border"], [class*="dark:border-"]) {
+    border-color: var(--border-strong);
+}
+
+:root[data-theme="dark"] .text-gray-900:not([class*="dark:text"], [class*="dark:text-"]),
+.dark .text-gray-900:not([class*="dark:text"], [class*="dark:text-"]) {
+    color: var(--foreground);
+}
+
+:root[data-theme="dark"] .text-gray-800:not([class*="dark:text"], [class*="dark:text-"]),
+.dark .text-gray-800:not([class*="dark:text"], [class*="dark:text-"]) {
+    color: var(--foreground);
+}
+
+:root[data-theme="dark"] .text-gray-700:not([class*="dark:text"], [class*="dark:text-"]),
+.dark .text-gray-700:not([class*="dark:text"], [class*="dark:text-"]) {
+    color: var(--muted-strong);
+}
+
+:root[data-theme="dark"] .text-gray-600:not([class*="dark:text"], [class*="dark:text-"]),
+.dark .text-gray-600:not([class*="dark:text"], [class*="dark:text-"]) {
+    color: var(--muted);
+}
+
+:root[data-theme="dark"] .text-gray-500:not([class*="dark:text"], [class*="dark:text-"]),
+.dark .text-gray-500:not([class*="dark:text"], [class*="dark:text-"]) {
+    color: color-mix(in srgb, var(--muted) 80%, transparent);
+}
+
+:root[data-theme="dark"] .hover\:bg-gray-50:hover:not([class*="dark:hover"], [class*="dark:hover-"]):not([class*="dark:bg"], [class*="dark:bg-"]),
+.dark .hover\:bg-gray-50:hover:not([class*="dark:hover"], [class*="dark:hover-"]):not([class*="dark:bg"], [class*="dark:bg-"]) {
+    background-color: color-mix(in srgb, var(--surface-muted) 70%, transparent);
+}
+
+:root[data-theme="dark"] .hover\:bg-gray-100:hover:not([class*="dark:hover"], [class*="dark:hover-"]):not([class*="dark:bg"], [class*="dark:bg-"]),
+.dark .hover\:bg-gray-100:hover:not([class*="dark:hover"], [class*="dark:hover-"]):not([class*="dark:bg"], [class*="dark:bg-"]) {
+    background-color: color-mix(in srgb, var(--surface) 60%, transparent);
+}
+
+:root[data-theme="dark"] .hover\:bg-gray-200:hover:not([class*="dark:hover"], [class*="dark:hover-"]):not([class*="dark:bg"], [class*="dark:bg-"]),
+.dark .hover\:bg-gray-200:hover:not([class*="dark:hover"], [class*="dark:hover-"]):not([class*="dark:bg"], [class*="dark:bg-"]) {
+    background-color: color-mix(in srgb, var(--surface) 50%, transparent);
+}
