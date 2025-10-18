@@ -101,14 +101,16 @@ export default async function RootLayout({
 
     return (
         <html lang={initialLang} className={htmlClass} data-theme={htmlDataTheme}>
-        <body className={["antialiased", notoTamil.variable].join(" ") }>
+        <body className={["antialiased", "text-foreground", notoTamil.variable].join(" ") }>
         <MockProvider>
             <LanguageProvider>
                 <AuthProvider>
                     <Header/>
-                    <main className="mx-auto max-w-6xl px-4 py-6">
-                        {children}
-                        <DevStatus/>
+                    <main className="mx-auto max-w-6xl px-4 py-8">
+                        <div className="page-surface">
+                            {children}
+                            <DevStatus/>
+                        </div>
                     </main>
                     <Footer/>
                 </AuthProvider>

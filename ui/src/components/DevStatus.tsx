@@ -31,7 +31,7 @@ export function DevStatus() {
 
     if (process.env.NODE_ENV !== "development") return null;
     return (
-        <div className="text-xs text-gray-500 mt-2" aria-live="polite">
+        <div className="text-xs text-muted mt-2" aria-live="polite">
             {msg}
         </div>
     );
