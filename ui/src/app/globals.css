@@ -281,6 +281,14 @@ body::after {
     color: var(--foreground);
 }
 
+.text-link {
+    color: var(--link);
+}
+
+.hover\:text-link-hover:hover {
+    color: var(--link-hover);
+}
+
 .text-muted {
     color: var(--muted);
 }
@@ -289,8 +297,16 @@ body::after {
     color: var(--muted-strong);
 }
 
+.text-accent {
+    color: var(--accent);
+}
+
 .border-subtle {
     border-color: var(--border);
+}
+
+.border-accent {
+    border-color: var(--accent);
 }
 
 .bg-surface {
@@ -301,6 +317,14 @@ body::after {
     background: var(--surface-muted);
 }
 
+.bg-accent {
+    background-color: var(--accent);
+}
+
+.bg-accent-soft {
+    background-color: var(--accent-soft);
+}
+
 .surface-panel {
     background-color: var(--surface);
     background-image: none;
@@ -309,6 +333,18 @@ body::after {
 
 .shadow-soft {
     box-shadow: var(--shadow-soft);
+}
+
+.hover\:bg-surface-muted:hover {
+    background: var(--surface-muted);
+}
+
+.hover\:bg-surface:hover {
+    background: var(--surface);
+}
+
+.hover\:bg-accent-strong:hover {
+    background-color: color-mix(in srgb, var(--accent) 92%, black 8%);
 }
 
 /* --- Legacy Tailwind color helpers -------------------------------------------------------- */

@@ -68,31 +68,31 @@ function PersonTile({
   const bioPreview = bio ? bio.substring(0, 100) + "..." : null;
 
   return (
-    <article className="rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm">
+    <article className="rounded-lg border border-subtle bg-surface overflow-hidden shadow-soft transition-colors">
       <div className="flex items-start gap-4 p-4">
         <Image
           src={src}
           alt={name}
           width={64}
           height={64}
-          className="h-16 w-16 flex-shrink-0 rounded-full object-cover border border-gray-200 bg-gray-100"
+          className="h-16 w-16 flex-shrink-0 rounded-full object-cover border border-subtle bg-surface-muted"
           loading="lazy"
         />
         <div className="flex-1 min-w-0">
-          <h3 className="text-base font-semibold text-gray-900">{name}</h3>
+          <h3 className="text-base font-semibold text-foreground">{name}</h3>
           {highlight ? (
-            <p className="text-sm text-green-700 font-medium">{highlight}</p>
+            <p className="text-sm text-accent font-medium">{highlight}</p>
           ) : null}
           {subtitle ? (
-            <p className="text-sm text-gray-600 mt-0.5">{subtitle}</p>
+            <p className="text-sm text-muted mt-0.5">{subtitle}</p>
           ) : null}
           {bioPreview && onExpand ? (
             <div className="mt-2">
-              <p className="text-sm text-gray-700">{bioPreview}</p>
+              <p className="text-sm text-muted-strong">{bioPreview}</p>
               <button
                 type="button"
                 onClick={onExpand}
-                className="mt-1 text-sm text-green-700 font-medium hover:underline"
+                className="mt-1 text-sm font-medium text-link hover:text-link-hover"
               >
                 {t("team.more")}
               </button>
@@ -144,7 +144,7 @@ function PersonDetailView({
   };
 
   return (
-    <article className="rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm">
+    <article className="rounded-lg border border-subtle bg-surface overflow-hidden shadow-soft transition-colors">
       <div className="p-6">
         <div className="flex items-start gap-6 mb-4">
           <Image
@@ -152,22 +152,22 @@ function PersonDetailView({
             alt={name}
             width={128}
             height={128}
-            className="h-32 w-32 flex-shrink-0 rounded-full object-cover border border-gray-200 bg-gray-100"
+            className="h-32 w-32 flex-shrink-0 rounded-full object-cover border border-subtle bg-surface-muted"
             loading="lazy"
           />
           <div className="flex-1 min-w-0">
-            <h3 className="text-2xl font-bold text-gray-900">{name}</h3>
+            <h3 className="text-2xl font-bold text-foreground">{name}</h3>
             {role ? (
-              <p className="text-base text-green-700 font-medium mt-1">{role}</p>
+              <p className="text-base text-accent font-medium mt-1">{role}</p>
             ) : null}
             {location ? (
-              <p className="text-sm text-gray-600 mt-1">{location}</p>
+              <p className="text-sm text-muted mt-1">{location}</p>
             ) : null}
           </div>
         </div>
 
         <div className="prose prose-sm max-w-none">
-          <p className="text-gray-700 whitespace-pre-wrap">{bio}</p>
+          <p className="text-muted-strong whitespace-pre-wrap">{bio}</p>
         </div>
 
         {/* Structured data for the person */}
@@ -179,7 +179,7 @@ function PersonDetailView({
         <button
           type="button"
           onClick={onClose}
-          className="mt-4 px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800 transition-colors"
+          className="mt-4 inline-flex items-center rounded-md bg-accent px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[color:var(--accent)]"
         >
           {t("team.close")}
         </button>
@@ -198,8 +198,8 @@ function CommitteeTile({
   members: { id: string; name: string; gender?: string }[];
 }) {
   return (
-    <article className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-      <h3 className="text-base font-semibold text-gray-900">{name}</h3>
+    <article className="rounded-lg border border-subtle bg-surface p-4 shadow-soft transition-colors">
+      <h3 className="text-base font-semibold text-foreground">{name}</h3>
       <ul className="mt-3 grid gap-3 sm:grid-cols-2">
         {members.map((m) => (
           <li key={`${id}-${m.id}`} className="flex items-center gap-3">
@@ -208,10 +208,10 @@ function CommitteeTile({
               alt={m.name}
               width={40}
               height={40}
-              className="h-10 w-10 rounded-full object-cover border border-gray-200 bg-gray-100"
+              className="h-10 w-10 rounded-full object-cover border border-subtle bg-surface-muted"
               loading="lazy"
             />
-            <span className="text-sm text-gray-800">{m.name}</span>
+            <span className="text-sm text-foreground">{m.name}</span>
           </li>
         ))}
       </ul>
@@ -276,7 +276,7 @@ export default function TeamPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <h1 data-testid="page-title" className="text-2xl font-semibold">
+      <h1 data-testid="page-title" className="text-2xl font-semibold text-foreground">
         {t("team.title")}
       </h1>
 
@@ -289,20 +289,20 @@ export default function TeamPage() {
               const available = s.available !== false;
               return (
                 <li key={s.key} className="flex-shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => onTabClick(s.key)}
-                    className={[
-                      "w-full text-left rounded-md px-3 py-2 border whitespace-nowrap",
-                      isActive
-                        ? "bg-green-700 text-white border-green-700"
-                        : "bg-white hover:bg-gray-50 border-gray-300",
-                      !available ? "opacity-60" : "",
-                    ].join(" ")}
-                    aria-current={isActive ? "page" : undefined}
-                  >
-                    {t(s.labelKey)}
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => onTabClick(s.key)}
+                      className={[
+                        "w-full text-left rounded-md px-3 py-2 border whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[color:var(--accent)]",
+                        isActive
+                          ? "bg-accent text-white border-accent"
+                          : "bg-surface text-foreground border-subtle hover:bg-surface-muted",
+                        !available ? "opacity-60" : "",
+                      ].join(" ")}
+                      aria-current={isActive ? "page" : undefined}
+                    >
+                      {t(s.labelKey)}
+                    </button>
                 </li>
               );
             })}
@@ -362,7 +362,7 @@ export default function TeamPage() {
           {active === "teachers" && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">{t("team.ourTeachers")}</h3>
+                <h3 className="text-lg font-semibold text-foreground">{t("team.ourTeachers")}</h3>
                 <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {people.teachers.map((tch) => (
                     <PersonTile
@@ -377,7 +377,7 @@ export default function TeamPage() {
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">{t("team.assistantTeachers")}</h3>
+                <h3 className="text-lg font-semibold text-foreground">{t("team.assistantTeachers")}</h3>
                 <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {people.assistantTeachers.map((tch) => (
                     <PersonTile
@@ -394,7 +394,7 @@ export default function TeamPage() {
           )}
 
           {(active === "volunteers" || active === "faq") && (
-            <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-900">
+            <div className="rounded-md border border-accent bg-accent-soft p-4 text-accent">
               <p>{t(SECTIONS.find(s => s.key === active)!.labelKey)} are not available yet.</p>
             </div>
           )}
