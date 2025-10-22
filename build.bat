@@ -3,27 +3,12 @@ setlocal
 REM Build script for GSDTA monorepo
 
 if "%1"=="" goto :all
-if "%1"=="api" goto :api
 if "%1"=="ui" goto :ui
 goto :usage
 
 :all
-echo Building entire monorepo...
+echo Building UI...
 echo.
-echo ========================================
-echo Building API
-echo ========================================
-cd api
-call scripts\build.bat
-if %ERRORLEVEL% NEQ 0 (
-  echo API build failed!
-  exit /b 1
-)
-cd ..
-echo.
-echo ========================================
-echo Building UI
-echo ========================================
 cd ui
 call npm run build
 if %ERRORLEVEL% NEQ 0 (
@@ -35,12 +20,6 @@ echo.
 echo Build complete!
 goto :end
 
-:api
-echo Building API...
-cd api
-call scripts\build.bat
-goto :end
-
 :ui
 echo Building UI...
 cd ui
@@ -48,11 +27,10 @@ call npm run build
 goto :end
 
 :usage
-echo Usage: build.bat [api^|ui]
+echo Usage: build.bat [ui]
 echo.
-echo   (no args) - Build both API and UI
-echo   api       - Build API binary only
-echo   ui        - Build UI only
+echo   (no args) - Build UI
+echo   ui        - Build UI
 goto :end
 
 :end

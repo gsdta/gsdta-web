@@ -1,9 +1,8 @@
-# GSDTA Web (Monorepo)
+# GSDTA Web
 
 [![CI](https://github.com/gsdta/gsdta-web/actions/workflows/ci.yml/badge.svg)](https://github.com/gsdta/gsdta-web/actions/workflows/ci.yml)
 
-This repository contains both the UI (Next.js) and API (Go) for the GSDTA web application in a unified monorepo
-structure.
+This repository contains the UI (Next.js) for the GSDTA web application.
 
 ## 📁 Structure
 
@@ -14,15 +13,9 @@ gsdta-web/
 │   ├── public/      # Static assets
 │   ├── tests/       # E2E and unit tests
 │   └── package.json
-├── api/             # Go backend API
-│   ├── cmd/         # Application entrypoints
-│   ├── internal/    # Internal packages
-│   ├── scripts/     # Helper scripts (Windows)
-│   ├── go.mod       # Go dependencies
-│   └── gsdta.sql    # Database schema
 ├── docs/            # Project documentation
 ├── .github/         # CI/CD workflows
-└── Dockerfile       # Single-image deployment (API + UI)
+└── Dockerfile       # Deployment image
 ```
 
 ## 🚀 Quick Start
@@ -30,24 +23,11 @@ gsdta-web/
 ### Prerequisites
 
 - **Node.js 20+** - [Download](https://nodejs.org/)
-- **Go 1.21+** - [Download](https://go.dev/dl/)
 - **Docker** (optional) - [Download](https://www.docker.com/products/docker-desktop)
 
 ### Local Development
 
-#### Option 1: Run API and UI separately (recommended for development)
-
-**Terminal 1 - API:**
-
-```cmd
-cd api
-copy .env.example .env
-scripts\dev.bat
-```
-
-API runs on http://localhost:8080
-
-**Terminal 2 - UI:**
+**UI:**
 
 ```cmd
 cd ui
@@ -58,47 +38,30 @@ npm run dev
 
 UI runs on http://localhost:3000
 
-#### Option 2: Use helper scripts
+#### Use helper scripts
 
 ```cmd
-REM Start API only
-dev.bat api
-
-REM Start UI only
+REM Start UI
 dev.bat ui
-
-REM Start both in Docker with hot reload
-dev.bat both
 ```
 
-#### Option 3: Docker Development Mode
+#### Docker Development Mode
 
 ```cmd
 docker-compose --profile dev up
 ```
 
-- API: http://api-dev:8080
 - UI: http://localhost:3001
 
 ## 🔨 Build
 
-### Build Everything
+### Build UI
 
 ```cmd
 build.bat
 ```
 
-### Build Individually
-
-**API:**
-
-```cmd
-cd api
-scripts\build.bat
-REM Output: api\bin\api.exe
-```
-
-**UI:**
+**Or:**
 
 ```cmd
 cd ui
@@ -166,44 +129,31 @@ npm run typecheck
 
 ### Production (Single Container)
 
-```cmd
-REM Using docker-compose
-docker-compose up --build
-
-REM Using helper script
-docker.bat build
-docker.bat run
-
-REM Access: http://localhost:3000
+```bash
+docker-compose up --build -d ui
+# Access: http://localhost:3000
 ```
 
-### Development (Separate Containers with Hot Reload)
+### Development (Hot Reload)
 
 ```cmd
 docker-compose --profile dev up --build
 
 REM UI: http://localhost:3001
-REM API: internal at api-dev:8080
 ```
 
-See [DOCKER.md](./DOCKER.md) for detailed Docker instructions.
-
-## 📚 Documentation
-
+```bash
+docker-compose --profile dev up --build -d
+# UI: http://localhost:3001
 - [Architecture Overview](./docs/architecture.md)
-- [API & Database Design](./docs/api-db.md)
-- [API Integration Guide](./docs/api-integration.md)
 - [UI Development Guide](./docs/ui.md)
 - [Docker Setup](./DOCKER.md)
 - [Infrastructure & Deployment](./docs/infra.md)
 - [Restructure Guide](./RESTRUCTURE_COMPLETE.md)
-- [Deploy to GCP (Cloud Run)](./docs/gcp-deploy.md)
 
-## 🚢 Deploy to GCP (Cloud Run)
+## 🚢 Deploy
 
-- This repo builds a single image that runs Next.js (port 3000) and the Go API (port 8080) in one container.
-- Use Cloud Run to host it; see [docs/gcp-deploy.md](./docs/gcp-deploy.md) for step-by-step setup, CI/CD, and manual deployment.
-- Important: Cloud Run must route traffic to port `3000`. The UI internally proxies `/api/*` to the API at `/v1/*`.
+See deployment documentation for hosting options.
 
 ## 🌐 Custom Domain on AWS Route 53 (gsdta.com)
 
