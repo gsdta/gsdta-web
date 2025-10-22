@@ -30,11 +30,6 @@ on:
         type: string
         default: ''
         required: false
-      backend_base_url:
-        description: 'Backend base URL used at build-time'
-        type: string
-        default: 'http://localhost:8080/v1'
-        required: false
 
 permissions:
   contents: read
@@ -49,8 +44,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NODE_VERSION: '20'
-      GO_VERSION: '1.21'
-      BACKEND_BASE_URL: ${{ inputs.backend_base_url || 'http://localhost:8080/v1' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -60,28 +53,6 @@ jobs:
           cache: 'npm'
           cache-dependency-path: ui/package-lock.json
 
-      - uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-          cache-dependency-path: api/go.sum
-
-      # API: download dependencies and build
-      - name: API - download deps
-        working-directory: ./api
-        run: go mod download
-
-      - name: API - build
-        working-directory: ./api
-        run: |
-          VERSION=$(git describe --tags --always 2>/dev/null || echo dev)
-          COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo none)
-          BUILDTIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          PKG=github.com/gsdta/api
-          LDFLAGS="-X ${PKG}/internal/version.Version=${VERSION} -X ${PKG}/internal/version.Commit=${COMMIT} -X ${PKG}/internal/version.BuildTime=${BUILDTIME}"
-          go build -ldflags "${LDFLAGS}" -o bin/api ./cmd/api
-
-      # UI: install and build
       - name: UI - install deps
         working-directory: ./ui
         run: npm ci
@@ -90,7 +61,6 @@ jobs:
         working-directory: ./ui
         env:
           NEXT_OUTPUT: standalone
-          BACKEND_BASE_URL: ${{ env.BACKEND_BASE_URL }}
         run: npm run build
 
   test:
@@ -99,7 +69,6 @@ jobs:
     needs: [build]
     env:
       NODE_VERSION: '20'
-      GO_VERSION: '1.21'
     steps:
       - uses: actions/checkout@v4
 
@@ -109,28 +78,6 @@ jobs:
           cache: 'npm'
           cache-dependency-path: ui/package-lock.json
 
-      - uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-          cache-dependency-path: api/go.sum
-
-      # API: lint and test
-      - name: API - download deps
-        working-directory: ./api
-        run: go mod download
-
-      - name: API - lint
-        working-directory: ./api
-        run: |
-          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-          golangci-lint run
-
-      - name: API - tests
-        working-directory: ./api
-        run: go test ./... -v -race -coverprofile=coverage.out
-
-      # UI: lint, typecheck, and test
       - name: UI - install deps
         working-directory: ./ui
         run: npm ci
@@ -157,17 +104,13 @@ jobs:
     needs: [build, test]
     env:
       NODE_VERSION: '20'
-      GO_VERSION: '1.21'
-      # Defaults; can be overridden via workflow_dispatch inputs below
       GCP_PROJECT_ID: playground-personal-474821
       GAR_LOCATION: us-central1
       GAR_REPO: web-apps
       SERVICE_NAME: gsdta-web
-      # Effective values resolved from inputs when manual-run, else fallbacks to defaults above
       PROJECT_ID: ${{ inputs.project_id || 'playground-personal-474821' }}
       REGION: ${{ inputs.region || 'us-central1' }}
       RUN_SERVICE_NAME: ${{ inputs.service_name || 'gsdta-web' }}
-      BACKEND_BASE_URL: ${{ inputs.backend_base_url || 'http://localhost:8080/v1' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -176,12 +119,6 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           cache-dependency-path: ui/package-lock.json
-
-      - uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-          cache-dependency-path: api/go.sum
 
       - name: Google Cloud auth
         uses: google-github-actions/auth@v2
@@ -225,7 +162,6 @@ jobs:
             VERSION=${{ steps.meta.outputs.version }}
             COMMIT=${{ steps.meta.outputs.commit }}
             BUILDTIME=${{ steps.meta.outputs.buildtime }}
-            BACKEND_BASE_URL=${{ env.BACKEND_BASE_URL }}
           tags: ${{ steps.meta.outputs.image }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -241,7 +177,7 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --port 3000 \
-            --set-env-vars NEXT_TELEMETRY_DISABLED=1,NODE_ENV=production,APP_ENV=production,SEED_ON_START=false
+            --set-env-vars NEXT_TELEMETRY_DISABLED=1,NODE_ENV=production
 
   cleanup:
     name: Cleanup old images
