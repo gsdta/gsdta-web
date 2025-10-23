@@ -7,6 +7,14 @@ const nextConfig: NextConfig = {
     output: resolvedOutput,
     images: {unoptimized: true},
     trailingSlash: true,
+    async rewrites() {
+        return [
+            {
+                source: '/api/:path*',
+                destination: 'http://localhost:8080/api/:path*',
+            },
+        ];
+    },
     webpack: (config) => {
         // pdf.js optionally requires 'canvas' when running in Node; we don't need it in the browser build.
         config.resolve = config.resolve || {};
