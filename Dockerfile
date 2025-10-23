@@ -88,7 +88,7 @@ COPY --from=api-builder --chown=nextjs:nodejs /app/.next/static ./api/.next/stat
 
 # Create supervisor configuration
 RUN mkdir -p /etc/supervisor/conf.d \
-  && sh -c 'cat > /etc/supervisor/conf.d/supervisord.conf << "EOF"\n[supervisord]\nnodaemon=true\nuser=root\nlogfile=/dev/null\nlogfile_maxbytes=0\n\n[program:ui]\ncommand=node server.js\ndirectory=/app/ui\nuser=nextjs\nautostart=true\nautorestart=true\nstdout_logfile=/dev/stdout\nstdout_logfile_maxbytes=0\nstderr_logfile=/dev/stderr\nstderr_logfile_maxbytes=0\nenvironment=PORT="3000",HOSTNAME="0.0.0.0"\n\n[program:api]\ncommand=node server.js\ndirectory=/app/api\nuser=nextjs\nautostart=true\nautorestart=true\nstdout_logfile=/dev/stdout\nstdout_logfile_maxbytes=0\nstderr_logfile=/dev/stderr\nstderr_logfile_maxbytes=0\nenvironment=PORT="3001",HOSTNAME="0.0.0.0"\nEOF'
+  && sh -c 'cat > /etc/supervisor/conf.d/supervisord.conf << "EOF"\n[supervisord]\nnodaemon=true\nuser=root\nlogfile=/dev/null\nlogfile_maxbytes=0\n\n[program:ui]\ncommand=node server.js\ndirectory=/app/ui\nuser=nextjs\nautostart=true\nautorestart=true\nstdout_logfile=/dev/stdout\nstdout_logfile_maxbytes=0\nstderr_logfile=/dev/stderr\nstderr_logfile_maxbytes=0\nenvironment=PORT="3000",HOSTNAME="0.0.0.0"\n\n[program:api]\ncommand=node server.js\ndirectory=/app/api\nuser=nextjs\nautostart=true\nautorestart=true\nstdout_logfile=/dev/stdout\nstdout_logfile_maxbytes=0\nstderr_logfile=/dev/stderr\nstderr_logfile_maxbytes=0\nenvironment=PORT="8080",HOSTNAME="0.0.0.0"\nEOF'
 
 # OCI labels
 ARG VERSION=dev
@@ -99,8 +99,8 @@ LABEL org.opencontainers.image.title="gsdta-web" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${COMMIT}"
 
-# Expose both UI and API ports
-EXPOSE 3000 3001
+# Expose UI and API ports
+EXPOSE 3000 8080
 
 # Run supervisor to manage both services
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
