@@ -12,6 +12,7 @@ services:
         BUILDTIME: "${BUILDTIME:-unknown}"
     ports:
       - "3000:3000"
+      - "3001:3001"
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_USE_MSW=false

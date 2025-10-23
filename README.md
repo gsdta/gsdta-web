@@ -14,9 +14,12 @@ gsdta-web/
 │   ├── public/      # Static assets
 │   ├── tests/       # E2E and unit tests
 │   └── package.json
+├── api/             # Next.js API server
+│   ├── src/         # API routes and handlers
+│   └── package.json
 ├── docs/            # Project documentation
 ├── .github/         # CI/CD workflows
-└── Dockerfile       # Deployment image
+└── Dockerfile       # Deployment image (bundles UI + API)
 ```
 
 ## 🚀 Quick Start
@@ -36,12 +39,31 @@ copy .env.example .env.local
 npm install
 npm run dev
 ```
+**API:**
+
+```cmd
+cd api
+npm install
+npm run dev
+```
+
+API runs on http://localhost:3001
+
 
 UI runs on http://localhost:3000
 
 #### Use helper scripts
 
+
+REM Start API (or use start-api.bat)
+cd api
+npm run dev
 ```cmd
+
+#### API Endpoints
+
+- `GET /v1/health` - Health check endpoint
+- `POST /v1/echo` - Echo endpoint that returns request body
 REM Start UI
 dev.bat ui
 ```
@@ -87,14 +109,6 @@ test.bat
 
 ### Test Individually
 
-**API Tests:**
-
-```cmd
-cd api
-scripts\test.bat
-REM Or: go test ./... -v
-```
-
 **UI Unit Tests:**
 
 ```cmd
@@ -108,14 +122,6 @@ npm test
 cd ui
 npm run pw:install  # First time only
 npm run test:e2e
-```
-
-**API Linting:**
-
-```cmd
-cd api
-scripts\lint.bat
-REM Requires: golangci-lint (https://golangci-lint.run/)
 ```
 
 **UI Linting:**
@@ -214,72 +220,40 @@ For a detailed, Windows-friendly walkthrough (cmd and PowerShell) with troublesh
    - Easiest: create a small redirect using an S3 static website + Route 53, or use your registrar’s URL forwarding.
    - Avoid pointing the apex directly unless you follow Google’s guidance for apex mappings. Using a subdomain is simpler.
 
-7) Optional: CORS settings (only if exposing API directly)
-   - In this single-container setup, the UI proxies API calls internally, so CORS isn’t needed.
-   - If you expose the API separately, set `CORS_ALLOWED_ORIGINS=https://app.gsdta.com` on the API.
+7) Optional: CORS settings (only if exposing external APIs)
+   - The current UI is a static/standalone app. When backend APIs are added (via Next.js routes), configure CORS as needed.
 
 ## 🏗️ Architecture
 
-- **UI**: Next.js 14+ with App Router, React Server Components
-- **API**: Go with Chi router, PostgreSQL/in-memory storage
-- **Deployment**: Single Docker image running both services
-    - Next.js serves on port 3000 (public)
-    - Go API runs on port 8080 (internal)
-    - Next.js proxies `/api/*` to internal Go API
+- **UI**: Next.js with App Router and modern React
+- **Deployment**: Single Docker image serving the UI on port 3000
 
 ## 🔧 Environment Variables
-
-### API (.env in api/)
-
-```env
-APP_ENV=development
-PORT=8080
-LOG_LEVEL=debug
-CORS_ALLOWED_ORIGINS=http://localhost:3000
-SEED_ON_START=true
-MIGRATE_ON_START=false
-DATABASE_URL=postgres://user:pass@host:5432/gsdta?sslmode=disable
-```
 
 ### UI (.env.local in ui/)
 
 ```env
 NEXT_PUBLIC_USE_MSW=false
-NEXT_PUBLIC_API_BASE_URL=/api
-BACKEND_BASE_URL=http://localhost:8080/v1
 ```
 
 ## 🤝 Contributing
 
 1. Create a feature branch from `main`
-2. Make changes in `api/` or `ui/` directories
+2. Make changes in `ui/`
 3. Run tests: `test.bat`
-4. Run linting: `npm run lint` (UI) and `scripts\lint.bat` (API)
+4. Run linting: `npm run lint` (UI)
 5. Create a pull request
 
 The CI pipeline will automatically:
 
-- Build and test the API
 - Build and test the UI
-- Build the unified Docker image
+- Build the UI Docker image
 
 ## 📝 License
 
 See [LICENSE](./LICENSE) for details.
 
-## 🔗 API Endpoints
-
-- `GET /healthz` - Health check
-- `GET /v1/version` - API version info
-- `GET /v1/students` - List students
-- `GET /v1/classes` - List classes
-- `POST /v1/enrollments` - Create enrollment
-- See [API docs](./api/README.md) for full endpoint list
-
 ## 💡 Tips
 
 - Use `dev.bat` scripts for quick local development
-- API uses in-memory storage by default (fast, but data resets)
-- Set `DATABASE_URL` to use PostgreSQL for persistent storage
-- The monorepo builds API **first**, then UI in Docker
-- Both services run in a single container for production deployment
+- The UI is currently standalone; backend APIs will be added later using Next.js route handlers/app router
