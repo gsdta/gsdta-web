@@ -51,7 +51,17 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: ui/package-lock.json
+          cache-dependency-path: '**/package-lock.json'
+
+      - name: API - install deps
+        working-directory: ./api
+        run: npm ci
+
+      - name: API - build
+        working-directory: ./api
+        env:
+          NEXT_OUTPUT: standalone
+        run: npm run build
 
       - name: UI - install deps
         working-directory: ./ui
@@ -76,7 +86,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: ui/package-lock.json
+          cache-dependency-path: '**/package-lock.json'
 
       - name: UI - install deps
         working-directory: ./ui
@@ -155,7 +165,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: ui/package-lock.json
+          cache-dependency-path: '**/package-lock.json'
 
       - name: Google Cloud auth
         uses: google-github-actions/auth@v2
