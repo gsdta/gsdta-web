@@ -78,8 +78,8 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Install Playwright browsers
-        uses: microsoft/playwright-github-action@v1
+      - name: Install Playwright browsers (with system deps)
+        run: npx playwright install --with-deps
 
       - name: Unit tests
         run: npm test --if-present
