@@ -2,267 +2,167 @@ name: Deploy
 
 on:
   push:
-    branches: [ main ]
+    branches: ["main"]
   workflow_dispatch:
     inputs:
       run_deploy:
-        description: 'On manual run, push image and deploy to Cloud Run? (false = build only)'
-        type: boolean
-        default: true
+        description: 'Actually deploy to Cloud Run'
         required: false
+        default: 'true'
       image_tag:
-        description: 'Optional image tag (defaults to current commit SHA)'
-        type: string
-        default: ''
+        description: 'Custom image tag (defaults to commit SHA)'
         required: false
-      project_id:
-        description: 'Override GCP project ID (defaults to env.GCP_PROJECT_ID)'
-        type: string
         default: ''
-        required: false
-      region:
-        description: 'Override region (defaults to env.GAR_LOCATION)'
-        type: string
-        default: ''
-        required: false
-      service_name:
-        description: 'Override Cloud Run service name (defaults to env.SERVICE_NAME)'
-        type: string
-        default: ''
-        required: false
 
-permissions:
-  contents: read
-
-concurrency:
-  group: deploy-${{ github.ref }}
-  cancel-in-progress: false
+env:
+  NODE_VERSION: 20
+  GCP_PROJECT_ID: YOUR_PROJECT_ID
+  GAR_LOCATION: us-central1
+  GAR_REPO: web-apps
+  SERVICE_NAME: gsdta-web
 
 jobs:
-  build:
-    name: Build and verify
+  api:
+    name: API - Build & Test
     runs-on: ubuntu-latest
-    env:
-      NODE_VERSION: '20'
+    defaults:
+      run:
+        working-directory: api
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: '**/package-lock.json'
+          cache-dependency-path: api/package-lock.json
 
-      - name: API - install deps
-        working-directory: ./api
+      - name: Install dependencies
         run: npm ci
 
-      - name: API - build
-        working-directory: ./api
-        env:
-          NEXT_OUTPUT: standalone
-        run: npm run build
-
-      - name: UI - install deps
-        working-directory: ./ui
-        run: npm ci
-
-      - name: UI - build
-        working-directory: ./ui
-        env:
-          NEXT_OUTPUT: standalone
-        run: npm run build
-
-  test:
-    name: Run tests
-    runs-on: ubuntu-latest
-    needs: [build]
-    env:
-      NODE_VERSION: '20'
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: '**/package-lock.json'
-
-      - name: UI - install deps
-        working-directory: ./ui
-        run: npm ci
-
-      - name: UI - lint
-        working-directory: ./ui
+      - name: Lint
         run: npm run lint
 
-      - name: UI - typecheck
-        working-directory: ./ui
+      - name: Typecheck
         run: npm run typecheck
 
-      - name: UI - tests
-        working-directory: ./ui
-        run: npm test -- --ci
+      - name: E2E (Cucumber)
+        run: npm run test:e2e
 
-      - name: UI - e2e tests
-        working-directory: ./ui
-        run: npm run e2e:ci
-
-      - name: Upload Playwright HTML report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: ui/playwright-report
-          if-no-files-found: ignore
-          retention-days: 7
-
-      - name: Upload Playwright traces and error context
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-traces
-          path: |
-            ui/test-results/**/*.zip
-            ui/test-results/**/error-context.md
-          if-no-files-found: ignore
-          retention-days: 7
-
-      - name: Upload Playwright JUnit XML
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-junit
-          path: ui/playwright-results.xml
-          if-no-files-found: ignore
-          retention-days: 7
-
-      - name: Summarize E2E artifacts
-        if: always()
-        run: |
-          echo "Playwright artifacts uploaded:" >> $GITHUB_STEP_SUMMARY
-          echo "- HTML report: 'playwright-report' artifact" >> $GITHUB_STEP_SUMMARY
-          echo "- Traces: 'playwright-traces' artifact (includes .zip and error-context.md)" >> $GITHUB_STEP_SUMMARY
-          echo "- JUnit XML: 'playwright-junit' artifact (playwright-results.xml)" >> $GITHUB_STEP_SUMMARY
-
-  deploy:
-    name: Deploy to GCP
+  ui:
+    name: UI - Build & Test
     runs-on: ubuntu-latest
-    needs: [build, test]
-    env:
-      NODE_VERSION: '20'
-      GCP_PROJECT_ID: YOUR_PROJECT_ID
-      GAR_LOCATION: us-central1
-      GAR_REPO: web-apps
-      SERVICE_NAME: gsdta-web
-      PROJECT_ID: ${{ inputs.project_id || 'YOUR_PROJECT_ID' }}
-      REGION: ${{ inputs.region || 'us-central1' }}
-      RUN_SERVICE_NAME: ${{ inputs.service_name || 'gsdta-web' }}
+    needs: api
+    defaults:
+      run:
+        working-directory: ui
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: '**/package-lock.json'
+          cache-dependency-path: ui/package-lock.json
 
-      - name: Google Cloud auth
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Install Playwright browsers
+        uses: microsoft/playwright-github-action@v1
+
+      - name: Unit tests
+        run: npm test --if-present
+
+      - name: E2E (Playwright)
+        run: npm run e2e:ci
+
+  docker:
+    name: Build & Push Docker image
+    runs-on: ubuntu-latest
+    needs: ui
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      image_uri: ${{ steps.meta.outputs.image_uri }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Google Auth
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Setup gcloud CLI
+      - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ env.PROJECT_ID }}
 
-      - name: Compute image URI and build metadata
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.GAR_LOCATION }}-docker.pkg.dev --quiet
+
+      - name: Compute metadata
         id: meta
-        env:
-          INPUT_IMAGE_TAG: ${{ inputs.image_tag }}
         run: |
-          VERSION=$(git describe --tags --always 2>/dev/null || echo dev)
-          COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo none)
-          BUILDTIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          TAG="$INPUT_IMAGE_TAG"; [ -z "$TAG" ] && TAG="$GITHUB_SHA"
-          IMAGE_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/${GAR_REPO}/${RUN_SERVICE_NAME}:${TAG}"
-          echo "image=$IMAGE_URI" >> $GITHUB_OUTPUT
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          COMMIT=${GITHUB_SHA::7}
+          VERSION=$(git describe --tags --always || echo dev)
+          BUILDTIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then TAG='${{ github.event.inputs.image_tag }}'; else TAG=""; fi
+          if [ -z "$TAG" ]; then TAG=$COMMIT; fi
           echo "commit=$COMMIT" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "buildtime=$BUILDTIME" >> $GITHUB_OUTPUT
-          echo "Will build: $IMAGE_URI (version=$VERSION commit=$COMMIT buildtime=$BUILDTIME)"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "image_uri=${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO }}/${{ env.SERVICE_NAME }}:$TAG" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Auth Docker to Artifact Registry
-        if: github.event_name != 'workflow_dispatch' || inputs.run_deploy
-        run: gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
-
-      - name: Build image (and push on deploy) with cache
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Dockerfile
-          build-args: |
-            VERSION=${{ steps.meta.outputs.version }}
-            COMMIT=${{ steps.meta.outputs.commit }}
-            BUILDTIME=${{ steps.meta.outputs.buildtime }}
-          tags: ${{ steps.meta.outputs.image }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          push: ${{ github.event_name != 'workflow_dispatch' || inputs.run_deploy }}
-          load: ${{ github.event_name == 'workflow_dispatch' && !inputs.run_deploy }}
-
-      - name: Deploy to Cloud Run
-        if: github.event_name != 'workflow_dispatch' || inputs.run_deploy
+      - name: Build image
         run: |
-          gcloud run deploy "$RUN_SERVICE_NAME" \
-            --image "${{ steps.meta.outputs.image }}" \
-            --region "$REGION" \
-            --platform managed \
-            --allow-unauthenticated \
-            --port 3000 \
-            --set-env-vars NEXT_TELEMETRY_DISABLED=1,NODE_ENV=production
+          docker build \
+            --build-arg VERSION=${{ steps.meta.outputs.version }} \
+            --build-arg COMMIT=${{ steps.meta.outputs.commit }} \
+            --build-arg BUILDTIME=${{ steps.meta.outputs.buildtime }} \
+            -t ${{ steps.meta.outputs.image_uri }} .
 
-  cleanup:
-    name: Cleanup old images
+      - name: Push image
+        if: ${{ github.event_name == 'push' || github.event.inputs.run_deploy == 'true' }}
+        run: docker push ${{ steps.meta.outputs.image_uri }}
+
+  deploy:
+    name: Deploy to Cloud Run
     runs-on: ubuntu-latest
-    needs: [deploy]
-    if: always() && needs.deploy.result == 'success'
-    env:
-      PROJECT_ID: ${{ inputs.project_id || 'YOUR_PROJECT_ID' }}
-      REGION: ${{ inputs.region || 'us-central1' }}
-      GAR_REPO: web-apps
-      RUN_SERVICE_NAME: ${{ inputs.service_name || 'gsdta-web' }}
+    needs: docker
+    if: ${{ github.event_name == 'push' || github.event.inputs.run_deploy == 'true' }}
+    permissions:
+      contents: read
+      id-token: write
     steps:
-      - name: Google Cloud auth
+      - name: Google Auth
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Setup gcloud CLI
+      - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ env.PROJECT_ID }}
 
-      - name: Delete old untagged images
-        continue-on-error: true
+      - name: Deploy
         run: |
-          echo "Cleaning up old images from ${REGION}-docker.pkg.dev/${PROJECT_ID}/${GAR_REPO}/${RUN_SERVICE_NAME}"
-          # List all digests and keep only the latest 10 tagged images
-          gcloud artifacts docker images list \
-            "${REGION}-docker.pkg.dev/${PROJECT_ID}/${GAR_REPO}/${RUN_SERVICE_NAME}" \
-            --include-tags \
-            --format="get(digest)" \
-            --sort-by="~UPDATE_TIME" \
-            --limit=999 | tail -n +11 | while read digest; do
-              if [ -n "$digest" ]; then
-                echo "Deleting old image: $digest"
-                gcloud artifacts docker images delete \
-                  "${REGION}-docker.pkg.dev/${PROJECT_ID}/${GAR_REPO}/${RUN_SERVICE_NAME}@${digest}" \
-                  --quiet || true
-              fi
-            done
-          echo "Cleanup complete"
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image ${{ needs.docker.outputs.image_uri }} \
+            --region ${{ env.GAR_LOCATION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --port 3000 \
+            --set-env-vars NEXT_TELEMETRY_DISABLED=1,NODE_ENV=production
