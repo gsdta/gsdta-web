@@ -1,22 +1,4 @@
 {
-  "indexes": [
-    {
-      "collectionGroup": "registrations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "metadata.status", "order": "ASCENDING" },
-        { "fieldPath": "metadata.createdAt", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "registrations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "school.tamil.enrollingGrade", "order": "ASCENDING" },
-        { "fieldPath": "metadata.createdAt", "order": "DESCENDING" }
-      ]
-    }
-  ],
-  "fieldOverrides": []
+  "indexes": [],
+  "movedTo": "persistence/firestore.indexes.json"
 }
-
