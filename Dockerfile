@@ -88,7 +88,37 @@ COPY --from=api-builder --chown=nextjs:nodejs /app/.next/static ./api/.next/stat
 
 # Create supervisor configuration
 RUN mkdir -p /etc/supervisor/conf.d \
-  && sh -c 'cat > /etc/supervisor/conf.d/supervisord.conf << "EOF"\n[supervisord]\nnodaemon=true\nuser=root\nlogfile=/dev/null\nlogfile_maxbytes=0\n\n[program:ui]\ncommand=node server.js\ndirectory=/app/ui\nuser=nextjs\nautostart=true\nautorestart=true\nstdout_logfile=/dev/stdout\nstdout_logfile_maxbytes=0\nstderr_logfile=/dev/stderr\nstderr_logfile_maxbytes=0\nenvironment=PORT="3000",HOSTNAME="0.0.0.0"\n\n[program:api]\ncommand=node server.js\ndirectory=/app/api\nuser=nextjs\nautostart=true\nautorestart=true\nstdout_logfile=/dev/stdout\nstdout_logfile_maxbytes=0\nstderr_logfile=/dev/stderr\nstderr_logfile_maxbytes=0\nenvironment=PORT="8080",HOSTNAME="0.0.0.0"\nEOF'
+  && cat > /etc/supervisor/conf.d/supervisord.conf <<'EOF'
+[supervisord]
+nodaemon=true
+user=root
+logfile=/dev/null
+logfile_maxbytes=0
+
+[program:ui]
+command=node server.js
+directory=/app/ui
+user=nextjs
+autostart=true
+autorestart=true
+stdout_logfile=/dev/stdout
+stdout_logfile_maxbytes=0
+stderr_logfile=/dev/stderr
+stderr_logfile_maxbytes=0
+environment=PORT="3000",HOSTNAME="0.0.0.0"
+
+[program:api]
+command=node server.js
+directory=/app/api
+user=nextjs
+autostart=true
+autorestart=true
+stdout_logfile=/dev/stdout
+stdout_logfile_maxbytes=0
+stderr_logfile=/dev/stderr
+stderr_logfile_maxbytes=0
+environment=PORT="8080",HOSTNAME="0.0.0.0"
+EOF
 
 # OCI labels
 ARG VERSION=dev
