@@ -1,0 +1,67 @@
+import assert from 'node:assert';
+import { When, Then, Before } from '@cucumber/cucumber';
+import type { DataTable } from '@cucumber/cucumber';
+
+const BASE_URL = process.env.BASE_URL || 'http://localhost:8080';
+
+let lastResponse: Response | undefined;
+let lastJson: unknown;
+
+function resolveUrl(path: string) {
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  return `${BASE_URL}${path}`;
+}
+
+function getByPath(obj: unknown, path: string): unknown {
+  const keys = path.split('.');
+  let curr: unknown = obj;
+  for (const key of keys) {
+    if (typeof curr === 'object' && curr !== null && key in (curr as Record<string, unknown>)) {
+      curr = (curr as Record<string, unknown>)[key];
+    } else {
+      return undefined;
+    }
+  }
+  return curr;
+}
+
+Before(function () {
+  lastResponse = undefined;
+  lastJson = undefined;
+});
+
+When('I send a GET request to {string}', async function (path: string) {
+  const url = resolveUrl(path);
+  lastResponse = await fetch(url);
+});
+
+When('I send a POST request to {string} with JSON body:', async function (path: string, body: string) {
+  const url = resolveUrl(path);
+  lastResponse = await fetch(url, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body,
+  });
+});
+
+Then('the response status should be {int}', async function (status: number) {
+  assert(lastResponse, 'No response received');
+  assert.strictEqual(lastResponse.status, status);
+});
+
+Then('the JSON response should have properties:', async function (table: DataTable) {
+  assert(lastResponse, 'No response received');
+  lastJson = await lastResponse.json();
+  const jsonObj = lastJson as Record<string, unknown>;
+  for (const [property, type] of table.rows()) {
+    const value = jsonObj[property];
+    assert.notStrictEqual(value, undefined, `Expected property '${property}' to exist`);
+    assert.strictEqual(typeof value, type, `Expected property '${property}' to be of type '${type}', got '${typeof value}'`);
+  }
+});
+
+Then('the JSON path {string} should equal {string}', async function (jsonPath: string, expected: string) {
+  const json = (lastJson ?? (await lastResponse?.json())) as unknown;
+  const value = getByPath(json, jsonPath);
+  assert.strictEqual(String(value), expected);
+});
