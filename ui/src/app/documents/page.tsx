@@ -159,7 +159,8 @@ export default function DocumentsPage() {
           ) : (
             <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-900">
               <p>
-                {currentLabel} are not available yet.
+                {/* Localized: e.g., "Financial Reports இன்னும் கிடைக்கவில்லை." */}
+                {currentLabel} {t("common.notAvailableYet")}
               </p>
             </div>
           )}
