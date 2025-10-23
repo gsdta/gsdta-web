@@ -138,13 +138,13 @@ firebase emulators:start --only firestore
 
 Set in `.env.local`:
 ```
-FIRESTORE_EMULATOR_HOST=localhost:8080
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8889
 GOOGLE_CLOUD_PROJECT=gsdta-web
 ```
 
 **5. Create Firestore Indexes:**
 
-Create `firestore.indexes.json`:
+Create `persistence/firestore.indexes.json`:
 ```json
 {
   "indexes": [
@@ -181,8 +181,8 @@ firebase deploy --only firestore:indexes
 
 **6. Create Security Rules:**
 
-Create `firestore.rules`:
-```javascript
+Create `persistence/firestore.rules`:
+```text
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -205,7 +205,7 @@ firebase deploy --only firestore:rules
 Verification:
 - [ ] Firestore database created in us-central1
 - [ ] Service account has datastore.user role
-- [ ] Emulator runs locally on port 8080
+- [ ] Emulator runs locally on port 8889
 - [ ] Indexes deployed successfully
 - [ ] Security rules deployed successfully
 
@@ -392,7 +392,7 @@ firebase emulators:start --only firestore
 ```
 
 Environment for local dev:
-- FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 (or printed port)
+- FIRESTORE_EMULATOR_HOST=127.0.0.1:8889 (or the port printed by the emulator)
 - GOOGLE_CLOUD_PROJECT=<PROJECT_ID>
 
 ---
