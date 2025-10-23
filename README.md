@@ -1,9 +1,9 @@
-# GSDTA Web (Monorepo)
+# GSDTA Web
 
-[![CI](https://github.com/gsdta/gsdta-web/actions/workflows/ci.yml/badge.svg)](https://github.com/gsdta/gsdta-web/actions/workflows/ci.yml)
+[![UI E2E (develop)](https://github.com/gsdta/gsdta-web/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/gsdta/gsdta-web/actions/workflows/ci.yml)
+[![UI E2E (main)](https://github.com/gsdta/gsdta-web/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/gsdta/gsdta-web/actions/workflows/deploy.yml)
 
-This repository contains both the UI (Next.js) and API (Go) for the GSDTA web application in a unified monorepo
-structure.
+This repository contains the UI (Next.js) for the GSDTA web application.
 
 ## 📁 Structure
 
@@ -14,15 +14,12 @@ gsdta-web/
 │   ├── public/      # Static assets
 │   ├── tests/       # E2E and unit tests
 │   └── package.json
-├── api/             # Go backend API
-│   ├── cmd/         # Application entrypoints
-│   ├── internal/    # Internal packages
-│   ├── scripts/     # Helper scripts (Windows)
-│   ├── go.mod       # Go dependencies
-│   └── gsdta.sql    # Database schema
+├── api/             # Next.js API server
+│   ├── src/         # API routes and handlers
+│   └── package.json
 ├── docs/            # Project documentation
 ├── .github/         # CI/CD workflows
-└── Dockerfile       # Single-image deployment (API + UI)
+└── Dockerfile       # Deployment image (bundles UI + API)
 ```
 
 ## 🚀 Quick Start
@@ -30,24 +27,11 @@ gsdta-web/
 ### Prerequisites
 
 - **Node.js 20+** - [Download](https://nodejs.org/)
-- **Go 1.21+** - [Download](https://go.dev/dl/)
 - **Docker** (optional) - [Download](https://www.docker.com/products/docker-desktop)
 
 ### Local Development
 
-#### Option 1: Run API and UI separately (recommended for development)
-
-**Terminal 1 - API:**
-
-```cmd
-cd api
-copy .env.example .env
-scripts\dev.bat
-```
-
-API runs on http://localhost:8080
-
-**Terminal 2 - UI:**
+**UI:**
 
 ```cmd
 cd ui
@@ -55,50 +39,52 @@ copy .env.example .env.local
 npm install
 npm run dev
 ```
+**API:**
+
+```cmd
+cd api
+npm install
+npm run dev
+```
+
+API runs on http://localhost:3001
+
 
 UI runs on http://localhost:3000
 
-#### Option 2: Use helper scripts
+#### Use helper scripts
 
+
+REM Start API (or use start-api.bat)
+cd api
+npm run dev
 ```cmd
-REM Start API only
-dev.bat api
 
-REM Start UI only
+#### API Endpoints
+
+- `GET /v1/health` - Health check endpoint
+- `POST /v1/echo` - Echo endpoint that returns request body
+REM Start UI
 dev.bat ui
-
-REM Start both in Docker with hot reload
-dev.bat both
 ```
 
-#### Option 3: Docker Development Mode
+#### Docker Development Mode
 
 ```cmd
 docker-compose --profile dev up
 ```
 
-- API: http://api-dev:8080
 - UI: http://localhost:3001
 
 ## 🔨 Build
 
-### Build Everything
+### Build UI
 
 ```cmd
 build.bat
 ```
 
-### Build Individually
-
-**API:**
-
-```cmd
-cd api
-scripts\build.bat
-REM Output: api\bin\api.exe
-```
-
-**UI:**
+**Or:**
 
 ```cmd
 cd ui
@@ -123,14 +109,6 @@ test.bat
 
 ### Test Individually
 
-**API Tests:**
-
-```cmd
-cd api
-scripts\test.bat
-REM Or: go test ./... -v
-```
-
 **UI Unit Tests:**
 
 ```cmd
@@ -146,14 +124,6 @@ npm run pw:install  # First time only
 npm run test:e2e
 ```
 
-**API Linting:**
-
-```cmd
-cd api
-scripts\lint.bat
-REM Requires: golangci-lint (https://golangci-lint.run/)
-```
-
 **UI Linting:**
 
 ```cmd
@@ -166,44 +136,31 @@ npm run typecheck
 
 ### Production (Single Container)
 
-```cmd
-REM Using docker-compose
-docker-compose up --build
-
-REM Using helper script
-docker.bat build
-docker.bat run
-
-REM Access: http://localhost:3000
+```bash
+docker-compose up --build -d ui
+# Access: http://localhost:3000
 ```
 
-### Development (Separate Containers with Hot Reload)
+### Development (Hot Reload)
 
 ```cmd
 docker-compose --profile dev up --build
 
 REM UI: http://localhost:3001
-REM API: internal at api-dev:8080
 ```
 
-See [DOCKER.md](./DOCKER.md) for detailed Docker instructions.
-
-## 📚 Documentation
-
+```bash
+docker-compose --profile dev up --build -d
+# UI: http://localhost:3001
 - [Architecture Overview](./docs/architecture.md)
-- [API & Database Design](./docs/api-db.md)
-- [API Integration Guide](./docs/api-integration.md)
 - [UI Development Guide](./docs/ui.md)
 - [Docker Setup](./DOCKER.md)
 - [Infrastructure & Deployment](./docs/infra.md)
 - [Restructure Guide](./RESTRUCTURE_COMPLETE.md)
-- [Deploy to GCP (Cloud Run)](./docs/gcp-deploy.md)
 
-## 🚢 Deploy to GCP (Cloud Run)
+## 🚢 Deploy
 
-- This repo builds a single image that runs Next.js (port 3000) and the Go API (port 8080) in one container.
-- Use Cloud Run to host it; see [docs/gcp-deploy.md](./docs/gcp-deploy.md) for step-by-step setup, CI/CD, and manual deployment.
-- Important: Cloud Run must route traffic to port `3000`. The UI internally proxies `/api/*` to the API at `/v1/*`.
+See deployment documentation for hosting options.
 
 ## 🌐 Custom Domain on AWS Route 53 (gsdta.com)
 
@@ -263,72 +220,40 @@ For a detailed, Windows-friendly walkthrough (cmd and PowerShell) with troublesh
    - Easiest: create a small redirect using an S3 static website + Route 53, or use your registrar’s URL forwarding.
    - Avoid pointing the apex directly unless you follow Google’s guidance for apex mappings. Using a subdomain is simpler.
 
-7) Optional: CORS settings (only if exposing API directly)
-   - In this single-container setup, the UI proxies API calls internally, so CORS isn’t needed.
-   - If you expose the API separately, set `CORS_ALLOWED_ORIGINS=https://app.gsdta.com` on the API.
+7) Optional: CORS settings (only if exposing external APIs)
+   - The current UI is a static/standalone app. When backend APIs are added (via Next.js routes), configure CORS as needed.
 
 ## 🏗️ Architecture
 
-- **UI**: Next.js 14+ with App Router, React Server Components
-- **API**: Go with Chi router, PostgreSQL/in-memory storage
-- **Deployment**: Single Docker image running both services
-    - Next.js serves on port 3000 (public)
-    - Go API runs on port 8080 (internal)
-    - Next.js proxies `/api/*` to internal Go API
+- **UI**: Next.js with App Router and modern React
+- **Deployment**: Single Docker image serving the UI on port 3000
 
 ## 🔧 Environment Variables
-
-### API (.env in api/)
-
-```env
-APP_ENV=development
-PORT=8080
-LOG_LEVEL=debug
-CORS_ALLOWED_ORIGINS=http://localhost:3000
-SEED_ON_START=true
-MIGRATE_ON_START=false
-DATABASE_URL=postgres://user:pass@host:5432/gsdta?sslmode=disable
-```
 
 ### UI (.env.local in ui/)
 
 ```env
 NEXT_PUBLIC_USE_MSW=false
-NEXT_PUBLIC_API_BASE_URL=/api
-BACKEND_BASE_URL=http://localhost:8080/v1
 ```
 
 ## 🤝 Contributing
 
 1. Create a feature branch from `main`
-2. Make changes in `api/` or `ui/` directories
+2. Make changes in `ui/`
 3. Run tests: `test.bat`
-4. Run linting: `npm run lint` (UI) and `scripts\lint.bat` (API)
+4. Run linting: `npm run lint` (UI)
 5. Create a pull request
 
 The CI pipeline will automatically:
 
-- Build and test the API
 - Build and test the UI
-- Build the unified Docker image
+- Build the UI Docker image
 
 ## 📝 License
 
 See [LICENSE](./LICENSE) for details.
 
-## 🔗 API Endpoints
-
-- `GET /healthz` - Health check
-- `GET /v1/version` - API version info
-- `GET /v1/students` - List students
-- `GET /v1/classes` - List classes
-- `POST /v1/enrollments` - Create enrollment
-- See [API docs](./api/README.md) for full endpoint list
-
 ## 💡 Tips
 
 - Use `dev.bat` scripts for quick local development
-- API uses in-memory storage by default (fast, but data resets)
-- Set `DATABASE_URL` to use PostgreSQL for persistent storage
-- The monorepo builds API **first**, then UI in Docker
-- Both services run in a single container for production deployment
+- The UI is currently standalone; backend APIs will be added later using Next.js route handlers/app router
