@@ -50,3 +50,40 @@ jobs:
       - name: UI - e2e tests
         working-directory: ./ui
         run: npm run e2e:ci
+
+      - name: Upload Playwright HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: ui/playwright-report
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload Playwright traces and error context
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: |
+            ui/test-results/**/*.zip
+            ui/test-results/**/error-context.md
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload Playwright JUnit XML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-junit
+          path: ui/playwright-results.xml
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Summarize E2E artifacts
+        if: always()
+        run: |
+          echo "Playwright artifacts uploaded:" >> $GITHUB_STEP_SUMMARY
+          echo "- HTML report: 'playwright-report' artifact" >> $GITHUB_STEP_SUMMARY
+          echo "- Traces: 'playwright-traces' artifact (includes .zip and error-context.md)" >> $GITHUB_STEP_SUMMARY
+          echo "- JUnit XML: 'playwright-junit' artifact (playwright-results.xml)" >> $GITHUB_STEP_SUMMARY

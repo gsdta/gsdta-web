@@ -1,6 +1,7 @@
 # GSDTA Web
 
-[![CI](https://github.com/gsdta/gsdta-web/actions/workflows/ci.yml/badge.svg)](https://github.com/gsdta/gsdta-web/actions/workflows/ci.yml)
+[![UI E2E (develop)](https://github.com/gsdta/gsdta-web/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/gsdta/gsdta-web/actions/workflows/ci.yml)
+[![UI E2E (main)](https://github.com/gsdta/gsdta-web/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/gsdta/gsdta-web/actions/workflows/deploy.yml)
 
 This repository contains the UI (Next.js) for the GSDTA web application.
 

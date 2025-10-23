@@ -1,5 +1,17 @@
 import path from "node:path";
 import {defineConfig, devices} from "@playwright/test";
+import type { ReporterDescription } from "@playwright/test";
+
+const isCI = !!process.env.CI;
+// Use the proper type for reporters
+const reporters: ReporterDescription[] = [
+    ["list"],
+];
+if (isCI) {
+    reporters.push(["github"]);
+    reporters.push(["junit", { outputFile: "playwright-results.xml" }]);
+}
+reporters.push(["html", { outputFolder: "playwright-report", open: "never" }]);
 
 export default defineConfig({
     testDir: path.join(__dirname, "tests", "e2e"),
@@ -10,7 +22,8 @@ export default defineConfig({
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 0,
     workers: 10, // Slightly reduced for stability
-    reporter: [["list"], ["html", {outputFolder: "playwright-report", open: "never"}]],
+    // Remove any-cast and pass typed reporters
+    reporter: reporters,
     use: {
         baseURL: "http://localhost:3100",
         trace: "retain-on-failure",
