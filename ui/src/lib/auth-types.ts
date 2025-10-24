@@ -5,4 +5,6 @@ export interface User {
     name: string;
     email: string;
     role: Role;
+    // Optional email verification flag (only meaningful in Firebase auth mode)
+    emailVerified?: boolean;
 }

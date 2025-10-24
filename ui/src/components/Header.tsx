@@ -94,8 +94,7 @@ export function Header() {
                             <Link href="/donate/" className="hover:underline text-gray-900 dark:text-gray-100">{t("nav.donate")}</Link>
                             {/* Contact intentionally removed from header */}
                             <LanguageSwitcher/>
-                            {/* Login hidden for now */}
-                            {/* <Link href="/login" className="hover:underline text-gray-900 dark:text-gray-100">{t("nav.login")}</Link> */}
+                            {/* Login temporarily hidden until feature is ready */}
                         </>
                     )}
                 </nav>
@@ -179,8 +178,7 @@ export function Header() {
                                 <Link href="/textbooks/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.textbooks")}</Link>
                                 <Link href="/donate/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.donate")}</Link>
                                 {/* Contact intentionally removed from header */}
-                                {/* Login hidden for now */}
-                                {/* <Link href="/login" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.login")}</Link> */}
+                                {/* Login temporarily hidden until feature is ready */}
                             </>
                         )}
                     </div>

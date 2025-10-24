@@ -1,26 +1,46 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper function to check if user is admin (customize based on your auth)
+    // Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function userDoc(uid) {
+      return get(/databases/$(database)/documents/users/$(uid));
+    }
     function isAdmin() {
-      return request.auth != null &&
-             request.auth.token.admin == true;
+      return isSignedIn() && ('admin' in userDoc(request.auth.uid).data.roles) && userDoc(request.auth.uid).data.status == 'active';
     }
 
-    // Registrations collection
-    match /registrations/{registrationId} {
-      // Allow public to create (no auth required for registration)
-      allow create: if true;
+    // Users collection: users/{uid}
+    match /users/{uid} {
+      // Create: self on first login
+      allow create: if isSignedIn() && request.auth.uid == uid;
 
-      // Only admins can read, update, delete
-      allow read, update, delete: if isAdmin();
+      // Read single doc: self or admin
+      allow get: if isSignedIn() && (request.auth.uid == uid || isAdmin());
 
-      // Validate required fields on create
-      allow create: if request.resource.data.keys().hasAll([
-        'student', 'guardians', 'school', 'metadata'
-      ]);
+      // List/query: admin only
+      allow list: if isAdmin();
+
+      // Update: self (restricted fields) or admin (full)
+      allow update: if isSignedIn() && (
+        isAdmin() || (
+          request.auth.uid == uid &&
+          // Prevent self from changing restricted fields
+          !request.resource.data.diff(resource.data).changedKeys().hasAny(['roles', 'status', 'invitedBy'])
+        )
+      );
+
+      // Delete: admin only
+      allow delete: if isAdmin();
     }
+
+    // Role invites: admin-only management
+    match /roleInvites/{inviteId} {
+      allow get, list, create, update, delete: if isAdmin();
+    }
+
+    // Default deny for everything else
   }
 }
-
