@@ -25,10 +25,9 @@ Project context
   - [x] Errors: 401 (missing/invalid token), 403 (status != active), 404 (no Firestore user), 500
   - Error response format (JSON): `{ code: string, message: string }` with appropriate HTTP status.
   - Examples:
-    - Request (dev):
-      ```cmd
-      curl -s -H "Authorization: Bearer <ID_TOKEN>" http://localhost:8080/api/v1/me
-      ```
+    ```cmd
+    curl -s -H "Authorization: Bearer <ID_TOKEN>" http://localhost:8080/api/v1/me
+    ```
     - 200 OK:
       ```json
       {
@@ -77,29 +76,29 @@ Project context
 ---
 
 ## 3) UI tasks (client auth + role-based landing)
-- [ ] Firebase client init
-  - [ ] `ui/src/lib/firebase/client.ts` — initialize Web SDK using env
-  - [ ] Env in `ui/.env.local`:
-    - [ ] `NEXT_PUBLIC_FIREBASE_API_KEY=...`
-    - [ ] `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=playground-personal-474821.firebaseapp.com`
-    - [ ] `NEXT_PUBLIC_FIREBASE_PROJECT_ID=playground-personal-474821`
-    - [ ] `NEXT_PUBLIC_FIREBASE_APP_ID=1:...:web:...`
-- [ ] Auth helpers/hook
-  - [ ] `ui/src/lib/auth/useAuth.ts` — manages auth state + gets ID token
-- [ ] Sign-in page (/signin)
-  - [ ] Google sign-in button (popup/redirect)
-  - [ ] Email/Password form (sign-in)
-  - [ ] If provider is Email/Password and not `emailVerified`, show “verify email” banner
-- [ ] Call API and route by role
-  - [ ] After sign-in, call `/api/v1/me` with Authorization header
-  - [ ] Route: parent → `/parent`, teacher → `/teacher`, admin → `/admin`
-- [ ] Protected routes (dummy pages ok)
-  - [ ] `/parent` — require role parent
-  - [ ] `/teacher` — require role teacher
-  - [ ] `/admin` — require role admin
-  - [ ] Unauthed → `/signin`; mismatched role → redirect to allowed landing
-- [ ] Sign out
-  - [ ] Clear Firebase client session; redirect to `/signin`
+- [x] Firebase client init
+  - [x] `ui/src/lib/firebase/client.ts` — initialize Web SDK using env
+  - [x] Env in `ui/.env.local`:
+    - [x] `NEXT_PUBLIC_FIREBASE_API_KEY=...`
+    - [x] `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=playground-personal-474821.firebaseapp.com`
+    - [x] `NEXT_PUBLIC_FIREBASE_PROJECT_ID=playground-personal-474821`
+    - [x] `NEXT_PUBLIC_FIREBASE_APP_ID=1:...:web:...`
+- [x] Auth helpers/hook
+  - [x] Auth provider + hook implemented in `ui/src/components/AuthProvider.tsx` (manages auth state + ID token)
+- [x] Sign-in page (/signin)
+  - [x] Google sign-in button (popup/redirect)
+  - [x] Email/Password form (sign-in)
+  - [x] If provider is Email/Password and not `emailVerified`, show “verify email” banner
+- [x] Call API and route by role
+  - [x] After sign-in, call `/api/v1/me` with Authorization header
+  - [x] Route: parent → `/parent`, teacher → `/teacher`, admin → `/admin`
+- [x] Protected routes (dummy pages ok)
+  - [x] `/parent` — require role parent
+  - [x] `/teacher` — require role teacher
+  - [x] `/admin` — require role admin
+  - [x] Unauthed → `/signin`; mismatched role → redirect to allowed landing
+- [x] Sign out
+  - [x] Clear Firebase client session; redirect to `/signin`
 
 ---
 
