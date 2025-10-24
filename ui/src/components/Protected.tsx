@@ -5,7 +5,10 @@ import {useAuth} from "@/components/AuthProvider";
 import type {Role} from "@/lib/auth-types";
 
 const STORAGE_KEY = "auth:user";
-const AUTH_MODE = process.env.NEXT_PUBLIC_AUTH_MODE === "firebase" ? "firebase" : "mock" as const;
+// Compute auth mode at runtime so tests can flip env per test
+function isFirebaseMode(): boolean {
+    return process.env.NEXT_PUBLIC_AUTH_MODE === "firebase";
+}
 
 function routeForRole(role: Role): string {
     switch (role) {
@@ -32,10 +35,10 @@ export function Protected({children, roles, deferUnauthRedirect = false}: Props)
                 if (raw) return;
                 if (!redirectTimer.current) {
                     redirectTimer.current = setTimeout(() => {
-                        router.replace(AUTH_MODE === "firebase" ? "/signin" : "/login");
+                        router.replace(isFirebaseMode() ? "/signin" : "/login");
                     }, 300);
                 }
-            } else if (AUTH_MODE === "firebase" && user.emailVerified === false) {
+            } else if (isFirebaseMode() && user.emailVerified === false) {
                 // Gate unverified email/password users; send them to /signin to see banner
                 router.replace("/signin?verify=true");
             } else if (roles && !roles.includes(user.role)) {
@@ -55,7 +58,7 @@ export function Protected({children, roles, deferUnauthRedirect = false}: Props)
         if (deferUnauthRedirect) return <>{children}</>;
         return null;
     }
-    if (AUTH_MODE === "firebase" && user.emailVerified === false) return null; // redirected to /signin
+    if (isFirebaseMode() && user.emailVerified === false) return null; // redirected to /signin
     if (roles && !roles.includes(user.role)) return null; // redirected to allowed landing
     return <>{children}</>;
 }
