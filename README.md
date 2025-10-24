@@ -88,6 +88,74 @@ docker-compose --profile dev up --build ui-dev
 - Docker setup: `DOCKER.md`
 - Custom domain: `docs/custom-domain.md`
 - Infra & Deploy to GCP: `docs/infra.md`, `docs/gcp-deploy.md`
+- GCloud bootstrap (CLI): `infra/gcloud-bootstrap.md`
+
+## Infrastructure bootstrap (gcloud)
+
+Goal: Create cloud resources in a repeatable way using CLI. Commands below use Windows cmd.exe syntax. Project and region are hardcoded for your environment.
+
+Prereqs
+- Install Google Cloud CLI: https://cloud.google.com/sdk/docs/install
+- (Optional) Install Firebase CLI: `npm install -g firebase-tools`
+- Have project billing enabled
+
+Authenticate and select the project
+```cmd
+gcloud auth login
+gcloud config set project playground-personal-474821
+```
+
+Enable required APIs
+```cmd
+gcloud services enable ^
+  firestore.googleapis.com ^
+  run.googleapis.com ^
+  secretmanager.googleapis.com ^
+  cloudbuild.googleapis.com ^
+  iamcredentials.googleapis.com ^
+  firebase.googleapis.com ^
+  identitytoolkit.googleapis.com
+```
+
+Create Firestore database (Native mode)
+```cmd
+gcloud firestore databases create ^
+  --location=us-central1 ^
+  --type=firestore-native
+```
+
+Create a service account for runtime (UI/API)
+```cmd
+gcloud iam service-accounts create gsdta-api-runner ^
+  --display-name="GSDTA API Service Account"
+
+gcloud projects add-iam-policy-binding playground-personal-474821 ^
+  --member="serviceAccount:gsdta-api-runner@playground-personal-474821.iam.gserviceaccount.com" ^
+  --role="roles/datastore.user"
+
+gcloud projects add-iam-policy-binding playground-personal-474821 ^
+  --member="serviceAccount:gsdta-api-runner@playground-personal-474821.iam.gserviceaccount.com" ^
+  --role="roles/secretmanager.secretAccessor"
+```
+
+Add Firebase to the GCP project (one-time) using firebase-tools
+```cmd
+firebase login
+firebase projects:addfirebase playground-personal-474821
+```
+
+Deploy Firestore rules and indexes (from repo files)
+Note: Firebase CLI is required for rules/indexes deployment.
+```cmd
+:: From repo root
+firebase deploy --project playground-personal-474821 --only firestore:rules
+firebase deploy --project playground-personal-474821 --only firestore:indexes
+```
+
+Limitations and notes
+- Enabling Firebase Auth providers (Google, Email/Password) is not covered by gcloud. Do this once via the Firebase Console (Authentication → Sign-in method), or automate with the Firebase Management/Identity Toolkit APIs.
+- Authorized domains for Auth are configured in the Firebase Console (Authentication → Settings → Authorized domains).
+- For Cloud Run deployment and custom domain mapping, see docs in this repo (docs/gcp-deploy.md, docs/custom-domain.md).
 
 ## License
 

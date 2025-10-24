@@ -5,6 +5,15 @@ import {useAuth} from "@/components/AuthProvider";
 import type {Role} from "@/lib/auth-types";
 
 const STORAGE_KEY = "auth:user";
+const AUTH_MODE = process.env.NEXT_PUBLIC_AUTH_MODE === "firebase" ? "firebase" : "mock" as const;
+
+function routeForRole(role: Role): string {
+    switch (role) {
+        case "admin": return "/admin";
+        case "teacher": return "/teacher";
+        default: return "/parent";
+    }
+}
 
 type Props = { children: React.ReactNode; roles?: Role[]; deferUnauthRedirect?: boolean };
 
@@ -18,17 +27,19 @@ export function Protected({children, roles, deferUnauthRedirect = false}: Props)
             if (!user) {
                 if (deferUnauthRedirect) return;
                 // If we have a stored user, defer redirect to allow AuthProvider to hydrate
-                if (typeof window !== "undefined") {
-                    const raw = sessionStorage.getItem(STORAGE_KEY);
-                    if (raw) return;
-                }
+                if (typeof window === "undefined") return;
+                const raw = sessionStorage.getItem(STORAGE_KEY);
+                if (raw) return;
                 if (!redirectTimer.current) {
                     redirectTimer.current = setTimeout(() => {
-                        router.replace("/login");
+                        router.replace(AUTH_MODE === "firebase" ? "/signin" : "/login");
                     }, 300);
                 }
+            } else if (AUTH_MODE === "firebase" && user.emailVerified === false) {
+                // Gate unverified email/password users; send them to /signin to see banner
+                router.replace("/signin?verify=true");
             } else if (roles && !roles.includes(user.role)) {
-                router.replace("/dashboard");
+                router.replace(routeForRole(user.role));
             }
         }
         return () => {
@@ -41,9 +52,10 @@ export function Protected({children, roles, deferUnauthRedirect = false}: Props)
 
     if (loading) return <div>Loading…</div>;
     if (!user) {
-        if (deferUnauthRedirect) return <>{children}</>; // allow render while auth hydrates
+        if (deferUnauthRedirect) return <>{children}</>;
         return null;
     }
-    if (roles && !roles.includes(user.role)) return null; // redirected
+    if (AUTH_MODE === "firebase" && user.emailVerified === false) return null; // redirected to /signin
+    if (roles && !roles.includes(user.role)) return null; // redirected to allowed landing
     return <>{children}</>;
 }
