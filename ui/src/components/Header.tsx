@@ -29,6 +29,7 @@ export function Header() {
     const {user, setRole} = useAuth();
     const {t} = useI18n();
     const [open, setOpen] = useState(false);
+    const authMode = process.env.NEXT_PUBLIC_AUTH_MODE === "firebase" ? "firebase" : "mock" as const;
 
     const onRoleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
         await setRole(e.target.value as Role);
@@ -94,7 +95,10 @@ export function Header() {
                             <Link href="/donate/" className="hover:underline text-gray-900 dark:text-gray-100">{t("nav.donate")}</Link>
                             {/* Contact intentionally removed from header */}
                             <LanguageSwitcher/>
-                            {/* Login temporarily hidden until feature is ready */}
+                            {/* Show Sign in link in Firebase mode only */}
+                            {authMode === "firebase" && (
+                                <Link href="/signin" className="hover:underline text-gray-900 dark:text-gray-100">{t("nav.login")}</Link>
+                            )}
                         </>
                     )}
                 </nav>
@@ -178,7 +182,10 @@ export function Header() {
                                 <Link href="/textbooks/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.textbooks")}</Link>
                                 <Link href="/donate/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.donate")}</Link>
                                 {/* Contact intentionally removed from header */}
-                                {/* Login temporarily hidden until feature is ready */}
+                                {/* Show Sign in link in Firebase mode only */}
+                                {authMode === "firebase" && (
+                                    <Link href="/signin" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.login")}</Link>
+                                )}
                             </>
                         )}
                     </div>
