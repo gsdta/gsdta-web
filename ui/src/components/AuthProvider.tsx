@@ -9,12 +9,22 @@ import React, {
     useState,
 } from "react";
 import type {Role, User} from "@/lib/auth-types";
-import {setDebugUser} from "@/lib/api-client";
+import type { User as FirebaseUser } from "firebase/auth";
+import {setDebugUser, EFFECTIVE_BASE_URL, setAuthTokenProvider, apiFetch} from "@/lib/api-client";
+
+// Firebase (loaded lazily to avoid errors in mock mode)
+let firebaseLoaded = false as boolean;
+async function lazyLoadFirebase() {
+    if (firebaseLoaded) return;
+    // Dynamic import to avoid bundling when not used
+    await import("@/lib/firebase/client");
+    firebaseLoaded = true;
+}
+
+const AUTH_MODE = process.env.NEXT_PUBLIC_AUTH_MODE === "firebase" ? "firebase" : "mock" as const;
 
 declare global {
-    interface Window {
-        __mswReady?: Promise<void>;
-    }
+    interface Window { __mswReady?: Promise<void>; }
 }
 
 const STORAGE_KEY = "auth:user";
@@ -29,7 +39,7 @@ function buildDebugUserSpec(role: Role): string {
     return `${id}|${r}|${email}|${name}`; // id|roles|email|name
 }
 
-async function fetchMe(): Promise<User | null> {
+async function fetchMeLegacy(): Promise<User | null> {
     try {
         const res = await fetch(`${BASE_URL}/auth/me`, {credentials: "include"});
         if (!res.ok) return null;
@@ -69,9 +79,14 @@ async function fetchMe(): Promise<User | null> {
 interface AuthContextValue {
     user: User | null;
     loading: boolean;
+    // Mock mode API (existing)
     login: (role: Role) => Promise<void>;
     logout: () => Promise<void>;
     setRole: (role: Role) => Promise<void>;
+    // Firebase mode extras
+    loginWithGoogle: () => Promise<void>;
+    loginWithEmailPassword: (email: string, password: string) => Promise<void>;
+    getIdToken: (forceRefresh?: boolean) => Promise<string | null>;
 }
 
 async function waitForMsw() {
@@ -84,10 +99,7 @@ async function waitForMsw() {
         waited += intervalMs;
     }
     if (window.__mswReady) {
-        try {
-            await window.__mswReady;
-        } catch { /* ignore */
-        }
+        try { await window.__mswReady; } catch { /* ignore */ }
     }
 }
 
@@ -107,21 +119,18 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
                 const parsed = JSON.parse(raw) as User;
                 setUser(parsed);
             }
-        } catch {
-        }
+        } catch {}
     }, []);
 
     useEffect(() => {
         let cancelled = false;
 
-        async function load() {
+        async function loadMock() {
             let hasStoredAuth = false;
             try {
                 const raw = sessionStorage.getItem(STORAGE_KEY);
                 hasStoredAuth = raw !== null;
-            } catch {
-            }
-
+            } catch {}
             try {
                 if (USE_MSW) {
                     await waitForMsw();
@@ -130,56 +139,113 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
                         const data = (await res.json()) as { user: User };
                         if (!cancelled && !hasManualAuth.current) {
                             setUser(data.user);
-                            try {
-                                sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
-                            } catch {
-                            }
+                            try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data.user)); } catch {}
                         }
                     } else if (!cancelled && !hasManualAuth.current && !hasStoredAuth) {
                         setUser(null);
-                        try {
-                            sessionStorage.removeItem(STORAGE_KEY);
-                        } catch {
-                        }
+                        try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
                     }
                 } else {
-                    // Debug header mode: if a stored debug spec exists, fetch /auth/me
-                    const me = await fetchMe();
+                    const me = await fetchMeLegacy();
                     if (me && !cancelled) {
                         setUser(me);
-                        try {
-                            sessionStorage.setItem(STORAGE_KEY, JSON.stringify(me));
-                        } catch {
-                        }
+                        try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(me)); } catch {}
                     } else if (!cancelled && !hasStoredAuth) {
                         setUser(null);
-                        try {
-                            sessionStorage.removeItem(STORAGE_KEY);
-                        } catch {
-                        }
+                        try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
                     }
                 }
             } catch {
                 if (!cancelled && !hasManualAuth.current && !hasStoredAuth) {
                     setUser(null);
-                    try {
-                        sessionStorage.removeItem(STORAGE_KEY);
-                    } catch {
-                    }
+                    try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
                 }
             } finally {
                 if (!cancelled) setLoading(false);
             }
         }
 
-        load();
-        return () => {
-            cancelled = true;
-        };
+        async function loadFirebase() {
+            try {
+                await lazyLoadFirebase();
+                const { getFirebaseAuth } = await import("@/lib/firebase/client");
+                const { onAuthStateChanged, onIdTokenChanged } = await import("firebase/auth");
+
+                const auth = getFirebaseAuth();
+
+                // Register token provider for apiFetch
+                setAuthTokenProvider(async () => auth.currentUser ? await auth.currentUser.getIdToken() : null);
+
+                const unsubscribeState = onAuthStateChanged(auth, async (fbUser: FirebaseUser | null) => {
+                    if (!fbUser) {
+                        setUser(null);
+                        try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
+                        if (!loading) setLoading(false);
+                        return;
+                    }
+                    try {
+                        const token = await fbUser.getIdToken();
+                        const base = EFFECTIVE_BASE_URL || "/api";
+                        type Me = { uid: string; email: string; name?: string; roles: string[]; emailVerified?: boolean };
+                        let data: Me | null = null;
+                        try {
+                            data = await apiFetch<Me>(`${base}/v1/me`, { rawUrl: true, headers: { Authorization: `Bearer ${token}` } });
+                        } catch {
+                            data = null;
+                        }
+                        if (!data) {
+                             // If forbidden or not found, treat as signed out from app perspective
+                             setUser(null);
+                             try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
+                         } else {
+                            const role = pickRole(data.roles);
+                            const emailVerified = typeof data.emailVerified === 'boolean' ? data.emailVerified : fbUser.emailVerified;
+                            const mapped: User = { id: data.uid, email: data.email, name: data.name || data.email, role, emailVerified };
+                            setUser(mapped);
+                            try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(mapped)); } catch {}
+                         }
+                    } catch {
+                        setUser(null);
+                        try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
+                    } finally {
+                        if (loading) setLoading(false);
+                    }
+                });
+
+                const unsubscribeToken = onIdTokenChanged(auth, async () => {
+                    // Token changed. api-client token provider reads currentUser on demand; no action.
+                });
+
+                return () => {
+                    unsubscribeState();
+                    unsubscribeToken();
+                    setAuthTokenProvider(null);
+                };
+            } catch {
+                // Fallback to mock if firebase fails to init
+                await loadMock();
+                return () => {};
+            }
+        }
+
+        if (AUTH_MODE === "firebase") {
+            let cleanup: (() => void) | undefined;
+            (async () => { cleanup = await loadFirebase(); })();
+            return () => { cancelled = true; cleanup?.(); };
+        }
+
+        // In mock mode, kick off load and set cancellation on unmount
+        (async () => { await loadMock(); })();
+        return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const login = useCallback(async (role: Role) => {
         hasManualAuth.current = true;
+        if (AUTH_MODE === "firebase") {
+            // Not applicable; use loginWithGoogle/loginWithEmailPassword instead.
+            throw new Error("Use Firebase sign-in methods in firebase auth mode");
+        }
         if (USE_MSW) {
             await waitForMsw();
             try {
@@ -192,45 +258,42 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
                 if (!res.ok) throw new Error("Login failed");
                 const data = (await res.json()) as { user: User };
                 setUser(data.user);
-                try {
-                    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
-                } catch {
-                }
+                try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data.user)); } catch {}
                 return;
-            } catch {/* fallback below */
-            }
+            } catch {/* fallback below */}
         }
-        // Debug header mode or fallback
         const spec = buildDebugUserSpec(role);
         setDebugUser(spec);
-        const me = await fetchMe();
+        const me = await fetchMeLegacy();
         const fallback: User = me || {id: `u-${role}`, name: role, email: `${role}@example.com`, role};
         setUser(fallback);
-        try {
-            sessionStorage.setItem(STORAGE_KEY, JSON.stringify(fallback));
-        } catch {
-        }
+        try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(fallback)); } catch {}
     }, []);
 
     const logout = useCallback(async () => {
         hasManualAuth.current = true;
+        if (AUTH_MODE === "firebase") {
+            try {
+                await lazyLoadFirebase();
+                const { getFirebaseAuth } = await import("@/lib/firebase/client");
+                const { signOut } = await import("firebase/auth");
+                await signOut(getFirebaseAuth());
+            } catch { /* ignore */ }
+        }
         if (USE_MSW) {
             await waitForMsw();
-            try {
-                await fetch(`${BASE_URL}/auth/logout`, {method: "POST", credentials: "include"});
-            } catch {
-            }
+            try { await fetch(`${BASE_URL}/auth/logout`, {method: "POST", credentials: "include"}); } catch {}
         }
         setDebugUser(null);
         setUser(null);
-        try {
-            sessionStorage.removeItem(STORAGE_KEY);
-        } catch {
-        }
+        try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
     }, []);
 
     const setRole = useCallback(async (role: Role) => {
         hasManualAuth.current = true;
+        if (AUTH_MODE === "firebase") {
+            throw new Error("Changing role is not supported in firebase auth mode");
+        }
         if (USE_MSW) {
             await waitForMsw();
             try {
@@ -243,31 +306,53 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
                 if (res.ok) {
                     const data = (await res.json()) as { user: User };
                     setUser(data.user);
-                    try {
-                        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
-                    } catch {
-                    }
+                    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data.user)); } catch {}
                     return;
                 }
-            } catch {/* fallback to debug */
-            }
+            } catch {/* fallback to debug */}
         }
         const spec = buildDebugUserSpec(role);
         setDebugUser(spec);
-        const me = await fetchMe();
-        setUser((/* prev */) => {
+        const me = await fetchMeLegacy();
+        setUser(() => {
             const next = me || {id: `u-${role}`, name: role, email: `${role}@example.com`, role};
-            try {
-                sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-            } catch {
-            }
+            try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch {}
             return next;
         });
     }, []);
 
+    const loginWithGoogle = useCallback(async () => {
+        if (AUTH_MODE !== "firebase") throw new Error("Google sign-in only in firebase mode");
+        await lazyLoadFirebase();
+        const { getFirebaseAuth, googleProvider } = await import("@/lib/firebase/client");
+        const { signInWithPopup } = await import("firebase/auth");
+        await signInWithPopup(getFirebaseAuth(), googleProvider);
+        // onAuthStateChanged will set the user
+    }, []);
+
+    const loginWithEmailPassword = useCallback(async (email: string, password: string) => {
+        if (AUTH_MODE !== "firebase") throw new Error("Email/password sign-in only in firebase mode");
+        await lazyLoadFirebase();
+        const { getFirebaseAuth } = await import("@/lib/firebase/client");
+        const { signInWithEmailAndPassword } = await import("firebase/auth");
+        await signInWithEmailAndPassword(getFirebaseAuth(), email, password);
+    }, []);
+
+    const getIdToken = useCallback(async (forceRefresh = false): Promise<string | null> => {
+        if (AUTH_MODE !== "firebase") return null;
+        try {
+            await lazyLoadFirebase();
+            const { getFirebaseAuth } = await import("@/lib/firebase/client");
+            const auth = getFirebaseAuth();
+            const u = auth.currentUser;
+            if (!u) return null;
+            return await u.getIdToken(forceRefresh);
+        } catch { return null; }
+    }, []);
+
     const value = useMemo(
-        () => ({user, loading, login, logout, setRole}),
-        [user, loading, login, logout, setRole],
+        () => ({user, loading, login, logout, setRole, loginWithGoogle, loginWithEmailPassword, getIdToken}),
+        [user, loading, login, logout, setRole, loginWithGoogle, loginWithEmailPassword, getIdToken],
     );
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -277,4 +362,11 @@ export function useAuth(): AuthContextValue {
     const ctx = useContext(AuthContext);
     if (!ctx) throw new Error("useAuth must be used within AuthProvider");
     return ctx;
+}
+
+function pickRole(roles: string[]): Role {
+    const rset = new Set(roles);
+    if (rset.has("admin")) return "admin";
+    if (rset.has("teacher")) return "teacher";
+    return "parent";
 }

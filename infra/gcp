@@ -1,0 +1,15 @@
+
+firebase apps:sdkconfig web 1:915562784753:web:65efdef1fd2363cc018650 --project playground-personal-474821
+
+{
+  "projectId": "playground-personal-474821",
+  "appId": "1:915562784753:web:65efdef1fd2363cc018650",
+  "storageBucket": "playground-personal-474821.firebasestorage.app",
+  "apiKey": "AIzaSyBCvyo5UnHI2antS2XzxmlzqIBztzJGerw",
+  "authDomain": "playground-personal-474821.firebaseapp.com",
+  "messagingSenderId": "915562784753",
+  "projectNumber": "915562784753",
+  "version": "2"
+}
+
+
