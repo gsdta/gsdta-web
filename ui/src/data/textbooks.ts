@@ -10,7 +10,6 @@ export type TextbookResource = {
 export type TextbookGrade = {
   id: string;
   label: string;
-  buttonColumns: 1 | 2;
   resources: TextbookResource[];
 };
 
@@ -18,7 +17,6 @@ export const TEXTBOOKS: TextbookGrade[] = [
   {
     id: "ps-1",
     label: "PS-1",
-    buttonColumns: 1,
     resources: [
       {
         id: "ps-1-mazhalai-sem-1-textbook",
@@ -30,7 +28,6 @@ export const TEXTBOOKS: TextbookGrade[] = [
   {
     id: "ps-2",
     label: "PS-2",
-    buttonColumns: 1,
     resources: [
       {
         id: "ps-2-mazhalai-sem-2-textbook",
@@ -47,7 +44,6 @@ export const TEXTBOOKS: TextbookGrade[] = [
   {
     id: "kg",
     label: "KG",
-    buttonColumns: 2,
     resources: [
       {
         id: "kg-basic-1-sem-1-textbook",
@@ -87,7 +83,6 @@ export const TEXTBOOKS: TextbookGrade[] = [
   {
     id: "grade-1",
     label: "Grade-1",
-    buttonColumns: 2,
     resources: [
       {
         id: "grade-1-basic-2-sem-1-textbook",
@@ -127,7 +122,6 @@ export const TEXTBOOKS: TextbookGrade[] = [
   {
     id: "grade-2",
     label: "Grade-2",
-    buttonColumns: 2,
     resources: [
       {
         id: "grade-2-basic-2-sem-3-textbook",
@@ -156,7 +150,6 @@ export const TEXTBOOKS: TextbookGrade[] = [
   {
     id: "grade-3",
     label: "Grade-3",
-    buttonColumns: 2,
     resources: [
       {
         id: "grade-3-basic-3-sem-3-textbook",
@@ -185,7 +178,6 @@ export const TEXTBOOKS: TextbookGrade[] = [
   {
     id: "grade-4",
     label: "Grade-4",
-    buttonColumns: 2,
     resources: [
       {
         id: "grade-4-unit-3-textbook",
@@ -214,7 +206,6 @@ export const TEXTBOOKS: TextbookGrade[] = [
   {
     id: "grade-5",
     label: "Grade-5",
-    buttonColumns: 2,
     resources: [
       {
         id: "grade-5-unit-6-textbook",
@@ -243,7 +234,6 @@ export const TEXTBOOKS: TextbookGrade[] = [
   {
     id: "grade-6",
     label: "Grade-6",
-    buttonColumns: 2,
     resources: [
       {
         id: "grade-6-unit-9-textbook",
@@ -272,7 +262,6 @@ export const TEXTBOOKS: TextbookGrade[] = [
   {
     id: "grade-7",
     label: "Grade-7",
-    buttonColumns: 2,
     resources: [
       {
         id: "grade-7-unit-12-textbook",
@@ -301,7 +290,6 @@ export const TEXTBOOKS: TextbookGrade[] = [
   {
     id: "grade-8",
     label: "Grade-8",
-    buttonColumns: 1,
     resources: [
       {
         id: "grade-8-unit-15-textbook",
