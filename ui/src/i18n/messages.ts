@@ -118,6 +118,16 @@ export const messages: Record<Lang, Record<string, string>> = {
         "common.loading": "Loading...",
         "common.loading.classes": "Loading classes...",
         "common.loading.enrollments": "Loading enrollments...",
+
+        // Textbooks page
+        "textbooks.pageTitle": "Academic Year 2025-26 – Text Books",
+        "textbooks.instructions": "Choose a grade to explore textbooks and homework for the 2025-26 school year.",
+        "textbooks.gradeSelectorLabel": "Textbook grades",
+        "textbooks.resourcesTitle": "Resources for {grade}",
+        "textbooks.resourcesSubtitle": "Select a textbook or homework to open it in the viewer.",
+        "textbooks.selectResourcePrompt": "Select a textbook or homework to view it.",
+        "textbooks.noGradeSelected": "Select a grade to view textbooks.",
+        "textbooks.viewerTitle": "{grade} – {resource}",
         "common.notAvailableYet": "are not available yet.",
         "common.publishSoon": "We'll publish them here soon.",
         "common.openInNewTab": "Open in new tab",
@@ -219,7 +229,7 @@ export const messages: Record<Lang, Record<string, string>> = {
         "nav.team": "குழு",
         "nav.documents": "ஆவணங்கள்",
         "nav.calendar": "நாட்காட்டி",
-        "nav.textbooks": "பாடங்கள்",
+        "nav.textbooks": "பாடப்புத்தகங்கள்",
         "nav.donate": "நன்கொடை",
         "nav.contact": "தொடர்பு",
 
@@ -320,6 +330,16 @@ export const messages: Record<Lang, Record<string, string>> = {
         "common.loading": "ஏற்றுகிறது...",
         "common.loading.classes": "வகுப்புகளை ஏற்றுகிறது...",
         "common.loading.enrollments": "சேர்க்கைகளை ஏற்றுகிறது...",
+
+        // Textbooks page
+        "textbooks.pageTitle": "2025-26 கல்வியாண்டு – பாடப்புத்தகங்கள்",
+        "textbooks.instructions": "2025-26 கல்வியாண்டிற்கான பாடப்புத்தகங்களையும் வீட்டுப்பாடங்களையும் பார்க்க தரத்தைத் தேர்ந்தெடுக்கவும்.",
+        "textbooks.gradeSelectorLabel": "பாடப்புத்தக தரங்கள்",
+        "textbooks.resourcesTitle": "{grade} க்கான வளங்கள்",
+        "textbooks.resourcesSubtitle": "காண்பியில் திறக்க ஒரு பாடப்புத்தகம் அல்லது வீட்டுப்பாடத்தைத் தேர்ந்தெடுக்கவும்.",
+        "textbooks.selectResourcePrompt": "ஒரு பாடப்புத்தகம் அல்லது வீட்டுப்பாடத்தைப் பார்க்கத் தேர்ந்தெடுக்கவும்.",
+        "textbooks.noGradeSelected": "பாடப்புத்தகங்களை பார்க்க தரத்தைத் தேர்ந்தெடுக்கவும்.",
+        "textbooks.viewerTitle": "{grade} – {resource}",
         "common.notAvailableYet": "இன்னும் கிடைக்கவில்லை.",
         "common.publishSoon": "விரைவில் வெளியிடப்படும்.",
         "common.openInNewTab": "புதிய தாவலில் திறக்க",
