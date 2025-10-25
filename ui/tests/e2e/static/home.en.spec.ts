@@ -31,7 +31,11 @@ test.describe("Homepage (English)", () => {
       { name: "Team", expectTitle: "Team", path: "/team/" },
       { name: "Documents", expectTitle: "Documents", path: "/documents/" },
       { name: "Calendar", expectTitle: /Calendar(\s+20\d{2}-\d{2})?/i, path: "/calendar/" },
-      { name: "Text books", expectTitle: "Text books", path: "/textbooks/" },
+      {
+        name: "Text books",
+        expectTitle: "Academic Year 2025-26 – Text Books",
+        path: "/textbooks/",
+      },
       { name: "Donate", expectTitle: "Donate", path: "/donate/" },
     ];
 

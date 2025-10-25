@@ -3,10 +3,12 @@ import {createContext, useContext, useEffect, useMemo, useState, useCallback} fr
 import type {Lang} from "./messages";
 import {messages} from "./messages";
 
+type TranslationValues = Record<string, string | number>;
+
 interface I18nContextValue {
     lang: Lang;
     setLang: (l: Lang) => void;
-    t: (key: string) => string;
+    t: (key: string, values?: TranslationValues) => string;
 }
 
 const Ctx = createContext<I18nContextValue | null>(null);
@@ -41,10 +43,24 @@ export function LanguageProvider({children}: { children: React.ReactNode }) {
         }
     }, [lang]);
 
-    const t = useCallback((key: string) => {
+    const formatMessage = useCallback(
+        (template: string, values?: TranslationValues) => {
+            if (!values) return template;
+            return template.replace(/\{(\w+)\}/g, (_, token: string) => {
+                if (Object.prototype.hasOwnProperty.call(values, token)) {
+                    return String(values[token]);
+                }
+                return `{${token}}`;
+            });
+        },
+        [],
+    );
+
+    const t = useCallback((key: string, values?: TranslationValues) => {
         const pack = messages[lang] || messages.ta;
-        return pack[key] ?? messages.en[key] ?? key;
-    }, [lang]);
+        const template = pack[key] ?? messages.en[key] ?? key;
+        return formatMessage(template, values);
+    }, [formatMessage, lang]);
 
     const value = useMemo(() => ({lang, setLang, t}), [lang, t]);
 
@@ -55,7 +71,19 @@ export function useI18n(): I18nContextValue {
     const ctx = useContext(Ctx);
     if (ctx) return ctx;
     // Fallback (no provider): default to English for tests and consistency
-    const t = (key: string) => messages.en[key] ?? key;
+    const formatMessage = (template: string, values?: TranslationValues) => {
+        if (!values) return template;
+        return template.replace(/\{(\w+)\}/g, (_, token: string) => {
+            if (Object.prototype.hasOwnProperty.call(values, token)) {
+                return String(values[token]);
+            }
+            return `{${token}}`;
+        });
+    };
+    const t = (key: string, values?: TranslationValues) => {
+        const template = messages.en[key] ?? key;
+        return formatMessage(template, values);
+    };
     return {
         lang: "en", setLang: () => {
         }, t
