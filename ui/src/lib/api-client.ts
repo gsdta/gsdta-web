@@ -9,6 +9,13 @@ export const EFFECTIVE_BASE_URL = BASE_URL;
 const DEBUG_ENV = process.env.NEXT_PUBLIC_DEBUG_USER || ""; // Optional build-time default
 const DEBUG_STORAGE_KEY = "auth:debug-user"; // LocalStorage persistence for selected debug principal
 
+// Optional bearer token provider (e.g., Firebase ID token)
+export type TokenProvider = () => Promise<string | null> | string | null;
+let authTokenProvider: TokenProvider | null = null;
+export function setAuthTokenProvider(provider: TokenProvider | null) {
+    authTokenProvider = provider;
+}
+
 function resolveDebugUser(): string | undefined {
     // Priority: stored selection > env-specified > undefined
     if (typeof window !== "undefined") {
@@ -66,6 +73,16 @@ export async function apiFetch<T = unknown>(path: string, options: ApiFetchOptio
     };
     if (debugUser && !mergedHeaders['X-Debug-User']) {
         mergedHeaders['X-Debug-User'] = debugUser;
+    }
+
+    // Attach bearer token if provided
+    if (authTokenProvider && !mergedHeaders['Authorization']) {
+        try {
+            const token = await Promise.resolve(authTokenProvider());
+            if (token) mergedHeaders['Authorization'] = `Bearer ${token}`;
+        } catch {
+            // ignore token errors; request proceeds without it
+        }
     }
 
     const res = await fetch(url, {...rest, headers: mergedHeaders, credentials: 'include'});

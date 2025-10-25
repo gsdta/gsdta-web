@@ -1,37 +1,25 @@
 # GSDTA Web
 
-[![UI E2E (develop)](https://github.com/gsdta/gsdta-web/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/gsdta/gsdta-web/actions/workflows/ci.yml)
-[![UI E2E (main)](https://github.com/gsdta/gsdta-web/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/gsdta/gsdta-web/actions/workflows/deploy.yml)
+[![CI (develop)](https://github.com/gsdta/gsdta-web/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/gsdta/gsdta-web/actions/workflows/ci.yml)
+[![Deploy (main)](https://github.com/gsdta/gsdta-web/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/gsdta/gsdta-web/actions/workflows/deploy.yml)
 
-This repository contains the UI (Next.js) for the GSDTA web application.
+Modern web app with a Next.js UI and a Next.js-based API, shipped as one Docker image.
 
-## 📁 Structure
+## Structure
 
 ```
 gsdta-web/
-├── ui/              # Next.js frontend application
-│   ├── src/         # React components, pages, lib
-│   ├── public/      # Static assets
-│   ├── tests/       # E2E and unit tests
-│   └── package.json
-├── api/             # Next.js API server
-│   ├── src/         # API routes and handlers
-│   └── package.json
-├── docs/            # Project documentation
-├── .github/         # CI/CD workflows
-└── Dockerfile       # Deployment image (bundles UI + API)
+├─ ui/   # Next.js frontend
+├─ api/  # Next.js API (route handlers)
+├─ docs/ # Project docs
+└─ Dockerfile (bundles UI + API)
 ```
 
-## 🚀 Quick Start
+## Quick start (local)
 
-### Prerequisites
+- Prerequisites: Node.js 20+, optional Docker Desktop
 
-- **Node.js 20+** - [Download](https://nodejs.org/)
-- **Docker** (optional) - [Download](https://www.docker.com/products/docker-desktop)
-
-### Local Development
-
-**UI:**
+UI (http://localhost:3000):
 
 ```cmd
 cd ui
@@ -39,7 +27,8 @@ copy .env.example .env.local
 npm install
 npm run dev
 ```
-**API:**
+
+API (http://localhost:8080):
 
 ```cmd
 cd api
@@ -47,213 +36,127 @@ npm install
 npm run dev
 ```
 
-API runs on http://localhost:3001
+## Testing
 
-
-UI runs on http://localhost:3000
-
-#### Use helper scripts
-
-
-REM Start API (or use start-api.bat)
-cd api
-npm run dev
-```cmd
-
-#### API Endpoints
-
-- `GET /v1/health` - Health check endpoint
-- `POST /v1/echo` - Echo endpoint that returns request body
-REM Start UI
-dev.bat ui
-```
-
-#### Docker Development Mode
-
-```cmd
-docker-compose --profile dev up
-```
-
-- UI: http://localhost:3001
-
-## 🔨 Build
-
-### Build UI
-
-```cmd
-build.bat
-```
-
-**Or:**
-
-```cmd
-cd ui
-npm run build
-REM Output: ui\.next\ (standalone server)
-```
-
-**Docker (Production):**
-
-```cmd
-docker build -t gsdta-web:latest .
-docker run -p 3000:3000 gsdta-web:latest
-```
-
-## 🧪 Testing
-
-### Test Everything
-
-```cmd
-test.bat
-```
-
-### Test Individually
-
-**UI Unit Tests:**
-
-```cmd
-cd ui
-npm test
-```
-
-**UI E2E Tests (Playwright):**
-
-```cmd
-cd ui
-npm run pw:install  # First time only
-npm run test:e2e
-```
-
-**UI Linting:**
+UI:
 
 ```cmd
 cd ui
 npm run lint
 npm run typecheck
+npm test
+npm run pw:install  
+npm run test:e2e
 ```
 
-## 🐳 Docker
-
-### Production (Single Container)
-
-```bash
-docker-compose up --build -d ui
-# Access: http://localhost:3000
-```
-
-### Development (Hot Reload)
+API (starts server on 8080 and runs Cucumber):
 
 ```cmd
-docker-compose --profile dev up --build
-
-REM UI: http://localhost:3001
+cd api
+npm run lint
+npm run typecheck
+npm run test:e2e
 ```
 
-```bash
-docker-compose --profile dev up --build -d
-# UI: http://localhost:3001
-- [Architecture Overview](./docs/architecture.md)
-- [UI Development Guide](./docs/ui.md)
-- [Docker Setup](./DOCKER.md)
-- [Infrastructure & Deployment](./docs/infra.md)
-- [Restructure Guide](./RESTRUCTURE_COMPLETE.md)
+## Docker
 
-## 🚢 Deploy
-
-See deployment documentation for hosting options.
-
-## 🌐 Custom Domain on AWS Route 53 (gsdta.com)
-
-If your domain is registered/hosted in AWS Route 53 (e.g., `gsdta.com`), you can point it to your Cloud Run service.
-
-Recommended pattern: use a subdomain like `app.gsdta.com` for the app. Keep the root (`gsdta.com`) free to redirect or host a landing page.
-
-### Steps
-
-1) Prerequisites
-   - Cloud Run service deployed (from CI or manual). Note its region and service name.
-   - Route 53 public hosted zone for `gsdta.com`.
-
-2) Verify domain ownership in Google
+Production-style (UI on 3000, API on 8080):
 
 ```cmd
-REM Replace with your domain
-gcloud domains verify gsdta.com
+docker-compose up --build
 ```
 
-Alternatively, verify via the Google Search Console UI. You’ll be asked to add a TXT record in Route 53; add it and wait until Google shows the domain as verified.
-
-3) Create a domain mapping in Cloud Run for a subdomain (e.g., `app.gsdta.com`)
-
-Note: Regional domain mappings may require the `beta` track depending on your gcloud version. If needed, install/update beta:
+Developer hot-reload for UI (http://localhost:3001):
 
 ```cmd
-gcloud components update
-gcloud components install beta
+docker-compose --profile dev up --build ui-dev
 ```
 
-Then create the mapping (regional):
+## Configuration
 
+- UI env file: `ui/.env.local`
+  - Example: `NEXT_PUBLIC_USE_MSW=false`
+
+## CI/CD
+
+- Overview of workflows and deployment: see `GITHUB_ACTIONS.md`
+
+## Docs
+
+- Architecture: `docs/architecture.md`
+- UI guide: `docs/ui.md`
+- Docker setup: `DOCKER.md`
+- Custom domain: `docs/custom-domain.md`
+- Infra & Deploy to GCP: `docs/infra.md`, `docs/gcp-deploy.md`
+- GCloud bootstrap (CLI): `infra/gcloud-bootstrap.md`
+
+## Infrastructure bootstrap (gcloud)
+
+Goal: Create cloud resources in a repeatable way using CLI. Commands below use Windows cmd.exe syntax. Project and region are hardcoded for your environment.
+
+Prereqs
+- Install Google Cloud CLI: https://cloud.google.com/sdk/docs/install
+- (Optional) Install Firebase CLI: `npm install -g firebase-tools`
+- Have project billing enabled
+
+Authenticate and select the project
 ```cmd
-gcloud beta run domain-mappings create ^
-  --service gsdta-web ^
-  --domain app.gsdta.com ^
-  --region us-central1
+gcloud auth login
+gcloud config set project playground-personal-474821
 ```
 
-4) Add DNS records in Route 53
-   - The previous command outputs the DNS records (typically a CNAME) to add for `app.gsdta.com`.
-   - In the hosted zone for `gsdta.com`, create the records exactly as shown.
-   - Save changes. DNS propagation may take a while.
-
-5) Wait for HTTPS certificate provisioning
-
+Enable required APIs
 ```cmd
-gcloud beta run domain-mappings describe --domain app.gsdta.com --region us-central1
+gcloud services enable ^
+  firestore.googleapis.com ^
+  run.googleapis.com ^
+  secretmanager.googleapis.com ^
+  cloudbuild.googleapis.com ^
+  iamcredentials.googleapis.com ^
+  firebase.googleapis.com ^
+  identitytoolkit.googleapis.com
 ```
 
-Proceed once the certificate status is Active. Then visit: `https://app.gsdta.com`
-
-For a detailed, Windows-friendly walkthrough (cmd and PowerShell) with troubleshooting, see [docs/custom-domain.md](./docs/custom-domain.md).
-
-6) Optional: redirect apex root (`gsdta.com`) → `https://app.gsdta.com`
-   - Easiest: create a small redirect using an S3 static website + Route 53, or use your registrar’s URL forwarding.
-   - Avoid pointing the apex directly unless you follow Google’s guidance for apex mappings. Using a subdomain is simpler.
-
-7) Optional: CORS settings (only if exposing external APIs)
-   - The current UI is a static/standalone app. When backend APIs are added (via Next.js routes), configure CORS as needed.
-
-## 🏗️ Architecture
-
-- **UI**: Next.js with App Router and modern React
-- **Deployment**: Single Docker image serving the UI on port 3000
-
-## 🔧 Environment Variables
-
-### UI (.env.local in ui/)
-
-```env
-NEXT_PUBLIC_USE_MSW=false
+Create Firestore database (Native mode)
+```cmd
+gcloud firestore databases create ^
+  --location=us-central1 ^
+  --type=firestore-native
 ```
 
-## 🤝 Contributing
+Create a service account for runtime (UI/API)
+```cmd
+gcloud iam service-accounts create gsdta-api-runner ^
+  --display-name="GSDTA API Service Account"
 
-1. Create a feature branch from `main`
-2. Make changes in `ui/`
-3. Run tests: `test.bat`
-4. Run linting: `npm run lint` (UI)
-5. Create a pull request
+gcloud projects add-iam-policy-binding playground-personal-474821 ^
+  --member="serviceAccount:gsdta-api-runner@playground-personal-474821.iam.gserviceaccount.com" ^
+  --role="roles/datastore.user"
 
-The CI pipeline will automatically:
+gcloud projects add-iam-policy-binding playground-personal-474821 ^
+  --member="serviceAccount:gsdta-api-runner@playground-personal-474821.iam.gserviceaccount.com" ^
+  --role="roles/secretmanager.secretAccessor"
+```
 
-- Build and test the UI
-- Build the UI Docker image
+Add Firebase to the GCP project (one-time) using firebase-tools
+```cmd
+firebase login
+firebase projects:addfirebase playground-personal-474821
+```
 
-## 📝 License
+Deploy Firestore rules and indexes (from repo files)
+Note: Firebase CLI is required for rules/indexes deployment.
+```cmd
+:: From repo root
+firebase deploy --project playground-personal-474821 --only firestore:rules
+firebase deploy --project playground-personal-474821 --only firestore:indexes
+```
 
-See [LICENSE](./LICENSE) for details.
+Limitations and notes
+- Enabling Firebase Auth providers (Google, Email/Password) is not covered by gcloud. Do this once via the Firebase Console (Authentication → Sign-in method), or automate with the Firebase Management/Identity Toolkit APIs.
+- Authorized domains for Auth are configured in the Firebase Console (Authentication → Settings → Authorized domains).
+- For Cloud Run deployment and custom domain mapping, see docs in this repo (docs/gcp-deploy.md, docs/custom-domain.md).
 
-## 💡 Tips
+## License
 
-- Use `dev.bat` scripts for quick local development
-- The UI is currently standalone; backend APIs will be added later using Next.js route handlers/app router
+See `LICENSE`.

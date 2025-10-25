@@ -1,263 +1,155 @@
-# GitHub Actions Configuration
+# GitHub Actions Workflows (CI and Deploy)
 
-This document describes the CI/CD workflows configured for this project.
+This document describes the CI and deployment workflows configured for this repository, based on the current workflow files in `.github/workflows/ci.yml` and `.github/workflows/deploy.yml`.
 
 ## Overview
 
-The project uses two separate GitHub Actions workflows:
+There are two workflows:
 
-1. **CI Workflow** (`ci.yml`) - Runs on the `develop` branch
-2. **Deploy Workflow** (`deploy.yml`) - Runs on the `main` branch
+- CI (`ci.yml`) – runs on pushes to `develop`, runs build-and-test for API and UI.
+- Deploy (`deploy.yml`) – runs on pushes to `main`, or manually via workflow dispatch, builds and pushes a Docker image and (optionally) deploys to Cloud Run after passing tests.
 
-**Important**: No workflows run when pull requests are created. This keeps the CI/CD pipeline clean and focused on integrated code.
+Notes:
+- Documentation/content changes are ignored by CI to save time.
+- The UI job depends on the API job in both workflows.
+
+---
 
 ## CI Workflow
 
-**File**: `.github/workflows/ci.yml`
+File: `.github/workflows/ci.yml`
 
-**Triggers**: 
-- Push to `develop` branch
-- Ignores documentation files (`*.md`, `*.mdx`, `*.txt`, `docs/**`)
+Triggers:
+- Push to `develop`
+- Ignores: `**.md`, `docs/**`, `**/*.mdx`, `**/*.txt`
 
-**Purpose**: Build and test the application when code is merged to the develop branch.
+Purpose:
+- Validate the API and UI with linting, type checks, and E2E tests.
 
-### Jobs
+Jobs:
 
-#### build-and-test
-Single job that performs all build and test operations sequentially:
+1) API – Build & Test
+- Runner: `ubuntu-latest`
+- Working directory: `api`
+- Tooling: Node.js 20 with npm cache (`cache-dependency-path: api/package-lock.json`)
+- Steps:
+  - Checkout repository
+  - Install dependencies: `npm ci`
+  - Lint: `npm run lint`
+  - Typecheck: `npm run typecheck`
+  - E2E (Cucumber): `npm run test:e2e`
 
-1. **Setup**: Checkout code, setup Node.js 20 and Go 1.21 with caching
-2. **API Steps**:
-   - Download Go dependencies
-   - Lint code with golangci-lint
-   - Run tests with race detection and coverage
-   - Build the API binary with version metadata
-3. **UI Steps**:
-   - Install npm dependencies
-   - Lint with ESLint
-   - Type check with TypeScript
-   - Run unit tests
-   - Build Next.js application (standalone server output)
-   - Run Playwright e2e tests
+2) UI – Build & Test (needs: API)
+- Runner: `ubuntu-latest`
+- Working directory: `ui`
+- Tooling: Node.js 20 with npm cache (`cache-dependency-path: ui/package-lock.json`)
+- Steps:
+  - Checkout repository
+  - Install dependencies: `npm ci`
+  - Lint: `npm run lint`
+  - Typecheck: `npm run typecheck`
+  - Install Playwright browsers (with system deps): `npx playwright install --with-deps`
+  - Unit tests (if present): `npm test --if-present`
+  - E2E (Playwright): `npm run e2e:ci`
 
-**Failure Behavior**: Any step failure stops the workflow. If linting, tests, or build fails, the workflow is marked as failed.
+Failure behavior:
+- Any failing step fails the workflow; the UI job does not run if the API job fails.
+
+---
 
 ## Deploy Workflow
 
-**File**: `.github/workflows/deploy.yml`
+File: `.github/workflows/deploy.yml`
 
-**Triggers**:
-- Push to `main` branch
-- Manual workflow dispatch (with configurable options)
+Triggers:
+- Push to `main`
+- Manual trigger (`workflow_dispatch`) with inputs:
+  - `run_deploy` (default: `true`) – when `false`, the workflow will build and test, and build the Docker image, but skip pushing the image and skip Cloud Run deployment.
+  - `image_tag` (default: empty) – when provided, used as the image tag; otherwise the short commit SHA is used.
 
-**Purpose**: Build, test, and deploy the application to Google Cloud Platform when code is merged to main.
+Environment variables:
+- `NODE_VERSION`: `20`
+- `GCP_PROJECT_ID`: `playground-personal-474821`
+- `GAR_LOCATION`: `us-central1`
+- `GAR_REPO`: `web-apps`
+- `SERVICE_NAME`: `gsdta-web`
 
-### Jobs
+Purpose:
+- Build and test API and UI (same as CI), then build and push a Docker image, and deploy to Google Cloud Run.
 
-The deploy workflow consists of 4 stages that run sequentially:
+Jobs and flow:
 
-#### 1. Build Stage
-**Job**: `build`
+1) API – Build & Test
+- Same as the CI API job (Node 20; `npm ci`, lint, typecheck, Cucumber E2E), running in `api/`.
 
-Verifies that the code compiles successfully:
+2) UI – Build & Test (needs: API)
+- Same as the CI UI job (Node 20; `npm ci`, lint, typecheck, Playwright install, unit tests if present, Playwright E2E), running in `ui/`.
 
-- Checkout code
-- Setup Node.js 20 and Go 1.21 with caching
-- Download Go dependencies and build API binary
-- Install npm dependencies and build Next.js UI
+3) Docker – Build & Push Docker image (needs: UI)
+- Permissions: `contents: read`, `id-token: write`
+- Steps:
+  - Checkout repository
+  - Authenticate to GCP using `google-github-actions/auth@v2` and `secrets.GCP_SA_KEY`
+  - Setup `gcloud` CLI
+  - Configure Docker to use Artifact Registry: `gcloud auth configure-docker ${GAR_LOCATION}-docker.pkg.dev --quiet`
+  - Compute metadata (step `meta`):
+    - `commit`: short SHA (7 chars)
+    - `version`: `git describe --tags --always` (fallback `dev`)
+    - `buildtime`: UTC ISO-8601 timestamp
+    - `tag`: `image_tag` input if provided (on dispatch), else short SHA
+    - `image_uri`: `${GAR_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GAR_REPO}/${SERVICE_NAME}:$tag`
+  - Set up Docker Buildx
+  - Build image (Dockerfile at repo root) with build args: `VERSION`, `COMMIT`, `BUILDTIME`; tag with `image_uri`
+  - Push image – conditional:
+    - Pushed when event is `push` OR `run_deploy == 'true'` (for manual dispatch)
 
-**Failure Behavior**: If build fails, workflow stops here. Test and deploy stages are skipped.
+4) Deploy – Deploy to Cloud Run (needs: Docker)
+- Condition: runs when event is `push` OR `run_deploy == 'true'`
+- Steps:
+  - Authenticate to GCP and setup `gcloud`
+  - Deploy:
+    - Service: `${SERVICE_NAME}`
+    - Image: `${{ needs.docker.outputs.image_uri }}`
+    - Region: `${GAR_LOCATION}` (Cloud Run region)
+    - Platform: managed
+    - Allow unauthenticated
+    - Port: `3000`
+    - Env vars: `NEXT_TELEMETRY_DISABLED=1`, `NODE_ENV=production`
 
-#### 2. Test Stage
-**Job**: `test` (runs only if `build` succeeds)
+Notes:
+- There is no separate cleanup job and no explicit concurrency group configured in the workflow.
 
-Runs comprehensive quality checks and tests:
-
-- **API Testing**:
-  - Download dependencies
-  - Lint with golangci-lint
-  - Run Go tests with race detection and coverage
-  
-- **UI Testing**:
-  - Install dependencies
-  - Lint with ESLint
-  - Type check with TypeScript
-  - Run unit tests in CI mode
-  - Run Playwright e2e tests (installs Playwright browsers, builds app, runs tests)
-
-**Failure Behavior**: If any test or lint check fails, workflow stops here. Deploy stage is skipped.
-
-#### 3. Deploy Stage
-**Job**: `deploy` (runs only if `build` and `test` succeed)
-
-Builds Docker image and deploys to Google Cloud Run:
-
-- Setup Node.js and Go
-- Authenticate with Google Cloud using service account credentials
-- Setup gcloud CLI
-- Compute image metadata (version, commit SHA, build time)
-- Setup Docker Buildx
-- Authenticate Docker to Google Artifact Registry
-- Build multi-stage Docker image with build arguments
-- Push image to Artifact Registry
-- Deploy to Cloud Run with environment variables
-
-**Configuration**:
-- **Project ID**: `playground-personal-474821`
-- **Region**: `us-central1`
-- **Artifact Registry**: `web-apps`
-- **Service Name**: `gsdta-web`
-- **Port**: 3000
-- **Access**: Public (unauthenticated)
-
-**Failure Behavior**: If Docker build or deployment fails, workflow stops. Cleanup stage is skipped.
-
-#### 4. Cleanup Stage
-**Job**: `cleanup` (runs only if `deploy` succeeds)
-
-Removes old Docker images to save storage costs:
-
-- Authenticates with Google Cloud
-- Lists all images in the repository
-- Keeps the latest 10 tagged images
-- Deletes older images
-
-**Failure Behavior**: Uses `continue-on-error: true`, so cleanup failures don't mark the workflow as failed. The deployment has already succeeded at this point.
-
-### Manual Workflow Dispatch
-
-The deploy workflow can be triggered manually with these optional inputs:
-
-- **run_deploy**: Whether to actually deploy (default: `true`)
-  - Set to `false` to only build the image without pushing or deploying
-- **image_tag**: Custom image tag (default: current commit SHA)
-- **project_id**: Override GCP project ID
-- **region**: Override deployment region
-- **service_name**: Override Cloud Run service name
-- **backend_base_url**: Backend API URL used at build time (default: `http://localhost:8080/v1`)
+---
 
 ## Required Secrets
 
-The following secrets must be configured in GitHub repository settings:
+- `GCP_SA_KEY` – Google Cloud service account JSON with permissions to:
+  - Authenticate (`id-token`) and use `gcloud`
+  - Push to Artifact Registry in `${GAR_LOCATION}` (`web-apps` repo under `${GCP_PROJECT_ID}`)
+  - Deploy to Cloud Run in the same project/region
 
-- **GCP_SA_KEY**: Google Cloud Platform service account JSON key with permissions for:
-  - Artifact Registry (push images)
-  - Cloud Run (deploy services)
+## Permissions
 
-## Workflow Permissions
+- CI workflow: default `contents: read`.
+- Deploy workflow (Docker/Deploy jobs): `contents: read`, `id-token: write` for Workload Identity / auth action.
 
-### CI Workflow
-- `contents: read` (default)
+## Caching
 
-### Deploy Workflow
-- `contents: read` - Access repository code
-
-## Concurrency Control
-
-**Deploy Workflow** uses concurrency settings:
-```yaml
-concurrency:
-  group: deploy-${{ github.ref }}
-  cancel-in-progress: false
-```
-
-This ensures only one deployment runs per branch at a time, and new deployments wait for the current one to complete rather than canceling it.
-
-## Environment Variables
-
-### CI Workflow
-- `NODE_VERSION`: 20
-- `GO_VERSION`: 1.21
-
-### Deploy Workflow
-- `NODE_VERSION`: 20
-- `GO_VERSION`: 1.21
-- `GCP_PROJECT_ID`: playground-personal-474821
-- `GAR_LOCATION`: us-central1
-- `GAR_REPO`: web-apps
-- `SERVICE_NAME`: gsdta-web
-- `BACKEND_BASE_URL`: http://localhost:8080/v1
-
-## Build Artifacts
-
-### API Binary
-Built with version metadata embedded via ldflags:
-- Version: Git tag/commit
-- Commit: Short commit SHA
-- Build Time: ISO 8601 timestamp
-
-### UI Application
-Built with Next.js standalone output for optimized deployment:
-- Server files in `.next/standalone`
-- Static files in `.next/static`
-- Public assets in `public`
-
-### Docker Image
-Multi-stage build combining both API and UI:
-- Base: Node.js 20 alpine
-- API binary copied from Go build stage
-- UI Next.js standalone server
-- Exposed port: 3000
-- Entry point: Custom script handling both services
+- Node.js setup uses npm cache with `cache-dependency-path` per package (`api/package-lock.json`, `ui/package-lock.json`).
 
 ## Troubleshooting
 
-### Build Failures
-If the build stage fails:
-1. Check that code compiles locally: `npm run build` (UI) and `go build ./cmd/api` (API)
-2. Verify dependencies are correct in `package.json` and `go.mod`
+- Lint/Typecheck failures: run locally in the respective folder
+  - API: `npm run lint`, `npm run typecheck`, `npm run test:e2e`
+  - UI: `npm run lint`, `npm run typecheck`, `npx playwright install --with-deps`, `npm test`, `npm run e2e:ci`
+- Docker build issues: build locally from repo root with the same build args `VERSION`, `COMMIT`, `BUILDTIME`.
+- GCP deploy issues: verify `GCP_SA_KEY`, project/region values, and Cloud Run IAM allow deployment and unauthenticated access (if desired).
 
-### Test Failures
-If the test stage fails:
-1. Run tests locally: `npm test` (UI) and `go test ./...` (API)
-2. Check linting: `npm run lint` (UI) and `golangci-lint run` (API)
-3. Verify type checking: `npm run typecheck` (UI)
+## At-a-glance Flow
 
-### Deploy Failures
-If the deploy stage fails:
-1. Verify GCP credentials are valid
-2. Check that service account has required permissions
-3. Ensure Docker image builds successfully
-4. Verify Cloud Run service configuration
-
-### Cleanup Failures
-Cleanup failures are non-critical and don't fail the workflow. However, you may need to manually clean up old images to avoid storage costs.
-
-## Best Practices
-
-1. **Always merge to develop first**: Code should be merged to `develop` and pass CI before merging to `main`
-2. **Branch protection**: Configure branch protection rules requiring CI checks to pass before merging
-3. **Review before main**: All merges to `main` should go through pull request review
-4. **Monitor deployments**: Check Cloud Run logs after deployment to verify the service is running correctly
-5. **Test locally**: Always run builds and tests locally before pushing to avoid unnecessary CI runs
-
-## Workflow Visualization
-
-```
-develop branch:
-  Push → CI Workflow → Build & Test
-
-main branch:
-  Push → Deploy Workflow:
-    1. Build Stage (compile API & UI)
-       ↓ (fails = stop)
-    2. Test Stage (lint & test API & UI)
-       ↓ (fails = stop)
-    3. Deploy Stage (Docker build → push → Cloud Run)
-       ↓ (fails = stop)
-    4. Cleanup Stage (remove old images)
-       ↓ (fails = continues)
-    ✓ Complete
-```
-
-## Future Enhancements
-
-Potential improvements to consider:
-
-- Add integration tests to test stage
-- Add smoke tests after deployment
-- Implement blue-green deployment strategy
-- Add performance testing
-- Cache Docker layers for faster builds
-- Add notifications (Slack, email) on deployment success/failure
-- Implement automatic rollback on deployment failure
+- develop branch:
+  - push → CI → API job → UI job
+- main branch:
+  - push → Deploy → API job → UI job → Docker image build/push → Cloud Run deploy
+- manual dispatch:
+  - dispatch → API job → UI job → Docker image build → (conditional push/deploy based on `run_deploy`)
