@@ -43,7 +43,7 @@ export default function TextbooksPage() {
     isSelected: boolean,
   ) => {
     const baseClasses =
-      "rounded-md px-4 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring focus-visible:ring-offset-2";
+      "w-full rounded-md px-4 py-2 text-left text-sm font-medium transition focus:outline-none focus-visible:ring focus-visible:ring-offset-2";
 
     if (kind === "homework") {
       return `${baseClasses} focus-visible:ring-emerald-500 ${
@@ -116,11 +116,7 @@ export default function TextbooksPage() {
               </p>
 
               <div
-                className={`mt-4 ${
-                  selectedGrade.buttonColumns === 2
-                    ? "grid grid-cols-1 gap-2 sm:grid-cols-2"
-                    : "grid grid-cols-1 gap-2"
-                }`}
+                className="mt-4 flex flex-col gap-2"
                 role="toolbar"
               >
                 {selectedGrade.resources.map((resource) => {
