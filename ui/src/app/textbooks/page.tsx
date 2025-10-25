@@ -79,40 +79,38 @@ export default function TextbooksPage() {
         </p>
       </div>
 
-      <div className="flex flex-col gap-4 lg:flex-row">
-        <div className="lg:w-1/3">
-          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              {t("textbooks.gradeSelectorLabel")}
-            </h2>
-            <div
-              role="tablist"
-              aria-label={t("textbooks.gradeSelectorLabel")}
-              className="mt-4 flex flex-col gap-2"
-            >
-              {grades.map((grade) => {
-                const isSelected = grade.id === selectedGradeId;
-                return (
-                  <button
-                    key={grade.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={isSelected}
-                    onClick={() => setSelectedGradeId(grade.id)}
-                    className={`whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${isSelected ? "bg-indigo-600 text-white shadow" : "bg-white text-gray-900 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"}`}
-                    data-testid={`grade-${grade.id}`}
-                  >
-                    {grade.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+      <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          {t("textbooks.gradeSelectorLabel")}
+        </h2>
+        <div
+          role="tablist"
+          aria-label={t("textbooks.gradeSelectorLabel")}
+          className="mt-4 flex flex-wrap gap-2"
+        >
+          {grades.map((grade) => {
+            const isSelected = grade.id === selectedGradeId;
+            return (
+              <button
+                key={grade.id}
+                type="button"
+                role="tab"
+                aria-selected={isSelected}
+                onClick={() => setSelectedGradeId(grade.id)}
+                className={`whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${isSelected ? "bg-indigo-600 text-white shadow" : "bg-white text-gray-900 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"}`}
+                data-testid={`grade-${grade.id}`}
+              >
+                {grade.label}
+              </button>
+            );
+          })}
         </div>
+      </div>
 
-        {selectedGrade ? (
-          <div className="flex flex-1 flex-col gap-4">
-            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      {selectedGrade ? (
+        <div className="flex flex-col gap-4 md:flex-row">
+          <div className="md:w-1/3">
+            <div className="h-full rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 {t("textbooks.resourcesTitle", { grade: selectedGrade.label })}
               </h2>
@@ -120,10 +118,7 @@ export default function TextbooksPage() {
                 {t("textbooks.resourcesSubtitle")}
               </p>
 
-              <div
-                className="mt-4 flex flex-col gap-2"
-                role="toolbar"
-              >
+              <div className="mt-4 flex flex-col gap-2" role="toolbar">
                 {selectedGrade.resources.map((resource) => {
                   const isSelected = resource.id === selectedResourceId;
                   return (
@@ -144,7 +139,9 @@ export default function TextbooksPage() {
                 })}
               </div>
             </div>
+          </div>
 
+          <div className="md:flex-1">
             <div className="min-h-[400px] rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               {selectedResource ? (
                 <iframe
@@ -166,12 +163,12 @@ export default function TextbooksPage() {
               )}
             </div>
           </div>
-        ) : (
-          <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-white p-6 text-center text-gray-600 shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
-            <p>{t("textbooks.noGradeSelected")}</p>
-          </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-white p-6 text-center text-gray-600 shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+          <p>{t("textbooks.noGradeSelected")}</p>
+        </div>
+      )}
     </section>
   );
 }
