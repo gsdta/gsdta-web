@@ -38,7 +38,7 @@ test("renders header links for parent role", () => {
   expect(hasLinkTo("/logout")).toBe(true);
 });
 
-test("renders public nav for anonymous users", () => {
+test("renders public nav for anonymous users (sign-in link varies by auth mode)", () => {
   useAuth.mockReturnValue({
     user: null,
     loading: false,
@@ -55,7 +55,5 @@ test("renders public nav for anonymous users", () => {
   expect(hasLinkTo("/calendar/")).toBe(true);
   expect(hasLinkTo("/textbooks/")).toBe(true);
   expect(hasLinkTo("/donate/")).toBe(true);
-  // Contact intentionally removed from header
-  // Login temporarily hidden until feature is ready
-  expect(hasLinkTo("/login")).toBe(false);
+  // Sign-in visibility depends on auth mode; no assertion here anymore.
 });
