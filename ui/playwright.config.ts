@@ -21,7 +21,7 @@ export default defineConfig({
     fullyParallel: true,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 0,
-    workers: 10, // Slightly reduced for stability
+    workers: process.env.CI ? "50%" : undefined, // Dial workers on CI to reduce contention
     // Remove any-cast and pass typed reporters
     reporter: reporters,
     use: {
