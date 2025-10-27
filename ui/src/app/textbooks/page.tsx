@@ -11,6 +11,39 @@ import {
   type TextbookResourceKind,
 } from "@/data/textbooks";
 
+// Detect viewport size without duplicating DOM via CSS-only visibility.
+function useMediaQuery(query: string) {
+  const getInitial = () => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      // Default to desktop to avoid accidental duplicate mobile rendering in tests/SSR.
+      return true;
+    }
+    return window.matchMedia(query).matches;
+  };
+  const [matches, setMatches] = useState<boolean>(getInitial);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+    const mql = window.matchMedia(query);
+    const handler = (e: MediaQueryListEvent) => setMatches(e.matches);
+    // Sync initial on mount
+    setMatches(mql.matches);
+    if (typeof mql.addEventListener === "function") {
+      mql.addEventListener("change", handler);
+      return () => mql.removeEventListener("change", handler);
+    }
+    // Safari/older: use legacy listener API with a safe cast
+    const legacyMql = mql as unknown as {
+      addListener: (cb: (e: MediaQueryListEvent) => void) => void;
+      removeListener: (cb: (e: MediaQueryListEvent) => void) => void;
+    };
+    legacyMql.addListener(handler);
+    return () => legacyMql.removeListener(handler);
+  }, [query]);
+
+  return matches;
+}
+
 export default function TextbooksPage() {
   const { t } = useI18n();
   const grades = useMemo(() => TEXTBOOKS, []);
@@ -37,6 +70,8 @@ export default function TextbooksPage() {
   useEffect(() => {
     setSelectedResourceId(null);
   }, [selectedGradeId]);
+
+  const isMdUp = useMediaQuery("(min-width: 768px)");
 
   const getResourceButtonClasses = (
     kind: TextbookResourceKind | undefined,
@@ -66,6 +101,124 @@ export default function TextbooksPage() {
         ? "bg-indigo-600 text-white shadow dark:bg-indigo-500"
         : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-300 dark:hover:bg-indigo-900/60"
     }`;
+  };
+
+  // Desktop (md and up): original side-by-side layout
+  const renderDesktopLayout = () => (
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+      <div className="col-span-1">
+        <div className="h-full rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            {t("textbooks.resourcesTitle", { grade: selectedGrade!.label })}
+          </h2>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+            {t("textbooks.resourcesSubtitle")}
+          </p>
+
+          <div className="mt-4 flex flex-col gap-2" role="toolbar">
+            {selectedGrade!.resources.map((resource) => {
+              const isSelected = resource.id === selectedResourceId;
+              return (
+                <button
+                  key={resource.id}
+                  type="button"
+                  aria-pressed={isSelected}
+                  onClick={() => setSelectedResourceId(resource.id)}
+                  className={getResourceButtonClasses(
+                    resource.kind,
+                    isSelected,
+                  )}
+                  data-testid={`resource-${resource.id}`}
+                >
+                  {resource.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div className="col-span-1 md:col-span-2">
+        <div className="min-h-[400px] rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          {selectedResource ? (
+            <iframe
+              title={t("textbooks.viewerTitle", {
+                grade: selectedGrade!.label,
+                resource: selectedResource.label,
+              })}
+              src={buildGoogleDrivePreviewUrl(
+                selectedResource.googleDriveId,
+              )}
+              className="h-[480px] w-full rounded-md border border-gray-200 bg-gray-100 dark:border-gray-700"
+              allowFullScreen
+              data-testid="textbook-viewer"
+            />
+          ) : (
+            <div className="flex h-full min-h-[240px] items-center justify-center text-center text-gray-600 dark:text-gray-300">
+              <p>{t("textbooks.selectResourcePrompt")}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  // Mobile (below md): single-pane flow with back button
+  const renderMobileLayout = () => {
+    const inViewer = Boolean(selectedResource);
+    return (
+      <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        {!inViewer ? (
+          <>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              {t("textbooks.resourcesTitle", { grade: selectedGrade!.label })}
+            </h2>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+              {t("textbooks.resourcesSubtitle")}
+            </p>
+            <div className="mt-4 flex flex-col gap-2" role="toolbar">
+              {selectedGrade!.resources.map((resource) => (
+                <button
+                  key={resource.id}
+                  type="button"
+                  onClick={() => setSelectedResourceId(resource.id)}
+                  className={getResourceButtonClasses(resource.kind, false)}
+                  data-testid={`resource-${resource.id}`}
+                >
+                  {resource.label}
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setSelectedResourceId(null)}
+                className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus-visible:ring focus-visible:ring-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+                aria-label="Back to resources list"
+              >
+                ← Back
+              </button>
+              <div className="text-sm text-gray-600 dark:text-gray-300 truncate max-w-[60%]" title={selectedResource!.label}>
+                {selectedResource!.label}
+              </div>
+            </div>
+            <iframe
+              title={t("textbooks.viewerTitle", {
+                grade: selectedGrade!.label,
+                resource: selectedResource!.label,
+              })}
+              src={buildGoogleDrivePreviewUrl(selectedResource!.googleDriveId)}
+              className="h-[70vh] w-full rounded-md border border-gray-200 bg-gray-100 dark:border-gray-700"
+              allowFullScreen
+              data-testid="textbook-viewer"
+            />
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -108,62 +261,7 @@ export default function TextbooksPage() {
       </div>
 
       {selectedGrade ? (
-        <div className="flex flex-col gap-4 md:flex-row">
-          <div className="md:w-1/3">
-            <div className="h-full rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                {t("textbooks.resourcesTitle", { grade: selectedGrade.label })}
-              </h2>
-              <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                {t("textbooks.resourcesSubtitle")}
-              </p>
-
-              <div className="mt-4 flex flex-col gap-2" role="toolbar">
-                {selectedGrade.resources.map((resource) => {
-                  const isSelected = resource.id === selectedResourceId;
-                  return (
-                    <button
-                      key={resource.id}
-                      type="button"
-                      aria-pressed={isSelected}
-                      onClick={() => setSelectedResourceId(resource.id)}
-                      className={getResourceButtonClasses(
-                        resource.kind,
-                        isSelected,
-                      )}
-                      data-testid={`resource-${resource.id}`}
-                    >
-                      {resource.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          <div className="md:flex-1">
-            <div className="min-h-[400px] rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-              {selectedResource ? (
-                <iframe
-                  title={t("textbooks.viewerTitle", {
-                    grade: selectedGrade.label,
-                    resource: selectedResource.label,
-                  })}
-                  src={buildGoogleDrivePreviewUrl(
-                    selectedResource.googleDriveId,
-                  )}
-                  className="h-[480px] w-full rounded-md border border-gray-200 bg-gray-100 dark:border-gray-700"
-                  allowFullScreen
-                  data-testid="textbook-viewer"
-                />
-              ) : (
-                <div className="flex h-full min-h-[240px] items-center justify-center text-center text-gray-600 dark:text-gray-300">
-                  <p>{t("textbooks.selectResourcePrompt")}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        isMdUp ? renderDesktopLayout() : renderMobileLayout()
       ) : (
         <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-white p-6 text-center text-gray-600 shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
           <p>{t("textbooks.noGradeSelected")}</p>
