@@ -37,6 +37,7 @@ export default defineConfig({
         timeout: 180_000,
         env: {
             NEXT_PUBLIC_USE_MSW: "false",
+            NEXT_PUBLIC_AUTH_MODE: "mock",
         },
     },
     projects: [
