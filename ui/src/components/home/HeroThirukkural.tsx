@@ -2,12 +2,15 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ThirukkuralDisplay } from "@/components/ThirukkuralDisplay";
+import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { useI18n } from "@/i18n/LanguageProvider";
 
 export function HeroThirukkural() {
   const { t } = useI18n();
   return (
-    <section className="relative isolate overflow-hidden rounded-xl bg-gradient-to-br from-pink-50 via-rose-50 to-amber-50 dark:from-gray-900 dark:via-gray-950 dark:to-black ring-1 ring-black/5 dark:ring-white/5 px-6 py-12 sm:px-10">
+    <section className="relative isolate overflow-hidden rounded-xl bg-gradient-to-br from-pink-50 via-rose-50 to-amber-50 dark:from-gray-900 dark:via-gray-950 dark:to-black ring-1 ring-black/5 dark:ring-white/5">
+      <AnnouncementBanner />
+      <div className="px-6 py-12 sm:px-10">
       <div className="mx-auto max-w-4xl">
         {/* Subtitle + Motto inside hero */}
         <div className="text-center">
@@ -43,6 +46,7 @@ export function HeroThirukkural() {
             />
           </div>
         </div>
+      </div>
       </div>
     </section>
   );
