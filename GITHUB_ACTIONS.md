@@ -41,6 +41,7 @@ Jobs:
 
 2) UI – Build & Test (needs: API)
 - Runner: `ubuntu-latest`
+- Container: `mcr.microsoft.com/playwright:v1.48.2-jammy` (pre-installs browsers and system deps)
 - Working directory: `ui`
 - Tooling: Node.js 20 with npm cache (`cache-dependency-path: ui/package-lock.json`)
 - Steps:
@@ -48,9 +49,12 @@ Jobs:
   - Install dependencies: `npm ci`
   - Lint: `npm run lint`
   - Typecheck: `npm run typecheck`
-  - Install Playwright browsers (with system deps): `npx playwright install --with-deps`
   - Unit tests (if present): `npm test --if-present`
   - E2E (Playwright): `npm run e2e:ci`
+
+Notes:
+- The Playwright container eliminates the slow `npx playwright install --with-deps` step.
+- Our Playwright config only runs Chromium; if you ever enable Firefox/WebKit projects, keep using the container or adjust install accordingly.
 
 Failure behavior:
 - Any failing step fails the workflow; the UI job does not run if the API job fails.
@@ -83,7 +87,7 @@ Jobs and flow:
 - Same as the CI API job (Node 20; `npm ci`, lint, typecheck, Cucumber E2E), running in `api/`.
 
 2) UI – Build & Test (needs: API)
-- Same as the CI UI job (Node 20; `npm ci`, lint, typecheck, Playwright install, unit tests if present, Playwright E2E), running in `ui/`.
+- Same as the CI UI job (Node 20; `npm ci`, lint, typecheck, unit tests if present, Playwright E2E), running in `ui/`, also using the Playwright container.
 
 3) Docker – Build & Push Docker image (needs: UI)
 - Permissions: `contents: read`, `id-token: write`
@@ -136,12 +140,18 @@ Notes:
 ## Caching
 
 - Node.js setup uses npm cache with `cache-dependency-path` per package (`api/package-lock.json`, `ui/package-lock.json`).
+- Playwright browsers are provided by the container; no additional caching is required. If you run without the container, prefer a targeted install and cache (Chromium-only):
+  - Install step: `npx playwright install --with-deps chromium`
+  - Cache: `~/.cache/ms-playwright` keyed by Playwright version and OS
 
 ## Troubleshooting
 
 - Lint/Typecheck failures: run locally in the respective folder
   - API: `npm run lint`, `npm run typecheck`, `npm run test:e2e`
-  - UI: `npm run lint`, `npm run typecheck`, `npx playwright install --with-deps`, `npm test`, `npm run e2e:ci`
+  - UI: `npm run lint`, `npm run typecheck`, `npm run e2e:ci`
+- If you choose not to use the Playwright container:
+  - Use Chromium-only install to reduce time: `npx playwright install --with-deps chromium`
+  - Optionally cache `~/.cache/ms-playwright` in Actions to avoid re-downloading browsers each run
 - Docker build issues: build locally from repo root with the same build args `VERSION`, `COMMIT`, `BUILDTIME`.
 - GCP deploy issues: verify `GCP_SA_KEY`, project/region values, and Cloud Run IAM allow deployment and unauthenticated access (if desired).
 
