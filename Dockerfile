@@ -56,6 +56,14 @@ ENV NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}
 ENV NEXT_PUBLIC_FIREBASE_PROJECT_ID=${NEXT_PUBLIC_FIREBASE_PROJECT_ID}
 ENV NEXT_PUBLIC_FIREBASE_APP_ID=${NEXT_PUBLIC_FIREBASE_APP_ID}
 
+# Validate presence of required Firebase config at build time
+RUN set -eu \
+  && [ -n "${NEXT_PUBLIC_FIREBASE_API_KEY:-}" ] \
+  && [ -n "${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN:-}" ] \
+  && [ -n "${NEXT_PUBLIC_FIREBASE_PROJECT_ID:-}" ] \
+  && [ -n "${NEXT_PUBLIC_FIREBASE_APP_ID:-}" ] \
+  || (echo "ERROR: Missing one or more NEXT_PUBLIC_FIREBASE_* build args. Aborting UI build." >&2; exit 1)
+
 RUN npm run build
 
 # =============================================================================
