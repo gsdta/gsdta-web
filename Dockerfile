@@ -35,7 +35,7 @@ COPY ui/ .
 
 # Build-time configuration - these MUST be set at build time for NEXT_PUBLIC_ vars
 ARG NEXT_PUBLIC_USE_MSW=false
-ARG NEXT_PUBLIC_AUTH_MODE=firebase
+ARG NEXT_PUBLIC_AUTH_MODE=mock
 ARG NEXT_PUBLIC_API_BASE_URL=/api
 # Firebase public config (baked into client)
 ARG NEXT_PUBLIC_FIREBASE_API_KEY
@@ -56,13 +56,17 @@ ENV NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}
 ENV NEXT_PUBLIC_FIREBASE_PROJECT_ID=${NEXT_PUBLIC_FIREBASE_PROJECT_ID}
 ENV NEXT_PUBLIC_FIREBASE_APP_ID=${NEXT_PUBLIC_FIREBASE_APP_ID}
 
-# Validate presence of required Firebase config at build time
+# Validate presence of required Firebase config at build time (only in firebase mode)
 RUN set -eu \
-  && [ -n "${NEXT_PUBLIC_FIREBASE_API_KEY:-}" ] \
-  && [ -n "${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN:-}" ] \
-  && [ -n "${NEXT_PUBLIC_FIREBASE_PROJECT_ID:-}" ] \
-  && [ -n "${NEXT_PUBLIC_FIREBASE_APP_ID:-}" ] \
-  || (echo "ERROR: Missing one or more NEXT_PUBLIC_FIREBASE_* build args. Aborting UI build." >&2; exit 1)
+  && if [ "${NEXT_PUBLIC_AUTH_MODE}" = "firebase" ]; then \
+       [ -n "${NEXT_PUBLIC_FIREBASE_API_KEY:-}" ] && \
+       [ -n "${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN:-}" ] && \
+       [ -n "${NEXT_PUBLIC_FIREBASE_PROJECT_ID:-}" ] && \
+       [ -n "${NEXT_PUBLIC_FIREBASE_APP_ID:-}" ] || \
+       (echo "ERROR: Missing one or more NEXT_PUBLIC_FIREBASE_* build args (auth mode: firebase). Aborting UI build." >&2; exit 1); \
+     else \
+       echo "Skipping Firebase config check (auth mode: ${NEXT_PUBLIC_AUTH_MODE})."; \
+     fi
 
 RUN npm run build
 
