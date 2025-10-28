@@ -55,7 +55,7 @@ jobs:
     name: UI - Build & Test
     runs-on: ubuntu-latest
     needs: api
-    container: mcr.microsoft.com/playwright:v1.48.2-jammy
+    container: mcr.microsoft.com/playwright:v1.56.1-jammy
     defaults:
       run:
         working-directory: ui
