@@ -33,8 +33,10 @@ WORKDIR /app
 COPY --from=ui-deps /app/node_modules ./node_modules
 COPY ui/ .
 
-# Build-time configuration for MSW behavior
+# Build-time configuration - these MUST be set at build time for NEXT_PUBLIC_ vars
 ARG NEXT_PUBLIC_USE_MSW=false
+ARG NEXT_PUBLIC_AUTH_MODE=firebase
+ARG NEXT_PUBLIC_API_BASE_URL=/api
 
 # Disable telemetry during build and force standalone output
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -42,6 +44,8 @@ ENV NEXT_OUTPUT=standalone
 
 # Propagate build args to env so Next picks them up at build time
 ENV NEXT_PUBLIC_USE_MSW=${NEXT_PUBLIC_USE_MSW}
+ENV NEXT_PUBLIC_AUTH_MODE=${NEXT_PUBLIC_AUTH_MODE}
+ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
 
 RUN npm run build
 

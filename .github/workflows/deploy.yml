@@ -132,6 +132,9 @@ jobs:
             --build-arg VERSION=${{ steps.meta.outputs.version }} \
             --build-arg COMMIT=${{ steps.meta.outputs.commit }} \
             --build-arg BUILDTIME=${{ steps.meta.outputs.buildtime }} \
+            --build-arg NEXT_PUBLIC_AUTH_MODE=firebase \
+            --build-arg NEXT_PUBLIC_API_BASE_URL=/api \
+            --build-arg NEXT_PUBLIC_USE_MSW=false \
             -t ${{ steps.meta.outputs.image_uri }} .
 
       - name: Push image
