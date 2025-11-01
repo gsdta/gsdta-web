@@ -17,10 +17,6 @@ on:
         description: 'Auth mode for the UI build (firebase|mock)'
         required: false
         default: 'firebase'
-
-env:
-  NODE_VERSION: 20
-  GCP_PROJECT_ID: playground-personal-474821
   GAR_LOCATION: us-central1
   GAR_REPO: web-apps
   SERVICE_NAME: gsdta-web
@@ -98,12 +94,11 @@ jobs:
       id-token: write
     outputs:
       image_uri: ${{ steps.meta.outputs.image_uri }}
-      auth_mode: ${{ steps.meta.outputs.auth_mode }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Google Auth
+      auth_mode: ${{ steps.meta.outputs.auth_mode }}
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
@@ -122,39 +117,30 @@ jobs:
           BUILDTIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then TAG='${{ github.event.inputs.image_tag }}'; else TAG=""; fi
           if [ -z "$TAG" ]; then TAG=$COMMIT; fi
+          echo "commit=$COMMIT" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "buildtime=$BUILDTIME" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "image_uri=${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO }}/${{ env.SERVICE_NAME }}:$TAG" >> $GITHUB_OUTPUT
           # Determine auth mode: default firebase on push; from input on dispatch
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then AUTH_MODE='${{ github.event.inputs.auth_mode }}'; else AUTH_MODE='firebase'; fi
           if [ "$AUTH_MODE" != "firebase" ] && [ "$AUTH_MODE" != "mock" ]; then
             echo "Invalid auth_mode: $AUTH_MODE (expected 'firebase' or 'mock')" >&2
             exit 1
           fi
-          echo "commit=$COMMIT" >> $GITHUB_OUTPUT
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "buildtime=$BUILDTIME" >> $GITHUB_OUTPUT
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-          echo "image_uri=${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO }}/${{ env.SERVICE_NAME }}:$TAG" >> $GITHUB_OUTPUT
-          echo "auth_mode=$AUTH_MODE" >> $GITHUB_OUTPUT
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Fetch Firebase secrets
-        id: firebase-secrets
-        if: ${{ steps.meta.outputs.auth_mode == 'firebase' }}
         run: |
           echo "api_key=$(gcloud secrets versions access latest --secret=FIREBASE_API_KEY --project=${{ env.GCP_PROJECT_ID }})" >> $GITHUB_OUTPUT
           echo "auth_domain=$(gcloud secrets versions access latest --secret=FIREBASE_AUTH_DOMAIN --project=${{ env.GCP_PROJECT_ID }})" >> $GITHUB_OUTPUT
           echo "project_id=$(gcloud secrets versions access latest --secret=FIREBASE_PROJECT_ID --project=${{ env.GCP_PROJECT_ID }})" >> $GITHUB_OUTPUT
           echo "app_id=$(gcloud secrets versions access latest --secret=FIREBASE_APP_ID --project=${{ env.GCP_PROJECT_ID }})" >> $GITHUB_OUTPUT
-
+          echo "auth_mode=$AUTH_MODE" >> $GITHUB_OUTPUT
       - name: Validate Firebase secrets
-        if: ${{ steps.meta.outputs.auth_mode == 'firebase' }}
         run: |
           set -euo pipefail
           if [ -z "${{ steps.firebase-secrets.outputs.api_key }}" ] || \
              [ -z "${{ steps.firebase-secrets.outputs.auth_domain }}" ] || \
              [ -z "${{ steps.firebase-secrets.outputs.project_id }}" ] || \
-             [ -z "${{ steps.firebase-secrets.outputs.app_id }}" ]; then
+        if: ${{ steps.meta.outputs.auth_mode == 'firebase' }}
             echo "One or more Firebase secrets are empty. Ensure the GitHub SA has Secret Manager access and that secrets exist." >&2
             echo "Project: ${{ env.GCP_PROJECT_ID }}" >&2
             exit 1
@@ -162,7 +148,21 @@ jobs:
           echo "Firebase secrets fetched (values masked in logs)."
 
       - name: Build image
-        run: |
+        if: ${{ steps.meta.outputs.auth_mode == 'firebase' }}
+          docker build \
+            --build-arg VERSION=${{ steps.meta.outputs.version }} \
+            --build-arg COMMIT=${{ steps.meta.outputs.commit }} \
+            --build-arg BUILDTIME=${{ steps.meta.outputs.buildtime }} \
+            --build-arg NEXT_PUBLIC_AUTH_MODE=firebase \
+            --build-arg NEXT_PUBLIC_API_BASE_URL=/api \
+            --build-arg NEXT_PUBLIC_USE_MSW=false \
+            --build-arg NEXT_PUBLIC_FIREBASE_API_KEY=${{ steps.firebase-secrets.outputs.api_key }} \
+            --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ steps.firebase-secrets.outputs.auth_domain }} \
+            --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ steps.firebase-secrets.outputs.project_id }} \
+            --build-arg NEXT_PUBLIC_FIREBASE_APP_ID=${{ steps.firebase-secrets.outputs.app_id }} \
+            -t ${{ steps.meta.outputs.image_uri }} .
+
+      - name: Push image
           set -euo pipefail
           AUTH_MODE='${{ steps.meta.outputs.auth_mode }}'
           FIREBASE_ARGS=""
@@ -173,57 +173,23 @@ jobs:
               --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ steps.firebase-secrets.outputs.project_id }} \
               --build-arg NEXT_PUBLIC_FIREBASE_APP_ID=${{ steps.firebase-secrets.outputs.app_id }}"
           fi
-          docker build \
-            --build-arg VERSION=${{ steps.meta.outputs.version }} \
-            --build-arg COMMIT=${{ steps.meta.outputs.commit }} \
-            --build-arg BUILDTIME=${{ steps.meta.outputs.buildtime }} \
-            --build-arg NEXT_PUBLIC_AUTH_MODE=${{ steps.meta.outputs.auth_mode }} \
-            --build-arg NEXT_PUBLIC_API_BASE_URL=/api \
-            --build-arg NEXT_PUBLIC_USE_MSW=false \
-            $FIREBASE_ARGS \
-            -t ${{ steps.meta.outputs.image_uri }} .
-
-      - name: Push image
-        if: ${{ github.event_name == 'push' || github.event.inputs.run_deploy == 'true' }}
-        run: docker push ${{ steps.meta.outputs.image_uri }}
-
-  deploy:
-    name: Deploy to Cloud Run
-    runs-on: ubuntu-latest
-    needs: docker
-    if: ${{ github.event_name == 'push' || github.event.inputs.run_deploy == 'true' }}
-    permissions:
-      contents: read
       id-token: write
     steps:
       - name: Google Auth
         uses: google-github-actions/auth@v2
-        with:
+            --build-arg NEXT_PUBLIC_AUTH_MODE=${{ steps.meta.outputs.auth_mode }} \
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Setup gcloud
+            $FIREBASE_ARGS \
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Deploy
         run: |
-          set -euo pipefail
-          AUTH_MODE='${{ needs.docker.outputs.auth_mode || '' }}'
-          # Fallback to firebase for push events where outputs aren't directly available via needs
-          if [ -z "$AUTH_MODE" ]; then AUTH_MODE='firebase'; fi
-
-          COMMON_ENV="NEXT_TELEMETRY_DISABLED=1,NODE_ENV=production,NEXT_PUBLIC_API_BASE_URL=/api,GOOGLE_CLOUD_PROJECT=${{ env.GCP_PROJECT_ID }},NEXT_PUBLIC_USE_MSW=false,USE_GO_API=false"
-          if [ "$AUTH_MODE" = "firebase" ]; then
-            ENV_FLAGS="--set-env-vars NEXT_PUBLIC_AUTH_MODE=firebase,$COMMON_ENV"
-            SECRET_FLAGS="--set-secrets NEXT_PUBLIC_FIREBASE_API_KEY=FIREBASE_API_KEY:latest,NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=FIREBASE_AUTH_DOMAIN:latest,NEXT_PUBLIC_FIREBASE_PROJECT_ID=FIREBASE_PROJECT_ID:latest,NEXT_PUBLIC_FIREBASE_APP_ID=FIREBASE_APP_ID:latest"
-          else
-            ENV_FLAGS="--set-env-vars NEXT_PUBLIC_AUTH_MODE=mock,$COMMON_ENV"
-            SECRET_FLAGS=""
-          fi
-
           gcloud run deploy ${{ env.SERVICE_NAME }} \
             --image ${{ needs.docker.outputs.image_uri }} \
             --region ${{ env.GAR_LOCATION }} \
             --platform managed \
             --allow-unauthenticated \
             --port 3000 \
-            $ENV_FLAGS $SECRET_FLAGS
+            --set-env-vars NEXT_TELEMETRY_DISABLED=1,NODE_ENV=production,NEXT_PUBLIC_AUTH_MODE=firebase,NEXT_PUBLIC_API_BASE_URL=/api,GOOGLE_CLOUD_PROJECT=${{ env.GCP_PROJECT_ID }},NEXT_PUBLIC_USE_MSW=false,USE_GO_API=false \
+            --set-secrets NEXT_PUBLIC_FIREBASE_API_KEY=FIREBASE_API_KEY:latest,NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=FIREBASE_AUTH_DOMAIN:latest,NEXT_PUBLIC_FIREBASE_PROJECT_ID=FIREBASE_PROJECT_ID:latest,NEXT_PUBLIC_FIREBASE_APP_ID=FIREBASE_APP_ID:latest
