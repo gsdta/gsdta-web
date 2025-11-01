@@ -71,7 +71,6 @@ Triggers:
   - `run_deploy` (default: `true`) – when `false`, the workflow will build and test, and build the Docker image, but skip pushing the image and skip Cloud Run deployment.
   - `image_tag` (default: empty) – when provided, used as the image tag; otherwise the short commit SHA is used.
   - `auth_mode` (default: `firebase`) – choose `firebase` for real auth or `mock` to bypass Firebase for non-prod builds.
-
 Environment variables:
 - `NODE_VERSION`: `20`
 - `GCP_PROJECT_ID`: `YOUR_PROJECT_ID`
@@ -82,17 +81,12 @@ Environment variables:
 Purpose:
 - Build and test API and UI (same as CI), then build and push a Docker image, and deploy to Google Cloud Run.
 
+Jobs and flow:
 Key points about auth and secrets:
 - The UI is a Next.js app. Any `NEXT_PUBLIC_*` variables are compiled into the client bundle at build time.
 - When `auth_mode` is `firebase`, the Docker build must receive Firebase public config via build args so the UI bundle contains the correct values. We fetch them from Google Secret Manager at build time to keep one source of truth.
 - When `auth_mode` is `mock`, we do not fetch or pass Firebase variables. The Dockerfile also skips the Firebase presence check in this mode.
 
-Jobs and flow:
-
-1) API – Build & Test
-- Same as the CI API job (Node 20; `npm ci`, lint, typecheck, Cucumber E2E), running in `api/`.
-
-2) UI – Build & Test (needs: API)
 - Same as the CI UI job (Node 20; `npm ci`, lint, typecheck, unit tests if present, Playwright E2E), running in `ui/`, also using the Playwright container.
 
 3) Docker – Build & Push Docker image (needs: UI)
@@ -102,19 +96,25 @@ Jobs and flow:
   - Authenticate to GCP using `google-github-actions/auth@v2` and `secrets.GCP_SA_KEY`
   - Setup `gcloud` CLI
   - Configure Docker to use Artifact Registry: `gcloud auth configure-docker ${GAR_LOCATION}-docker.pkg.dev --quiet`
+  - Compute metadata (step `meta`):
+    - `commit`: short SHA (7 chars)
+    - `version`: `git describe --tags --always` (fallback `dev`)
+    - `buildtime`: UTC ISO-8601 timestamp
+    - `tag`: `image_tag` input if provided (on dispatch), else short SHA
+    - `image_uri`: `${GAR_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GAR_REPO}/${SERVICE_NAME}:$tag`
   - Compute metadata (step `meta`) and the chosen `auth_mode` (push default: firebase; manual dispatch: from input)
-  - Set up Docker Buildx
+  - Build image (Dockerfile at repo root) with build args: `VERSION`, `COMMIT`, `BUILDTIME`; tag with `image_uri`
   - Optionally fetch and validate Firebase secrets only when `auth_mode=firebase`
   - Build image with build args:
     - Always: `VERSION`, `COMMIT`, `BUILDTIME`, `NEXT_PUBLIC_AUTH_MODE`, `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_USE_MSW`
     - Only in `firebase` mode: `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`
-  - Push image – conditional:
-    - Pushed when event is `push` OR `run_deploy == 'true'` (for manual dispatch)
-
-4) Deploy – Deploy to Cloud Run (needs: Docker)
 - Condition: runs when event is `push` OR `run_deploy == 'true'`
 - Steps:
   - Authenticate to GCP and setup `gcloud`
+  - Deploy:
+    - Service: `${SERVICE_NAME}`
+    - Image: `${{ needs.docker.outputs.image_uri }}`
+    - Region: `${GAR_LOCATION}` (Cloud Run region)
   - Deploy with port `3000` and env vars:
     - Always: `NEXT_TELEMETRY_DISABLED=1`, `NODE_ENV=production`, `NEXT_PUBLIC_API_BASE_URL=/api`, `NEXT_PUBLIC_USE_MSW=false`, `USE_GO_API=false`, `GOOGLE_CLOUD_PROJECT=<project>`
     - `NEXT_PUBLIC_AUTH_MODE` is set to `firebase` or `mock` to match the image build
@@ -141,18 +141,19 @@ Notes:
 
 - Node.js setup uses npm cache with `cache-dependency-path` per package (`api/package-lock.json`, `ui/package-lock.json`).
 - Playwright browsers are provided by the container; no additional caching is required. If you run without the container, prefer a targeted install and cache (Chromium-only).
-
-## Troubleshooting
+  - Install step: `npx playwright install --with-deps chromium`
+  - Cache: `~/.cache/ms-playwright` keyed by Playwright version and OS
 
 - Error: `ERROR: Missing one or more NEXT_PUBLIC_FIREBASE_* build args. Aborting UI build.`
   - Cause: Building with `auth_mode=firebase` but the Firebase build args were not provided (empty).
   - Fix:
     - Ensure the GSM secrets exist and the GitHub SA has `Secret Manager Secret Accessor` in `${GCP_PROJECT_ID}`
     - Or run a manual deployment with `auth_mode=mock` to build without Firebase: in the workflow dispatch form, set `auth_mode` to `mock`.
-- Lint/Typecheck failures: run locally in the respective folder
-  - API: `npm run lint`, `npm run typecheck`, `npm run test:e2e`
-  - UI: `npm run lint`, `npm run typecheck`, `npm run e2e:ci`
+- If you choose not to use the Playwright container:
+  - Use Chromium-only install to reduce time: `npx playwright install --with-deps chromium`
+  - Optionally cache `~/.cache/ms-playwright` in Actions to avoid re-downloading browsers each run
 - Docker build issues: build locally from repo root with the same build args.
+- GCP deploy issues: verify `GCP_SA_KEY`, project/region values, and Cloud Run IAM allow deployment and unauthenticated access (if desired).
 
 ## At-a-glance Flow
 
@@ -160,5 +161,5 @@ Notes:
   - push → CI → API job → UI job
 - main branch:
   - push → Deploy → API job → UI job → Docker image build/push → Cloud Run deploy
-- manual dispatch:
   - dispatch → API job → UI job → Docker image build (with chosen `auth_mode`) → (conditional push/deploy based on `run_deploy`)
+  - dispatch → API job → UI job → Docker image build → (conditional push/deploy based on `run_deploy`)
