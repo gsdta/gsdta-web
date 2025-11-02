@@ -52,11 +52,17 @@ function isDev() {
 function allowedOrigin(origin: string | null): string | null {
   if (!origin) return null;
   if (isDev()) {
-    return origin === 'http://localhost:3000' ? origin : null;
+    // In development, allow localhost and local network IPs (192.168.x.x, 10.x.x.x, etc.)
+    if (origin.startsWith('http://localhost:') ||
+        origin.startsWith('http://127.0.0.1:') ||
+        origin.match(/^http:\/\/(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/)) {
+      return origin;
+    }
+    return null;
   }
   // In production, we typically don't need cross-origin access from UI (same domain), but keep allow-list if needed.
   const prodAllowed = new Set<string>([
-    'https://www.gsdta.org',
+    'https://www.gsdta.com',
   ]);
   return prodAllowed.has(origin) ? origin : null;
 }
