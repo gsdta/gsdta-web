@@ -1,5 +1,5 @@
 import assert from 'node:assert';
-import { When, Then, Before } from '@cucumber/cucumber';
+import { Given, When, Then, Before } from '@cucumber/cucumber';
 import type { DataTable } from '@cucumber/cucumber';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8080';
@@ -28,6 +28,13 @@ function getByPath(obj: unknown, path: string): unknown {
 Before(function () {
   lastResponse = undefined;
   lastJson = undefined;
+});
+
+Given('the API is running', async function () {
+  // Verify the health endpoint is accessible
+  const url = resolveUrl('/api/v1/health');
+  const response = await fetch(url);
+  assert.strictEqual(response.status, 200, 'API health check failed');
 });
 
 When('I send a GET request to {string}', async function (path: string) {
