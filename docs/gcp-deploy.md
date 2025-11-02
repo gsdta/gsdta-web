@@ -185,8 +185,10 @@ gcloud run deploy %SERVICE_NAME% ^
   --platform managed ^
   --allow-unauthenticated ^
   --port 3000 ^
-  --set-env-vars NEXT_TELEMETRY_DISABLED=1,NODE_ENV=production,APP_ENV=production,SEED_ON_START=false
+  --set-env-vars NEXT_TELEMETRY_DISABLED=1,NODE_ENV=production,APP_ENV=production,SEED_ON_START=false,NEXT_PUBLIC_SITE_URL=https://app.gsdta.com
 ```
+
+**IMPORTANT:** Replace `https://app.gsdta.com` with your actual production domain. This prevents CORS errors where the app tries to load resources from `http://localhost:3000`.
 
 The deploy command outputs a service URL like `https://<service>-<hash>-<region>.a.run.app`.
 
@@ -214,6 +216,10 @@ Go API (env at runtime):
 - `CORS_ALLOWED_ORIGINS` (default: http://localhost:3000) — not critical in single-container pattern
 - `SEED_ON_START` (default: true in dev when no DB) — set to `false` in prod
 - `DATABASE_URL` — optional Postgres connection string (if you add a real DB)
+Next.js (runtime):
+- `NEXT_PUBLIC_SITE_URL` — **REQUIRED in production**. Your site's public URL (e.g., `https://app.gsdta.com`). Used for generating absolute URLs in metadata, structured data, and assets. Defaults to `http://localhost:3000` if not set, causing CORS errors in production.
+- `NEXT_TELEMETRY_DISABLED` — set to `1` to disable Next.js telemetry
+
 - `MIGRATE_ON_START` (default: false)
 
 Next.js (build-time):
