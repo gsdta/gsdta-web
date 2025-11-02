@@ -9,6 +9,7 @@
     "serve": "npm run build && npm run start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "test": "tsx --test 'src/**/__tests__/*.test.ts'",
     "test:cucumber": "cross-env TS_NODE_PROJECT=tsconfig.cucumber.json cucumber-js",
     "test:e2e": "start-server-and-test \"npm run serve\" http://localhost:8080/api/v1/health \"npm run test:cucumber\""
   },

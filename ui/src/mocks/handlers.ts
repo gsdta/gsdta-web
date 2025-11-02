@@ -131,6 +131,16 @@ const globalDb: {
     attendance: [...initialAttendance],
 };
 
+// Simple in-memory invites store for mock mode
+const invitesDb: Record<string, { email: string; role: "teacher"; status: "pending" | "accepted"; expiresAt: string }> = {
+    "valid-teacher-token": {
+        email: "teacher@example.com",
+        role: "teacher",
+        status: "pending",
+        expiresAt: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+    },
+};
+
 // Function to reset database state
 export function resetDatabase() {
     globalDb.user = null;
@@ -441,5 +451,32 @@ export const handlers = [
         );
 
         return HttpResponse.json(newRecords, {status: 201});
+    }),
+
+    // Invite verification (public)
+    http.get("/api/v1/invites/verify", ({ request }) => {
+        const url = new URL(request.url);
+        const token = (url.searchParams.get("token") || "").trim();
+        const inv = invitesDb[token];
+        if (!inv || inv.status !== "pending" || new Date(inv.expiresAt).getTime() <= Date.now()) {
+            return HttpResponse.json({ code: "invite/not-found", message: "Invite not found or expired" }, { status: 404 });
+        }
+        return HttpResponse.json({ id: token, email: inv.email, role: inv.role, status: inv.status, expiresAt: inv.expiresAt });
+    }),
+
+    // Invite accept (requires user in real backend; here we just flip state)
+    http.post("/api/v1/invites/accept", async ({ request }) => {
+        try {
+            const body = (await request.json().catch(() => ({}))) as { token?: string };
+            const token = (body.token || "").trim();
+            const inv = invitesDb[token];
+            if (!inv || inv.status !== "pending") {
+                return HttpResponse.json({ code: "invite/not-found", message: "Invite not found or expired" }, { status: 404 });
+            }
+            inv.status = "accepted";
+            return HttpResponse.json({ ok: true });
+        } catch {
+            return HttpResponse.json({ code: "internal/error", message: "Failed to accept invite" }, { status: 500 });
+        }
     }),
 ];

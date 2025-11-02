@@ -49,3 +49,34 @@ export async function createUserProfile(uid: string, email: string, name: string
   await getDb().collection('users').doc(uid).set(profile);
   return profile;
 }
+
+/**
+ * Ensure a user profile exists and contains the given role; set status to active.
+ * If profile doesn't exist, it will be created with provided email/name and the role.
+ */
+export async function ensureUserHasRole(uid: string, email: string, name: string, role: string): Promise<UserProfile> {
+  const ref = getDb().collection('users').doc(uid);
+  const snap = await ref.get();
+  if (!snap.exists) {
+    // Create fresh profile with the role
+    const created = await createUserProfile(uid, email, name, [role]);
+    return created;
+  }
+  const data = (snap.data() || {}) as Partial<UserProfile>;
+  const roles = Array.isArray(data.roles) ? [...new Set([...(data.roles as string[]), role])] : [role];
+  const updated: Partial<UserProfile> = {
+    email: email || data.email,
+    name: name || data.name,
+    roles,
+    status: 'active',
+  };
+  await ref.set(updated, { merge: true });
+  // return merged view
+  return {
+    uid,
+    email: (updated.email as string | undefined) ?? data.email,
+    name: (updated.name as string | undefined) ?? data.name,
+    roles,
+    status: 'active',
+  } as UserProfile;
+}
