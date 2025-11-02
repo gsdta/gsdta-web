@@ -41,11 +41,10 @@ export function Header() {
     return (
         <header className="border-b border-gray-200 dark:border-gray-800 bg-white/70 supports-[backdrop-filter]:bg-white/50 dark:bg-black/40 supports-[backdrop-filter]:dark:bg-black/30 backdrop-blur sticky top-0 z-10">
             <div className="mx-auto max-w-6xl px-4 py-2 flex items-center justify-between gap-4">
-                <Link href="/" className="text-gray-900 dark:text-gray-100 max-w-[60vw] lg:max-w-none truncate" onClick={close} title={t("brand.full")} aria-label={t("brand.full")}>
+                <Link href="/" className="text-gray-900 dark:text-gray-100 max-w-[60vw] lg:max-w-none truncate" onClick={close} title={t("brand.full")} aria-label={t("brand.full")} suppressHydrationWarning>
                     {/* Brand title + compact tagline (tagline hidden on small screens to avoid extra height) */}
-                    <span className="block whitespace-nowrap leading-tight">
-                        <span className="inline md:hidden font-semibold">{t("brand.short")}</span>
-                        <span className="hidden md:inline font-semibold">{t("brand.full")}</span>
+                    <span className="block whitespace-nowrap leading-tight" suppressHydrationWarning>
+                        <span className="inline md:hidden font-semibold" suppressHydrationWarning>{t("brand.short")}</span>
                     </span>
                     <span className="hidden md:block text-[10px] leading-tight text-gray-600 dark:text-gray-300 -mt-0.5">
                         {t("brand.tagline")}
