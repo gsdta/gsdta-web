@@ -5,6 +5,11 @@ const nextConfig: NextConfig = {
   basePath: '/api',
   // API-only server, no pages
   experimental: {},
+  // Skip generating error pages in static export
+  skipTrailingSlashRedirect: true,
+  generateBuildId: async () => {
+    return 'api-build'
+  },
 };
 
 export default nextConfig;
