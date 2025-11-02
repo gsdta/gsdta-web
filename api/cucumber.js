@@ -4,7 +4,8 @@ module.exports = {
     require: ['tests/e2e/steps/**/*.ts'],
     paths: ['tests/e2e/features/**/*.feature'],
     format: ['summary', 'progress'],
-    parallel: 1
+    parallel: 1,
+    tags: 'not @skip'
   },
 };
 
