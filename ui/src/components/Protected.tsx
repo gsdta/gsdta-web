@@ -38,7 +38,7 @@ export function Protected({children, roles, deferUnauthRedirect = false}: Props)
                         router.replace(isFirebaseMode() ? "/signin" : "/login");
                     }, 300);
                 }
-            } else if (isFirebaseMode() && user.emailVerified === false) {
+            } else if (isFirebaseMode() && process.env.NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION !== "true" && user.emailVerified === false) {
                 // Gate unverified email/password users; send them to /signin to see banner
                 router.replace("/signin?verify=true");
             } else if (roles && !roles.includes(user.role)) {
@@ -58,7 +58,7 @@ export function Protected({children, roles, deferUnauthRedirect = false}: Props)
         if (deferUnauthRedirect) return <>{children}</>;
         return null;
     }
-    if (isFirebaseMode() && user.emailVerified === false) return null; // redirected to /signin
+    if (isFirebaseMode() && process.env.NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION !== "true" && user.emailVerified === false) return null; // redirected to /signin
     if (roles && !roles.includes(user.role)) return null; // redirected to allowed landing
     return <>{children}</>;
 }

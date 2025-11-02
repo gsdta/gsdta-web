@@ -1,4 +1,3 @@
-// filepath: c:\projects\gsdta\gsdta-web\ui\src\app\signin\page.tsx
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -6,6 +5,7 @@ import { useAuth } from "@/components/AuthProvider";
 import type { Role } from "@/lib/auth-types";
 
 const AUTH_MODE = process.env.NEXT_PUBLIC_AUTH_MODE === "firebase" ? "firebase" : "mock" as const;
+const SKIP_EMAIL_VERIFICATION = process.env.NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION === "true";
 
 function routeForRole(role: Role): string {
   switch (role) {
@@ -17,18 +17,19 @@ function routeForRole(role: Role): string {
 
 export default function SignInPage() {
   const router = useRouter();
-  const { user, loading, loginWithGoogle, loginWithEmailPassword, login, logout } = useAuth();
+  const { user, loading, loginWithGoogle, loginWithEmailPassword, sendEmailVerification, login, logout } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
 
-  const isUnverified = AUTH_MODE === "firebase" && !!user && user.emailVerified === false;
+  const isUnverified = AUTH_MODE === "firebase" && !SKIP_EMAIL_VERIFICATION && !!user && user.emailVerified === false;
 
   useEffect(() => {
     if (user && !loading) {
-      // In Firebase mode, do not redirect if email is not verified
-      if (AUTH_MODE === "firebase" && user.emailVerified === false) return;
+      // In Firebase mode, do not redirect if email is not verified (unless skipping verification)
+      if (AUTH_MODE === "firebase" && !SKIP_EMAIL_VERIFICATION && user.emailVerified === false) return;
       router.replace(routeForRole(user.role));
     }
   }, [user, loading, router]);
@@ -60,6 +61,20 @@ export default function SignInPage() {
     }
   };
 
+  const onResendVerification = async () => {
+    setErr(null);
+    setVerificationSent(false);
+    setBusy(true);
+    try {
+      await sendEmailVerification();
+      setVerificationSent(true);
+    } catch (e) {
+      setErr((e as Error).message || "Failed to send verification email");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="prose max-w-md mx-auto">
       <h1>Sign in</h1>
@@ -69,8 +84,15 @@ export default function SignInPage() {
         <div role="alert" className="not-prose p-3 border rounded bg-yellow-50 text-yellow-900 mb-4">
           <p className="font-medium">Verify your email to continue</p>
           <p className="text-sm">We sent a verification link to your email address. Please verify your email and then return here to access protected pages.</p>
-          <div className="mt-2 text-sm">
-            <button onClick={() => logout()} className="underline">Sign out</button>
+          {verificationSent && (
+            <p className="text-sm mt-2 text-green-700 font-medium">✓ Verification email sent! Check your inbox.</p>
+          )}
+          <div className="mt-3 flex gap-3 text-sm">
+            <button onClick={onResendVerification} disabled={busy} className="underline hover:no-underline">
+              {busy ? "Sending..." : "Resend verification email"}
+            </button>
+            <span>•</span>
+            <button onClick={() => logout()} className="underline hover:no-underline">Sign out</button>
           </div>
         </div>
       )}
@@ -103,3 +125,4 @@ export default function SignInPage() {
     </div>
   );
 }
+

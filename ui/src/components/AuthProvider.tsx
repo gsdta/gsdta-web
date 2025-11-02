@@ -86,6 +86,7 @@ interface AuthContextValue {
     // Firebase mode extras
     loginWithGoogle: () => Promise<void>;
     loginWithEmailPassword: (email: string, password: string) => Promise<void>;
+    sendEmailVerification: () => Promise<void>;
     getIdToken: (forceRefresh?: boolean) => Promise<string | null>;
 }
 
@@ -337,6 +338,17 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
         const { signInWithEmailAndPassword } = await import("firebase/auth");
         await signInWithEmailAndPassword(getFirebaseAuth(), email, password);
     }, []);
+    const sendEmailVerification = useCallback(async () => {
+        if (AUTH_MODE !== "firebase") throw new Error("Email verification only in firebase mode");
+        await lazyLoadFirebase();
+        const { getFirebaseAuth } = await import("@/lib/firebase/client");
+        const { sendEmailVerification: sendVerification } = await import("firebase/auth");
+        const auth = getFirebaseAuth();
+        const u = auth.currentUser;
+        if (!u) throw new Error("No user signed in");
+        await sendVerification(u);
+    }, []);
+
 
     const getIdToken = useCallback(async (forceRefresh = false): Promise<string | null> => {
         if (AUTH_MODE !== "firebase") return null;
@@ -351,8 +363,8 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
     }, []);
 
     const value = useMemo(
-        () => ({user, loading, login, logout, setRole, loginWithGoogle, loginWithEmailPassword, getIdToken}),
-        [user, loading, login, logout, setRole, loginWithGoogle, loginWithEmailPassword, getIdToken],
+        () => ({user, loading, login, logout, setRole, loginWithGoogle, loginWithEmailPassword, sendEmailVerification, getIdToken}),
+        [user, loading, login, logout, setRole, loginWithGoogle, loginWithEmailPassword, sendEmailVerification, getIdToken],
     );
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
