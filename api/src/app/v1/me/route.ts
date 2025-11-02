@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyIdToken, AuthError } from '@/lib/auth';
-import { getUserProfile } from '@/lib/firestoreUsers';
+import { getUserProfile, createUserProfile } from '@/lib/firestoreUsers';
 import { randomUUID } from 'crypto';
 
 /**
@@ -108,9 +108,15 @@ export async function GET(req: NextRequest) {
     const authz = req.headers.get('authorization');
     const token = await verifyIdToken(authz);
 
-    const profile = await getUserProfile(token.uid);
+    let profile = await getUserProfile(token.uid);
+
+    // Auto-create parent profile on first sign-in (Parent Signup Policy - 04)
     if (!profile) {
-      return jsonError(404, 'users/not-found', 'User profile not found', origin);
+      const email = token.email ?? '';
+      // Get name from email prefix as fallback
+      const name = email.split('@')[0];
+      console.info(JSON.stringify({ requestId, uid: token.uid, action: 'auto-create-parent-profile' }));
+      profile = await createUserProfile(token.uid, email, name, ['parent']);
     }
 
     if (profile.status !== 'active') {

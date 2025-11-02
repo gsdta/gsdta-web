@@ -94,9 +94,12 @@ export function Header() {
                             <Link href="/donate/" className="hover:underline text-gray-900 dark:text-gray-100">{t("nav.donate")}</Link>
                             {/* Contact intentionally removed from header */}
                             <LanguageSwitcher/>
-                            {/* Show Sign in link in Firebase mode only */}
+                            {/* Show Sign in/Sign up links in Firebase mode only */}
                             {authMode === "firebase" && (
-                                <Link href="/signin" className="hover:underline text-gray-900 dark:text-gray-100">{t("nav.login")}</Link>
+                                <>
+                                    <Link href="/signup" className="hover:underline text-gray-900 dark:text-gray-100">Sign Up</Link>
+                                    <Link href="/signin" className="hover:underline text-gray-900 dark:text-gray-100">{t("nav.login")}</Link>
+                                </>
                             )}
                         </>
                     )}
@@ -178,9 +181,12 @@ export function Header() {
                                 <Link href="/team/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.team")}</Link>
                                 <Link href="/documents/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.documents")}</Link>
                                 <Link href="/calendar/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.calendar")}</Link>
-                                <Link href="/textbooks/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.textbooks")}</Link>
+                                {/* Show Sign in/Sign up links in Firebase mode only */}
                                 <Link href="/donate/" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.donate")}</Link>
-                                {/* Contact intentionally removed from header */}
+                                    <>
+                                        <Link href="/signup" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>Sign Up</Link>
+                                        <Link href="/signin" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.login")}</Link>
+                                    </>
                                 {/* Show Sign in link in Firebase mode only */}
                                 {authMode === "firebase" && (
                                     <Link href="/signin" className="hover:underline text-gray-900 dark:text-gray-100" onClick={close}>{t("nav.login")}</Link>
