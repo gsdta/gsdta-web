@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
+import Link from "next/link";
 import type { Role } from "@/lib/auth-types";
 
 const AUTH_MODE = process.env.NEXT_PUBLIC_AUTH_MODE === "firebase" ? "firebase" : "mock" as const;
@@ -121,8 +122,14 @@ export default function SignInPage() {
         </form>
 
         {err && <div role="alert" className="text-red-600 text-sm">{err}</div>}
+
+        <div className="text-center text-sm text-gray-600 pt-4 border-t mt-6">
+          Don&apos;t have an account?{" "}
+          <Link href="/signup" className="text-blue-600 hover:underline">
+            Sign up here
+          </Link>
+        </div>
       </div>
     </div>
   );
 }
-
