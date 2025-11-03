@@ -1,6 +1,6 @@
 # Infrastructure Bootstrap via gcloud (Windows)
 
-Purpose: One place for repeatable, CLI-based setup of core GCP/Firebase resources used by this repo. This is copy-paste friendly for Windows cmd.exe and mirrors what we’ve documented across README and RBAC docs. We’ll automate later.
+Purpose: One place for repeatable, CLI-based setup of core GCP/Firebase resources used by this repo. This is copy-paste friendly for Windows cmd.exe and mirrors what we’ve documented across README and /docs. We’ll automate later.
 
 Works with
 - Google Cloud project (billing enabled)
@@ -8,7 +8,7 @@ Works with
 
 References in repo
 - README → "Infrastructure bootstrap (gcloud)"
-- RBAC → `docs/rbac/00-prereqs-project-setup.md` (Firebase enablement, Firestore, Web App)
+- Features → `docs/features.md`
 - GCP deploy → `docs/gcp-deploy.md`
 
 ---

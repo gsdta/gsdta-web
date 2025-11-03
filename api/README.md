@@ -1,73 +1,49 @@
-# GSDTA API Server
+# GSDTA API (Next.js)
 
-This is a Next.js-based API server for the GSDTA application.
+This package contains the Next.js-based API for the application.
 
-## Getting Started
+## Quick start
 
-### Install dependencies
-
-```bash
+```cmd
 npm install
-```
-
-### Development
-
-```bash
 npm run dev
 ```
 
-The API server will run on [http://localhost:3001](http://localhost:3001).
+- Dev server: http://localhost:8080
+- Base path: `/api/v1/*`
 
-### Build
+Production build/start:
 
-```bash
+```cmd
 npm run build
-```
-
-### Production
-
-```bash
 npm start
 ```
 
-## API Endpoints
+## Key endpoints (v1)
+- `GET /api/v1/health` — readiness/health
+- `GET /api/v1/openapi.json` — OpenAPI spec
+- `GET /api/v1/docs` — API docs pages
+- `GET /api/v1/me` — current user profile (auth required)
+- `GET /api/v1/invites/verify?token=...` — verify teacher invite (public)
+- `POST /api/v1/invites/accept` — accept invite (auth required)
+- `POST /api/v1/invites` — create teacher invite (admin only)
 
-### GET /v1/health
+## Security
+- Token verification via Firebase Admin SDK
+- Reusable `requireAuth()` guard enforces active status and roles
+- Rate limiting on invite endpoints (verify/accept/create)
+- CORS allow-list with per-route OPTIONS handlers
 
-Health check endpoint that returns the service status.
-
-**Response:**
-```json
-{
-  "status": "ok",
-  "timestamp": "2025-10-23T00:00:00.000Z",
-  "service": "gsdta-api",
-  "version": "v1"
-}
+## Tests
+```cmd
+npm run lint
+npm run typecheck
+npm test                 :: unit tests
+npm run test:e2e         :: Cucumber e2e (if configured)
 ```
 
-### POST /v1/echo
-
-Echo endpoint that returns the request body along with metadata.
-
-**Request:**
-```json
-{
-  "message": "Hello, World!"
-}
-```
-
-**Response:**
-```json
-{
-  "echo": {
-    "message": "Hello, World!"
-  },
-  "timestamp": "2025-10-23T00:00:00.000Z",
-  "headers": {
-    "content-type": "application/json",
-    "user-agent": "..."
-  }
-}
-```
-
+## Docs
+- Features overview: `../docs/features.md`
+- API surface: `../docs/features.md#api-surface-v1`
+- CI/CD: `../docs/ci-cd.md`
+- Docker: `../docs/docker.md`
