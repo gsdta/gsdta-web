@@ -41,7 +41,7 @@ export default function AcceptInvitePage() {
         const base = EFFECTIVE_BASE_URL || "/api";
         const res = await apiFetch<VerifyResponse>(`${base}/v1/invites/verify?token=${encodeURIComponent(token)}`, { rawUrl: true });
         if (!cancelled) setInvite(res);
-      } catch (e) {
+      } catch {
         if (!cancelled) setVerifyError("Invite not found or expired.");
       } finally {
         if (!cancelled) setLoading(false);
@@ -79,7 +79,7 @@ export default function AcceptInvitePage() {
       setAccepted(true);
       // Small delay then route to teacher dashboard
       setTimeout(() => router.replace("/teacher"), 800);
-    } catch (e: any) {
+    } catch (e: unknown) {
       const msg = (e && typeof e === 'object' && 'message' in e && typeof e.message === 'string') ? e.message : 'Failed to accept invite.';
       setAcceptError(msg);
     } finally {
@@ -90,15 +90,15 @@ export default function AcceptInvitePage() {
   return (
     <div className="mx-auto max-w-xl p-6">
       <h1 className="text-2xl font-semibold mb-4">Accept Teacher Invite</h1>
-      {loading && <p>Validating invite…</p>}
+      {loading && <p data-testid="invite-loading">Validating invite…</p>}
       {!loading && verifyError && (
         <div className="rounded border border-red-300 bg-red-50 p-3 text-red-700">{verifyError}</div>
       )}
       {!loading && invite && !accepted && (
         <div className="space-y-4">
           <div className="rounded border p-3">
-            <p className="mb-1">Email: <strong>{invite.email}</strong></p>
-            <p className="mb-1">Role: <strong>{invite.role}</strong></p>
+            <p className="mb-1">Email: <strong data-testid="invite-email">{invite.email}</strong></p>
+            <p className="mb-1">Role: <strong data-testid="invite-role">{invite.role}</strong></p>
             <p className="text-sm text-gray-600">Expires: {new Date(invite.expiresAt).toLocaleString()}</p>
           </div>
           {needsGoogleSignIn && (

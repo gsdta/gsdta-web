@@ -49,7 +49,7 @@ export function TeacherInviteForm() {
 
       setSuccess(response);
       setEmail("");
-    } catch (err: any) {
+    } catch (err: unknown) {
       const msg =
         err && typeof err === "object" && "message" in err && typeof err.message === "string"
           ? err.message
