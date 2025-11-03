@@ -33,7 +33,7 @@ export default defineConfig({
     // Start API (test mode) and UI servers for the test run
     webServer: [
         {
-            command: "npm run --prefix ..\\api serve:test",
+            command: "npm run --prefix ../api serve:test",
             port: 8080,
             reuseExistingServer: false,
             timeout: 180_000,
