@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyIdToken, AuthError } from '@/lib/auth';
 import { getInviteByToken, isInviteUsable, markInviteAccepted } from '@/lib/roleInvites';
 import { ensureUserHasRole } from '@/lib/firestoreUsers';
+import { enforceRateLimit } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -58,6 +59,15 @@ export async function OPTIONS(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const origin = req.headers.get('origin');
   try {
+    // Rate limit: 10 attempts per minute per IP for invite acceptance
+    const rl = enforceRateLimit(req, 'invites:accept', 10, 60_000);
+    if (rl.limited) {
+      const res = NextResponse.json({ code: 'rate/limited', message: 'Too many requests. Please try again later.' }, { status: 429 });
+      res.headers.set('Retry-After', String(Math.ceil(rl.resetInMs / 1000)));
+      const headers = corsHeaders(origin);
+      Object.entries(headers).forEach(([k, v]) => res.headers.set(k, v));
+      return res;
+    }
     const authz = req.headers.get('authorization');
     const token = await verifyIdToken(authz);
 
@@ -73,6 +83,17 @@ export async function POST(req: NextRequest) {
     const userEmail = (token.email || '').toLowerCase();
     if (!userEmail || userEmail !== invite.email.toLowerCase()) {
       return jsonError(400, 'invite/email-mismatch', 'Signed-in email does not match invite', origin);
+    }
+
+    // Security: if a profile exists and is not active, block acceptance
+    try {
+      const { getUserProfile } = await import('@/lib/firestoreUsers');
+      const existing = await getUserProfile(token.uid);
+      if (existing && existing.status !== 'active') {
+        return jsonError(403, 'auth/forbidden', 'User status is not active', origin);
+      }
+    } catch {
+      // On error fetching profile, fall through; the main path below will still enforce email match and invite usability
     }
 
     const name = userEmail.split('@')[0];
@@ -96,4 +117,3 @@ export async function POST(req: NextRequest) {
     return jsonError(500, 'internal/error', 'Internal server error', origin);
   }
 }
-
