@@ -51,19 +51,23 @@ export async function createRoleInvite(params: { email: string; role: string; in
 
 export async function getInviteByToken(token: string): Promise<RoleInvite | null> {
   // Test-only path to avoid Firestore during e2e
-  if (process.env.ALLOW_TEST_INVITES === '1' && token.startsWith('test-')) {
-    const now = Timestamp.now();
-    const future = Timestamp.fromMillis(now.toMillis() + 60 * 60 * 1000);
-    return {
-      id: 'test',
-      email: 'teacher@example.com',
-      role: 'teacher',
-      invitedBy: 'test-admin',
-      status: 'pending',
-      token,
-      createdAt: now,
-      expiresAt: future,
-    } as RoleInvite;
+  if (process.env.ALLOW_TEST_INVITES === '1') {
+    if (token.startsWith('test-')) {
+      const now = Timestamp.now();
+      const future = Timestamp.fromMillis(now.toMillis() + 60 * 60 * 1000);
+      return {
+        id: 'test',
+        email: 'teacher@example.com',
+        role: 'teacher',
+        invitedBy: 'test-admin',
+        status: 'pending',
+        token,
+        createdAt: now,
+        expiresAt: future,
+      } as RoleInvite;
+    }
+    // In ALLOW_TEST_INVITES mode, avoid hitting Firestore for non test tokens
+    return null;
   }
   const q = await getDb().collection('roleInvites').where('token', '==', token).limit(1).get();
   if (q.empty) return null;
