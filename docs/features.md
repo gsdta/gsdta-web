@@ -7,10 +7,6 @@ This document summarizes the currently implemented features across the UI and AP
 - Teacher role → [roles/teacher.md](./roles/teacher.md)
 - Admin role → [roles/admin.md](./roles/admin.md)
 
-Related design/planning references:
-- RBAC Plan → [rbac-plan.md](./rbac-plan.md)
-- RBAC series → [rbac/](./rbac/)
-
 ## Public Site (UI)
 Public pages are available without login. Current pages (covered by E2E tests):
 - Home (English/Tamil), mobile header behavior
@@ -35,8 +31,6 @@ Two modes exist to support development and production:
   - `NEXT_PUBLIC_AUTH_MODE=firebase` enables Firebase Web SDK.
   - Client fetches `/api/v1/me` with `Authorization: Bearer <idToken>` to resolve roles/status.
   - Session is cached in `sessionStorage` and hydrated on load.
-
-See: [rbac/06-session-handling-ui.md](./rbac/06-session-handling-ui.md)
 
 ## RBAC and Roles
 System roles: parent, teacher, admin. High-level behavior:
@@ -80,6 +74,21 @@ UI behavior
 - Minimal request logging middleware
   - Assigns `x-request-id` and logs method/path/IP for `/api/v1/*`.
 
+## API Surface (v1)
+Reference list of current endpoints:
+- GET /api/v1/health (public) — readiness/health
+- GET /api/v1/docs (public) — API docs pages
+- GET /api/v1/openapi.json (public) — OpenAPI spec
+- GET /api/v1/me (auth required) — returns uid, email, name, roles, status, emailVerified; auto-creates parent profile on first sign-in
+- GET /api/v1/invites/verify?token=... (public) — returns invite details when usable; 400 for missing token; 404 when not found/expired; ALLOW_TEST_INVITES=1 supports test tokens
+- POST /api/v1/invites/accept (auth required) — body { token }; email must match invite; adds role and marks invite accepted; blocks non-active users
+- POST /api/v1/invites (admin only) — creates teacher invite; requires admin role
+
+Notes
+- CORS: Dev allows localhost/local network; Prod allow-list (e.g., https://www.gsdta.com)
+- Auth: Per-route token verification with a reusable guard enforcing status/roles
+- Rate limiting: verify (20/min/IP), accept (10/min/IP), create (30/hour/IP)
+
 ## Testing Coverage
 - E2E (Playwright): public pages, auth mocks, signup validation, teacher invite verification and error states.
 - API e2e/unit tests: invites and users library; endpoint health.
@@ -88,4 +97,3 @@ UI behavior
 - UI/API can run locally with the UI proxying to the API.
 - CI runs Playwright against a locally started API (test mode) and UI.
 - For production, prefer a shared rate-limit store and real Firebase credentials via secure secrets.
-
