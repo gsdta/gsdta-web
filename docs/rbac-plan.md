@@ -2,6 +2,13 @@
 
 This is the master RBAC page. Each section has its own dedicated doc for easier navigation and collaboration. Start at the top and work down.
 
+## Start here
+- Features overview → [features.md](./features.md)
+- Role pages:
+  - Parent → [roles/parent.md](./roles/parent.md)
+  - Teacher → [roles/teacher.md](./roles/teacher.md)
+  - Admin → [roles/admin.md](./roles/admin.md)
+
 ## Overview and decisions
 - Parents-only signup; Teachers/Admins are invite/manual only
 - Auth: Firebase Auth (Google + Email/Password)
