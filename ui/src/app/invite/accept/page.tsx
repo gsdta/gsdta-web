@@ -90,15 +90,15 @@ export default function AcceptInvitePage() {
   return (
     <div className="mx-auto max-w-xl p-6">
       <h1 className="text-2xl font-semibold mb-4">Accept Teacher Invite</h1>
-      {loading && <p>Validating invite…</p>}
+      {loading && <p data-testid="invite-loading">Validating invite…</p>}
       {!loading && verifyError && (
         <div className="rounded border border-red-300 bg-red-50 p-3 text-red-700">{verifyError}</div>
       )}
       {!loading && invite && !accepted && (
         <div className="space-y-4">
           <div className="rounded border p-3">
-            <p className="mb-1">Email: <strong>{invite.email}</strong></p>
-            <p className="mb-1">Role: <strong>{invite.role}</strong></p>
+            <p className="mb-1">Email: <strong data-testid="invite-email">{invite.email}</strong></p>
+            <p className="mb-1">Role: <strong data-testid="invite-role">{invite.role}</strong></p>
             <p className="text-sm text-gray-600">Expires: {new Date(invite.expiresAt).toLocaleString()}</p>
           </div>
           {needsGoogleSignIn && (

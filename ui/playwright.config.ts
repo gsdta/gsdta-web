@@ -30,16 +30,31 @@ export default defineConfig({
         screenshot: "only-on-failure",
         video: "off",
     },
-    webServer: {
-        command: "npm run build && npx next start -p 3100",
-        port: 3100,
-        reuseExistingServer: false, // Force fresh server to avoid dev server reuse
-        timeout: 180_000,
-        env: {
-            NEXT_PUBLIC_USE_MSW: "false",
-            NEXT_PUBLIC_AUTH_MODE: "mock",
+    // Start API (test mode) and UI servers for the test run
+    webServer: [
+        {
+            command: "npm run --prefix ..\\api serve:test",
+            port: 8080,
+            reuseExistingServer: false,
+            timeout: 180_000,
+            env: {
+                ALLOW_TEST_INVITES: "1",
+                NODE_ENV: "test",
+            },
         },
-    },
+        {
+            command: "npm run build && npx next start -p 3100",
+            port: 3100,
+            reuseExistingServer: false, // Force fresh server to avoid dev server reuse
+            timeout: 180_000,
+            env: {
+                NEXT_PUBLIC_USE_MSW: "false",
+                NEXT_PUBLIC_AUTH_MODE: "mock",
+                // Ensure UI targets the proxy path consistently
+                NEXT_PUBLIC_API_BASE_URL: "/api",
+            },
+        },
+    ],
     projects: [
         {
             name: "chromium",
