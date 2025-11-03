@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getInviteByToken, isInviteUsable } from '@/lib/roleInvites';
+import { enforceRateLimit } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -54,6 +55,15 @@ export async function OPTIONS(req: NextRequest) {
  */
 export async function GET(req: NextRequest) {
   const origin = req.headers.get('origin');
+  // Rate limit: 20 requests per minute per IP for invite verification
+  const rl = enforceRateLimit(req, 'invites:verify', 20, 60_000);
+  if (rl.limited) {
+    const res = NextResponse.json({ code: 'rate/limited', message: 'Too many requests. Please try again later.' }, { status: 429 });
+    res.headers.set('Retry-After', String(Math.ceil(rl.resetInMs / 1000)));
+    const headers = corsHeaders(origin);
+    Object.entries(headers).forEach(([k, v]) => res.headers.set(k, v));
+    return res;
+  }
   const { searchParams } = new URL(req.url);
   const token = (searchParams.get('token') || '').trim();
   if (!token) return jsonError(400, 'invite/invalid-token', 'Token is required', origin);
@@ -77,4 +87,3 @@ export async function GET(req: NextRequest) {
     return jsonError(500, 'internal/error', 'Internal server error', origin);
   }
 }
-
