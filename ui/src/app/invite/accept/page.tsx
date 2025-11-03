@@ -41,7 +41,7 @@ export default function AcceptInvitePage() {
         const base = EFFECTIVE_BASE_URL || "/api";
         const res = await apiFetch<VerifyResponse>(`${base}/v1/invites/verify?token=${encodeURIComponent(token)}`, { rawUrl: true });
         if (!cancelled) setInvite(res);
-      } catch (e) {
+      } catch {
         if (!cancelled) setVerifyError("Invite not found or expired.");
       } finally {
         if (!cancelled) setLoading(false);
@@ -79,7 +79,7 @@ export default function AcceptInvitePage() {
       setAccepted(true);
       // Small delay then route to teacher dashboard
       setTimeout(() => router.replace("/teacher"), 800);
-    } catch (e: any) {
+    } catch (e: unknown) {
       const msg = (e && typeof e === 'object' && 'message' in e && typeof e.message === 'string') ? e.message : 'Failed to accept invite.';
       setAcceptError(msg);
     } finally {
