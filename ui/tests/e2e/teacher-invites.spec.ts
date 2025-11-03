@@ -6,12 +6,12 @@ test.describe('Teacher Invite Flow', () => {
     await page.goto('/invite/accept?token=test-valid-token');
 
     // Should show loading state
-    await expect(page.getByText(/validating invite/i)).toBeVisible();
+    await expect(page.getByTestId('invite-loading')).toBeVisible();
 
     // Should eventually show invite details (with ALLOW_TEST_INVITES=1 in API)
     // This test assumes API has test mode enabled
-    await expect(page.getByText(/teacher@example.com/i)).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText(/teacher/i)).toBeVisible();
+    await expect(page.getByTestId('invite-email')).toHaveText(/teacher@example.com/i, { timeout: 5000 });
+    await expect(page.getByTestId('invite-role')).toHaveText(/teacher/i);
     await expect(page.getByRole('button', { name: /accept invite/i })).toBeVisible();
   });
 
@@ -31,12 +31,6 @@ test.describe('Teacher Invite Flow', () => {
     // Should immediately show error
     await expect(page.getByText(/missing invite token/i)).toBeVisible();
   });
-
-  // Note: Full acceptance flow requires authentication which is complex to test in E2E
-  // Additional scenarios to consider:
-  // - User signs in with matching email and accepts invite
-  // - User signs in with non-matching email and sees error
-  // - Successful acceptance redirects to teacher dashboard
 });
 
 test.describe('Admin Teacher Invite Creation', () => {
