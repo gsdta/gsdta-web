@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyIdToken, AuthError } from '@/lib/auth';
-import { getUserProfile } from '@/lib/firestoreUsers';
+import { AuthError } from '@/lib/auth';
+import { requireAuth } from '@/lib/guard';
 import { createRoleInvite } from '@/lib/roleInvites';
+import { enforceRateLimit } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -58,12 +59,17 @@ export async function OPTIONS(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const origin = req.headers.get('origin');
   try {
-    const authz = req.headers.get('authorization');
-    const token = await verifyIdToken(authz);
-    const profile = await getUserProfile(token.uid);
-    if (!profile || !profile.roles.includes('admin')) {
-      return jsonError(403, 'auth/forbidden', 'Admin privileges required', origin);
+    // Rate limit: 30 requests per hour per IP for invite creation
+    const rl = enforceRateLimit(req, 'invites:create', 30, 3_600_000);
+    if (rl.limited) {
+      const res = NextResponse.json({ code: 'rate/limited', message: 'Too many requests. Please try again later.' }, { status: 429 });
+      res.headers.set('Retry-After', String(Math.ceil(rl.resetInMs / 1000)));
+      const headers = corsHeaders(origin);
+      Object.entries(headers).forEach(([k, v]) => res.headers.set(k, v));
+      return res;
     }
+    const authz = req.headers.get('authorization');
+    const { token } = await requireAuth(authz, { requireRoles: ['admin'] });
 
     const body = await req.json().catch(() => ({}));
     const emailRaw = typeof body.email === 'string' ? body.email : '';
@@ -98,4 +104,3 @@ export async function POST(req: NextRequest) {
     return jsonError(500, 'internal/error', 'Internal server error', origin);
   }
 }
-
