@@ -32,14 +32,14 @@
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
     "@react-pdf-viewer/core": "^3.12.0",
+    "firebase": "^10.14.1",
     "next": "15.5.4",
     "pdfjs-dist": "^3.11.174",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.53.0",
     "xlsx": "^0.18.5",
-    "zod": "^3.23.8",
-    "firebase": "^10.14.1"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.5.0",
@@ -63,6 +63,7 @@
     "jest-environment-jsdom": "^29.7.0",
     "lint-staged": "^15.2.10",
     "msw": "^2.6.5",
+    "playwright": "^1.56.1",
     "prettier": "^3.3.3",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
