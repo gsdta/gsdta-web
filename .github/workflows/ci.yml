@@ -150,17 +150,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install build essentials for native modules
-        run: |
-          apt-get update
-          apt-get install -y python3 make g++
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: ui/package-lock.json
+          # Don't cache in container - native modules are platform-specific
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -185,10 +179,15 @@ jobs:
           npm run seed
 
       - name: Install dependencies
-        run: npm ci
-
-      - name: Rebuild native modules for container
-        run: npm rebuild lightningcss @tailwindcss/node
+        run: |
+          echo "📦 Installing dependencies fresh (no cache for native modules)..."
+          npm ci
+          
+      - name: Verify lightningcss installation
+        run: |
+          echo "🔍 Checking for lightningcss binary..."
+          ls -la node_modules/lightningcss/node/ || echo "⚠️ lightningcss/node directory not found"
+          find node_modules/lightningcss -name "*.node" -ls || echo "⚠️ No .node files found"
 
       - name: Lint
         run: npm run lint
