@@ -10,13 +10,13 @@ on:
       - '**/*.mdx'
       - '**/*.txt'
 
+env:
+  NODE_VERSION: 20
+
 jobs:
-  api:
-    name: API - Build & Test
+  emulator-setup:
+    name: Setup Firebase Emulators
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: api
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,9 +24,98 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Cache Firebase Emulators
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: ${{ runner.os }}-firebase-emulators-${{ hashFiles('firebase.json') }}
+          restore-keys: |
+            ${{ runner.os }}-firebase-emulators-
+
+      - name: Start Firebase Emulators
+        run: |
+          firebase emulators:start --project demo-gsdta --only auth,firestore &
+          EMULATOR_PID=$!
+          echo "EMULATOR_PID=$EMULATOR_PID" >> $GITHUB_ENV
+          
+          # Wait for emulators to be ready
+          echo "Waiting for emulators to start..."
+          for i in {1..30}; do
+            if curl -s http://localhost:4445 > /dev/null 2>&1; then
+              echo "Emulators ready!"
+              break
+            fi
+            echo "Still waiting... ($i/30)"
+            sleep 2
+          done
+
+      - name: Install seed script dependencies
+        working-directory: scripts
+        run: npm ci
+
+      - name: Seed test data
+        run: |
+          export FIRESTORE_EMULATOR_HOST=localhost:8889
+          export FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
+          npm run seed
+
+      - name: Verify emulator data
+        run: |
+          curl -s http://localhost:4445 | grep -q "Emulator Suite" && echo "✅ Emulator UI accessible"
+
+  api:
+    name: API - Build & Test
+    runs-on: ubuntu-latest
+    needs: emulator-setup
+    defaults:
+      run:
+        working-directory: api
+    env:
+      FIRESTORE_EMULATOR_HOST: localhost:8889
+      FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
+      FIREBASE_PROJECT_ID: demo-gsdta
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           cache-dependency-path: api/package-lock.json
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Start Firebase Emulators
+        run: |
+          firebase emulators:start --project demo-gsdta --only auth,firestore &
+          sleep 10
+
+      - name: Seed emulators
+        run: |
+          cd ../scripts && npm ci
+          export FIRESTORE_EMULATOR_HOST=localhost:8889
+          export FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
+          npm run seed
 
       - name: Install dependencies
         run: npm ci
@@ -48,6 +137,15 @@ jobs:
     defaults:
       run:
         working-directory: ui
+    env:
+      NEXT_PUBLIC_AUTH_MODE: firebase
+      NEXT_PUBLIC_USE_MSW: false
+      NEXT_PUBLIC_FIREBASE_API_KEY: demo-key
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: localhost
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: demo-gsdta
+      NEXT_PUBLIC_FIREBASE_APP_ID: demo-app
+      NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
+      NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST: localhost:8889
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -55,12 +153,57 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
-          cache-dependency-path: ui/package-lock.json
+          node-version: ${{ env.NODE_VERSION }}
+          # Don't cache in container - native modules are platform-specific
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Start Firebase Emulators
+        run: |
+          cd ..
+          firebase emulators:start --project demo-gsdta --only auth,firestore &
+          sleep 10
+
+      - name: Seed emulators
+        run: |
+          cd ../scripts && npm ci
+          export FIRESTORE_EMULATOR_HOST=localhost:8889
+          export FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
+          npm run seed
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm ci
+          # Explicitly install lightningcss binary for the container's architecture
+          ARCH=$(node -p "process.arch")
+          PLATFORM=$(node -p "process.platform")
+          if [ "$PLATFORM" = "linux" ]; then
+            LIBC=$(node -p "require('detect-libc').familySync()")
+            if [ "$LIBC" = "musl" ]; then
+              BINARY="lightningcss-${PLATFORM}-${ARCH}-musl"
+            elif [ "$ARCH" = "arm" ]; then
+              BINARY="lightningcss-${PLATFORM}-${ARCH}-gnueabihf"
+            else
+              BINARY="lightningcss-${PLATFORM}-${ARCH}-gnu"
+            fi
+            echo "📦 Installing ${BINARY} for ${PLATFORM}/${ARCH}..."
+            npm install --no-save "${BINARY}@$(node -p "require('./node_modules/lightningcss/package.json').version")"
+          fi
+
+      - name: Verify lightningcss installation
+        run: |
+          echo "🔍 Checking for lightningcss binary..."
+          echo "Working directory: $(pwd)"
+          ls -la node_modules/lightningcss/node/ || echo "⚠️ lightningcss/node directory not found"
+          find node_modules -name "lightningcss*.node" -ls || echo "⚠️ No .node files found"
+          echo "Platform info: $(uname -m), Node arch: $(node -p 'process.arch')"
 
       - name: Lint
         run: npm run lint

@@ -5,13 +5,16 @@ const resolvedOutput = process.env.NEXT_OUTPUT as NextConfig["output"] | undefin
 
 const nextConfig: NextConfig = {
     output: resolvedOutput,
+    outputFileTracingRoot: __dirname,
     images: {unoptimized: true},
     trailingSlash: true,
     async rewrites() {
+        // Use API_PROXY_URL env var for Docker, fallback to localhost for local dev
+        const apiProxyUrl = process.env.API_PROXY_URL || 'http://localhost:8080';
         return [
             {
                 source: '/api/:path*',
-                destination: 'http://localhost:8080/api/:path*',
+                destination: `${apiProxyUrl}/api/:path*`,
             },
         ];
     },
