@@ -146,7 +146,6 @@ jobs:
       NEXT_PUBLIC_FIREBASE_APP_ID: demo-app
       NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
       NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST: localhost:8889
-      npm_config_optional: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -181,14 +180,30 @@ jobs:
 
       - name: Install dependencies
         run: |
-          echo "📦 Installing dependencies fresh (no cache for native modules)..."
-          npm ci --include=optional
+          npm ci
+          # Explicitly install lightningcss binary for the container's architecture
+          ARCH=$(node -p "process.arch")
+          PLATFORM=$(node -p "process.platform")
+          if [ "$PLATFORM" = "linux" ]; then
+            LIBC=$(node -p "require('detect-libc').familySync()")
+            if [ "$LIBC" = "musl" ]; then
+              BINARY="lightningcss-${PLATFORM}-${ARCH}-musl"
+            elif [ "$ARCH" = "arm" ]; then
+              BINARY="lightningcss-${PLATFORM}-${ARCH}-gnueabihf"
+            else
+              BINARY="lightningcss-${PLATFORM}-${ARCH}-gnu"
+            fi
+            echo "📦 Installing ${BINARY} for ${PLATFORM}/${ARCH}..."
+            npm install --no-save "${BINARY}@$(node -p "require('./node_modules/lightningcss/package.json').version")"
+          fi
 
       - name: Verify lightningcss installation
         run: |
           echo "🔍 Checking for lightningcss binary..."
+          echo "Working directory: $(pwd)"
           ls -la node_modules/lightningcss/node/ || echo "⚠️ lightningcss/node directory not found"
-          find node_modules/lightningcss -name "*.node" -ls || echo "⚠️ No .node files found"
+          find node_modules -name "lightningcss*.node" -ls || echo "⚠️ No .node files found"
+          echo "Platform info: $(uname -m), Node arch: $(node -p 'process.arch')"
 
       - name: Lint
         run: npm run lint
