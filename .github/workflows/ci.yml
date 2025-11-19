@@ -26,6 +26,12 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
@@ -90,6 +96,12 @@ jobs:
           cache: 'npm'
           cache-dependency-path: api/package-lock.json
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
@@ -144,6 +156,12 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           cache-dependency-path: ui/package-lock.json
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
 
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
