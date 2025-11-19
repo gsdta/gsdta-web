@@ -184,12 +184,11 @@ jobs:
           echo "📦 Installing dependencies..."
           npm ci --include=optional
           
-      - name: Force install correct platform binaries
+      - name: Rebuild native modules for platform
         run: |
-          echo "🔧 Reinstalling native modules for Linux x64..."
-          rm -rf node_modules/lightningcss node_modules/@tailwindcss/node
-          npm install --force --no-save lightningcss@1.30.2 @tailwindcss/node@4.1.16
-          echo "✅ Native modules reinstalled"
+          echo "🔧 Rebuilding native modules for Linux x64..."
+          npm rebuild lightningcss @tailwindcss/node
+          echo "✅ Native modules rebuilt"
           
       - name: Verify lightningcss installation
         run: |
