@@ -149,7 +149,6 @@ jobs:
       NEXT_PUBLIC_FIREBASE_APP_ID: demo-app
       NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
       NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST: localhost:8889
-      npm_config_optional: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -182,16 +181,12 @@ jobs:
           export FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
           npm run seed
 
-      - name: Install dependencies and fix native modules
+      - name: Install dependencies
         run: |
-          echo "📦 Installing dependencies..."
-          npm ci --include=optional
-          
-          echo "🔧 Fixing npm optional dependencies bug..."
-          rm -rf node_modules/.cache
-          npm rebuild @tailwindcss/oxide lightningcss @tailwindcss/node
-          echo "✅ Native modules rebuilt for Linux x64"
-          
+          npm ci
+          # Fix lightningcss native module for Linux in Playwright container
+          npm install --no-save "lightningcss-linux-x64-gnu@$(node -p "require('./node_modules/lightningcss/package.json').version")"
+
       - name: Verify lightningcss installation
         run: |
           echo "🔍 Checking for lightningcss binary..."
