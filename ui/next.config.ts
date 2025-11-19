@@ -5,6 +5,7 @@ const resolvedOutput = process.env.NEXT_OUTPUT as NextConfig["output"] | undefin
 
 const nextConfig: NextConfig = {
     output: resolvedOutput,
+    outputFileTracingRoot: __dirname,
     images: {unoptimized: true},
     trailingSlash: true,
     async rewrites() {
