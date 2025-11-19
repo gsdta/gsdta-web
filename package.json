@@ -1,0 +1,28 @@
+{
+  "name": "gsdta-web",
+  "version": "1.0.0",
+  "description": "GSDTA Web Application",
+  "private": true,
+  "scripts": {
+    "seed": "cd scripts && npm run seed",
+    "seed:clear": "cd scripts && npm run seed:clear",
+    "emulators": "firebase emulators:start --project demo-gsdta --import=./firebase-data --export-on-exit",
+    "emulators:reset": "rm -rf firebase-data && npm run emulators",
+    "dev:ui": "cd ui && npm run dev",
+    "dev:api": "cd api && npm run dev",
+    "build:ui": "cd ui && npm run build",
+    "build:api": "cd api && npm run build",
+    "lint:ui": "cd ui && npm run lint",
+    "lint:api": "cd api && npm run lint",
+    "typecheck:ui": "cd ui && npm run typecheck",
+    "typecheck:api": "cd api && npm run typecheck",
+    "test:ui": "cd ui && npm test",
+    "test:api": "cd api && npm test"
+  },
+  "workspaces": [
+    "ui",
+    "api",
+    "scripts"
+  ],
+  "devDependencies": {}
+}
