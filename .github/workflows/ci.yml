@@ -146,6 +146,7 @@ jobs:
       NEXT_PUBLIC_FIREBASE_APP_ID: demo-app
       NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
       NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST: localhost:8889
+      npm_config_optional: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -181,8 +182,8 @@ jobs:
       - name: Install dependencies
         run: |
           echo "📦 Installing dependencies fresh (no cache for native modules)..."
-          npm ci
-          
+          npm ci --include=optional
+
       - name: Verify lightningcss installation
         run: |
           echo "🔍 Checking for lightningcss binary..."
