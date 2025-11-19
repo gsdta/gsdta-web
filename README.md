@@ -24,15 +24,32 @@ gsdta-web/
 - Docker → `docs/docker.md`
 
 ## Quick start
-For package-specific steps, see module READMEs:
+
+### Local Development (Recommended)
+
+**One-command start:**
+```bash
+./start-dev-local.sh
+```
+
+Then visit:
+- **UI**: http://localhost:3000
+- **Emulator UI**: http://localhost:4445
+- **Sign in with**: teacher@test.com / teacher123
+
+**Complete guide**: See `docs/local-development.md` for detailed instructions.
+
+### Package-Specific READMEs
 - UI → `ui/README.md`
 - API → `api/README.md`
 - Persistence → `persistence/README.md`
 
-## Local development (summary)
-- UI dev server: http://localhost:3000
-- API dev server: http://localhost:8080
-- UI proxy to API via Next.js rewrites (`/api/*` → http://localhost:8080/api/*)
+## Local development details
+- **UI dev server**: http://localhost:3000
+- **API dev server**: http://localhost:8080
+- **Firebase Emulators**: Auth (9099), Firestore (8889), UI (4445)
+- **Test data**: Automatically seeded (5 users, 3 students, 3 invites)
+- UI proxies to API via Next.js rewrites (`/api/*` → http://localhost:8080/api/*)
 
 ## Testing
 - UI: lint, typecheck, unit, and Playwright E2E (spawns API + UI servers automatically). See `ui/README.md`.
@@ -40,11 +57,19 @@ For package-specific steps, see module READMEs:
 
 ## Docs index
 All docs live under `docs/`. Highlights:
+- **Local Development** → `docs/local-development.md` ⭐ **START HERE**
 - Architecture → `docs/architecture.md`
 - UI guide → `docs/ui.md`
+- CI/CD → `docs/ci-cd.md`
 - Infra & Deploy to GCP → `docs/infra.md`, `docs/gcp-deploy.md`
 - Custom domain → `docs/custom-domain.md`
 - CORS troubleshooting → `docs/cors-troubleshooting.md`
+
+## Quick Reference
+- **Test Credentials**: admin@test.com / admin123, teacher@test.com / teacher123, parent@test.com / parent123
+- **Emulator UI**: http://localhost:4445 (view test data)
+- **Seed Data**: `npm run seed` (create test users and data)
+- **Reset Data**: `npm run seed:clear && npm run seed`
 
 ## License
 See `LICENSE`.

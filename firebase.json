@@ -4,12 +4,22 @@
     "indexes": "persistence/firestore.indexes.json"
   },
   "emulators": {
+    "auth": {
+      "port": 9099,
+      "host": "0.0.0.0"
+    },
     "firestore": {
-      "port": 8889
+      "port": 8889,
+      "host": "0.0.0.0"
     },
     "ui": {
       "enabled": true,
-      "port": 4445
+      "port": 4445,
+      "host": "0.0.0.0"
+    },
+    "hub": {
+      "port": 4400,
+      "host": "0.0.0.0"
     }
   }
 }

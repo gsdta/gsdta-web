@@ -2,6 +2,9 @@
 
 Start here to explore the project documentation.
 
+## 🚀 Getting Started
+- **Local Development** → `local-development.md` ⭐ **START HERE**
+
 ## Product
 - Features overview → `features.md`
 - Roles → `roles/parent.md`, `roles/teacher.md`, `roles/admin.md`
