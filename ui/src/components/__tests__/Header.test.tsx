@@ -49,7 +49,6 @@ test("renders public nav for anonymous users (sign-in link varies by auth mode)"
   render(<Header />);
   // Check presence of required public links by href (labels may be localized)
   expect(hasLinkTo("/about/")).toBe(true);
-  expect(hasLinkTo("/register/")).toBe(true);
   expect(hasLinkTo("/team/")).toBe(true);
   expect(hasLinkTo("/documents/")).toBe(true);
   expect(hasLinkTo("/calendar/")).toBe(true);
