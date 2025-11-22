@@ -1,5 +1,5 @@
 // Ensure Lightning CSS and Tailwind Oxide native bindings exist on Linux CI environments.
-import {execSync} from "node:child_process";
+import {execSync, spawnSync} from "node:child_process";
 import {existsSync, readFileSync} from "node:fs";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
@@ -10,6 +10,11 @@ const projectRoot = path.resolve(__dirname, "..");
 
 const platform = process.platform;
 const arch = process.arch;
+
+if (process.env.GSDTA_NATIVE_BINDINGS === "1") {
+    console.log("ℹ️ Native binary installer already running. Skipping nested invocation.");
+    process.exit(0);
+}
 
 if (platform !== "linux") {
     console.log(`ℹ️ Skipping native binary install on ${platform}/${arch}`);
@@ -47,10 +52,32 @@ targets.forEach((target) => {
     }
 
     console.log(`📦 Installing ${target.package}@${target.version} for ${platform}/${arch} (${libcVariant})...`);
-    execSync(`npm install --no-save ${target.package}@${target.version}`, {
-        cwd: projectRoot,
-        stdio: "inherit",
-    });
+    const child = spawnSync(
+        "npm",
+        [
+            "install",
+            "--no-save",
+            "--ignore-scripts",
+            "--prefix",
+            projectRoot,
+            `${target.package}@${target.version}`,
+        ],
+        {
+            cwd: projectRoot,
+            stdio: "inherit",
+            env: {
+                ...process.env,
+                GSDTA_NATIVE_BINDINGS: "1",
+                npm_config_prefix: projectRoot,
+                npm_config_local_prefix: projectRoot,
+                npm_config_ignore_scripts: "true",
+            },
+        },
+    );
+
+    if (child.status !== 0) {
+        throw new Error(`Failed to install ${target.package}@${target.version} (${child.status})`);
+    }
 });
 
 function readInstalledVersion(packageName) {
