@@ -6,7 +6,10 @@ const createJestConfig = nextJest({dir: './'})
 const config = {
     testEnvironment: 'jsdom',
     setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
-    moduleNameMapper: {'^@/(.*)$': '<rootDir>/src/$1'},
+    moduleNameMapper: {
+        '^@/(.*)$': '<rootDir>/src/$1',
+        '^canvas$': '<rootDir>/tests/__mocks__/canvas.ts',
+    },
     testPathIgnorePatterns: ['<rootDir>/tests/e2e/'],
 }
 
