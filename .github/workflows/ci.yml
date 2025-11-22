@@ -182,21 +182,12 @@ jobs:
           npm run seed
 
       - name: Install dependencies
-        run: |
-          npm ci
-          # Fix lightningcss native module for Linux in Playwright container
-          npm install --no-save "lightningcss-linux-x64-gnu@$(node -p "require('./node_modules/lightningcss/package.json').version")"
-          # Tailwind CSS 4 relies on @tailwindcss/oxide native bindings which need to match the host OS
-          npm install --no-save "@tailwindcss/oxide-linux-x64-gnu@$(node -p "require('./node_modules/@tailwindcss/oxide/package.json').version")"
+        run: npm ci
 
       - name: Verify native bindings
         run: |
-          echo "🔍 Checking for lightningcss binary..."
-          ls -la node_modules/lightningcss/node/ || echo "⚠️ lightningcss/node directory not found"
-          find node_modules/lightningcss -name "*.node" -ls || echo "⚠️ No .node files found"
-          file node_modules/lightningcss/node/*.node 2>/dev/null || echo "⚠️ Binary check failed"
-          echo "🔍 Checking for Tailwind oxide binary..."
-          find node_modules/@tailwindcss -maxdepth 1 -name "oxide-*" -ls || echo "⚠️ No oxide native module found"
+          node -e "require('lightningcss'); console.log('✅ lightningcss native binding loaded')"
+          node -e "require('@tailwindcss/oxide'); console.log('✅ tailwind css oxide native binding loaded')"
 
       - name: Lint
         working-directory: ui
