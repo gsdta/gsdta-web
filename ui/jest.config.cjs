@@ -8,7 +8,7 @@ const config = {
     setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
     moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
-        '^canvas$': '<rootDir>/tests/__mocks__/canvas.ts',
+        '^canvas$': '<rootDir>/tests/__mocks__/canvas.js',
     },
     testPathIgnorePatterns: ['<rootDir>/tests/e2e/'],
 }

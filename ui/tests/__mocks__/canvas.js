@@ -26,7 +26,7 @@ const mockContext = {
   clip: noop,
 };
 
-export const createCanvas = () => ({
+const createCanvas = () => ({
   getContext: () => mockContext,
   toBuffer: () => Buffer.from(""),
   toDataURL: () => "",
@@ -34,4 +34,9 @@ export const createCanvas = () => ({
   height: 0,
 });
 
-export const loadImage = async () => ({ width: 0, height: 0 });
+const loadImage = async () => ({ width: 0, height: 0 });
+
+module.exports = {
+  createCanvas,
+  loadImage,
+};
