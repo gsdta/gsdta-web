@@ -119,6 +119,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+      
+      - name: Install lightningcss for Linux
+        run: npm install --no-save lightningcss-linux-x64-gnu
 
       - name: Lint
         run: npm run lint
@@ -181,38 +184,27 @@ jobs:
       - name: Install dependencies
         run: |
           npm ci
-          # Explicitly install lightningcss binary for the container's architecture
-          ARCH=$(node -p "process.arch")
-          PLATFORM=$(node -p "process.platform")
-          if [ "$PLATFORM" = "linux" ]; then
-            LIBC=$(node -p "require('detect-libc').familySync()")
-            if [ "$LIBC" = "musl" ]; then
-              BINARY="lightningcss-${PLATFORM}-${ARCH}-musl"
-            elif [ "$ARCH" = "arm" ]; then
-              BINARY="lightningcss-${PLATFORM}-${ARCH}-gnueabihf"
-            else
-              BINARY="lightningcss-${PLATFORM}-${ARCH}-gnu"
-            fi
-            echo "📦 Installing ${BINARY} for ${PLATFORM}/${ARCH}..."
-            npm install --no-save "${BINARY}@$(node -p "require('./node_modules/lightningcss/package.json').version")"
-          fi
+          npm run ensure:native
+          # Remove optional canvas native module (jsdom gracefully falls back when it's absent)
+          rm -rf node_modules/canvas
 
-      - name: Verify lightningcss installation
+      - name: Verify native bindings
         run: |
-          echo "🔍 Checking for lightningcss binary..."
-          echo "Working directory: $(pwd)"
-          ls -la node_modules/lightningcss/node/ || echo "⚠️ lightningcss/node directory not found"
-          find node_modules -name "lightningcss*.node" -ls || echo "⚠️ No .node files found"
-          echo "Platform info: $(uname -m), Node arch: $(node -p 'process.arch')"
+          node -e "require('lightningcss'); console.log('✅ lightningcss native binding loaded')"
+          node -e "require('@tailwindcss/oxide'); console.log('✅ tailwind css oxide native binding loaded')"
 
       - name: Lint
+        working-directory: ui
         run: npm run lint
 
       - name: Typecheck
+        working-directory: ui
         run: npm run typecheck
 
       - name: Unit tests
+        working-directory: ui
         run: npm test --if-present
 
       - name: E2E (Playwright)
+        working-directory: ui
         run: npm run e2e:ci

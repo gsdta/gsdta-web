@@ -21,7 +21,7 @@ export default defineConfig({
     fullyParallel: true,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 0,
-    workers: process.env.CI ? "50%" : undefined, // Dial workers on CI to reduce contention
+    workers: process.env.CI ? 4 : undefined, // Use 4 workers in CI for faster execution
     // Remove any-cast and pass typed reporters
     reporter: reporters,
     use: {
@@ -40,6 +40,10 @@ export default defineConfig({
             env: {
                 ALLOW_TEST_INVITES: "1",
                 NODE_ENV: "test",
+                FIRESTORE_EMULATOR_HOST: process.env.FIRESTORE_EMULATOR_HOST || "localhost:8889",
+                FIREBASE_AUTH_EMULATOR_HOST: process.env.FIREBASE_AUTH_EMULATOR_HOST || "localhost:9099",
+                FIREBASE_PROJECT_ID: "demo-gsdta",
+                GCLOUD_PROJECT: "demo-gsdta",
             },
         },
         {
@@ -57,6 +61,8 @@ export default defineConfig({
                 NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "",
                 NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST: process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST || "",
                 NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST: process.env.NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST || "",
+                FIRESTORE_EMULATOR_HOST: process.env.FIRESTORE_EMULATOR_HOST || "",
+                FIREBASE_AUTH_EMULATOR_HOST: process.env.FIREBASE_AUTH_EMULATOR_HOST || "",
             },
         },
     ],
