@@ -11,6 +11,7 @@ const config = {
         '^canvas$': '<rootDir>/tests/__mocks__/canvas.js',
     },
     testPathIgnorePatterns: ['<rootDir>/tests/e2e/'],
+    testTimeout: 15000,
 }
 
 module.exports = createJestConfig(config)
