@@ -52,6 +52,8 @@ Then visit:
 - UI proxies to API via Next.js rewrites (`/api/*` → http://localhost:8080/api/*)
 
 ## Testing
+- **E2E Tests**: See `RUN-E2E-TESTS.md` for running Playwright tests locally ⭐
+- **Quick E2E**: Run `./run-e2e-tests.sh` (automated script)
 - UI: lint, typecheck, unit, and Playwright E2E (spawns API + UI servers automatically). See `ui/README.md`.
 - API: lint, typecheck, unit, and Cucumber E2E. See `api/README.md`.
 

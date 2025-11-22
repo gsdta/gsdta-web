@@ -12,6 +12,12 @@ async function clearStorage(page: Page) {
 }
 
 test.describe("Mock auth flow + role-based routing", () => {
+  // Skip these tests if using Firebase auth (they require mock auth mode)
+  test.skip(
+    process.env.NEXT_PUBLIC_AUTH_MODE === "firebase",
+    "Mock auth tests require NEXT_PUBLIC_AUTH_MODE=mock"
+  );
+
   test.beforeEach(async ({ page }) => {
     await clearStorage(page);
   });
