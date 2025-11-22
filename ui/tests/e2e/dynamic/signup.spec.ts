@@ -81,6 +81,12 @@ test.describe("Parent Signup Flow", () => {
   });
 
   test("authenticated user should be redirected from signup page", async ({ page }) => {
+    // Skip in Firebase mode - this test requires mock auth login flow
+    test.skip(
+      process.env.NEXT_PUBLIC_AUTH_MODE === "firebase",
+      "This test requires mock auth mode (uses /login with role selector)"
+    );
+
     // First, login
     await page.goto("/login");
     await page.selectOption("#role", "parent");
