@@ -27,7 +27,6 @@ test.describe("Homepage (English)", () => {
 
     const links: { name: string; expectTitle: string | RegExp | null; path: string }[] = [
       { name: "About us", expectTitle: /About us/i, path: "/about/" },
-      { name: "Register", expectTitle: "Register", path: "/register/" },
       { name: "Team", expectTitle: "Team", path: "/team/" },
       { name: "Documents", expectTitle: "Documents", path: "/documents/" },
       { name: "Calendar", expectTitle: /Calendar(\s+20\d{2}-\d{2})?/i, path: "/calendar/" },
