@@ -185,6 +185,8 @@ jobs:
         run: |
           npm ci
           npm run ensure:native
+          # Remove optional canvas native module (jsdom gracefully falls back when it's absent)
+          rm -rf node_modules/canvas
 
       - name: Verify native bindings
         run: |
