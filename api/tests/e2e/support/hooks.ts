@@ -96,7 +96,7 @@ async function mockGetUserProfile(uid: string): Promise<UserProfile | null> {
 BeforeAll(async function () {
   // Install test mocks for authentication
   __setGuardDepsForTests({
-    verify: mockVerify as typeof import('../../../src/lib/firebase-admin').auth.verifyIdToken,
+    verify: mockVerify as (authorizationHeader: string | null | undefined) => Promise<VerifiedToken>,
     getUserProfile: mockGetUserProfile,
   });
 });
