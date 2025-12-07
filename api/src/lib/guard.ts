@@ -112,10 +112,11 @@ function getGetProfileFunction() {
 }
 
 export function __setGuardDepsForTests(
-  deps: { verify?: typeof verifyIdToken; getUserProfile?: typeof getUserProfile } | null
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _deps: { verify?: typeof verifyIdToken; getUserProfile?: typeof getUserProfile } | null
 ) {
   // This function is kept for backwards compatibility but not used anymore
-  // Test mocks are now automatically used based on NODE_ENV
+  // Test mocks are now automatically used based on USE_TEST_AUTH env var
 }
 
 /**
