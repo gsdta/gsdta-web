@@ -193,6 +193,114 @@ firebase deploy --only firestore:rules
 firebase deploy --only firestore:indexes
 ```
 
+### 6. Firestore Collections Setup
+
+**Important**: Firestore collections are **auto-created** on first write. You **DO NOT** need to manually create them.
+
+#### Collections Used by GSDTA App
+
+The application uses the following Firestore collections:
+
+1. **`users`** - User profiles (linked to Firebase Auth)
+   - Auto-created when users sign up
+   - Fields: `uid`, `email`, `name`, `roles`, `status`, `createdAt`, `updatedAt`
+
+2. **`students`** - Student records
+   - Auto-created when admin adds students
+   - Fields: `id`, `name`, `parentId`, `grade`, `schoolName`, `dateOfBirth`, etc.
+
+3. **`invites`** (or `roleInvites`) - Teacher invites
+   - Auto-created when admin invites teachers
+   - Fields: `token`, `email`, `role`, `status`, `expiresAt`, etc.
+
+4. **`heroContent`** - Event banners for homepage
+   - Auto-created when admin creates hero content
+   - Fields: `id`, `type`, `title`, `subtitle`, `imageUrl`, `isActive`, `priority`, etc.
+   - **NEW** as of December 2024
+
+5. **Additional collections** (as features are added):
+   - `classes` - Class information
+   - `attendance` - Attendance records
+   - `grades` - Grade records
+   - `announcements` - School announcements
+   - etc.
+
+#### How Collections Are Created
+
+Collections are automatically created when:
+1. **First document is written** to that collection
+2. Via application code (e.g., admin creates first hero content)
+3. Via seed script for local development
+
+#### Seed Data for Local Development
+
+```bash
+# Start emulators
+npm run emulators
+
+# In another terminal, seed test data
+node scripts/seed-emulator.js
+
+# This creates all collections with sample data
+```
+
+#### Manual Collection Creation (NOT REQUIRED)
+
+You **do not** need to manually create collections in production. However, if you want to pre-create them:
+
+**Option 1: Via Firebase Console**
+1. Go to: https://console.firebase.google.com
+2. Navigate to: **Firestore Database**
+3. Click: **Start collection**
+4. Enter collection ID (e.g., `heroContent`)
+5. Add first document (can be a placeholder)
+
+**Option 2: Via gcloud (using Admin SDK)**
+```bash
+# Not recommended - collections auto-create on first write
+# Just deploy the app and let it create collections naturally
+```
+
+#### Verify Collections
+
+After deploying and using the app:
+
+**Option 1: Firebase Console (Recommended)**
+1. Go to: https://console.firebase.google.com
+2. Select your project
+3. Navigate to: **Firestore Database** → **Data**
+4. Collections will be visible in the left sidebar
+
+**Option 2: Using a Node.js Script**
+```javascript
+// scripts/list-collections.js
+const admin = require('firebase-admin');
+admin.initializeApp({ projectId: process.env.PROJECT_ID });
+
+async function listCollections() {
+  const collections = await admin.firestore().listCollections();
+  collections.forEach(collection => {
+    console.log('Collection:', collection.id);
+  });
+}
+
+listCollections().then(() => process.exit(0));
+```
+
+Run with:
+```bash
+export PROJECT_ID="your-project-id"
+node scripts/list-collections.js
+```
+
+**Option 3: Export Firestore Data**
+```bash
+# Export shows all collections in metadata
+gcloud firestore export gs://YOUR_BUCKET/firestore-export
+```
+
+**Note**: There is no direct `gcloud firestore collections list` command. Collections are best viewed via Firebase Console.
+
 ---
 
 ## Artifact Registry Setup
