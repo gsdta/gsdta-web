@@ -8,7 +8,7 @@ export function Footer() {
     const { t } = useI18n();
 
     return (
-        <footer className="mt-16 border-t border-gray-200 dark:border-gray-800 bg-gradient-to-br from-rose-50/30 via-white to-pink-50/30 dark:from-gray-900 dark:via-gray-950 dark:to-black">
+        <footer className="mt-16 border-t border-gray-200 bg-gradient-to-br from-rose-50/30 via-white to-pink-50/30">
             <div className="mx-auto max-w-7xl px-6 py-8">
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5 text-center md:text-left">
                     {/* Logo Section */}
@@ -26,15 +26,15 @@ export function Footer() {
 
                     {/* Organization Column */}
                     <div className="text-center md:text-left">
-                        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">{t("footer.orgTitle")}</h3>
-                        <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                        <h3 className="text-base font-semibold text-gray-900 mb-3">{t("footer.orgTitle")}</h3>
+                        <ul className="space-y-2 text-sm text-gray-600">
                             <li>
-                                <Link href="/about" className="hover:text-rose-600 dark:hover:text-rose-400 transition-colors">
+                                <Link href="/about" className="hover:text-rose-600:text-rose-400 transition-colors">
                                     {t("footer.aboutUs")}
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/enrollment" className="hover:text-rose-600 dark:hover:text-rose-400 transition-colors">
+                                <Link href="/enrollment" className="hover:text-rose-600:text-rose-400 transition-colors">
                                     {t("footer.registerNow")}
                                 </Link>
                             </li>
@@ -43,20 +43,20 @@ export function Footer() {
 
                     {/* Team Column */}
                     <div className="text-center md:text-left">
-                        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">{t("footer.teamTitle")}</h3>
-                        <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                        <h3 className="text-base font-semibold text-gray-900 mb-3">{t("footer.teamTitle")}</h3>
+                        <ul className="space-y-2 text-sm text-gray-600">
                             <li>
-                                <Link href="/team?tab=board#board" className="hover:text-rose-600 dark:hover:text-rose-400 transition-colors">
+                                <Link href="/team?tab=board#board" className="hover:text-rose-600:text-rose-400 transition-colors">
                                     {t("footer.board")}
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/team?tab=executives#executives" className="hover:text-rose-600 dark:hover:text-rose-400 transition-colors">
+                                <Link href="/team?tab=executives#executives" className="hover:text-rose-600:text-rose-400 transition-colors">
                                     {t("footer.executives")}
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/team?tab=teachers#teachers" className="hover:text-rose-600 dark:hover:text-rose-400 transition-colors">
+                                <Link href="/team?tab=teachers#teachers" className="hover:text-rose-600:text-rose-400 transition-colors">
                                     {t("footer.teachers")}
                                 </Link>
                             </li>
@@ -65,15 +65,15 @@ export function Footer() {
 
                     {/* Documents Column */}
                     <div className="text-center md:text-left">
-                        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">{t("footer.documentsTitle")}</h3>
-                        <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                        <h3 className="text-base font-semibold text-gray-900 mb-3">{t("footer.documentsTitle")}</h3>
+                        <ul className="space-y-2 text-sm text-gray-600">
                             <li>
-                                <Link href="/documents?tab=tax#tax" className="hover:text-rose-600 dark:hover:text-rose-400 transition-colors">
+                                <Link href="/documents?tab=tax#tax" className="hover:text-rose-600:text-rose-400 transition-colors">
                                     {t("footer.taxExempt")}
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/documents?tab=bylaws#bylaws" className="hover:text-rose-600 dark:hover:text-rose-400 transition-colors">
+                                <Link href="/documents?tab=bylaws#bylaws" className="hover:text-rose-600:text-rose-400 transition-colors">
                                     {t("footer.bylaws")}
                                 </Link>
                             </li>
@@ -82,17 +82,17 @@ export function Footer() {
 
                     {/* Contact Column */}
                     <div className="text-center md:text-left">
-                        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">{t("footer.contactTitle")}</h3>
-                        <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                        <h3 className="text-base font-semibold text-gray-900 mb-3">{t("footer.contactTitle")}</h3>
+                        <div className="space-y-2 text-sm text-gray-600">
                             <div className="flex items-center gap-2 justify-center md:justify-start">
-                                <span className="text-rose-600 dark:text-rose-400">✉</span>
-                                <a href="mailto:communications@gsdta.org" className="hover:text-rose-600 dark:hover:text-rose-400 transition-colors">
+                                <span className="text-rose-600">✉</span>
+                                <a href="mailto:communications@gsdta.org" className="hover:text-rose-600:text-rose-400 transition-colors">
                                     communications@gsdta.org
                                 </a>
                             </div>
                             <div className="flex items-center gap-2 justify-center md:justify-start">
-                                <span className="text-rose-600 dark:text-rose-400">☎</span>
-                                <a href="tel:619-630-8499" className="hover:text-rose-600 dark:hover:text-rose-400 transition-colors">
+                                <span className="text-rose-600">☎</span>
+                                <a href="tel:619-630-8499" className="hover:text-rose-600:text-rose-400 transition-colors">
                                     619-630-8499
                                 </a>
                             </div>
@@ -149,7 +149,7 @@ export function Footer() {
                 </div>
 
                 {/* Copyright */}
-                <div className="border-t border-gray-200 dark:border-gray-800 mt-6 pt-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                <div className="border-t border-gray-200 mt-6 pt-4 text-center text-sm text-gray-500">
                     © {currentYear} Greater San Diego Tamil Academy. {t("footer.rights")}
                 </div>
             </div>

@@ -141,7 +141,9 @@ gsdta-web/
    - E2E tests for critical user flows
 
 5. **Documentation**:
-   - Update relevant docs in `/docs/`
+   - **ALWAYS keep documentation current** - update existing `.md` files as you work
+   - When making changes, immediately update related docs in `/docs/`
+   - Update checkboxes in `/docs/ROLES.md` when implementing features
    - Add comments for complex logic
 
 ---

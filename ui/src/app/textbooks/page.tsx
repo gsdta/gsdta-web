@@ -83,23 +83,23 @@ export default function TextbooksPage() {
     if (kind === "homework") {
       return `${baseClasses} focus-visible:ring-emerald-500 ${
         isSelected
-          ? "bg-emerald-600 text-white shadow dark:bg-emerald-500"
-          : "bg-emerald-500 text-white hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-500"
+          ? "bg-emerald-600 text-white shadow"
+          : "bg-emerald-500 text-white hover:bg-emerald-600:bg-emerald-500"
       }`;
     }
 
     if (kind === "mixed") {
       return `${baseClasses} focus-visible:ring-sky-500 ${
         isSelected
-          ? "bg-sky-600 text-white shadow dark:bg-sky-500"
-          : "bg-sky-100 text-sky-800 hover:bg-sky-200 dark:bg-sky-900/40 dark:text-sky-200 dark:hover:bg-sky-900/60"
+          ? "bg-sky-600 text-white shadow"
+          : "bg-sky-100 text-sky-800 hover:bg-sky-200/40:bg-sky-900/60"
       }`;
     }
 
     return `${baseClasses} focus-visible:ring-indigo-500 ${
       isSelected
-        ? "bg-indigo-600 text-white shadow dark:bg-indigo-500"
-        : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-300 dark:hover:bg-indigo-900/60"
+        ? "bg-indigo-600 text-white shadow"
+        : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100/40:bg-indigo-900/60"
     }`;
   };
 
@@ -107,11 +107,11 @@ export default function TextbooksPage() {
   const renderDesktopLayout = () => (
     <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
       <div className="col-span-1">
-        <div className="h-full rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+        <div className="h-full rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-900">
             {t("textbooks.resourcesTitle", { grade: selectedGrade!.label })}
           </h2>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+          <p className="mt-1 text-sm text-gray-600">
             {t("textbooks.resourcesSubtitle")}
           </p>
 
@@ -139,7 +139,7 @@ export default function TextbooksPage() {
       </div>
 
       <div className="col-span-1 md:col-span-2">
-        <div className="min-h-[400px] rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="min-h-[400px] rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
           {selectedResource ? (
             <iframe
               title={t("textbooks.viewerTitle", {
@@ -149,12 +149,12 @@ export default function TextbooksPage() {
               src={buildGoogleDrivePreviewUrl(
                 selectedResource.googleDriveId,
               )}
-              className="h-[480px] w-full rounded-md border border-gray-200 bg-gray-100 dark:border-gray-700"
+              className="h-[480px] w-full rounded-md border border-gray-200 bg-gray-100"
               allowFullScreen
               data-testid="textbook-viewer"
             />
           ) : (
-            <div className="flex h-full min-h-[240px] items-center justify-center text-center text-gray-600 dark:text-gray-300">
+            <div className="flex h-full min-h-[240px] items-center justify-center text-center text-gray-600">
               <p>{t("textbooks.selectResourcePrompt")}</p>
             </div>
           )}
@@ -167,13 +167,13 @@ export default function TextbooksPage() {
   const renderMobileLayout = () => {
     const inViewer = Boolean(selectedResource);
     return (
-      <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
         {!inViewer ? (
           <>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            <h2 className="text-lg font-semibold text-gray-900">
               {t("textbooks.resourcesTitle", { grade: selectedGrade!.label })}
             </h2>
-            <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+            <p className="mt-1 text-sm text-gray-600">
               {t("textbooks.resourcesSubtitle")}
             </p>
             <div className="mt-4 flex flex-col gap-2" role="toolbar">
@@ -196,12 +196,12 @@ export default function TextbooksPage() {
               <button
                 type="button"
                 onClick={() => setSelectedResourceId(null)}
-                className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus-visible:ring focus-visible:ring-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+                className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus-visible:ring focus-visible:ring-indigo-500:bg-gray-700"
                 aria-label="Back to resources list"
               >
                 ← Back
               </button>
-              <div className="text-sm text-gray-600 dark:text-gray-300 truncate max-w-[60%]" title={selectedResource!.label}>
+              <div className="text-sm text-gray-600 truncate max-w-[60%]" title={selectedResource!.label}>
                 {selectedResource!.label}
               </div>
             </div>
@@ -211,7 +211,7 @@ export default function TextbooksPage() {
                 resource: selectedResource!.label,
               })}
               src={buildGoogleDrivePreviewUrl(selectedResource!.googleDriveId)}
-              className="h-[70vh] w-full rounded-md border border-gray-200 bg-gray-100 dark:border-gray-700"
+              className="h-[70vh] w-full rounded-md border border-gray-200 bg-gray-100"
               allowFullScreen
               data-testid="textbook-viewer"
             />
@@ -227,13 +227,13 @@ export default function TextbooksPage() {
         <h1 data-testid="page-title" className="text-3xl font-semibold">
           {t("textbooks.pageTitle")}
         </h1>
-        <p className="mt-2 text-gray-700 dark:text-gray-300">
+        <p className="mt-2 text-gray-700">
           {t("textbooks.instructions")}
         </p>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+      <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <h2 className="text-lg font-semibold text-gray-900">
           {t("textbooks.gradeSelectorLabel")}
         </h2>
         <div
@@ -250,7 +250,7 @@ export default function TextbooksPage() {
                 role="tab"
                 aria-selected={isSelected}
                 onClick={() => setSelectedGradeId(grade.id)}
-                className={`whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${isSelected ? "bg-indigo-600 text-white shadow" : "bg-white text-gray-900 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"}`}
+                className={`whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${isSelected ? "bg-indigo-600 text-white shadow" : "bg-white text-gray-900 hover:bg-gray-100:bg-gray-700"}`}
                 data-testid={`grade-${grade.id}`}
               >
                 {grade.label}
@@ -263,7 +263,7 @@ export default function TextbooksPage() {
       {selectedGrade ? (
         isMdUp ? renderDesktopLayout() : renderMobileLayout()
       ) : (
-        <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-white p-6 text-center text-gray-600 shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+        <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-white p-6 text-center text-gray-600 shadow-sm">
           <p>{t("textbooks.noGradeSelected")}</p>
         </div>
       )}
