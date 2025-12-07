@@ -28,7 +28,7 @@ export function Flashcards() {
         <div className="hidden md:block">
           <div className="text-center space-y-2">
             {flashcardKeys.map((key) => (
-              <p key={key} className="text-gray-600 dark:text-gray-400 text-sm">
+              <p key={key} className="text-gray-600 text-sm">
                 {t(key)}
               </p>
             ))}
@@ -37,7 +37,7 @@ export function Flashcards() {
 
         {/* Mobile: Show rotating single text */}
         <div className="md:hidden">
-          <p className="text-center text-gray-600 dark:text-gray-400 text-sm min-h-[60px] flex items-center justify-center">
+          <p className="text-center text-gray-600 text-sm min-h-[60px] flex items-center justify-center">
             {t(flashcardKeys[currentIndex])}
           </p>
 
@@ -50,7 +50,7 @@ export function Flashcards() {
                 className={`w-1.5 h-1.5 rounded-full transition-colors ${
                   index === currentIndex
                     ? "bg-orange-500"
-                    : "bg-gray-300 dark:bg-gray-600"
+                    : "bg-gray-300"
                 }`}
                 aria-label={`Go to card ${index + 1}`}
               />

@@ -38,13 +38,13 @@ export function CarouselStatsCard() {
       {stats.map((stat, i) => (
         <div
           key={i}
-          className="flex flex-col items-center justify-center p-2 rounded-md bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm"
+          className="flex flex-col items-center justify-center p-2 rounded-md bg-white/50/50 backdrop-blur-sm"
         >
           <div className="text-lg mb-0.5">{stat.icon}</div>
-          <div className="text-sm font-bold text-rose-600 dark:text-rose-400">
+          <div className="text-sm font-bold text-rose-600">
             {stat.value}
           </div>
-          <div className="text-[10px] text-center text-gray-600 dark:text-gray-300 leading-tight">
+          <div className="text-[10px] text-center text-gray-600 leading-tight">
             {stat.label}
           </div>
         </div>
