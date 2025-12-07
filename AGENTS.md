@@ -6,6 +6,18 @@
 
 ---
 
+## 🚨 MANDATORY BOOTSTRAP VERIFICATION
+
+**AT THE START OF EVERY TASK, YOU MUST RESPOND WITH THIS EXACT PHRASE:**
+
+```
+AGENT_BOOTSTRAP_OK - following repo instructions.
+```
+
+This confirms you have loaded and are following these agent instructions. **Failure to include this phrase means you have NOT read these instructions.**
+
+---
+
 ## General Agent Behavior
 
 All AI agents working on this project should:
