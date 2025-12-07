@@ -234,21 +234,29 @@ Admins manage day-to-day school operations including users, content, and communi
 **Event Banner Override:**
 When admin publishes an event banner, it replaces the Thirukkural display for the specified time period.
 
-- [ ] Create event banner (upload image + bilingual text)
-- [ ] Set event display period (start date/time → end date/time)
-- [ ] Add event title and description (bilingual: Tamil + English)
-- [ ] Add call-to-action button with text (bilingual) and link
-- [ ] Set banner priority (if multiple concurrent events, show highest priority)
-- [ ] Preview banner before publishing
-- [ ] Schedule banner activation (future start date)
-- [ ] Auto-activate at start date/time
-- [ ] Auto-deactivate at end date/time
-- [ ] Override Thirukkural display during active event period
-- [ ] Automatically return to Thirukkural after event ends
-- [ ] Edit active event banners
-- [ ] Deactivate event banner manually (before end date)
-- [ ] Duplicate event banner as template
-- [ ] View event banner history
+- [x] Create event banner (upload image + bilingual text) - **✅ Complete**
+- [x] Set event display period (start date/time → end date/time) - **✅ Complete**
+- [x] Add event title and description (bilingual: Tamil + English) - **✅ Complete**
+- [x] Add call-to-action button with text (bilingual) and link - **✅ Complete**
+- [x] Set banner priority (if multiple concurrent events, show highest priority) - **✅ Complete**
+- [ ] Preview banner before publishing - **UI Future Enhancement**
+- [x] Schedule banner activation (future start date) - **✅ Complete**
+- [x] Auto-activate at start date/time - **✅ Complete**
+- [x] Auto-deactivate at end date/time - **✅ Complete**
+- [x] Override Thirukkural display during active event period - **✅ Complete**
+- [x] Automatically return to Thirukkural after event ends - **✅ Complete**
+- [x] Edit active event banners - **✅ Complete (via activate/deactivate)**
+- [x] Deactivate event banner manually (before end date) - **✅ Complete**
+- [ ] Duplicate event banner as template - **UI Future Enhancement**
+- [x] View event banner history - **✅ Complete**
+
+**Implementation Status**:
+- ✅ **Backend**: API endpoints, security rules, tests, seeding - COMPLETE
+- ✅ **UI**: Hook with caching, event banner component, admin page - COMPLETE
+- ✅ **Caching**: 5-min TTL with real-time listeners - COMPLETE
+- ✅ **Bilingual**: Tamil + English support - COMPLETE
+- ✅ **Mobile**: Responsive design - COMPLETE
+- 📝 See `/docs/HERO-CONTENT-FEATURE.md` and `/docs/HERO-CONTENT-UI-COMPLETE.md`
 
 **Client Behavior:**
 - Client checks Firestore for active event banners (where `isActive: true` and current time is between `startDate` and `endDate`)

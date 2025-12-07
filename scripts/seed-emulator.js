@@ -259,6 +259,105 @@ async function seedInvites() {
   }
 }
 
+// Sample hero content
+const SAMPLE_HERO_CONTENT = [
+  {
+    id: 'hero-annual-day-2024',
+    type: 'event',
+    title: {
+      en: 'Annual Day Celebration 2024',
+      ta: 'ஆண்டு விழா கொண்டாட்டம் 2024'
+    },
+    subtitle: {
+      en: 'Join us for our grand annual celebration',
+      ta: 'எங்கள் பெரிய ஆண்டு விழாவில் எங்களுடன் சேருங்கள்'
+    },
+    description: {
+      en: 'Experience cultural performances, traditional music, and delicious Tamil cuisine',
+      ta: 'கலாச்சார நிகழ்ச்சிகள், பாரம்பரிய இசை மற்றும் சுவையான தமிழ் உணவுகளை அனுபவிக்கவும்'
+    },
+    imageUrl: 'https://picsum.photos/seed/annual-day/1200/600',
+    ctaText: {
+      en: 'Register Now',
+      ta: 'இப்போது பதிவு செய்க'
+    },
+    ctaLink: 'https://example.com/register',
+    startDate: new Date('2024-12-01'),
+    endDate: new Date('2025-01-15'),
+    isActive: true,
+    priority: 10
+  },
+  {
+    id: 'hero-registration-open',
+    type: 'event',
+    title: {
+      en: 'New Student Registration Open',
+      ta: 'புதிய மாணவர் பதிவு திறந்துள்ளது'
+    },
+    subtitle: {
+      en: 'Enroll your child for 2024-25 academic year',
+      ta: '2024-25 கல்வியாண்டுக்கு உங்கள் குழந்தையை சேர்க்கவும்'
+    },
+    description: {
+      en: 'Limited seats available. Early bird discount until December 31st',
+      ta: 'குறைந்த இருக்கைகள் கிடைக்கின்றன. டிசம்பர் 31 வரை ஆரம்ப தள்ளுபடி'
+    },
+    imageUrl: 'https://picsum.photos/seed/registration/1200/600',
+    ctaText: {
+      en: 'Apply Now',
+      ta: 'இப்போது விண்ணப்பிக்கவும்'
+    },
+    ctaLink: 'https://example.com/apply',
+    startDate: new Date('2024-11-15'),
+    endDate: new Date('2025-01-31'),
+    isActive: false,
+    priority: 8
+  },
+  {
+    id: 'hero-inactive-past-event',
+    type: 'event',
+    title: {
+      en: 'Past Cultural Event',
+      ta: 'கடந்த கலாச்சார நிகழ்வு'
+    },
+    subtitle: {
+      en: 'This event has concluded',
+      ta: 'இந்த நிகழ்வு முடிந்துவிட்டது'
+    },
+    startDate: new Date('2024-10-01'),
+    endDate: new Date('2024-10-15'),
+    isActive: false,
+    priority: 5
+  }
+];
+
+/**
+ * Seed hero content
+ */
+async function seedHeroContent() {
+  console.log('\n📝 Seeding hero content...');
+  
+  for (const content of SAMPLE_HERO_CONTENT) {
+    try {
+      const contentData = {
+        ...content,
+        startDate: content.startDate ? admin.firestore.Timestamp.fromDate(content.startDate) : null,
+        endDate: content.endDate ? admin.firestore.Timestamp.fromDate(content.endDate) : null,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdBy: 'admin-test-001'
+      };
+
+      await db.collection('heroContent').doc(content.id).set(contentData, { merge: true });
+      
+      const statusEmoji = content.isActive ? '✅ (active)' : '💤 (inactive)';
+      console.log(`  ✅ Created hero content: ${content.title.en} ${statusEmoji}`);
+    } catch (error) {
+      console.error(`  ❌ Error creating hero content ${content.title.en}:`, error.message);
+    }
+  }
+}
+
 /**
  * Clear all data (optional - use with caution)
  */
@@ -267,7 +366,7 @@ async function clearAllData() {
   
   try {
     // Clear Firestore collections
-    const collections = ['users', 'students', 'invites'];
+    const collections = ['users', 'students', 'invites', 'heroContent'];
     for (const collectionName of collections) {
       const snapshot = await db.collection(collectionName).get();
       const batch = db.batch();
@@ -313,6 +412,7 @@ async function main() {
     await seedUserProfiles();
     await seedStudents();
     await seedInvites();
+    await seedHeroContent();
 
     console.log('\n✅ Seeding complete!\n');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
