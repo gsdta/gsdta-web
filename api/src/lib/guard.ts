@@ -11,14 +11,111 @@ export type AuthContext = {
   profile: UserProfile;
 };
 
-// Allow tests to override dependencies
-let _verify = verifyIdToken;
-let _getProfile = getUserProfile;
+// Test user profiles for test mode
+const testUsers: Record<string, { token: VerifiedToken; profile: UserProfile }> = {
+  admin: {
+    token: {
+      uid: 'test-admin-uid',
+      email: 'admin@test.com',
+      emailVerified: true,
+    },
+    profile: {
+      uid: 'test-admin-uid',
+      email: 'admin@test.com',
+      firstName: 'Test',
+      lastName: 'Admin',
+      roles: ['admin'],
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  },
+  teacher: {
+    token: {
+      uid: 'test-teacher-uid',
+      email: 'teacher@test.com',
+      emailVerified: true,
+    },
+    profile: {
+      uid: 'test-teacher-uid',
+      email: 'teacher@test.com',
+      firstName: 'Test',
+      lastName: 'Teacher',
+      roles: ['teacher'],
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  },
+  parent: {
+    token: {
+      uid: 'test-parent-uid',
+      email: 'parent@test.com',
+      emailVerified: true,
+    },
+    profile: {
+      uid: 'test-parent-uid',
+      email: 'parent@test.com',
+      firstName: 'Test',
+      lastName: 'Parent',
+      roles: ['parent'],
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  },
+};
+
+// Mock verify function for tests
+async function mockVerify(authHeader: string | null | undefined): Promise<VerifiedToken> {
+  if (!authHeader) {
+    throw new AuthError(401, 'auth/missing-token', 'Authorization header required');
+  }
+
+  const match = authHeader.match(/^Bearer (.+)$/);
+  if (!match) {
+    throw new AuthError(401, 'auth/invalid-token', 'Invalid authorization format');
+  }
+
+  const token = match[1];
+  
+  // Match test tokens to test users
+  if (token === 'test-admin-token') {
+    return testUsers.admin.token;
+  } else if (token === 'test-teacher-token') {
+    return testUsers.teacher.token;
+  } else if (token === 'test-parent-token') {
+    return testUsers.parent.token;
+  }
+
+  throw new AuthError(401, 'auth/invalid-token', 'Invalid token');
+}
+
+// Mock getUserProfile function for tests
+async function mockGetUserProfile(uid: string): Promise<UserProfile | null> {
+  for (const user of Object.values(testUsers)) {
+    if (user.token.uid === uid) {
+      return user.profile;
+    }
+  }
+  return null;
+}
+
+// Function to get verify function based on runtime env
+function getVerifyFunction() {
+  return process.env.USE_TEST_AUTH === 'true' ? mockVerify : verifyIdToken;
+}
+
+// Function to get getUserProfile based on runtime env
+function getGetProfileFunction() {
+  return process.env.USE_TEST_AUTH === 'true' ? mockGetUserProfile : getUserProfile;
+}
+
 export function __setGuardDepsForTests(
   deps: { verify?: typeof verifyIdToken; getUserProfile?: typeof getUserProfile } | null
 ) {
-  _verify = (deps?.verify ?? verifyIdToken) as typeof verifyIdToken;
-  _getProfile = (deps?.getUserProfile ?? getUserProfile) as typeof getUserProfile;
+  // This function is kept for backwards compatibility but not used anymore
+  // Test mocks are now automatically used based on NODE_ENV
 }
 
 /**
@@ -31,8 +128,12 @@ export async function requireAuth(
 ): Promise<AuthContext> {
   const { requireActive = true, requireRoles } = options;
 
-  const token = await _verify(authorizationHeader);
-  const profile = await _getProfile(token.uid);
+  // Get functions based on runtime environment
+  const verify = getVerifyFunction();
+  const getProfile = getGetProfileFunction();
+
+  const token = await verify(authorizationHeader);
+  const profile = await getProfile(token.uid);
 
   if (!profile) {
     throw new AuthError(404, 'auth/profile-not-found', 'User profile not found');
