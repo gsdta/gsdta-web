@@ -8,16 +8,16 @@ import { useI18n } from "@/i18n/LanguageProvider";
 export function HeroThirukkural() {
   const { t } = useI18n();
   return (
-    <section className="relative isolate overflow-hidden rounded-xl bg-gradient-to-br from-pink-50 via-rose-50 to-amber-50 dark:from-gray-900 dark:via-gray-950 dark:to-black ring-1 ring-black/5 dark:ring-white/5">
+    <section className="relative isolate overflow-hidden rounded-xl bg-gradient-to-br from-pink-50 via-rose-50 to-amber-50 ring-1 ring-black/5/5">
       <AnnouncementBanner />
       <div className="px-6 py-12 sm:px-10">
       <div className="mx-auto max-w-4xl">
         {/* Subtitle + Motto inside hero */}
         <div className="text-center">
-          <p className="text-[12px] md:text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-[12px] md:text-sm text-gray-500">
             {t("flashcards.card4")}
           </p>
-          <h2 className="mt-2 text-xl md:text-2xl font-semibold text-gray-900 dark:text-gray-100">
+          <h2 className="mt-2 text-xl md:text-2xl font-semibold text-gray-900">
             {t("motto.title")}
           </h2>
           <span className="mt-2 inline-block h-0.5 w-14 bg-orange-500 rounded" />
@@ -34,7 +34,7 @@ export function HeroThirukkural() {
                 className="drop-shadow-lg"
                 priority
               />
-              <div className="absolute -top-2 -right-2 bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200 text-xs px-2 py-1 rounded-full font-medium">
+              <div className="absolute -top-2 -right-2 bg-amber-100 text-amber-800/40 text-xs px-2 py-1 rounded-full font-medium">
                 {t("brand.short")}
               </div>
             </div>
@@ -42,7 +42,7 @@ export function HeroThirukkural() {
           <div className="flex-1 max-w-2xl">
             <ThirukkuralDisplay
               intervalMs={8000}
-              className="bg-white/60 dark:bg-white/5 backdrop-blur-sm rounded-lg p-6 shadow-sm border border-white/40 dark:border-white/10"
+              className="bg-white/60/5 backdrop-blur-sm rounded-lg p-6 shadow-sm border border-white/40/10"
             />
           </div>
         </div>

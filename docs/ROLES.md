@@ -224,19 +224,55 @@ Admins manage day-to-day school operations including users, content, and communi
 
 #### Website Content Management - Hero Section
 
-- [ ] Update hero card title
-- [ ] Update hero card subtitle
-- [ ] Upload/change hero image
-- [ ] Update call-to-action text and link
-- [ ] Preview changes before publishing
-- [ ] Schedule hero updates (future publish date)
-- [ ] Version history (view previous versions)
-- [ ] Rollback to previous version
-- [ ] A/B testing variants (future)
+**Default Behavior:**
+- Thirukkural displays by default (bilingual: Tamil + English)
+- Static client-side data (stored in `ui/src/data/thirukkural-data.ts`)
+- Automatically rotates every ~8-13 seconds (random verses, 1330 total)
+- No Firestore storage - all client-side for performance
+- No admin management needed for Thirukkural rotation
 
-#### Website Content Management - News & Announcements
+**Event Banner Override:**
+When admin publishes an event banner, it replaces the Thirukkural display for the specified time period.
 
-- [ ] Create news items (title, body, rich text)
+- [ ] Create event banner (upload image + bilingual text)
+- [ ] Set event display period (start date/time → end date/time)
+- [ ] Add event title and description (bilingual: Tamil + English)
+- [ ] Add call-to-action button with text (bilingual) and link
+- [ ] Set banner priority (if multiple concurrent events, show highest priority)
+- [ ] Preview banner before publishing
+- [ ] Schedule banner activation (future start date)
+- [ ] Auto-activate at start date/time
+- [ ] Auto-deactivate at end date/time
+- [ ] Override Thirukkural display during active event period
+- [ ] Automatically return to Thirukkural after event ends
+- [ ] Edit active event banners
+- [ ] Deactivate event banner manually (before end date)
+- [ ] Duplicate event banner as template
+- [ ] View event banner history
+
+**Client Behavior:**
+- Client checks Firestore for active event banners (where `isActive: true` and current time is between `startDate` and `endDate`)
+- If active event banner exists → Show event banner
+- If no active event banner → Show Thirukkural (static client-side rotation)
+- Cache event banner data with 5-minute TTL
+- Real-time listener on `heroContent` collection to immediately show/hide event banners
+- Force cache eviction when admin publishes/updates event banner
+
+#### Website Content Management - News & Announcements (Flash News Marquee)
+
+**Flash News Marquee:**
+- [ ] Create flash news items (short text, bilingual: Tamil + English)
+- [ ] Set display priority/order
+- [ ] Set start and end dates (auto-show/hide)
+- [ ] Mark as urgent (different styling/speed)
+- [ ] Preview marquee before publishing
+- [ ] Publish/unpublish toggle (immediate effect)
+- [ ] Force cache eviction on publish
+- [ ] Client-side caching with TTL (configurable)
+- [ ] Automatic cache refresh when admin updates
+
+**News Post Management:**
+- [ ] Create detailed news items (title, body, rich text - bilingual)
 - [ ] Add images to news posts
 - [ ] Add links and attachments
 - [ ] Categorize news (Events, Academic, Sports, etc.)
@@ -248,6 +284,16 @@ Admins manage day-to-day school operations including users, content, and communi
 - [ ] Draft mode (save without publishing)
 - [ ] Preview news before publishing
 - [ ] Edit published news
+- [ ] Delete news (soft delete)
+- [ ] View news analytics (views, clicks)
+- [ ] Duplicate news template
+- [ ] Bulk operations (publish multiple, expire multiple)
+
+**Bilingual Content:**
+- All news content must support Tamil + English
+- Admin enters both languages during creation
+- Client displays based on user's language preference
+- Fallback to English if Tamil translation missing
 - [ ] Archive old news
 - [ ] View news analytics (views, engagement)
 - [ ] Approve/reject teacher-submitted news

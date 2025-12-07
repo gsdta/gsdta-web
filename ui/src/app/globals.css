@@ -20,31 +20,14 @@
     --font-noto-tamil: "Noto Sans Tamil";
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        --background: #0a0a0a;
-        --foreground: #ededed;
-    }
-}
-
-/* Forced theme overrides (take precedence over OS preference) */
-:root[data-theme="light"] {
-    --background: #ffffff;
-    --foreground: #171717;
-}
-:root[data-theme="dark"] {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-}
-
 html {
     /* Better text rendering */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Allow both light and dark native UI styles */
-html { color-scheme: light dark; }
+/* Force light mode for native UI elements (forms, scrollbars) */
+html { color-scheme: light; }
 
 body {
     background: var(--background);

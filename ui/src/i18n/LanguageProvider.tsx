@@ -14,17 +14,20 @@ interface I18nContextValue {
 const Ctx = createContext<I18nContextValue | null>(null);
 const STORAGE_KEY = "i18n:lang";
 
-export function LanguageProvider({children}: { children: React.ReactNode }) {
-    const [lang, setLangState] = useState<Lang>(() => {
+export function LanguageProvider({children, initialLang}: { children: React.ReactNode; initialLang: Lang }) {
+    const [lang, setLangState] = useState<Lang>(initialLang);
+
+    useEffect(() => {
+        // After mount, check if we should override with client-side preference
         if (typeof window !== "undefined") {
             const stored = (localStorage.getItem(STORAGE_KEY) as Lang | null) || null;
-            if (stored === "en" || stored === "ta") return stored;
-            // Attempt browser language detection
-            const nav = navigator?.language?.toLowerCase() ?? "";
-            if (nav.startsWith("ta")) return "ta";
+            if (stored === "en" || stored === "ta") {
+                if (stored !== initialLang) {
+                    setLangState(stored);
+                }
+            }
         }
-        return "ta"; // default Tamil
-    });
+    }, [initialLang]);
 
     const setLang = (l: Lang) => {
         setLangState(l);

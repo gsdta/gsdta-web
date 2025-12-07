@@ -112,7 +112,7 @@ GSDTA Web is a modern full-stack web application built with Next.js for both fro
 - ✅ Teacher invite acceptance flow
 
 #### UI/UX Features
-- ✅ Dark mode support with CSS defaults
+- ✅ Light mode only (simplified maintenance)
 - ✅ Responsive design (mobile-first)
 - ✅ PDF.js integration for document viewing
 - ✅ Form validation with React Hook Form + Zod
@@ -689,7 +689,7 @@ GSDTA Web is a modern full-stack web application built with Next.js for both fro
 ## 📝 Notes
 
 - Project is well-structured with clear separation of concerns
-- Recent focus on dark mode improvements and styling consistency
+- Recent focus on simplifying theme to light-only mode
 - Active development with regular commits to `develop` branch
 - Firebase emulator integration provides excellent local development experience
 - Deployment automation is mature and production-ready
