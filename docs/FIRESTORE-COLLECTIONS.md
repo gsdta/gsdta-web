@@ -46,14 +46,15 @@ This document outlines all Firestore collections needed for the GSDTA web applic
 - `studentClassEnrollments` - Student-class enrollments
 
 ### Phase 3: Content Management (Weeks 9-12)
-- `heroContent` - Hero section content (Thirukkural/Event banners)
-- `thirukkural` - Thirukkural collection (Tamil + English)
+- `heroContent` - Hero section event banners (overrides client-side Thirukkural)
 - `flashNews` - Flash news marquee items
 - `newsArticles` - Detailed news articles/posts
 - `calendar` - School events and calendar
 - `announcements` - Targeted announcements
 - `media` - Media library
 - `galleries` - Photo galleries
+
+**Note**: Thirukkural is NOT stored in Firestore. It's static client-side data in `ui/src/data/thirukkural-data.ts` that rotates automatically. Hero section shows Thirukkural by default, and admins can publish event banners to temporarily override it.
 
 ### Phase 4: Academic Management (Weeks 13-20)
 - `attendance` - Daily attendance records
@@ -107,19 +108,12 @@ Below are the collections required for admin workflows, organized by functionali
 ### 4. Content Management System
 
 **Static Website Content (Bilingual):**
-- 🆕 **heroContent** - Hero section content
-  - Thirukkural display (default)
-  - Event banner override (time-based)
+- 🆕 **heroContent** - Event banners for hero section
+  - Override Thirukkural display temporarily (time-based)
   - Bilingual: Tamil + English
-  - Client-side cached with TTL
+  - Client-side cached with 5-min TTL
   - Real-time updates via Firestore listeners
-  
-- 🆕 **thirukkural** - Thirukkural collection
-  - Tamil text (original)
-  - English translation
-  - Interpretation/meaning
-  - Author/source attribution
-  - Display sequence/rotation
+  - **Note**: Thirukkural is NOT in Firestore - it's static client-side data in `ui/src/data/thirukkural-data.ts`
   
 - 🆕 **flashNews** - Flash news marquee items
   - Short bilingual text (Tamil + English)
@@ -228,8 +222,7 @@ Here's the complete list of collections needed specifically for **Admin workflow
 - [ ] studentClassEnrollments
 
 ### Content Management (11)
-- [ ] heroContent
-- [ ] thirukkural
+- [ ] heroContent (event banners only - Thirukkural is client-side static data)
 - [ ] flashNews
 - [ ] newsArticles
 - [ ] content
@@ -300,16 +293,21 @@ Suggested starting order:
 
 ### 1. heroContent
 
-**Purpose**: Store hero section content - Thirukkural (default) or Event banners (temporary override)
+**Purpose**: Store event banners that temporarily override the default Thirukkural display in the hero section.
 
 **Collection**: `heroContent`
+
+**Important**: 
+- Thirukkural is NOT stored in Firestore
+- Thirukkural is static client-side data in `ui/src/data/thirukkural-data.ts` (1330 verses)
+- It rotates automatically every ~8-13 seconds on the client
+- This collection only stores **event banners** that override Thirukkural for a time period
 
 **Document Structure**:
 ```typescript
 interface HeroContent {
   // Identity
   id: string;                      // Auto-generated document ID
-  type: 'thirukkural' | 'event';   // Content type
   
   // Bilingual Content
   title: {
@@ -326,7 +324,7 @@ interface HeroContent {
   };
   
   // Media
-  imageUrl?: string;               // Cloud Storage URL
+  imageUrl: string;                // Cloud Storage URL (required for event banners)
   thumbnailUrl?: string;           // Optimized thumbnail
   
   // Call to Action (optional)
@@ -338,13 +336,9 @@ interface HeroContent {
   
   // Display Control
   isActive: boolean;               // Currently active/visible
-  startDate?: Timestamp;           // Event start (for type: event)
-  endDate?: Timestamp;             // Event end (auto-deactivate after)
-  priority?: number;               // If multiple active, show highest priority
-  
-  // Thirukkural-specific (for type: thirukkural)
-  thirukkuralNumber?: number;      // Reference to thirukkural collection
-  thirukkuralCategory?: string;    // அறத்துப்பால், பொருட்பால், காமத்துப்பால்
+  startDate: Timestamp;            // Event start date/time
+  endDate: Timestamp;              // Event end date/time (auto-deactivate after)
+  priority: number;                // If multiple active, show highest priority (default: 5)
   
   // Metadata
   createdAt: Timestamp;
@@ -388,35 +382,9 @@ match /heroContent/{contentId} {
 **Sample Documents**:
 
 ```json
-// Default Thirukkural
-{
-  "id": "thirukkural-default",
-  "type": "thirukkural",
-  "title": {
-    "en": "Thirukkural - Verse of the Day",
-    "ta": "இன்றைய திருக்குறள்"
-  },
-  "subtitle": {
-    "en": "அன்புடைமை",
-    "ta": "Affection"
-  },
-  "description": {
-    "en": "The virtue of affection is the foundation of all righteous living.",
-    "ta": "அன்பு என்பது அனைத்து நல்லொழுக்கங்களுக்கும் அடிப்படை."
-  },
-  "thirukkuralNumber": 77,
-  "thirukkuralCategory": "அறத்துப்பால்",
-  "isActive": true,
-  "priority": 1,
-  "createdAt": "2025-01-01T00:00:00Z",
-  "updatedAt": "2025-01-01T00:00:00Z",
-  "createdBy": "system"
-}
-
 // Christmas Event Banner
 {
   "id": "event-christmas-2025",
-  "type": "event",
   "title": {
     "en": "Christmas Celebration 2025",
     "ta": "கிறிஸ்துமஸ் விழா 2025"
@@ -426,6 +394,7 @@ match /heroContent/{contentId} {
     "ta": "உற்சாகமான கொண்டாட்டத்தில் எங்களுடன் சேருங்கள்!"
   },
   "imageUrl": "https://storage.googleapis.com/.../christmas-2025.jpg",
+  "thumbnailUrl": "https://storage.googleapis.com/.../christmas-2025-thumb.jpg",
   "ctaText": {
     "en": "Register Now",
     "ta": "இப்போது பதிவு செய்யுங்கள்"
@@ -439,125 +408,72 @@ match /heroContent/{contentId} {
   "updatedAt": "2025-12-01T10:00:00Z",
   "createdBy": "admin-uid-123",
   "publishedAt": "2025-12-15T00:00:00Z",
-  "publishedBy": "admin-uid-123"
+  "publishedBy": "admin-uid-123",
+  "views": 1250,
+  "clicks": 89
 }
-```
 
----
-
-### 2. thirukkural
-
-**Purpose**: Complete Thirukkural collection (1330 verses) with bilingual translations
-
-**Collection**: `thirukkural`
-
-**Document Structure**:
-```typescript
-interface Thirukkural {
-  // Identity
-  id: string;                      // e.g., "thirukkural-1", "thirukkural-77"
-  number: number;                  // 1-1330
-  
-  // Categorization
-  paal: string;                    // அறத்துப்பால், பொருட்பால், காமத்துப்பால்
-  iyal: string;                    // இயல் (Chapter group)
-  athigaram: string;               // அதிகாரம் (Chapter)
-  athigaramNumber: number;         // 1-133
-  
-  // Tamil Original
-  tamil: {
-    line1: string;                 // First line in Tamil
-    line2: string;                 // Second line in Tamil
-    full: string;                  // Combined verse
-  };
-  
-  // English Translation
-  english: {
-    translation: string;           // Literal translation
-    interpretation: string;        // Meaning/explanation
-    translatedBy?: string;         // Translator name
-  };
-  
-  // Additional Translations (optional)
-  transliteration?: string;        // Romanized Tamil
-  
-  // Display Properties
-  isActive: boolean;               // Available for rotation
-  displayPriority?: number;        // Higher = more frequent display
-  
-  // Metadata
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-  addedBy: string;                 // Who added this entry
-}
-```
-
-**Indexes Required**:
-```json
+// Annual Day Event
 {
-  "collectionGroup": "thirukkural",
-  "queryScope": "COLLECTION",
-  "fields": [
-    { "fieldPath": "isActive", "order": "ASCENDING" },
-    { "fieldPath": "number", "order": "ASCENDING" }
-  ]
-},
-{
-  "collectionGroup": "thirukkural",
-  "queryScope": "COLLECTION",
-  "fields": [
-    { "fieldPath": "paal", "order": "ASCENDING" },
-    { "fieldPath": "athigaramNumber", "order": "ASCENDING" }
-  ]
-}
-```
-
-**Security Rules**:
-```javascript
-match /thirukkural/{kuralId} {
-  // Anyone can read
-  allow read: if true;
-  
-  // Only admins can create/update
-  allow create, update: if request.auth != null 
-    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles.hasAny(['admin', 'super_admin']);
-  
-  // Never allow delete
-  allow delete: if false;
-}
-```
-
-**Sample Document**:
-```json
-{
-  "id": "thirukkural-77",
-  "number": 77,
-  "paal": "அறத்துப்பால்",
-  "iyal": "இல்லறவியல்",
-  "athigaram": "அன்புடைமை",
-  "athigaramNumber": 8,
-  "tamil": {
-    "line1": "அன்பிற்கும் உண்டோ அடைக்குந்தாழ் ஆர்வலர்",
-    "line2": "புன்கணீர் பூசல் தரும்",
-    "full": "அன்பிற்கும் உண்டோ அடைக்குந்தாழ் ஆர்வலர்\nபுன்கணீர் பூசல் தரும்"
+  "id": "event-annual-day-2025",
+  "title": {
+    "en": "Annual Day 2025",
+    "ta": "ஆண்டு விழா 2025"
   },
-  "english": {
-    "translation": "What door can shut out love? The eyes of lovers in tears will break it open.",
-    "interpretation": "True affection cannot be hidden or contained. The tears of loved ones reveal the depth of genuine love.",
-    "translatedBy": "G.U. Pope"
+  "subtitle": {
+    "en": "Celebrating Excellence",
+    "ta": "சிறப்பை கொண்டாடுதல்"
   },
-  "transliteration": "Anpirkum untō ataikkuntāḻ ārvalarpuṇkaṇīr pūsal tarum",
+  "description": {
+    "en": "Join us for our annual celebration of student achievements",
+    "ta": "மாணவர் சாதனைகளின் வருடாந்திர கொண்டாட்டத்தில் எங்களுடன் சேருங்கள்"
+  },
+  "imageUrl": "https://storage.googleapis.com/.../annual-day-2025.jpg",
+  "ctaText": {
+    "en": "View Schedule",
+    "ta": "அட்டவணையைக் காண்க"
+  },
+  "ctaLink": "/calendar/annual-day",
   "isActive": true,
-  "displayPriority": 5,
-  "createdAt": "2025-01-01T00:00:00Z",
-  "updatedAt": "2025-01-01T00:00:00Z",
-  "addedBy": "system"
+  "startDate": "2025-03-01T00:00:00Z",
+  "endDate": "2025-03-15T23:59:59Z",
+  "priority": 8,
+  "createdAt": "2025-02-15T09:00:00Z",
+  "updatedAt": "2025-02-15T09:00:00Z",
+  "createdBy": "admin-uid-456",
+  "publishedAt": "2025-03-01T00:00:00Z",
+  "publishedBy": "admin-uid-456"
+}
+```
+
+**Client Implementation Logic**:
+```typescript
+// Frontend logic for hero section
+async function getHeroContent() {
+  // Query for active event banners
+  const now = new Date();
+  const activeEvents = await db.collection('heroContent')
+    .where('isActive', '==', true)
+    .where('startDate', '<=', now)
+    .where('endDate', '>=', now)
+    .orderBy('priority', 'desc')
+    .limit(1)
+    .get();
+  
+  if (activeEvents.empty) {
+    // No active event - show Thirukkural (client-side static data)
+    return { type: 'thirukkural', data: getRandomThirukkural() };
+  }
+  
+  // Show event banner
+  const eventBanner = activeEvents.docs[0].data();
+  return { type: 'event', data: eventBanner };
 }
 ```
 
 ---
 
-### 3. flashNews
+### 2. flashNews
 
 **Purpose**: Short bilingual news items displayed in scrolling marquee
 
@@ -691,7 +607,7 @@ match /flashNews/{newsId} {
 
 ---
 
-### 4. newsArticles
+### 3. newsArticles
 
 **Purpose**: Detailed bilingual news posts/articles with rich content
 
