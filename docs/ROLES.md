@@ -225,39 +225,38 @@ Admins manage day-to-day school operations including users, content, and communi
 #### Website Content Management - Hero Section
 
 **Default Behavior:**
-- Show Thirukkural (bilingual: Tamil + English) when no event is active
-- Automatically rotate daily/weekly through Thirukkural collection
-- Stored in Firestore with client-side caching (TTL-based)
+- Thirukkural displays by default (bilingual: Tamil + English)
+- Static client-side data (stored in `ui/src/data/thirukkural-data.ts`)
+- Automatically rotates every ~8-13 seconds (random verses, 1330 total)
+- No Firestore storage - all client-side for performance
+- No admin management needed for Thirukkural rotation
 
-**Event Banner Mode:**
-- [ ] Create event banner (image upload)
-- [ ] Set event banner display period (start/end dates)
+**Event Banner Override:**
+When admin publishes an event banner, it replaces the Thirukkural display for the specified time period.
+
+- [ ] Create event banner (upload image + bilingual text)
+- [ ] Set event display period (start date/time → end date/time)
 - [ ] Add event title and description (bilingual: Tamil + English)
-- [ ] Add call-to-action button (text and link)
-- [ ] Set banner priority (multiple concurrent events)
+- [ ] Add call-to-action button with text (bilingual) and link
+- [ ] Set banner priority (if multiple concurrent events, show highest priority)
 - [ ] Preview banner before publishing
 - [ ] Schedule banner activation (future start date)
-- [ ] Auto-deactivate after end date
-- [ ] Override Thirukkural display during event period
-- [ ] Return to Thirukkural after event ends
+- [ ] Auto-activate at start date/time
+- [ ] Auto-deactivate at end date/time
+- [ ] Override Thirukkural display during active event period
+- [ ] Automatically return to Thirukkural after event ends
+- [ ] Edit active event banners
+- [ ] Deactivate event banner manually (before end date)
+- [ ] Duplicate event banner as template
+- [ ] View event banner history
 
-**Content Management:**
-- [ ] Toggle between Thirukkural and Event Banner mode
-- [ ] Update hero card title (bilingual)
-- [ ] Update hero card subtitle (bilingual)
-- [ ] Upload/change hero image
-- [ ] Update call-to-action text and link (bilingual)
-- [ ] Preview changes before publishing
-- [ ] Version history (view previous versions)
-- [ ] Rollback to previous version
-- [ ] Force cache eviction on publish (immediate update for all users)
-
-**Thirukkural Management:**
-- [ ] Add new Thirukkural entries (Tamil + English translation)
-- [ ] Edit existing Thirukkural
-- [ ] Set rotation frequency (daily, weekly, random)
-- [ ] Pin specific Thirukkural to display
-- [ ] Import Thirukkural collection (bulk upload)
+**Client Behavior:**
+- Client checks Firestore for active event banners (where `isActive: true` and current time is between `startDate` and `endDate`)
+- If active event banner exists → Show event banner
+- If no active event banner → Show Thirukkural (static client-side rotation)
+- Cache event banner data with 5-minute TTL
+- Real-time listener on `heroContent` collection to immediately show/hide event banners
+- Force cache eviction when admin publishes/updates event banner
 
 #### Website Content Management - News & Announcements (Flash News Marquee)
 
