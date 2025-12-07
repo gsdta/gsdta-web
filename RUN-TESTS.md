@@ -1,34 +1,67 @@
 # Running Tests - Quick Start Guide
 
-## ⚠️ System Limitation
-
-PowerShell 6+ is not available on this system, so tests must be run using Windows Command Prompt (cmd.exe) or batch files.
-
 ## 🚀 Quick Start
 
-### Step 1: Verify Setup
-```cmd
-check-test-setup.bat
+### Prerequisites
+- Node.js 20+ installed
+- Firebase Emulators installed: `npm install -g firebase-tools`
+- Project dependencies installed: `npm install` in root, `api/`, and `ui/` directories
+
+### Step 1: Unit Tests (No Emulators Required)
+
+#### API Unit Tests
+```bash
+cd api
+npm test
+```
+**Expected:** All tests passing
+
+#### UI Unit Tests  
+```bash
+cd ui
+npm test
+```
+**Expected:** All tests passing
+
+### Step 2: E2E Tests (Requires Emulators)
+
+#### Start Firebase Emulators
+```bash
+# Terminal 1 - Start emulators
+npm run emulators
 ```
 
-This will:
-- Check Node.js and npm are installed
-- Install dependencies if needed
-- Verify all test files exist
+Wait for emulators to be ready (you'll see "All emulators ready!" message)
 
-### Step 2: Run API Unit Tests
-```cmd
-run-api-tests.bat
+#### Seed Test Data
+```bash
+# Terminal 2 - Seed emulators with test data
+npm run seed
 ```
 
-**Expected:** 24 tests passing (15 + 9)
+This creates:
+- Test users (admin@test.com, teacher@test.com, parent@test.com)
+- Sample students
+- Sample invites
+- Sample hero content
 
-### Step 3: Run UI Unit Tests
-```cmd
-run-ui-tests.bat
+#### Run API E2E Tests
+```bash
+# Terminal 2 (same terminal as seed)
+cd api
+npm run test:e2e
 ```
 
-**Expected:** 18+ tests passing (10 + 8 + existing)
+**Expected:** All Cucumber scenarios passing
+
+#### Run UI E2E Tests (Playwright)
+```bash
+# Terminal 2
+cd ui
+npm run test:e2e
+```
+
+**Expected:** All Playwright tests passing
 
 ## 📝 Manual Test Commands
 

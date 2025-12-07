@@ -77,20 +77,20 @@ export async function OPTIONS(req: NextRequest) {
  *         schema:
  *           type: string
  *           enum: [active, inactive, all]
- *         description: Filter by status (default: active)
+ *         description: Filter by status
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
  *           minimum: 1
  *           maximum: 100
- *         description: Number of results per page (default: 50)
+ *         description: Results per page
  *       - in: query
  *         name: offset
  *         schema:
  *           type: integer
  *           minimum: 0
- *         description: Offset for pagination (default: 0)
+ *         description: Pagination offset
  *     responses:
  *       200:
  *         description: List of teachers

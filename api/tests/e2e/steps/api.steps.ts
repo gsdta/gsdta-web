@@ -6,6 +6,7 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:8080';
 
 let lastResponse: Response | undefined;
 let lastJson: unknown;
+let authToken: string | undefined;
 
 function resolveUrl(path: string) {
   if (path.startsWith('http://') || path.startsWith('https://')) return path;
@@ -28,6 +29,7 @@ function getByPath(obj: unknown, path: string): unknown {
 Before(function () {
   lastResponse = undefined;
   lastJson = undefined;
+  authToken = undefined;
 });
 
 Given('the API is running', async function () {
@@ -37,16 +39,37 @@ Given('the API is running', async function () {
   assert.strictEqual(response.status, 200, 'API health check failed');
 });
 
+Given('I am authenticated as an admin', async function () {
+  // Use test admin token from environment or create a mock one
+  authToken = process.env.TEST_ADMIN_TOKEN || 'test-admin-token';
+});
+
+Given('I am authenticated as a teacher', async function () {
+  authToken = process.env.TEST_TEACHER_TOKEN || 'test-teacher-token';
+});
+
+Given('I am authenticated as a parent', async function () {
+  authToken = process.env.TEST_PARENT_TOKEN || 'test-parent-token';
+});
+
 When('I send a GET request to {string}', async function (path: string) {
   const url = resolveUrl(path);
-  lastResponse = await fetch(url);
+  const headers: HeadersInit = {};
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
+  }
+  lastResponse = await fetch(url, { headers });
 });
 
 When('I send a POST request to {string} with JSON body:', async function (path: string, body: string) {
   const url = resolveUrl(path);
+  const headers: HeadersInit = { 'content-type': 'application/json' };
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
+  }
   lastResponse = await fetch(url, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers,
     body,
   });
 });
@@ -75,17 +98,26 @@ Then('the JSON path {string} should equal {string}', async function (jsonPath: s
 
 When('I send a PATCH request to {string} with JSON body:', async function (path: string, body: string) {
   const url = resolveUrl(path);
+  const headers: HeadersInit = { 'content-type': 'application/json' };
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
+  }
   lastResponse = await fetch(url, {
     method: 'PATCH',
-    headers: { 'content-type': 'application/json' },
+    headers,
     body,
   });
 });
 
 When('I send a DELETE request to {string}', async function (path: string) {
   const url = resolveUrl(path);
+  const headers: HeadersInit = {};
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
+  }
   lastResponse = await fetch(url, {
     method: 'DELETE',
+    headers,
   });
 });
 
@@ -112,4 +144,23 @@ Then('the JSON path {string} should exist or be null', async function (jsonPath:
   const value = getByPath(json, jsonPath);
   // This passes as long as the path exists, even if the value is null
   assert(value !== undefined, `Expected '${jsonPath}' to exist (can be null)`);
+});
+
+Then('the JSON path {string} should equal {int}', async function (jsonPath: string, expected: number) {
+  const json = (lastJson ?? (await lastResponse?.json())) as unknown;
+  const value = getByPath(json, jsonPath);
+  assert.strictEqual(value, expected, `Expected '${jsonPath}' to equal ${expected}, got ${value}`);
+});
+
+Then('the JSON path {string} should equal true', async function (jsonPath: string) {
+  const json = (lastJson ?? (await lastResponse?.json())) as unknown;
+  const value = getByPath(json, jsonPath);
+  assert.strictEqual(value, true, `Expected '${jsonPath}' to be true, got ${value}`);
+});
+
+Then('the JSON path {string} should be less than or equal to {int}', async function (jsonPath: string, expected: number) {
+  const json = (lastJson ?? (await lastResponse?.json())) as unknown;
+  const value = getByPath(json, jsonPath) as number;
+  assert(typeof value === 'number', `Expected '${jsonPath}' to be a number, got ${typeof value}`);
+  assert(value <= expected, `Expected '${jsonPath}' (${value}) to be <= ${expected}`);
 });

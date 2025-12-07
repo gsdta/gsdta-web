@@ -23,36 +23,46 @@ const db = admin.firestore();
 
 // Test users configuration
 const TEST_USERS = [
+  // E2E test users (used by Cucumber tests)
   {
-    uid: 'admin-test-001',
+    uid: 'test-admin-uid',
     email: 'admin@test.com',
     password: 'admin123',
     displayName: 'Test Admin',
+    firstName: 'Test',
+    lastName: 'Admin',
     roles: ['admin'],
     status: 'active'
   },
   {
-    uid: 'teacher-test-001',
+    uid: 'test-teacher-uid',
     email: 'teacher@test.com',
     password: 'teacher123',
     displayName: 'Test Teacher',
+    firstName: 'Test',
+    lastName: 'Teacher',
     roles: ['teacher'],
     status: 'active'
   },
+  {
+    uid: 'test-parent-uid',
+    email: 'parent@test.com',
+    password: 'parent123',
+    displayName: 'Test Parent',
+    firstName: 'Test',
+    lastName: 'Parent',
+    roles: ['parent'],
+    status: 'active'
+  },
+  // Additional test users
   {
     uid: 'teacher-test-002',
     email: 'teacher2@test.com',
     password: 'teacher123',
     displayName: 'Sarah Johnson',
+    firstName: 'Sarah',
+    lastName: 'Johnson',
     roles: ['teacher'],
-    status: 'active'
-  },
-  {
-    uid: 'parent-test-001',
-    email: 'parent@test.com',
-    password: 'parent123',
-    displayName: 'Test Parent',
-    roles: ['parent'],
     status: 'active'
   },
   {
@@ -60,6 +70,8 @@ const TEST_USERS = [
     email: 'parent2@test.com',
     password: 'parent123',
     displayName: 'John Smith',
+    firstName: 'John',
+    lastName: 'Smith',
     roles: ['parent'],
     status: 'active'
   }
@@ -70,7 +82,7 @@ const SAMPLE_STUDENTS = [
   {
     id: 'student-001',
     name: 'Arun Kumar',
-    parentId: 'parent-test-001',
+    parentId: 'test-parent-uid',
     grade: '5th Grade',
     schoolName: 'Lincoln Elementary',
     dateOfBirth: '2015-03-15',
@@ -81,7 +93,7 @@ const SAMPLE_STUDENTS = [
   {
     id: 'student-002',
     name: 'Priya Sharma',
-    parentId: 'parent-test-001',
+    parentId: 'test-parent-uid',
     grade: '7th Grade',
     schoolName: 'Lincoln Elementary',
     dateOfBirth: '2013-07-22',
@@ -109,7 +121,7 @@ const SAMPLE_INVITES = [
     email: 'newteacher@test.com',
     role: 'teacher',
     status: 'pending',
-    createdBy: 'admin-test-001',
+    createdBy: 'test-admin-uid',
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
   },
   {
@@ -117,7 +129,7 @@ const SAMPLE_INVITES = [
     email: 'expired@test.com',
     role: 'teacher',
     status: 'pending',
-    createdBy: 'admin-test-001',
+    createdBy: 'test-admin-uid',
     expiresAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) // 1 day ago (expired)
   },
   {
@@ -125,7 +137,7 @@ const SAMPLE_INVITES = [
     email: 'teacher2@test.com',
     role: 'teacher',
     status: 'accepted',
-    createdBy: 'admin-test-001',
+    createdBy: 'test-admin-uid',
     acceptedBy: 'teacher-test-002',
     acceptedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
     expiresAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000) // Still valid
@@ -185,8 +197,10 @@ async function seedUserProfiles() {
   for (const userData of TEST_USERS) {
     try {
       const userProfile = {
+        uid: userData.uid,
         email: userData.email,
-        name: userData.displayName,
+        firstName: userData.firstName || userData.displayName?.split(' ')[0] || 'Test',
+        lastName: userData.lastName || userData.displayName?.split(' ')[1] || 'User',
         roles: userData.roles,
         status: userData.status,
         emailVerified: true,
