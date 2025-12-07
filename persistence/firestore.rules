@@ -41,6 +41,15 @@ service cloud.firestore {
       allow get, list, create, update, delete: if isAdmin();
     }
 
+    // Hero content: public read, admin write
+    match /heroContent/{contentId} {
+      // Anyone can read active hero content
+      allow get, list: if true;
+      
+      // Only admins can create, update, delete
+      allow create, update, delete: if isAdmin();
+    }
+
     // Default deny for everything else
   }
 }

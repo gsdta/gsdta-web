@@ -3,10 +3,25 @@ import Link from "next/link";
 import Image from "next/image";
 import { ThirukkuralDisplay } from "@/components/ThirukkuralDisplay";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
+import { HeroEventBanner } from "@/components/home/HeroEventBanner";
 import { useI18n } from "@/i18n/LanguageProvider";
+import { useHeroContent } from "@/hooks/useHeroContent";
 
 export function HeroThirukkural() {
   const { t } = useI18n();
+  const { content, loading } = useHeroContent();
+
+  // If there's an active event banner, show it instead of Thirukkural
+  if (content && !loading) {
+    return (
+      <>
+        <AnnouncementBanner />
+        <HeroEventBanner content={content} />
+      </>
+    );
+  }
+
+  // Default: Show Thirukkural
   return (
     <section className="relative isolate overflow-hidden rounded-xl bg-gradient-to-br from-pink-50 via-rose-50 to-amber-50 ring-1 ring-black/5/5">
       <AnnouncementBanner />
