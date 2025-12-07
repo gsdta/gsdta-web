@@ -2,7 +2,6 @@ import type {Metadata} from "next";
 import "./globals.css";
 import "@react-pdf-viewer/core/lib/styles/index.css";
 import {Header} from "@/components/Header";
-import {MockProvider} from "@/components/MockProvider";
 import {DevStatus} from "@/components/DevStatus";
 import {AuthProvider} from "@/components/AuthProvider";
 import {Footer} from "@/components/Footer";
@@ -102,7 +101,6 @@ export default async function RootLayout({
     return (
         <html lang={initialLang} className={htmlClass} data-theme={htmlDataTheme}>
         <body className={["antialiased", notoTamil.variable].join(" ") }>
-        <MockProvider>
             <LanguageProvider>
                 <AuthProvider>
                     <Header/>
@@ -113,7 +111,6 @@ export default async function RootLayout({
                     <Footer/>
                 </AuthProvider>
             </LanguageProvider>
-        </MockProvider>
         </body>
         </html>
     );
