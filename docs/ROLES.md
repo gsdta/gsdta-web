@@ -109,7 +109,7 @@ Admins manage day-to-day school operations including users, content, and communi
 #### User Management - Teachers
 
 - [x] Create teacher invites (already implemented)
-- [ ] View all teachers (list with search/filter)
+- [x] View all teachers (list with search/filter)
 - [ ] View teacher details (classes, students, activity)
 - [ ] Edit teacher profile information
 - [ ] Edit teacher contact details
