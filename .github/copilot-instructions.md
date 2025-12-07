@@ -54,9 +54,13 @@ This is a **production school management system** for a non-profit Tamil educati
 - ✅ Follow existing patterns (check similar code first)
 - ✅ Document complex logic with comments
 - ✅ Run linter before committing
+- ✅ Mobile-first responsive design (all UI must work on mobile)
+- ✅ SEO optimization (metadata, SSR, robots.txt, sitemap)
 - ❌ Do NOT use `any` types without good reason
 - ❌ Do NOT skip error handling
 - ❌ Do NOT commit TypeScript errors
+- ❌ Do NOT build desktop-only layouts
+- ❌ Do NOT skip SEO metadata on public pages
 
 ### 4. Data Integrity
 - ✅ Soft delete: Mark records as 'inactive' instead of deleting
@@ -124,9 +128,12 @@ gsdta-web/
 3. **UI Component**:
    - Create React component in `/ui/src/`
    - Use existing UI components when possible
+   - Design mobile-first (responsive for all screen sizes)
    - Add form validation
    - Add loading & error states
-   - Test in browser
+   - Add SEO metadata (title, description, Open Graph)
+   - Use Server Components for SEO-critical content
+   - Test in browser (desktop + mobile views)
 
 4. **Tests**:
    - Write tests for critical business logic

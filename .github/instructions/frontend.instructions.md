@@ -434,6 +434,9 @@ if (typeof data === 'object' && data !== null) {
 ❌ **Don't** inline styles (use Tailwind classes)  
 ❌ **Don't** hardcode text in components (use i18n)  
 ❌ **Don't** forget bilingual support for static content  
+❌ **Don't** build desktop-only layouts (mobile-first required)  
+❌ **Don't** skip SEO metadata (title, description, Open Graph)  
+❌ **Don't** forget robots.txt and sitemap updates  
 
 ✅ **Do** add 'use client' when using hooks  
 ✅ **Do** use Server Components when possible  
@@ -443,6 +446,10 @@ if (typeof data === 'object' && data !== null) {
 ✅ **Do** use Tailwind utility classes  
 ✅ **Do** use i18n for all user-facing text  
 ✅ **Do** support Tamil + English for all static content  
+✅ **Do** design mobile-first, then enhance for desktop  
+✅ **Do** use SSR (Server-Side Rendering) wherever possible  
+✅ **Do** add proper SEO metadata to all pages  
+✅ **Do** keep robots.txt updated with all routes  
 
 ---
 
@@ -794,6 +801,394 @@ describe('StudentCard', () => {
   });
 });
 ```
+
+---
+
+## Mobile-First Development
+
+**CRITICAL**: All UI must be mobile-compatible and responsive.
+
+### Mobile-First Approach
+
+```typescript
+// ✅ Design for mobile first, then add desktop enhancements
+export function ResponsiveCard() {
+  return (
+    <div className="
+      p-4              // Mobile padding
+      sm:p-6           // Tablet padding
+      lg:p-8           // Desktop padding
+      
+      w-full           // Mobile full width
+      sm:w-auto        // Tablet auto width
+      lg:max-w-2xl     // Desktop constrained
+      
+      text-sm          // Mobile text
+      sm:text-base     // Tablet text
+      lg:text-lg       // Desktop text
+    ">
+      <h2 className="text-lg sm:text-xl lg:text-2xl">
+        Responsive Heading
+      </h2>
+    </div>
+  );
+}
+```
+
+### Touch-Friendly UI
+
+```typescript
+// ✅ Larger touch targets for mobile
+export function MobileButton() {
+  return (
+    <button className="
+      min-h-[44px]     // iOS minimum touch target
+      px-4 py-3        // Comfortable padding
+      text-base        // Readable text size
+      active:scale-95  // Touch feedback
+      transition-transform
+    ">
+      Tap Me
+    </button>
+  );
+}
+```
+
+### Responsive Navigation
+
+```typescript
+'use client';
+
+import { useState } from 'react';
+
+export function MobileNav() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      {/* Mobile hamburger menu */}
+      <div className="lg:hidden">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="p-2"
+          aria-label="Toggle menu"
+        >
+          <svg className="w-6 h-6">...</svg>
+        </button>
+        
+        {isOpen && (
+          <div className="absolute top-16 left-0 right-0 bg-white shadow-lg">
+            {/* Mobile menu items */}
+          </div>
+        )}
+      </div>
+
+      {/* Desktop navigation */}
+      <nav className="hidden lg:flex gap-6">
+        {/* Desktop menu items */}
+      </nav>
+    </>
+  );
+}
+```
+
+### Responsive Tables
+
+```typescript
+// ✅ Stack table on mobile, grid on desktop
+export function ResponsiveTable({ students }: { students: Student[] }) {
+  return (
+    <>
+      {/* Mobile: Card layout */}
+      <div className="lg:hidden space-y-4">
+        {students.map(student => (
+          <div key={student.id} className="border rounded-lg p-4">
+            <div className="font-bold">{student.name}</div>
+            <div className="text-sm text-gray-600">Grade: {student.grade}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop: Table layout */}
+      <table className="hidden lg:table w-full">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Grade</th>
+          </tr>
+        </thead>
+        <tbody>
+          {students.map(student => (
+            <tr key={student.id}>
+              <td>{student.name}</td>
+              <td>{student.grade}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </>
+  );
+}
+```
+
+### Testing Mobile UI
+
+```bash
+# Use Chrome DevTools device emulation
+# Test on actual devices when possible
+# Common breakpoints:
+# - Mobile: 320px - 639px
+# - Tablet: 640px - 1023px
+# - Desktop: 1024px+
+```
+
+---
+
+## SEO Optimization
+
+**CRITICAL**: All pages must be SEO-optimized with proper metadata.
+
+### Page Metadata (Server Components)
+
+```typescript
+// app/students/page.tsx
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Students | GSDTA Tamil School',
+  description: 'Manage student enrollment, attendance, and academic records at GSDTA Tamil School.',
+  keywords: ['tamil school', 'student management', 'GSDTA'],
+  
+  // Open Graph (Facebook, LinkedIn)
+  openGraph: {
+    title: 'Students | GSDTA Tamil School',
+    description: 'Manage student enrollment and records',
+    url: 'https://gsdta.org/students',
+    siteName: 'GSDTA Tamil School',
+    images: [
+      {
+        url: 'https://gsdta.org/og-image.jpg',
+        width: 1200,
+        height: 630,
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  
+  // Twitter Card
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Students | GSDTA Tamil School',
+    description: 'Manage student enrollment and records',
+    images: ['https://gsdta.org/og-image.jpg'],
+  },
+  
+  // Additional metadata
+  alternates: {
+    canonical: 'https://gsdta.org/students',
+  },
+};
+
+export default function StudentsPage() {
+  return <div>...</div>;
+}
+```
+
+### Dynamic Metadata
+
+```typescript
+// app/students/[id]/page.tsx
+import { Metadata } from 'next';
+
+interface Props {
+  params: { id: string };
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  // Fetch student data
+  const student = await getStudent(params.id);
+  
+  return {
+    title: `${student.name} | GSDTA Tamil School`,
+    description: `View academic records for ${student.name}, Grade ${student.grade}`,
+  };
+}
+
+export default function StudentDetailPage({ params }: Props) {
+  return <div>...</div>;
+}
+```
+
+### Server-Side Rendering (SSR)
+
+```typescript
+// ✅ Use Server Components for SEO-critical content
+// app/about/page.tsx (Server Component by default)
+export default async function AboutPage() {
+  // This renders on the server
+  const content = await fetchAboutContent();
+  
+  return (
+    <div>
+      <h1>{content.title}</h1>
+      <p>{content.description}</p>
+    </div>
+  );
+}
+
+// ❌ Avoid Client Components for SEO content
+// If you need interactivity, use Server Components + Client Components together
+export default async function AboutPage() {
+  const content = await fetchAboutContent();
+  
+  return (
+    <div>
+      {/* Server-rendered content (SEO-friendly) */}
+      <h1>{content.title}</h1>
+      <p>{content.description}</p>
+      
+      {/* Client component for interactivity */}
+      <InteractiveForm />
+    </div>
+  );
+}
+```
+
+### Robots.txt
+
+```text
+# public/robots.txt
+
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Public pages
+Allow: /about
+Allow: /contact
+Allow: /programs
+Allow: /calendar
+
+# Disallow admin and auth pages
+Disallow: /admin
+Disallow: /teacher
+Disallow: /parent
+Disallow: /login
+Disallow: /signup
+Disallow: /api
+
+# Sitemap
+Sitemap: https://gsdta.org/sitemap.xml
+```
+
+### Sitemap
+
+```typescript
+// app/sitemap.ts
+import { MetadataRoute } from 'next';
+
+export default function sitemap(): MetadataRoute.Sitemap {
+  return [
+    {
+      url: 'https://gsdta.org',
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 1,
+    },
+    {
+      url: 'https://gsdta.org/about',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: 'https://gsdta.org/programs',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: 'https://gsdta.org/calendar',
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    },
+    {
+      url: 'https://gsdta.org/contact',
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.5,
+    },
+  ];
+}
+```
+
+### Structured Data (JSON-LD)
+
+```typescript
+// app/layout.tsx or specific pages
+export default function HomePage() {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    "name": "GSDTA Tamil School",
+    "url": "https://gsdta.org",
+    "logo": "https://gsdta.org/logo.png",
+    "description": "Non-profit Tamil educational organization",
+    "address": {
+      "@type": "PostalAddress",
+      "addressCountry": "US"
+    },
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "Administration",
+      "email": "info@gsdta.org"
+    }
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      {/* Rest of page */}
+    </>
+  );
+}
+```
+
+### SEO Checklist
+
+When creating a new page:
+
+- [ ] Add page metadata (title, description, keywords)
+- [ ] Add Open Graph metadata (Facebook/LinkedIn sharing)
+- [ ] Add Twitter Card metadata
+- [ ] Use Server Components for SEO-critical content
+- [ ] Add canonical URL
+- [ ] Update robots.txt if needed (allow/disallow)
+- [ ] Update sitemap.ts with new route
+- [ ] Add structured data (JSON-LD) if applicable
+- [ ] Test with Google Search Console
+- [ ] Test social media sharing preview
+
+### SSR vs CSR Decision
+
+**Use Server Components (SSR) for**:
+- Public pages (home, about, contact)
+- Content that should be indexed by search engines
+- Initial page load performance
+- Static content that doesn't change frequently
+
+**Use Client Components for**:
+- Interactive forms
+- Real-time updates
+- User-specific dashboards
+- Components that need useState, useEffect, event handlers
+
+---
 
 ## Running Locally
 
