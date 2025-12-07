@@ -432,6 +432,8 @@ if (typeof data === 'object' && data !== null) {
 ❌ **Don't** forget to disable forms during submission  
 ❌ **Don't** use `any` types  
 ❌ **Don't** inline styles (use Tailwind classes)  
+❌ **Don't** hardcode text in components (use i18n)  
+❌ **Don't** forget bilingual support for static content  
 
 ✅ **Do** add 'use client' when using hooks  
 ✅ **Do** use Server Components when possible  
@@ -439,6 +441,344 @@ if (typeof data === 'object' && data !== null) {
 ✅ **Do** disable submit buttons while submitting  
 ✅ **Do** use TypeScript strictly  
 ✅ **Do** use Tailwind utility classes  
+✅ **Do** use i18n for all user-facing text  
+✅ **Do** support Tamil + English for all static content  
+
+---
+
+## Internationalization (i18n)
+
+**CRITICAL**: All static content MUST be bilingual (Tamil + English).
+
+### Static Content from Firestore
+
+Static content loaded from Firestore (hero section, flash news, announcements) must store both languages:
+
+```typescript
+// Firestore document structure
+interface HeroContent {
+  id: string;
+  type: 'thirukkural' | 'event';
+  
+  // Bilingual fields
+  title: {
+    en: string;
+    ta: string;  // Tamil
+  };
+  subtitle: {
+    en: string;
+    ta: string;
+  };
+  description?: {
+    en: string;
+    ta: string;
+  };
+  
+  // Other fields
+  imageUrl?: string;
+  ctaText?: {
+    en: string;
+    ta: string;
+  };
+  ctaLink?: string;
+  
+  // Display control
+  startDate?: Timestamp;
+  endDate?: Timestamp;
+  isActive: boolean;
+  
+  // Metadata
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  createdBy: string;
+}
+```
+
+### Client-Side Caching with TTL
+
+**Static content should be cached client-side with TTL:**
+
+```typescript
+'use client';
+
+import { useState, useEffect } from 'react';
+import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
+
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_KEY = 'hero_content';
+
+interface CachedData<T> {
+  data: T;
+  timestamp: number;
+}
+
+export function useHeroContent() {
+  const [content, setContent] = useState<HeroContent | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check cache first
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      const { data, timestamp }: CachedData<HeroContent> = JSON.parse(cached);
+      
+      // Use cache if not expired
+      if (Date.now() - timestamp < CACHE_TTL) {
+        setContent(data);
+        setLoading(false);
+        
+        // Still listen for updates in background
+        subscribeToUpdates();
+        return;
+      }
+    }
+    
+    // Cache expired or doesn't exist, fetch fresh
+    fetchAndCache();
+    
+    function fetchAndCache() {
+      const q = query(
+        collection(db, 'heroContent'),
+        where('isActive', '==', true)
+      );
+      
+      getDocs(q).then(snapshot => {
+        const doc = snapshot.docs[0];
+        if (doc) {
+          const data = doc.data() as HeroContent;
+          
+          // Cache with timestamp
+          localStorage.setItem(CACHE_KEY, JSON.stringify({
+            data,
+            timestamp: Date.now()
+          }));
+          
+          setContent(data);
+        }
+        setLoading(false);
+        
+        // Subscribe to realtime updates
+        subscribeToUpdates();
+      });
+    }
+    
+    function subscribeToUpdates() {
+      // Listen for admin updates
+      const q = query(
+        collection(db, 'heroContent'),
+        where('isActive', '==', true)
+      );
+      
+      const unsubscribe = onSnapshot(q, snapshot => {
+        const doc = snapshot.docs[0];
+        if (doc) {
+          const data = doc.data() as HeroContent;
+          
+          // Update cache immediately when admin changes content
+          localStorage.setItem(CACHE_KEY, JSON.stringify({
+            data,
+            timestamp: Date.now()
+          }));
+          
+          setContent(data);
+        }
+      });
+      
+      return unsubscribe;
+    }
+  }, []);
+
+  return { content, loading };
+}
+```
+
+### Force Cache Eviction
+
+**Admin publish action should trigger cache eviction:**
+
+```typescript
+// In admin component
+async function publishHeroContent(content: HeroContent) {
+  // Save to Firestore
+  await setDoc(doc(db, 'heroContent', content.id), {
+    ...content,
+    isActive: true,
+    updatedAt: Timestamp.now()
+  });
+  
+  // Firestore real-time listeners will automatically update all clients
+  // Cache will be refreshed via onSnapshot callback
+  
+  alert('Published! All users will see updates within seconds.');
+}
+```
+
+### Language Selection
+
+**Use Next.js i18n or simple context:**
+
+```typescript
+'use client';
+
+import { createContext, useContext, useState } from 'react';
+
+type Language = 'en' | 'ta';
+
+interface LanguageContextType {
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  t: (text: { en: string; ta: string }) => string;
+}
+
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+
+export function LanguageProvider({ children }: { children: React.ReactNode }) {
+  const [language, setLanguage] = useState<Language>('en');
+
+  const t = (text: { en: string; ta: string }) => {
+    return text[language] || text.en;
+  };
+
+  return (
+    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+      {children}
+    </LanguageContext.Provider>
+  );
+}
+
+export function useLanguage() {
+  const context = useContext(LanguageContext);
+  if (!context) throw new Error('useLanguage must be used within LanguageProvider');
+  return context;
+}
+```
+
+### Using Bilingual Content
+
+```typescript
+'use client';
+
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useHeroContent } from '@/hooks/useHeroContent';
+
+export function HeroSection() {
+  const { t } = useLanguage();
+  const { content, loading } = useHeroContent();
+
+  if (loading) return <HeroSkeleton />;
+  if (!content) return <DefaultThirukkural />;
+
+  return (
+    <section className="hero">
+      <h1>{t(content.title)}</h1>
+      <p>{t(content.subtitle)}</p>
+      
+      {content.ctaText && (
+        <a href={content.ctaLink}>
+          {t(content.ctaText)}
+        </a>
+      )}
+    </section>
+  );
+}
+```
+
+### Flash News Marquee
+
+```typescript
+'use client';
+
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useFlashNews } from '@/hooks/useFlashNews';
+
+const MARQUEE_CACHE_KEY = 'flash_news';
+const MARQUEE_CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+
+export function FlashNewsMarquee() {
+  const { t } = useLanguage();
+  const { newsItems, loading } = useFlashNews(); // Similar caching logic
+
+  if (loading || newsItems.length === 0) return null;
+
+  return (
+    <div className="marquee-container">
+      <div className="marquee">
+        {newsItems.map(item => (
+          <span key={item.id} className="marquee-item">
+            {item.isUrgent && '⚠️ '}
+            {t(item.text)}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+### Admin Forms for Bilingual Content
+
+```typescript
+'use client';
+
+export function HeroContentForm() {
+  const [formData, setFormData] = useState({
+    title: { en: '', ta: '' },
+    subtitle: { en: '', ta: '' },
+    // ...
+  });
+
+  return (
+    <form>
+      <div className="form-section">
+        <h3>Title</h3>
+        
+        <label>English</label>
+        <input
+          value={formData.title.en}
+          onChange={e => setFormData(prev => ({
+            ...prev,
+            title: { ...prev.title, en: e.target.value }
+          }))}
+          required
+        />
+        
+        <label>Tamil (தமிழ்)</label>
+        <input
+          value={formData.title.ta}
+          onChange={e => setFormData(prev => ({
+            ...prev,
+            title: { ...prev.title, ta: e.target.value }
+          }))}
+          required
+          className="font-tamil" // Use Tamil font
+        />
+      </div>
+      
+      {/* Similar for subtitle, description, etc. */}
+    </form>
+  );
+}
+```
+
+### i18n Best Practices
+
+**DO**:
+- ✅ Store both Tamil and English in Firestore
+- ✅ Use `{ en: string; ta: string }` structure
+- ✅ Provide English fallback if Tamil missing
+- ✅ Cache static content with TTL
+- ✅ Use Firestore realtime listeners for instant updates
+- ✅ Test with both languages
+- ✅ Use appropriate Tamil fonts (Noto Sans Tamil, Latha)
+
+**DON'T**:
+- ❌ Hardcode English-only text in components
+- ❌ Skip Tamil translations for public content
+- ❌ Forget to cache frequently accessed content
+- ❌ Use long cache TTLs (max 5 minutes for static content)
+- ❌ Forget to invalidate cache on admin updates
+
+---
 
 ## Testing
 
