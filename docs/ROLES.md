@@ -224,19 +224,56 @@ Admins manage day-to-day school operations including users, content, and communi
 
 #### Website Content Management - Hero Section
 
-- [ ] Update hero card title
-- [ ] Update hero card subtitle
+**Default Behavior:**
+- Show Thirukkural (bilingual: Tamil + English) when no event is active
+- Automatically rotate daily/weekly through Thirukkural collection
+- Stored in Firestore with client-side caching (TTL-based)
+
+**Event Banner Mode:**
+- [ ] Create event banner (image upload)
+- [ ] Set event banner display period (start/end dates)
+- [ ] Add event title and description (bilingual: Tamil + English)
+- [ ] Add call-to-action button (text and link)
+- [ ] Set banner priority (multiple concurrent events)
+- [ ] Preview banner before publishing
+- [ ] Schedule banner activation (future start date)
+- [ ] Auto-deactivate after end date
+- [ ] Override Thirukkural display during event period
+- [ ] Return to Thirukkural after event ends
+
+**Content Management:**
+- [ ] Toggle between Thirukkural and Event Banner mode
+- [ ] Update hero card title (bilingual)
+- [ ] Update hero card subtitle (bilingual)
 - [ ] Upload/change hero image
-- [ ] Update call-to-action text and link
+- [ ] Update call-to-action text and link (bilingual)
 - [ ] Preview changes before publishing
-- [ ] Schedule hero updates (future publish date)
 - [ ] Version history (view previous versions)
 - [ ] Rollback to previous version
-- [ ] A/B testing variants (future)
+- [ ] Force cache eviction on publish (immediate update for all users)
 
-#### Website Content Management - News & Announcements
+**Thirukkural Management:**
+- [ ] Add new Thirukkural entries (Tamil + English translation)
+- [ ] Edit existing Thirukkural
+- [ ] Set rotation frequency (daily, weekly, random)
+- [ ] Pin specific Thirukkural to display
+- [ ] Import Thirukkural collection (bulk upload)
 
-- [ ] Create news items (title, body, rich text)
+#### Website Content Management - News & Announcements (Flash News Marquee)
+
+**Flash News Marquee:**
+- [ ] Create flash news items (short text, bilingual: Tamil + English)
+- [ ] Set display priority/order
+- [ ] Set start and end dates (auto-show/hide)
+- [ ] Mark as urgent (different styling/speed)
+- [ ] Preview marquee before publishing
+- [ ] Publish/unpublish toggle (immediate effect)
+- [ ] Force cache eviction on publish
+- [ ] Client-side caching with TTL (configurable)
+- [ ] Automatic cache refresh when admin updates
+
+**News Post Management:**
+- [ ] Create detailed news items (title, body, rich text - bilingual)
 - [ ] Add images to news posts
 - [ ] Add links and attachments
 - [ ] Categorize news (Events, Academic, Sports, etc.)
@@ -248,6 +285,16 @@ Admins manage day-to-day school operations including users, content, and communi
 - [ ] Draft mode (save without publishing)
 - [ ] Preview news before publishing
 - [ ] Edit published news
+- [ ] Delete news (soft delete)
+- [ ] View news analytics (views, clicks)
+- [ ] Duplicate news template
+- [ ] Bulk operations (publish multiple, expire multiple)
+
+**Bilingual Content:**
+- All news content must support Tamil + English
+- Admin enters both languages during creation
+- Client displays based on user's language preference
+- Fallback to English if Tamil translation missing
 - [ ] Archive old news
 - [ ] View news analytics (views, engagement)
 - [ ] Approve/reject teacher-submitted news
