@@ -300,15 +300,6 @@ export function ResponsiveGrid() {
     </div>
   );
 }
-
-// Dark mode support
-export function DarkModeCard() {
-  return (
-    <div className="bg-white dark:bg-gray-800 text-black dark:text-white">
-      {/* Content adapts to theme */}
-    </div>
-  );
-}
 ```
 
 ## Loading & Error States

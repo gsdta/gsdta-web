@@ -1,7 +1,8 @@
 import type { Config } from "tailwindcss";
 
 export default {
-  darkMode: "class",
+  // Disable dark mode completely - app is light-only
+  darkMode: false,
   content: [
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],

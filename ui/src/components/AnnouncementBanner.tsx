@@ -12,7 +12,7 @@ export function AnnouncementBanner() {
 
   if (!mounted) {
     return (
-      <div className="relative overflow-hidden bg-orange-600 dark:bg-orange-700 py-3 shadow-md">
+      <div className="relative overflow-hidden bg-orange-600 py-3 shadow-md">
         <div className="flex whitespace-nowrap">
           <span className="mx-8 text-sm md:text-base font-medium text-white inline-block opacity-0">
             Loading...
@@ -25,7 +25,7 @@ export function AnnouncementBanner() {
   const message = t("announcement.construction");
 
   return (
-    <div className="relative overflow-hidden bg-orange-600 dark:bg-orange-700 py-3 shadow-md">
+    <div className="relative overflow-hidden bg-orange-600 py-3 shadow-md">
       <div className="flex">
         <div className="flex animate-marquee whitespace-nowrap">
           {Array(6).fill(null).map((_, i) => (

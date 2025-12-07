@@ -64,7 +64,7 @@
   - Utility-first CSS framework
   - JIT (Just-In-Time) compilation
   - Custom configuration
-  - Dark mode support via CSS variables
+  - Light mode only (dark mode disabled for simplified maintenance)
   - `@tailwindcss/postcss` for v4 features
   - `@tailwindcss/oxide` for native bindings
 

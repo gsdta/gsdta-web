@@ -10,8 +10,8 @@ export default function Head() {
   };
   return (
     <>
-      {/* Prefer light/dark for native UI elements */}
-      <meta name="color-scheme" content="light dark" />
+      {/* Force light mode only */}
+      <meta name="color-scheme" content="light" />
       {/* Organization JSON-LD */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgLd) }} />
     </>

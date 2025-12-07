@@ -328,14 +328,18 @@ Before submitting any code with security implications:
 
 ## Documentation Update Checklist
 
-Update docs when:
+Update docs **as you work** - documentation must always reflect current state:
 
-- [ ] Adding a new feature (update ROLES.md checkbox)
+- [ ] Adding a new feature (update ROLES.md checkbox immediately)
 - [ ] Changing authentication flow (update INFRASTRUCTURE-SETUP.md)
 - [ ] Adding a new API endpoint (add to OpenAPI spec)
 - [ ] Adding a new Firestore collection (update FIRESTORE-COLLECTIONS.md)
 - [ ] Changing deployment process (update INFRASTRUCTURE-SETUP.md)
 - [ ] Adding complex business logic (add code comments)
+- [ ] Modifying existing features (update relevant docs)
+- [ ] Changing configuration or setup (update setup docs)
+
+**Important**: Never leave documentation outdated. Update `.md` files in `/docs/` as you implement changes, not after.
 
 ---
 
@@ -364,7 +368,8 @@ Before considering code complete:
 
 ### Documentation
 - [ ] Complex logic is commented
-- [ ] Relevant docs updated
+- [ ] **All relevant `.md` files updated to reflect current state**
+- [ ] Feature checkboxes in `/docs/ROLES.md` updated
 - [ ] API changes documented
 
 ---
