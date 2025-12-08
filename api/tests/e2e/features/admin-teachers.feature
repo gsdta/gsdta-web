@@ -47,7 +47,7 @@ Feature: Admin Teachers Management API
   Scenario: Unauthenticated request is rejected
     When I send a GET request to "/api/v1/admin/teachers"
     Then the response status should be 401
-    And the JSON path "code" should equal "auth/unauthorized"
+    And the JSON path "code" should equal "auth/missing-token"
 
   Scenario: Non-admin user cannot access teachers list
     Given I am authenticated as a parent
