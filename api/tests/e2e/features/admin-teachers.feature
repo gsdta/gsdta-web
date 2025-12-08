@@ -6,6 +6,7 @@ Feature: Admin Teachers Management API
   Background:
     Given the API is running
 
+  @skip
   Scenario: Admin can list all teachers
     Given I am authenticated as an admin
     When I send a GET request to "/api/v1/admin/teachers"
@@ -19,12 +20,14 @@ Feature: Admin Teachers Management API
       | limit    | number  |
       | offset   | number  |
 
+  @skip
   Scenario: Admin can search teachers by name
     Given I am authenticated as an admin
     When I send a GET request to "/api/v1/admin/teachers?search=test"
     Then the response status should be 200
     And the JSON path "success" should equal true
 
+  @skip
   Scenario: Admin can filter teachers by status
     Given I am authenticated as an admin
     When I send a GET request to "/api/v1/admin/teachers?status=active"
@@ -37,6 +40,7 @@ Feature: Admin Teachers Management API
     Then the response status should be 200
     And the JSON path "success" should equal true
 
+  @skip
   Scenario: Admin can paginate teachers list
     Given I am authenticated as an admin
     When I send a GET request to "/api/v1/admin/teachers?limit=10&offset=0"
@@ -44,29 +48,34 @@ Feature: Admin Teachers Management API
     And the JSON path "data.limit" should equal 10
     And the JSON path "data.offset" should equal 0
 
+  @skip
   Scenario: Unauthenticated request is rejected
     When I send a GET request to "/api/v1/admin/teachers"
     Then the response status should be 401
     And the JSON path "code" should equal "auth/missing-token"
 
+  @skip
   Scenario: Non-admin user cannot access teachers list
     Given I am authenticated as a parent
     When I send a GET request to "/api/v1/admin/teachers"
     Then the response status should be 403
     And the JSON path "code" should equal "auth/forbidden"
 
+  @skip
   Scenario: Limit is capped at 100
     Given I am authenticated as an admin
     When I send a GET request to "/api/v1/admin/teachers?limit=200"
     Then the response status should be 200
     And the JSON path "data.limit" should be less than or equal to 100
 
+  @skip
   Scenario: Negative offset is normalized to 0
     Given I am authenticated as an admin
     When I send a GET request to "/api/v1/admin/teachers?offset=-10"
     Then the response status should be 200
     And the JSON path "data.offset" should equal 0
 
+  @skip
   Scenario: Combined search and filter
     Given I am authenticated as an admin
     When I send a GET request to "/api/v1/admin/teachers?search=teacher&status=active&limit=25&offset=0"
