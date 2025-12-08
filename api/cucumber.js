@@ -5,7 +5,8 @@ module.exports = {
     paths: ['tests/e2e/features/**/*.feature'],
     format: ['summary', 'progress'],
     parallel: 1,
-    tags: 'not @skip'
+    tags: 'not @skip',
+    timeout: 10000 // 10 seconds per step
   },
 };
 
