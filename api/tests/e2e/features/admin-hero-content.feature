@@ -207,7 +207,7 @@ Feature: Admin Hero Content Management API
   Scenario: Unauthenticated request to list hero content is rejected
     When I send a GET request to "/api/v1/admin/hero-content"
     Then the response status should be 401
-    And the JSON path "code" should equal "auth/unauthorized"
+    And the JSON path "code" should equal "auth/missing-token"
 
   Scenario: Unauthenticated request to create hero content is rejected
     When I send a POST request to "/api/v1/admin/hero-content" with JSON body:
@@ -219,7 +219,7 @@ Feature: Admin Hero Content Management API
       }
       """
     Then the response status should be 401
-    And the JSON path "code" should equal "auth/unauthorized"
+    And the JSON path "code" should equal "auth/missing-token"
 
   Scenario: Non-admin user cannot list hero content
     Given I am authenticated as a parent
