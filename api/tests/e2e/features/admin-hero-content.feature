@@ -237,8 +237,8 @@ Feature: Admin Hero Content Management API
     Then the response status should be 403
     And the JSON path "code" should equal "auth/forbidden"
 
-  Scenario: Non-admin user cannot create hero content
   @skip
+  Scenario: Non-admin user cannot create hero content
     Given I am authenticated as a parent
     When I send a POST request to "/api/v1/admin/hero-content" with JSON body:
       """
