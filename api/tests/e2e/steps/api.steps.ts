@@ -6,6 +6,7 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:8080';
 
 let lastResponse: Response | undefined;
 let lastJson: unknown;
+let hasParsedJson = false;
 let authToken: string | undefined;
 
 function resolveUrl(path: string) {
@@ -26,9 +27,21 @@ function getByPath(obj: unknown, path: string): unknown {
   return curr;
 }
 
+async function getJsonBody() {
+  if (!lastResponse) {
+    throw new Error('No response received');
+  }
+  if (!hasParsedJson) {
+    lastJson = await lastResponse.json();
+    hasParsedJson = true;
+  }
+  return lastJson;
+}
+
 Before(function () {
   lastResponse = undefined;
   lastJson = undefined;
+  hasParsedJson = false;
   authToken = undefined;
 });
 
@@ -52,26 +65,50 @@ Given('I am authenticated as a parent', async function () {
   authToken = process.env.TEST_PARENT_TOKEN || 'test-parent-token';
 });
 
-When('I send a GET request to {string}', async function (path: string) {
+When('I send a GET request to {string}', { timeout: 10000 }, async function (path: string) {
   const url = resolveUrl(path);
   const headers: HeadersInit = {};
   if (authToken) {
     headers['Authorization'] = `Bearer ${authToken}`;
   }
-  lastResponse = await fetch(url, { headers });
+  
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+  
+  try {
+    lastResponse = await fetch(url, { 
+      headers,
+      signal: controller.signal
+    });
+    lastJson = undefined;
+    hasParsedJson = false;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 });
 
-When('I send a POST request to {string} with JSON body:', async function (path: string, body: string) {
+When('I send a POST request to {string} with JSON body:', { timeout: 10000 }, async function (path: string, body: string) {
   const url = resolveUrl(path);
   const headers: HeadersInit = { 'content-type': 'application/json' };
   if (authToken) {
     headers['Authorization'] = `Bearer ${authToken}`;
   }
-  lastResponse = await fetch(url, {
-    method: 'POST',
-    headers,
-    body,
-  });
+  
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+  
+  try {
+    lastResponse = await fetch(url, {
+      method: 'POST',
+      headers,
+      body,
+      signal: controller.signal
+    });
+    lastJson = undefined;
+    hasParsedJson = false;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 });
 
 Then('the response status should be {int}', async function (status: number) {
@@ -80,9 +117,7 @@ Then('the response status should be {int}', async function (status: number) {
 });
 
 Then('the JSON response should have properties:', async function (table: DataTable) {
-  assert(lastResponse, 'No response received');
-  lastJson = await lastResponse.json();
-  const jsonObj = lastJson as Record<string, unknown>;
+  const jsonObj = (await getJsonBody()) as Record<string, unknown>;
   for (const [property, type] of table.rows()) {
     const value = jsonObj[property];
     assert.notStrictEqual(value, undefined, `Expected property '${property}' to exist`);
@@ -91,7 +126,7 @@ Then('the JSON response should have properties:', async function (table: DataTab
 });
 
 Then('the JSON path {string} should equal {string}', async function (jsonPath: string, expected: string) {
-  const json = (lastJson ?? (await lastResponse?.json())) as unknown;
+  const json = await getJsonBody();
   const value = getByPath(json, jsonPath);
   assert.strictEqual(String(value), expected);
 });
@@ -107,6 +142,8 @@ When('I send a PATCH request to {string} with JSON body:', async function (path:
     headers,
     body,
   });
+  lastJson = undefined;
+  hasParsedJson = false;
 });
 
 When('I send a DELETE request to {string}', async function (path: string) {
@@ -119,10 +156,12 @@ When('I send a DELETE request to {string}', async function (path: string) {
     method: 'DELETE',
     headers,
   });
+  lastJson = undefined;
+  hasParsedJson = false;
 });
 
 Then('the JSON path {string} should have properties:', async function (jsonPath: string, table: DataTable) {
-  const json = (lastJson ?? (await lastResponse?.json())) as unknown;
+  const json = await getJsonBody();
   const obj = getByPath(json, jsonPath) as Record<string, unknown>;
   assert(typeof obj === 'object' && obj !== null, `Expected '${jsonPath}' to be an object`);
   for (const [property, type] of table.rows()) {
@@ -133,33 +172,32 @@ Then('the JSON path {string} should have properties:', async function (jsonPath:
 });
 
 Then('the JSON path {string} should exist', async function (jsonPath: string) {
-  const json = (lastJson ?? (await lastResponse?.json())) as unknown;
+  const json = await getJsonBody();
   const value = getByPath(json, jsonPath);
   assert.notStrictEqual(value, undefined, `Expected '${jsonPath}' to exist`);
 });
 
 Then('the JSON path {string} should exist or be null', async function (jsonPath: string) {
-  const json = (lastJson ?? (await lastResponse?.json())) as unknown;
-  lastJson = json;
+  const json = await getJsonBody();
   const value = getByPath(json, jsonPath);
   // This passes as long as the path exists, even if the value is null
   assert(value !== undefined, `Expected '${jsonPath}' to exist (can be null)`);
 });
 
 Then('the JSON path {string} should equal {int}', async function (jsonPath: string, expected: number) {
-  const json = (lastJson ?? (await lastResponse?.json())) as unknown;
+  const json = await getJsonBody();
   const value = getByPath(json, jsonPath);
   assert.strictEqual(value, expected, `Expected '${jsonPath}' to equal ${expected}, got ${value}`);
 });
 
 Then('the JSON path {string} should equal true', async function (jsonPath: string) {
-  const json = (lastJson ?? (await lastResponse?.json())) as unknown;
+  const json = await getJsonBody();
   const value = getByPath(json, jsonPath);
   assert.strictEqual(value, true, `Expected '${jsonPath}' to be true, got ${value}`);
 });
 
 Then('the JSON path {string} should be less than or equal to {int}', async function (jsonPath: string, expected: number) {
-  const json = (lastJson ?? (await lastResponse?.json())) as unknown;
+  const json = await getJsonBody();
   const value = getByPath(json, jsonPath) as number;
   assert(typeof value === 'number', `Expected '${jsonPath}' to be a number, got ${typeof value}`);
   assert(value <= expected, `Expected '${jsonPath}' (${value}) to be <= ${expected}`);
