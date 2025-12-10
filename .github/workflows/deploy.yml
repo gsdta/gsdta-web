@@ -256,31 +256,25 @@ jobs:
           fi
           echo "Firebase secrets fetched (values masked in logs)."
 
-      - name: Build image
-        run: |
-          set -euo pipefail
-          AUTH_MODE='${{ steps.meta.outputs.auth_mode }}'
-          FIREBASE_ARGS=""
-          if [ "$AUTH_MODE" = "firebase" ]; then
-            FIREBASE_ARGS=" \
-              --build-arg NEXT_PUBLIC_FIREBASE_API_KEY=${{ steps.firebase-secrets.outputs.api_key }} \
-              --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ steps.firebase-secrets.outputs.auth_domain }} \
-              --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ steps.firebase-secrets.outputs.project_id }} \
-              --build-arg NEXT_PUBLIC_FIREBASE_APP_ID=${{ steps.firebase-secrets.outputs.app_id }}"
-          fi
-          docker build \
-            --build-arg VERSION=${{ steps.meta.outputs.version }} \
-            --build-arg COMMIT=${{ steps.meta.outputs.commit }} \
-            --build-arg BUILDTIME=${{ steps.meta.outputs.buildtime }} \
-            --build-arg NEXT_PUBLIC_AUTH_MODE=${{ steps.meta.outputs.auth_mode }} \
-            --build-arg NEXT_PUBLIC_API_BASE_URL=/api \
-            --build-arg NEXT_PUBLIC_USE_MSW=false \
-            $FIREBASE_ARGS \
-            -t ${{ steps.meta.outputs.image_uri }} .
-
-      - name: Push image
-        if: ${{ github.event_name == 'push' || github.event.inputs.run_deploy == 'true' }}
-        run: docker push ${{ steps.meta.outputs.image_uri }}
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: ${{ github.event_name == 'push' || github.event.inputs.run_deploy == 'true' }}
+          tags: ${{ steps.meta.outputs.image_uri }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ steps.meta.outputs.version }}
+            COMMIT=${{ steps.meta.outputs.commit }}
+            BUILDTIME=${{ steps.meta.outputs.buildtime }}
+            NEXT_PUBLIC_AUTH_MODE=${{ steps.meta.outputs.auth_mode }}
+            NEXT_PUBLIC_API_BASE_URL=/api
+            NEXT_PUBLIC_USE_MSW=false
+            NEXT_PUBLIC_FIREBASE_API_KEY=${{ steps.meta.outputs.auth_mode == 'firebase' && steps.firebase-secrets.outputs.api_key || '' }}
+            NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ steps.meta.outputs.auth_mode == 'firebase' && steps.firebase-secrets.outputs.auth_domain || '' }}
+            NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ steps.meta.outputs.auth_mode == 'firebase' && steps.firebase-secrets.outputs.project_id || '' }}
+            NEXT_PUBLIC_FIREBASE_APP_ID=${{ steps.meta.outputs.auth_mode == 'firebase' && steps.firebase-secrets.outputs.app_id || '' }}
 
   deploy:
     name: Deploy to Cloud Run
