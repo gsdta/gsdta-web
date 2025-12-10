@@ -112,8 +112,12 @@ jobs:
       - name: Start emulators
         run: firebase emulators:start --project demo-gsdta --only auth,firestore & sleep 10
       - run: npm run seed
-      - run: cd api && npm run build:test
-      - run: cd ui && npm run e2e:ci
+      - name: API E2E (Cucumber)
+        run: cd api && npm run test:e2e
+      - name: Build API for UI E2E
+        run: cd api && npm run build:test
+      - name: UI E2E (Playwright)
+        run: cd ui && npm run e2e:ci
       - uses: actions/upload-artifact@v4
         if: always()
         with:
