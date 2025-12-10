@@ -236,13 +236,12 @@ jobs:
           npm run seed
 
       - name: Install dependencies
+        working-directory: .
         run: |
           npm ci
-          npm run ensure:native
-          rm -rf node_modules/canvas
+          cd ui && npm run ensure:native
+          rm -rf ui/node_modules/canvas
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
 
       - name: Verify native bindings
         run: |
