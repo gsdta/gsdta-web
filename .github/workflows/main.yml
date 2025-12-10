@@ -11,12 +11,13 @@ on:
         type: choice
         options:
           - 'ubuntu-latest'
-          - 'ubuntu-latest-4-cores'
+          - 'ubuntu-latest-4-cores-linux'
           - 'ubuntu-22.04'
           - 'ubuntu-20.04'
           - 'windows-latest'
           - 'macos-latest'
           - 'macos-13'
+          - 'self-hosted'
       
       # Stage selection
       run_emulator_tests:
