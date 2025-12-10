@@ -1,6 +1,10 @@
 name: Main Workflow
 
 on:
+  push:
+    branches:
+      - develop
+      - main
   workflow_dispatch:
     inputs:
       # Runner configuration
@@ -89,8 +93,8 @@ env:
 jobs:
   emulator-tests:
     name: '1. Firebase Emulator Tests'
-    runs-on: ${{ github.event.inputs.runner_os }}
-    if: ${{ github.event.inputs.run_emulator_tests == 'true' }}
+    runs-on: ${{ inputs.runner_os || 'ubuntu-latest' }}
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_emulator_tests == 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -99,6 +103,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
 
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
@@ -122,9 +132,9 @@ jobs:
 
   api:
     name: '2. API Tests'
-    runs-on: ${{ github.event.inputs.runner_os }}
+    runs-on: ${{ inputs.runner_os || 'ubuntu-latest' }}
     needs: emulator-tests
-    if: ${{ !cancelled() && github.event.inputs.run_api_tests == 'true' && (needs.emulator-tests.result == 'success' || needs.emulator-tests.result == 'skipped') }}
+    if: ${{ !cancelled() && (github.event_name != 'workflow_dispatch' || inputs.run_api_tests == 'true') && (needs.emulator-tests.result == 'success' || needs.emulator-tests.result == 'skipped') }}
     defaults:
       run:
         working-directory: api
@@ -188,9 +198,9 @@ jobs:
 
   ui:
     name: '3. UI Tests'
-    runs-on: ${{ github.event.inputs.runner_os }}
+    runs-on: ${{ inputs.runner_os || 'ubuntu-latest' }}
     needs: api
-    if: ${{ !cancelled() && github.event.inputs.run_ui_tests == 'true' && (needs.api.result == 'success' || needs.api.result == 'skipped') }}
+    if: ${{ !cancelled() && (github.event_name != 'workflow_dispatch' || inputs.run_ui_tests == 'true') && (needs.api.result == 'success' || needs.api.result == 'skipped') }}
     container: mcr.microsoft.com/playwright:v1.56.1-jammy
     defaults:
       run:
@@ -242,7 +252,6 @@ jobs:
           cd ui && npm run ensure:native
           rm -rf ui/node_modules/canvas
 
-
       - name: Verify native bindings
         run: |
           node -e "require('lightningcss'); console.log('✅ lightningcss native binding loaded')"
@@ -273,9 +282,12 @@ jobs:
 
   docker:
     name: '4. Build & Push Docker'
-    runs-on: ${{ github.event.inputs.runner_os }}
+    runs-on: ${{ inputs.runner_os || 'ubuntu-latest' }}
     needs: ui
-    if: ${{ !cancelled() && github.event.inputs.run_docker_build == 'true' && (needs.ui.result == 'success' || needs.ui.result == 'skipped') }}
+    if: ${{ !cancelled() && (
+            (github.event_name == 'workflow_dispatch' && inputs.run_docker_build == 'true') ||
+            (github.event_name == 'push' && github.ref == 'refs/heads/main')
+          ) && (needs.ui.result == 'success' || needs.ui.result == 'skipped') }}
     permissions:
       contents: read
       id-token: write
@@ -303,9 +315,14 @@ jobs:
           COMMIT=${GITHUB_SHA::7}
           VERSION=$(git describe --tags --always || echo dev)
           BUILDTIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          TAG='${{ github.event.inputs.image_tag }}'
-          if [ -z "$TAG" ]; then TAG=$COMMIT; fi
-          AUTH_MODE='${{ github.event.inputs.auth_mode }}'
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG_INPUT='${{ inputs.image_tag }}'
+            AUTH_MODE='${{ inputs.auth_mode }}'
+          else
+            TAG_INPUT=""
+            AUTH_MODE="firebase"
+          fi
+          if [ -z "$TAG_INPUT" ]; then TAG=$COMMIT; else TAG=$TAG_INPUT; fi
           if [ "$AUTH_MODE" != "firebase" ] && [ "$AUTH_MODE" != "mock" ]; then
             echo "Invalid auth_mode: $AUTH_MODE (expected 'firebase' or 'mock')" >&2
             exit 1
@@ -365,9 +382,12 @@ jobs:
 
   deploy:
     name: '5. Deploy to Cloud Run'
-    runs-on: ${{ github.event.inputs.runner_os }}
+    runs-on: ${{ inputs.runner_os || 'ubuntu-latest' }}
     needs: docker
-    if: ${{ !cancelled() && github.event.inputs.run_deploy == 'true' && (needs.docker.result == 'success' || needs.docker.result == 'skipped') }}
+    if: ${{ !cancelled() && (
+            (github.event_name == 'workflow_dispatch' && inputs.run_deploy == 'true') ||
+            (github.event_name == 'push' && github.ref == 'refs/heads/main')
+          ) && (needs.docker.result == 'success' || needs.docker.result == 'skipped') }}
     permissions:
       contents: read
       id-token: write
@@ -382,13 +402,26 @@ jobs:
 
       - name: Deploy to Cloud Run
         run: |
+          set -euo pipefail
+          AUTH_MODE='${{ needs.docker.outputs.auth_mode || '' }}'
+          if [ -z "$AUTH_MODE" ]; then AUTH_MODE='firebase'; fi
+
+          COMMON_ENV="NEXT_TELEMETRY_DISABLED=1,NODE_ENV=production,NEXT_PUBLIC_API_BASE_URL=/api,GOOGLE_CLOUD_PROJECT=${{ env.GCP_PROJECT_ID }},NEXT_PUBLIC_USE_MSW=false,USE_GO_API=false"
+          if [ "$AUTH_MODE" = "firebase" ]; then
+            ENV_FLAGS="--set-env-vars NEXT_PUBLIC_AUTH_MODE=firebase,$COMMON_ENV"
+            SECRET_FLAGS="--set-secrets NEXT_PUBLIC_FIREBASE_API_KEY=FIREBASE_API_KEY:latest,NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=FIREBASE_AUTH_DOMAIN:latest,NEXT_PUBLIC_FIREBASE_PROJECT_ID=FIREBASE_PROJECT_ID:latest,NEXT_PUBLIC_FIREBASE_APP_ID=FIREBASE_APP_ID:latest"
+          else
+            ENV_FLAGS="--set-env-vars NEXT_PUBLIC_AUTH_MODE=mock,$COMMON_ENV"
+            SECRET_FLAGS=""
+          fi
+
           gcloud run deploy ${{ env.SERVICE_NAME }} \
             --image ${{ needs.docker.outputs.image_uri }} \
             --region ${{ env.GAR_LOCATION }} \
             --platform managed \
             --allow-unauthenticated \
-            --set-env-vars "NEXT_PUBLIC_AUTH_MODE=${{ needs.docker.outputs.auth_mode }}" \
-            --project ${{ env.GCP_PROJECT_ID }}
+            --port 3000 \
+            $ENV_FLAGS $SECRET_FLAGS
 
       - name: Get Service URL
         id: service
