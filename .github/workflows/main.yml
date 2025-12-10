@@ -5,19 +5,18 @@ on:
     inputs:
       # Runner configuration
       runner_os:
-        description: 'Runner OS'
+        description: 'Runner OS (larger runners require GitHub Team/Enterprise)'
         required: false
         default: 'ubuntu-latest'
         type: choice
         options:
           - 'ubuntu-latest'
-          - 'ubuntu-latest-4-cores-linux'
           - 'ubuntu-22.04'
           - 'ubuntu-20.04'
           - 'windows-latest'
           - 'macos-latest'
           - 'macos-13'
-          - 'self-hosted'
+          - 'Power'
       
       # Stage selection
       run_emulator_tests:
