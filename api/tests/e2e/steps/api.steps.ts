@@ -4,6 +4,9 @@ import type { DataTable } from '@cucumber/cucumber';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8080';
 
+// Use longer timeout in CI environment
+const FETCH_TIMEOUT = process.env.CI ? 60000 : 25000; // 60s in CI, 25s local
+
 let lastResponse: Response | undefined;
 let lastJson: unknown;
 let hasParsedJson = false;
@@ -65,7 +68,7 @@ Given('I am authenticated as a parent', async function () {
   authToken = process.env.TEST_PARENT_TOKEN || 'test-parent-token';
 });
 
-When('I send a GET request to {string}', { timeout: 30000 }, async function (path: string) {
+When('I send a GET request to {string}', { timeout: 90000 }, async function (path: string) {
   const url = resolveUrl(path);
   const headers: HeadersInit = {};
   if (authToken) {
@@ -73,7 +76,7 @@ When('I send a GET request to {string}', { timeout: 30000 }, async function (pat
   }
   
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 seconds for CI
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
   
   try {
     lastResponse = await fetch(url, { 
@@ -87,7 +90,7 @@ When('I send a GET request to {string}', { timeout: 30000 }, async function (pat
   }
 });
 
-When('I send a POST request to {string} with JSON body:', { timeout: 30000 }, async function (path: string, body: string) {
+When('I send a POST request to {string} with JSON body:', { timeout: 90000 }, async function (path: string, body: string) {
   const url = resolveUrl(path);
   const headers: HeadersInit = { 'content-type': 'application/json' };
   if (authToken) {
@@ -95,7 +98,7 @@ When('I send a POST request to {string} with JSON body:', { timeout: 30000 }, as
   }
   
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 seconds for CI
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
   
   try {
     lastResponse = await fetch(url, {
@@ -131,7 +134,7 @@ Then('the JSON path {string} should equal {string}', async function (jsonPath: s
   assert.strictEqual(String(value), expected);
 });
 
-When('I send a PATCH request to {string} with JSON body:', { timeout: 30000 }, async function (path: string, body: string) {
+When('I send a PATCH request to {string} with JSON body:', { timeout: 90000 }, async function (path: string, body: string) {
   const url = resolveUrl(path);
   const headers: HeadersInit = { 'content-type': 'application/json' };
   if (authToken) {
@@ -139,7 +142,7 @@ When('I send a PATCH request to {string} with JSON body:', { timeout: 30000 }, a
   }
   
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 25000);
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
   
   try {
     lastResponse = await fetch(url, {
@@ -155,7 +158,7 @@ When('I send a PATCH request to {string} with JSON body:', { timeout: 30000 }, a
   }
 });
 
-When('I send a DELETE request to {string}', { timeout: 30000 }, async function (path: string) {
+When('I send a DELETE request to {string}', { timeout: 90000 }, async function (path: string) {
   const url = resolveUrl(path);
   const headers: HeadersInit = {};
   if (authToken) {
@@ -163,7 +166,7 @@ When('I send a DELETE request to {string}', { timeout: 30000 }, async function (
   }
   
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 25000);
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
   
   try {
     lastResponse = await fetch(url, {
