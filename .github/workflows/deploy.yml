@@ -91,9 +91,10 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: api/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
+        working-directory: .
         run: npm ci
 
       - name: Lint
@@ -155,11 +156,12 @@ jobs:
           npm run seed
 
       - name: Install dependencies
+        working-directory: .
         run: |
           npm ci
-          npm run ensure:native
+          cd ui && npm run ensure:native
           # Remove optional canvas native module (jsdom gracefully falls back when it's absent)
-          rm -rf node_modules/canvas
+          cd ui && rm -rf node_modules/canvas
 
       - name: Verify native bindings
         run: |
