@@ -11,8 +11,10 @@ jest.mock('@/i18n/LanguageProvider', () => ({
 jest.mock('next/image', () => ({
   __esModule: true,
   default: (props: any) => {
+    // Remove non-HTML attributes
+    const { priority, fill, ...htmlProps } = props;
     // eslint-disable-next-line jsx-a11y/alt-text, @next/next/no-img-element
-    return <img {...props} />;
+    return <img {...htmlProps} />;
   },
 }));
 

@@ -256,8 +256,7 @@ jobs:
         run: npm test
 
       - name: Build API for e2e
-        working-directory: ../api
-        run: npm run build:test
+        run: cd ../api && npm ci && npm run build:test
 
       - name: E2E Tests
         run: npm run e2e:ci
