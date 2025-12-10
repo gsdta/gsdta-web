@@ -10,6 +10,11 @@ Choose option 1 (local) or 2 (Docker), then visit:
 - http://localhost:3000 (UI)
 - http://localhost:4445 (Emulator UI)
 
+## Prerequisites
+
+- Firebase CLI: `firebase --version`
+- Java 11+ for the Firestore emulator (OpenJDK 21 recommended). Example install on macOS: `brew install openjdk@21`
+
 ## Ports Used
 
 | Service | Port | URL |
