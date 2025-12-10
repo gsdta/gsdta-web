@@ -63,10 +63,20 @@ jobs:
           npm install --no-save lightningcss-linux-x64-gnu
           npm install --no-save @tailwindcss/oxide-linux-x64-gnu
           
+          # Debug: Show what was actually installed and where
+          echo "=== Checking lightningcss-linux-x64-gnu package ==="
+          ls -la node_modules/lightningcss-linux-x64-gnu/ 2>/dev/null || echo "Package not found"
+          
+          echo "=== Checking lightningcss package ==="
+          ls -la node_modules/lightningcss/*.node 2>/dev/null || echo "No .node files found"
+          
+          echo "=== Searching for all .node files ==="
+          find node_modules -name "*.node" -path "*lightningcss*" 2>/dev/null || echo "No .node files found"
+          
           # Remove canvas (causes issues in Playwright container)
           rm -rf ../node_modules/canvas node_modules/canvas 2>/dev/null || true
           
-          echo "✅ Platform binaries installed"
+          echo "✅ Platform binaries installation attempted - see debug output above"
       
       - name: Verify native bindings (optional)
         continue-on-error: true
