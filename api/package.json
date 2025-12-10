@@ -12,7 +12,7 @@
     "serve:test": "npm run build:test && cross-env USE_TEST_AUTH=true ALLOW_TEST_INVITES=1 NODE_ENV=test next start -p 8080",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test \"src/**/__tests__/*.test.ts\"",
+    "test": "node --import tsx --test $(find src -name '*.test.ts' -type f)",
     "test:cucumber": "cross-env TS_NODE_PROJECT=tsconfig.cucumber.json cucumber-js",
     "test:e2e": "cross-env FIRESTORE_EMULATOR_HOST=localhost:8889 FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 start-server-and-test \"npm run serve:test\" http://localhost:8080/api/v1/health \"npm run test:cucumber\"",
     "test:e2e:seed": "npm run seed:emulator && npm run test:e2e",
