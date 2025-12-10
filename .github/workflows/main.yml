@@ -67,7 +67,8 @@ jobs:
   e2e-tests:
     name: E2E Tests
     runs-on: ${{ inputs.runner }}
-    if: ${{ inputs.run_e2e_tests }}
+    needs: [unit-tests]
+    if: ${{ inputs.run_e2e_tests && (needs.unit-tests.result == 'success' || needs.unit-tests.result == 'skipped') }}
     container:
       image: mcr.microsoft.com/playwright:v1.56.1-jammy
     env:
@@ -122,8 +123,8 @@ jobs:
   build:
     name: Build Docker Image
     runs-on: ${{ inputs.runner }}
-    needs: [unit-tests]
-    if: ${{ always() && inputs.build_image && (needs.unit-tests.result == 'success' || needs.unit-tests.result == 'skipped') }}
+    needs: [unit-tests, e2e-tests]
+    if: ${{ always() && inputs.build_image && (needs.unit-tests.result == 'success' || needs.unit-tests.result == 'skipped') && (needs.e2e-tests.result == 'success' || needs.e2e-tests.result == 'skipped') }}
     outputs:
       image_uri: ${{ steps.meta.outputs.image_uri }}
     steps:
