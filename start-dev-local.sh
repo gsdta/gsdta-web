@@ -31,6 +31,26 @@ if ! command -v firebase &> /dev/null; then
     echo ""
 fi
 
+# Check for Java (required by Firebase Emulators)
+if ! java -version &> /dev/null; then
+    echo "❌ Java Runtime not found!"
+    echo ""
+    echo "Firebase Emulators require Java to run."
+    echo ""
+    echo "Please install Java using one of these methods:"
+    echo ""
+    echo "Option 1 (Homebrew - Recommended for macOS):"
+    echo "  brew install openjdk@11"
+    echo "  sudo ln -sfn /usr/local/opt/openjdk@11/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-11.jdk"
+    echo ""
+    echo "Option 2 (Download from Oracle/OpenJDK):"
+    echo "  Visit: https://www.oracle.com/java/technologies/downloads/"
+    echo "  Or: https://adoptium.net/"
+    echo ""
+    echo "After installing, restart your terminal and run this script again."
+    exit 1
+fi
+
 # Check if .env.local files exist, if not copy from emulator templates
 if [ ! -f "ui/.env.local" ]; then
     echo "📝 Creating ui/.env.local from template..."
@@ -57,6 +77,14 @@ case $choice in
         echo "🔥 Starting Firebase Emulators..."
         echo ""
         
+        # Check if seed script dependencies are installed
+        if [ ! -d "scripts/node_modules" ]; then
+            echo "📦 Installing seed script dependencies..."
+            cd scripts && npm install && cd ..
+            echo "✅ Dependencies installed"
+            echo ""
+        fi
+        
         # Check if we should seed data
         if [ -d "firebase-data" ]; then
             echo "Existing emulator data found."
@@ -82,13 +110,24 @@ case $choice in
         echo "   Emulator UI:  http://localhost:4445"
         echo ""
         
-        # Start emulators in foreground
+        # Start emulators in background
         firebase emulators:start --project demo-gsdta --import=./firebase-data --export-on-exit &
         EMULATOR_PID=$!
         
         # Wait for emulators to start
         echo "⏳ Waiting for emulators to start..."
         sleep 8
+        
+        # Check if emulators are actually running
+        if ! ps -p $EMULATOR_PID > /dev/null; then
+            echo "❌ Emulators failed to start. Check the error messages above."
+            echo ""
+            echo "Common issues:"
+            echo "  - Java not properly installed"
+            echo "  - Ports already in use (4445, 8889, 9099)"
+            echo "  - Firebase project configuration issue"
+            exit 1
+        fi
         
         # Seed if no existing data
         if [ ! -d "firebase-data" ]; then
@@ -98,12 +137,29 @@ case $choice in
             echo ""
         fi
         
+        echo "✅ Emulators are running!"
+        echo ""
+        echo "Press Ctrl+C to stop emulators (data will be exported to ./firebase-data)"
+        echo ""
+        
         # Keep emulators running
         wait $EMULATOR_PID
         ;;
     2)
         echo ""
         echo "🐳 Starting Docker Compose stack..."
+        echo ""
+        echo "Note: Docker Compose mode includes Java and all dependencies."
+        echo ""
+        
+        # Check if Docker is running
+        if ! docker info &> /dev/null; then
+            echo "❌ Docker is not running!"
+            echo ""
+            echo "Please start Docker Desktop and try again."
+            exit 1
+        fi
+        
         docker-compose -f docker-compose.local.yml up --build
         ;;
     *)
