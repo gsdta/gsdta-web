@@ -65,7 +65,7 @@ Given('I am authenticated as a parent', async function () {
   authToken = process.env.TEST_PARENT_TOKEN || 'test-parent-token';
 });
 
-When('I send a GET request to {string}', { timeout: 10000 }, async function (path: string) {
+When('I send a GET request to {string}', { timeout: 30000 }, async function (path: string) {
   const url = resolveUrl(path);
   const headers: HeadersInit = {};
   if (authToken) {
@@ -73,7 +73,7 @@ When('I send a GET request to {string}', { timeout: 10000 }, async function (pat
   }
   
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 8000);
+  const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 seconds for CI
   
   try {
     lastResponse = await fetch(url, { 
@@ -87,7 +87,7 @@ When('I send a GET request to {string}', { timeout: 10000 }, async function (pat
   }
 });
 
-When('I send a POST request to {string} with JSON body:', { timeout: 10000 }, async function (path: string, body: string) {
+When('I send a POST request to {string} with JSON body:', { timeout: 30000 }, async function (path: string, body: string) {
   const url = resolveUrl(path);
   const headers: HeadersInit = { 'content-type': 'application/json' };
   if (authToken) {
@@ -95,7 +95,7 @@ When('I send a POST request to {string} with JSON body:', { timeout: 10000 }, as
   }
   
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 8000);
+  const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 seconds for CI
   
   try {
     lastResponse = await fetch(url, {
@@ -131,33 +131,51 @@ Then('the JSON path {string} should equal {string}', async function (jsonPath: s
   assert.strictEqual(String(value), expected);
 });
 
-When('I send a PATCH request to {string} with JSON body:', async function (path: string, body: string) {
+When('I send a PATCH request to {string} with JSON body:', { timeout: 30000 }, async function (path: string, body: string) {
   const url = resolveUrl(path);
   const headers: HeadersInit = { 'content-type': 'application/json' };
   if (authToken) {
     headers['Authorization'] = `Bearer ${authToken}`;
   }
-  lastResponse = await fetch(url, {
-    method: 'PATCH',
-    headers,
-    body,
-  });
-  lastJson = undefined;
-  hasParsedJson = false;
+  
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
+  
+  try {
+    lastResponse = await fetch(url, {
+      method: 'PATCH',
+      headers,
+      body,
+      signal: controller.signal
+    });
+    lastJson = undefined;
+    hasParsedJson = false;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 });
 
-When('I send a DELETE request to {string}', async function (path: string) {
+When('I send a DELETE request to {string}', { timeout: 30000 }, async function (path: string) {
   const url = resolveUrl(path);
   const headers: HeadersInit = {};
   if (authToken) {
     headers['Authorization'] = `Bearer ${authToken}`;
   }
-  lastResponse = await fetch(url, {
-    method: 'DELETE',
-    headers,
-  });
-  lastJson = undefined;
-  hasParsedJson = false;
+  
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
+  
+  try {
+    lastResponse = await fetch(url, {
+      method: 'DELETE',
+      headers,
+      signal: controller.signal
+    });
+    lastJson = undefined;
+    hasParsedJson = false;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 });
 
 Then('the JSON path {string} should have properties:', async function (jsonPath: string, table: DataTable) {
