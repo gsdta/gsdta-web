@@ -1,14 +1,48 @@
 name: Deploy
 
 on:
-  push:
-    branches: ["main"]
   workflow_dispatch:
     inputs:
-      run_deploy:
-        description: 'Actually deploy to Cloud Run'
+      run_emulator_tests:
+        description: 'Run Firebase emulator tests'
         required: false
         default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      run_api_tests:
+        description: 'Run API tests (lint, typecheck, e2e)'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      run_ui_tests:
+        description: 'Run UI tests (lint, typecheck, e2e)'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      run_docker_build:
+        description: 'Build and push Docker image'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      run_deploy:
+        description: 'Deploy to Cloud Run'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
       image_tag:
         description: 'Custom image tag (defaults to commit SHA)'
         required: false
@@ -17,6 +51,10 @@ on:
         description: 'Auth mode for the UI build (firebase|mock)'
         required: false
         default: 'firebase'
+        type: choice
+        options:
+          - 'firebase'
+          - 'mock'
 
 env:
   NODE_VERSION: 20
@@ -29,6 +67,7 @@ jobs:
   emulator-tests:
     name: Test with Firebase Emulators
     runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.run_emulator_tests == 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -79,6 +118,7 @@ jobs:
     name: API - Build & Test
     runs-on: ubuntu-latest
     needs: emulator-tests
+    if: ${{ !cancelled() && github.event.inputs.run_api_tests == 'true' && (needs.emulator-tests.result == 'success' || needs.emulator-tests.result == 'skipped') }}
     defaults:
       run:
         working-directory: api
@@ -110,6 +150,7 @@ jobs:
     name: UI - Build & Test
     runs-on: ubuntu-latest
     needs: api
+    if: ${{ !cancelled() && github.event.inputs.run_ui_tests == 'true' && (needs.api.result == 'success' || needs.api.result == 'skipped') }}
     container: mcr.microsoft.com/playwright:v1.56.1-jammy
     defaults:
       run:
@@ -188,6 +229,7 @@ jobs:
     name: Build & Push Docker image
     runs-on: ubuntu-latest
     needs: ui
+    if: ${{ !cancelled() && github.event.inputs.run_docker_build == 'true' && (needs.ui.result == 'success' || needs.ui.result == 'skipped') }}
     permissions:
       contents: read
       id-token: write
@@ -280,7 +322,7 @@ jobs:
     name: Deploy to Cloud Run
     runs-on: ubuntu-latest
     needs: docker
-    if: ${{ github.event_name == 'push' || github.event.inputs.run_deploy == 'true' }}
+    if: ${{ !cancelled() && github.event.inputs.run_deploy == 'true' && (needs.docker.result == 'success' || needs.docker.result == 'skipped') }}
     permissions:
       contents: read
       id-token: write
