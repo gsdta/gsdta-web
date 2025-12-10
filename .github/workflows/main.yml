@@ -155,7 +155,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/firebase/emulators
-          key: ${{ runner.os }}-firebase-emulators-${{ hashFiles('../firebase.json') }}
+          key: ${{ runner.os }}-firebase-emulators-${{ hashFiles('firebase.json') }}
           restore-keys: |
             ${{ runner.os }}-firebase-emulators-
 
