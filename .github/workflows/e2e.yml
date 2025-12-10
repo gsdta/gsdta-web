@@ -54,36 +54,47 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Install platform-specific binaries for UI (matching local script)
+      - name: Install platform-specific binaries for UI
         run: |
-          # Match exactly what run-e2e-tests.sh does
           cd ui
           
-          # Install platform-specific packages directly (like local script)
-          npm install --no-save lightningcss-linux-x64-gnu
-          npm install --no-save @tailwindcss/oxide-linux-x64-gnu
+          # Run ensure:native and check if it actually succeeds
+          if npm run ensure:native; then
+            echo "✅ ensure:native succeeded"
+          else
+            echo "❌ ensure:native failed, trying manual install"
+            npm install --no-save lightningcss-linux-x64-gnu
+            npm install --no-save @tailwindcss/oxide-linux-x64-gnu
+          fi
           
-          # Debug: Show what was actually installed and where
-          echo "=== Checking lightningcss-linux-x64-gnu package ==="
-          ls -la node_modules/lightningcss-linux-x64-gnu/ 2>/dev/null || echo "Package not found"
+          # List what we have
+          echo "=== Files in lightningcss package ==="
+          ls -la node_modules/lightningcss/*.node 2>/dev/null || echo "No .node files"
           
-          echo "=== Checking lightningcss package ==="
-          ls -la node_modules/lightningcss/*.node 2>/dev/null || echo "No .node files found"
+          echo "=== Files in lightningcss-linux-x64-gnu package ==="
+          ls -la node_modules/lightningcss-linux-x64-gnu/*.node 2>/dev/null || echo "No .node files"
           
-          echo "=== Searching for all .node files ==="
-          find node_modules -name "*.node" -path "*lightningcss*" 2>/dev/null || echo "No .node files found"
+          # If ensure:native failed, manually copy
+          if [ -f "node_modules/lightningcss-linux-x64-gnu/lightningcss.linux-x64-gnu.node" ]; then
+            echo "📋 Copying binary manually..."
+            cp node_modules/lightningcss-linux-x64-gnu/lightningcss.linux-x64-gnu.node node_modules/lightningcss/
+          fi
           
-          # Remove canvas (causes issues in Playwright container)
+          if [ -f "node_modules/@tailwindcss/oxide-linux-x64-gnu/oxide.linux-x64-gnu.node" ]; then
+            echo "📋 Copying oxide binary manually..."
+            cp node_modules/@tailwindcss/oxide-linux-x64-gnu/oxide.linux-x64-gnu.node node_modules/@tailwindcss/oxide/
+          fi
+          
+          # Remove canvas which causes issues in Playwright container
           rm -rf ../node_modules/canvas node_modules/canvas 2>/dev/null || true
           
-          echo "✅ Platform binaries installation attempted - see debug output above"
+          echo "✅ Setup complete"
       
-      - name: Verify native bindings (optional)
-        continue-on-error: true
+      - name: Verify native bindings
         run: |
           cd ui
-          node -e "require('lightningcss'); console.log('✅ lightningcss loaded')" || echo "⚠️  lightningcss verification failed (non-fatal)"
-          node -e "require('@tailwindcss/oxide'); console.log('✅ @tailwindcss/oxide loaded')" || echo "⚠️  oxide verification failed (non-fatal)"
+          node -e "require('lightningcss'); console.log('✅ lightningcss loaded')"
+          node -e "require('@tailwindcss/oxide'); console.log('✅ @tailwindcss/oxide loaded')"
       
       - name: Start Firebase Emulators
         run: |
