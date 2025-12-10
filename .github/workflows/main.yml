@@ -1,54 +1,76 @@
-name: Deploy
+name: Main Workflow
 
 on:
   workflow_dispatch:
     inputs:
+      # Runner configuration
+      runner_os:
+        description: 'Runner OS'
+        required: false
+        default: 'ubuntu-latest'
+        type: choice
+        options:
+          - 'ubuntu-latest'
+          - 'ubuntu-22.04'
+          - 'ubuntu-20.04'
+          - 'windows-latest'
+          - 'macos-latest'
+          - 'macos-13'
+      
+      # Stage selection
       run_emulator_tests:
-        description: 'Run Firebase emulator tests'
+        description: '1. Run Firebase emulator tests'
         required: false
         default: 'true'
         type: choice
         options:
           - 'true'
           - 'false'
+      
       run_api_tests:
-        description: 'Run API tests (lint, typecheck, e2e)'
+        description: '2. Run API tests (lint, typecheck, e2e)'
         required: false
         default: 'true'
         type: choice
         options:
           - 'true'
           - 'false'
+      
       run_ui_tests:
-        description: 'Run UI tests (lint, typecheck, e2e)'
+        description: '3. Run UI tests (lint, typecheck, e2e)'
         required: false
         default: 'true'
         type: choice
         options:
           - 'true'
           - 'false'
+      
       run_docker_build:
-        description: 'Build and push Docker image'
-        required: false
-        default: 'true'
-        type: choice
-        options:
-          - 'true'
-          - 'false'
-      run_deploy:
-        description: 'Deploy to Cloud Run'
+        description: '4. Build and push Docker image'
         required: false
         default: 'false'
         type: choice
         options:
           - 'true'
           - 'false'
+      
+      run_deploy:
+        description: '5. Deploy to Cloud Run'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      
+      # Build configuration
       image_tag:
-        description: 'Custom image tag (defaults to commit SHA)'
+        description: 'Docker image tag (defaults to commit SHA)'
         required: false
         default: ''
+      
       auth_mode:
-        description: 'Auth mode for the UI build (firebase|mock)'
+        description: 'Auth mode for UI build'
         required: false
         default: 'firebase'
         type: choice
@@ -65,8 +87,8 @@ env:
 
 jobs:
   emulator-tests:
-    name: Test with Firebase Emulators
-    runs-on: ubuntu-latest
+    name: '1. Firebase Emulator Tests'
+    runs-on: ${{ github.event.inputs.runner_os }}
     if: ${{ github.event.inputs.run_emulator_tests == 'true' }}
     steps:
       - name: Checkout
@@ -88,40 +110,27 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-firebase-emulators-
 
-      - name: Start Firebase Emulators
+      - name: Start Firebase Emulators (Background)
         run: |
           firebase emulators:start --project demo-gsdta --only auth,firestore &
           sleep 10
 
-      - name: Seed test data
+      - name: Verify Emulators Running
         run: |
-          cd scripts && npm ci
-          export FIRESTORE_EMULATOR_HOST=localhost:8889
-          export FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
-          npm run seed
-
-      - name: Install API dependencies
-        working-directory: api
-        run: npm ci
-
-      - name: Run API tests
-        working-directory: api
-        env:
-          FIRESTORE_EMULATOR_HOST: localhost:8889
-          FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
-          FIREBASE_PROJECT_ID: demo-gsdta
-        run: |
-          npm run lint
-          npm run typecheck
+          curl -s http://localhost:4445 | grep -q "Emulator Suite" && echo "✅ Emulator UI accessible"
 
   api:
-    name: API - Build & Test
-    runs-on: ubuntu-latest
+    name: '2. API Tests'
+    runs-on: ${{ github.event.inputs.runner_os }}
     needs: emulator-tests
     if: ${{ !cancelled() && github.event.inputs.run_api_tests == 'true' && (needs.emulator-tests.result == 'success' || needs.emulator-tests.result == 'skipped') }}
     defaults:
       run:
         working-directory: api
+    env:
+      FIRESTORE_EMULATOR_HOST: localhost:8889
+      FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
+      FIREBASE_PROJECT_ID: demo-gsdta
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -132,6 +141,36 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           cache-dependency-path: package-lock.json
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Cache Firebase Emulators
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: ${{ runner.os }}-firebase-emulators-${{ hashFiles('../firebase.json') }}
+          restore-keys: |
+            ${{ runner.os }}-firebase-emulators-
+
+      - name: Start Firebase Emulators
+        run: |
+          cd ..
+          firebase emulators:start --project demo-gsdta --only auth,firestore &
+          sleep 10
+
+      - name: Seed emulators
+        run: |
+          cd ../scripts && npm ci
+          export FIRESTORE_EMULATOR_HOST=localhost:8889
+          export FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
+          npm run seed
 
       - name: Install dependencies
         working-directory: .
@@ -147,8 +186,8 @@ jobs:
         run: npm run test:e2e
 
   ui:
-    name: UI - Build & Test
-    runs-on: ubuntu-latest
+    name: '3. UI Tests'
+    runs-on: ${{ github.event.inputs.runner_os }}
     needs: api
     if: ${{ !cancelled() && github.event.inputs.run_ui_tests == 'true' && (needs.api.result == 'success' || needs.api.result == 'skipped') }}
     container: mcr.microsoft.com/playwright:v1.56.1-jammy
@@ -172,7 +211,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          # Don't cache in container - native modules are platform-specific
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -201,7 +239,6 @@ jobs:
         run: |
           npm ci
           cd ui && npm run ensure:native
-          # Remove optional canvas native module (jsdom gracefully falls back when it's absent)
           cd ui && rm -rf node_modules/canvas
 
       - name: Verify native bindings
@@ -210,24 +247,32 @@ jobs:
           node -e "require('@tailwindcss/oxide'); console.log('✅ tailwind css oxide native binding loaded')"
 
       - name: Lint
-        working-directory: ui
         run: npm run lint
 
       - name: Typecheck
-        working-directory: ui
         run: npm run typecheck
 
-      - name: Unit tests
-        working-directory: ui
-        run: npm test --if-present
+      - name: Test
+        run: npm test
 
-      - name: E2E (Playwright)
-        working-directory: ui
+      - name: Build API for e2e
+        working-directory: ../api
+        run: npm run build:test
+
+      - name: E2E Tests
         run: npm run e2e:ci
 
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: ui/playwright-report/
+          retention-days: 7
+
   docker:
-    name: Build & Push Docker image
-    runs-on: ubuntu-latest
+    name: '4. Build & Push Docker'
+    runs-on: ${{ github.event.inputs.runner_os }}
     needs: ui
     if: ${{ !cancelled() && github.event.inputs.run_docker_build == 'true' && (needs.ui.result == 'success' || needs.ui.result == 'skipped') }}
     permissions:
@@ -257,10 +302,9 @@ jobs:
           COMMIT=${GITHUB_SHA::7}
           VERSION=$(git describe --tags --always || echo dev)
           BUILDTIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then TAG='${{ github.event.inputs.image_tag }}'; else TAG=""; fi
+          TAG='${{ github.event.inputs.image_tag }}'
           if [ -z "$TAG" ]; then TAG=$COMMIT; fi
-          # Determine auth mode: default firebase on push; from input on dispatch
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then AUTH_MODE='${{ github.event.inputs.auth_mode }}'; else AUTH_MODE='firebase'; fi
+          AUTH_MODE='${{ github.event.inputs.auth_mode }}'
           if [ "$AUTH_MODE" != "firebase" ] && [ "$AUTH_MODE" != "mock" ]; then
             echo "Invalid auth_mode: $AUTH_MODE (expected 'firebase' or 'mock')" >&2
             exit 1
@@ -302,7 +346,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: ${{ github.event_name == 'push' || github.event.inputs.run_deploy == 'true' }}
+          push: true
           tags: ${{ steps.meta.outputs.image_uri }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -319,8 +363,8 @@ jobs:
             NEXT_PUBLIC_FIREBASE_APP_ID=${{ steps.meta.outputs.auth_mode == 'firebase' && steps.firebase-secrets.outputs.app_id || '' }}
 
   deploy:
-    name: Deploy to Cloud Run
-    runs-on: ubuntu-latest
+    name: '5. Deploy to Cloud Run'
+    runs-on: ${{ github.event.inputs.runner_os }}
     needs: docker
     if: ${{ !cancelled() && github.event.inputs.run_deploy == 'true' && (needs.docker.result == 'success' || needs.docker.result == 'skipped') }}
     permissions:
@@ -335,26 +379,28 @@ jobs:
       - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Deploy
+      - name: Deploy to Cloud Run
         run: |
-          set -euo pipefail
-          AUTH_MODE='${{ needs.docker.outputs.auth_mode || '' }}'
-          # Fallback to firebase for push events where outputs aren't directly available via needs
-          if [ -z "$AUTH_MODE" ]; then AUTH_MODE='firebase'; fi
-
-          COMMON_ENV="NEXT_TELEMETRY_DISABLED=1,NODE_ENV=production,NEXT_PUBLIC_API_BASE_URL=/api,GOOGLE_CLOUD_PROJECT=${{ env.GCP_PROJECT_ID }},NEXT_PUBLIC_USE_MSW=false,USE_GO_API=false"
-          if [ "$AUTH_MODE" = "firebase" ]; then
-            ENV_FLAGS="--set-env-vars NEXT_PUBLIC_AUTH_MODE=firebase,$COMMON_ENV"
-            SECRET_FLAGS="--set-secrets NEXT_PUBLIC_FIREBASE_API_KEY=FIREBASE_API_KEY:latest,NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=FIREBASE_AUTH_DOMAIN:latest,NEXT_PUBLIC_FIREBASE_PROJECT_ID=FIREBASE_PROJECT_ID:latest,NEXT_PUBLIC_FIREBASE_APP_ID=FIREBASE_APP_ID:latest"
-          else
-            ENV_FLAGS="--set-env-vars NEXT_PUBLIC_AUTH_MODE=mock,$COMMON_ENV"
-            SECRET_FLAGS=""
-          fi
-
           gcloud run deploy ${{ env.SERVICE_NAME }} \
             --image ${{ needs.docker.outputs.image_uri }} \
             --region ${{ env.GAR_LOCATION }} \
             --platform managed \
             --allow-unauthenticated \
-            --port 3000 \
-            $ENV_FLAGS $SECRET_FLAGS
+            --set-env-vars "NEXT_PUBLIC_AUTH_MODE=${{ needs.docker.outputs.auth_mode }}" \
+            --project ${{ env.GCP_PROJECT_ID }}
+
+      - name: Get Service URL
+        id: service
+        run: |
+          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region ${{ env.GAR_LOCATION }} \
+            --project ${{ env.GCP_PROJECT_ID }} \
+            --format 'value(status.url)')
+          echo "url=$SERVICE_URL" >> $GITHUB_OUTPUT
+          echo "🚀 Deployed to: $SERVICE_URL"
+
+      - name: Health Check
+        run: |
+          sleep 10
+          curl -f ${{ steps.service.outputs.url }}/api/v1/health || exit 1
+          echo "✅ Health check passed"
