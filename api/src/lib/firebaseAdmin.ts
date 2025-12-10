@@ -23,6 +23,14 @@ export function getAdminApp(): App {
     if (isEmulator) {
       // In emulator mode, initialize without credentials
       // Firebase Admin SDK will auto-detect emulator via env vars
+      
+      // Force IPv4 for Firestore emulator to avoid IPv6 connection issues in CI
+      const firestoreHost = process.env.FIRESTORE_EMULATOR_HOST;
+      if (firestoreHost && !firestoreHost.includes('127.0.0.1')) {
+        // Replace localhost with 127.0.0.1 to force IPv4
+        process.env.FIRESTORE_EMULATOR_HOST = firestoreHost.replace('localhost', '127.0.0.1');
+      }
+      
       console.log(`[Firebase Admin] Connecting to emulators (project: ${DEFAULT_PROJECT_ID})`);
       console.log(`  - Auth Emulator: ${process.env.FIREBASE_AUTH_EMULATOR_HOST || 'not set'}`);
       console.log(`  - Firestore Emulator: ${process.env.FIRESTORE_EMULATOR_HOST || 'not set'}`);
