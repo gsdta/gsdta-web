@@ -250,7 +250,7 @@ jobs:
         run: |
           npm ci
           cd ui && npm run ensure:native
-          rm -rf ui/node_modules/canvas
+          rm -rf node_modules/canvas ui/node_modules/canvas
 
       - name: Verify native bindings
         run: |
