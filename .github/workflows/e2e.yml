@@ -60,6 +60,15 @@ jobs:
           # Install native binaries for Linux x64 gnu (Playwright container)
           npm install --no-save lightningcss-linux-x64-gnu@1.30.2
           npm install --no-save @tailwindcss/oxide-linux-x64-gnu@4.0.14
+          
+          # Copy the binary to where lightningcss expects it
+          cp node_modules/lightningcss-linux-x64-gnu/lightningcss.linux-x64-gnu.node \
+             node_modules/lightningcss/lightningcss.linux-x64-gnu.node
+          
+          # Copy oxide binary to where tailwindcss expects it
+          cp node_modules/@tailwindcss/oxide-linux-x64-gnu/oxide.linux-x64-gnu.node \
+             node_modules/@tailwindcss/oxide/oxide.linux-x64-gnu.node
+          
           # Remove canvas (causes issues in Playwright container)
           rm -rf ../node_modules/canvas node_modules/canvas 2>/dev/null || true
           echo "✅ Native binaries installed"
