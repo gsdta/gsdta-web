@@ -16,6 +16,7 @@ on:
           - 'windows-latest'
           - 'macos-latest'
           - 'macos-13'
+          - 'Power'
       
       # Stage selection
       run_emulator_tests:
