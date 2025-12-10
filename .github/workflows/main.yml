@@ -241,6 +241,9 @@ jobs:
           npm run ensure:native
           rm -rf node_modules/canvas
 
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
       - name: Verify native bindings
         run: |
           node -e "require('lightningcss'); console.log('✅ lightningcss native binding loaded')"
