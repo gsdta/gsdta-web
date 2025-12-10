@@ -98,6 +98,7 @@ jobs:
       
       - name: Compute image metadata
         id: meta
+        shell: bash
         run: |
           TAG="${{ inputs.image_tag }}"
           if [ -z "$TAG" ]; then
