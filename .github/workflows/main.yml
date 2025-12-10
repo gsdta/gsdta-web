@@ -236,11 +236,10 @@ jobs:
           npm run seed
 
       - name: Install dependencies
-        working-directory: .
         run: |
           npm ci
-          cd ui && npm run ensure:native
-          cd ui && rm -rf node_modules/canvas
+          npm run ensure:native
+          rm -rf node_modules/canvas
 
       - name: Verify native bindings
         run: |
