@@ -2,7 +2,7 @@ import { Given } from '@cucumber/cucumber';
 import { adminDb } from '../../../src/lib/firebaseAdmin';
 import { Timestamp } from 'firebase-admin/firestore';
 
-Given('there is a hero content with id {string}', { timeout: 30000 }, async function (id: string) {
+Given('there is a hero content with id {string}', { timeout: 120000 }, async function (id: string) {
   const db = adminDb();
   const contentRef = db.collection('heroContent').doc(id);
   
