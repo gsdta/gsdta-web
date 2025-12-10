@@ -9,6 +9,12 @@ on:
       - 'docs/**'
       - '**/*.mdx'
       - '**/*.txt'
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to test (leave empty for current branch)'
+        required: false
+        default: ''
 
 env:
   NODE_VERSION: 20
