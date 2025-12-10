@@ -19,7 +19,7 @@
     "test:e2e": "playwright test --config=playwright.config.ts",
     "test:e2e:headed": "playwright test --config=playwright.config.ts --headed --browser=chromium",
     "pw:install": "playwright install chromium",
-    "e2e:ci": "playwright test --config=playwright.config.ts",
+    "e2e:ci": "node_modules/.bin/playwright test --config=playwright.config.ts",
     "docker:build": "docker build -t gsdta-ui:latest .",
     "docker:build-dev": "docker build -f Dockerfile.dev -t gsdta-ui:dev .",
     "docker:run": "docker-compose up -d ui",
