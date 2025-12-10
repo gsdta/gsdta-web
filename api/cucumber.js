@@ -6,7 +6,7 @@ module.exports = {
     format: ['summary', 'progress'],
     parallel: 1,
     tags: 'not @skip',
-    timeout: 30000 // 30 seconds per step (CI can be slower)
+    timeout: 120000 // 120 seconds (2 minutes) for CI - some steps are very slow
   },
 };
 
