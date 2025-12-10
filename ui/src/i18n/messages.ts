@@ -100,7 +100,7 @@ export const messages: Record<Lang, Record<string, string>> = {
         "flashcards.card4": "Celebrate Tamil Culture through vibrant events and workshops.",
 
         // Announcement
-        "announcement.construction": "⚠️ This site is under construction. For the latest information, please visit www.gsdta.org ⚠️",
+        "announcement.welcome": "Welcome to Greater San Diego Tamil Academy",
 
         // Footer (extended)
         "footer.orgTitle": "Organization",
@@ -315,7 +315,7 @@ export const messages: Record<Lang, Record<string, string>> = {
         "flashcards.card4": "துடிப்பான நிகழ்வுகள் மற்றும் பட்டறைகள் மூலம் தமிழ் கலாச்சாரத்தைக் கொண்டாடுங்கள்.",
 
         // Announcement
-        "announcement.construction": "⚠️ இந்த தளம் கட்டுமானத்தில் உள்ளது. சமீபத்திய தகவலுக்கு, தயவுசெய்து www.gsdta.org ஐப் பார்வையிடவும் ⚠️",
+        "announcement.welcome": "கிரேட்டர் சான் டியேகோ தமிழ் அகாடமிக்கு வரவேற்கிறோம்",
 
         // Footer (extended)
         "footer.orgTitle": "அமைப்பு",
