@@ -1,37 +1,35 @@
 # syntax=docker/dockerfile:1
 
 # =============================================================================
-# Stage 1: Install UI dependencies
+# Stage 1: Install dependencies from workspace root
 # =============================================================================
-FROM node:20-alpine AS ui-deps
+FROM node:20-alpine AS deps
 WORKDIR /app
 
 # Common packages
 RUN apk add --no-cache libc6-compat
 
-COPY ui/package.json ui/package-lock.json* ./
+# Copy workspace package files
+COPY package.json package-lock.json ./
+COPY ui/package.json ./ui/
+COPY api/package.json ./api/
+COPY scripts/package.json ./scripts/
+
+# Install all workspace dependencies at once
 RUN npm ci --ignore-scripts
 
 # =============================================================================
-# Stage 2: Install API dependencies
-# =============================================================================
-FROM node:20-alpine AS api-deps
-WORKDIR /app
-
-# Common packages
-RUN apk add --no-cache libc6-compat
-
-COPY api/package.json api/package-lock.json* ./
-RUN npm ci --ignore-scripts
-
-# =============================================================================
-# Stage 3: Build UI
+# Stage 2: Build UI
 # =============================================================================
 FROM node:20-alpine AS ui-builder
 WORKDIR /app
 
-COPY --from=ui-deps /app/node_modules ./node_modules
-COPY ui/ .
+# Copy all node_modules from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/ui/node_modules ./ui/node_modules
+
+# Copy UI source
+COPY ui/ ./ui/
 
 # Build-time configuration - these MUST be set at build time for NEXT_PUBLIC_ vars
 ARG NEXT_PUBLIC_USE_MSW=false
@@ -68,25 +66,40 @@ RUN set -eu \
        echo "Skipping Firebase config check (auth mode: ${NEXT_PUBLIC_AUTH_MODE})."; \
      fi
 
+WORKDIR /app/ui
+
+# Install platform-specific lightningcss for Linux
+# Use BuildKit's automatic platform variables
+RUN if [ "$(uname -m)" = "x86_64" ]; then \
+      npm install --no-save lightningcss-linux-x64-musl; \
+    elif [ "$(uname -m)" = "aarch64" ]; then \
+      npm install --no-save lightningcss-linux-arm64-musl; \
+    fi
+
 RUN npm run build
 
 # =============================================================================
-# Stage 4: Build API
+# Stage 3: Build API
 # =============================================================================
 FROM node:20-alpine AS api-builder
 WORKDIR /app
 
-COPY --from=api-deps /app/node_modules ./node_modules
-COPY api/ .
+# Copy all node_modules from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/api/node_modules ./api/node_modules
+
+# Copy API source
+COPY api/ ./api/
 
 # Disable telemetry during build and force standalone output
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_OUTPUT=standalone
 
+WORKDIR /app/api
 RUN npm run build
 
 # =============================================================================
-# Stage 5: Production runtime image
+# Stage 4: Production runtime image
 # =============================================================================
 FROM node:20-alpine AS runner
 WORKDIR /app
@@ -101,15 +114,15 @@ RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 RUN apk add --no-cache supervisor
 
 # Copy UI files
-COPY --from=ui-builder /app/public ./ui/public
+COPY --from=ui-builder /app/ui/public ./ui/public
 RUN mkdir -p ui/.next && chown nextjs:nodejs ui/.next
-COPY --from=ui-builder --chown=nextjs:nodejs /app/.next/standalone ./ui/
-COPY --from=ui-builder --chown=nextjs:nodejs /app/.next/static ./ui/.next/static
+COPY --from=ui-builder --chown=nextjs:nodejs /app/ui/.next/standalone ./ui/
+COPY --from=ui-builder --chown=nextjs:nodejs /app/ui/.next/static ./ui/.next/static
 
 # Copy API files
 RUN mkdir -p api/.next && chown nextjs:nodejs api/.next
-COPY --from=api-builder --chown=nextjs:nodejs /app/.next/standalone ./api/
-COPY --from=api-builder --chown=nextjs:nodejs /app/.next/static ./api/.next/static
+COPY --from=api-builder --chown=nextjs:nodejs /app/api/.next/standalone ./api/
+COPY --from=api-builder --chown=nextjs:nodejs /app/api/.next/static ./api/.next/static
 
 # Create supervisor configuration
 RUN mkdir -p /etc/supervisor/conf.d \
