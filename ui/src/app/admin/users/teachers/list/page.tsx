@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Protected } from '@/components/Protected';
 import { apiFetch } from '@/lib/api-client';
 
 interface Teacher {
@@ -99,11 +98,10 @@ export default function TeachersListPage() {
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <Protected roles={['admin']}>
-      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Teachers</h1>
-          <p className="mt-2 text-sm text-gray-600">
+      <div className="max-w-6xl">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">All Teachers</h1>
+          <p className="mt-1 text-sm text-gray-600">
             View and manage all teachers in the system
           </p>
         </div>
@@ -275,6 +273,5 @@ export default function TeachersListPage() {
           </>
         )}
       </div>
-    </Protected>
   );
 }

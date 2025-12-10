@@ -148,16 +148,23 @@ test.describe('Admin Teachers List Page', () => {
 });
 
 test.describe('Admin Dashboard Teachers Link', () => {
-  test.skip('admin dashboard should have link to teachers list', async ({ page }) => {
+  test.skip('admin dashboard should have navigation to teachers', async ({ page }) => {
     // TODO: Implement with admin auth mock
     await page.goto('/admin');
     
-    // Should have a link to teachers list
-    const teachersLink = page.getByRole('link', { name: /view all teachers/i });
-    await expect(teachersLink).toBeVisible();
+    // New layout: should have Teachers dropdown in header
+    const teachersButton = page.getByRole('button', { name: /teachers/i });
+    await expect(teachersButton).toBeVisible();
+    
+    // Click to open dropdown
+    await teachersButton.click();
+    
+    // Should show "All Teachers" link in dropdown
+    const allTeachersLink = page.getByRole('link', { name: /all teachers/i });
+    await expect(allTeachersLink).toBeVisible();
     
     // Click should navigate to teachers list
-    await teachersLink.click();
+    await allTeachersLink.click();
     await page.waitForURL('/admin/users/teachers/list');
   });
 });
