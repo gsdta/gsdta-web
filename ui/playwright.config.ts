@@ -33,10 +33,10 @@ export default defineConfig({
     // Start API (test mode) and UI servers for the test run
     webServer: [
         {
-            command: "cd ../api && npm run build && npm run start",
+            command: "cd ../api && npm run start",
             port: 8080,
-            reuseExistingServer: false,
-            timeout: 180_000,
+            reuseExistingServer: !isCI, // Allow reusing in local dev for speed
+            timeout: 60_000, // Reduced since no build needed
             env: {
                 ALLOW_TEST_INVITES: "1",
                 NODE_ENV: "test",
@@ -47,22 +47,22 @@ export default defineConfig({
             },
         },
         {
-            command: "npm run build && npx next start -p 3100",
+            command: "npx next start -p 3100",
             port: 3100,
-            reuseExistingServer: false, // Force fresh server to avoid dev server reuse
-            timeout: 180_000,
+            reuseExistingServer: !isCI, // Allow reusing in local dev for speed
+            timeout: 60_000, // Reduced since no build needed
             env: {
                 NEXT_PUBLIC_USE_MSW: "false",
-                NEXT_PUBLIC_AUTH_MODE: process.env.NEXT_PUBLIC_AUTH_MODE || "mock",
+                NEXT_PUBLIC_AUTH_MODE: "firebase", // Use Firebase emulator auth for E2E tests
                 NEXT_PUBLIC_API_BASE_URL: "/api",
-                NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
-                NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
-                NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "",
-                NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "",
-                NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST: process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST || "",
-                NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST: process.env.NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST || "",
-                FIRESTORE_EMULATOR_HOST: process.env.FIRESTORE_EMULATOR_HOST || "",
-                FIREBASE_AUTH_EMULATOR_HOST: process.env.FIREBASE_AUTH_EMULATOR_HOST || "",
+                NEXT_PUBLIC_FIREBASE_API_KEY: "fake-api-key-for-emulator",
+                NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: "demo-gsdta.firebaseapp.com",
+                NEXT_PUBLIC_FIREBASE_PROJECT_ID: "demo-gsdta",
+                NEXT_PUBLIC_FIREBASE_APP_ID: "1:1234567890:web:abcdef123456",
+                NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST: "localhost:9099",
+                NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST: "localhost:8889",
+                FIRESTORE_EMULATOR_HOST: "localhost:8889",
+                FIREBASE_AUTH_EMULATOR_HOST: "localhost:9099",
             },
         },
     ],
