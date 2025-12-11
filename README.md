@@ -3,27 +3,24 @@
 [![CI (develop)](https://github.com/gsdta/gsdta-web/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/gsdta/gsdta-web/actions/workflows/ci.yml)
 [![Deploy (main)](https://github.com/gsdta/gsdta-web/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/gsdta/gsdta-web/actions/workflows/deploy.yml)
 
-Modern web app with a Next.js UI and a Next.js-based API, shipped as one Docker image.
+Modern Tamil school management system with Next.js UI and API, deployed as a single Docker container.
 
-## Structure
+## 📁 Structure
 
 ```
 gsdta-web/
-├─ ui/   # Next.js frontend
-├─ api/  # Next.js API (route handlers)
-├─ persistence/ # Firestore rules and indexes
-├─ docs/ # Project docs (single source of truth)
-└─ Dockerfile (bundles UI + API)
+├── ui/                 # Next.js frontend (App Router)
+├── api/                # Express.js API (TypeScript)
+├── scripts/            # Seed scripts and utilities
+├── docs/               # Documentation (single source of truth)
+│   ├── FEATURES.md     # Implemented features tracker
+│   ├── ROLES.md        # Complete role capability matrix
+│   ├── TECH-STACK.md   # Technology reference
+│   └── ...
+└── Dockerfile          # Production container
 ```
 
-## Start here
-- Features overview → `docs/features.md`
-- Role pages → `docs/roles/parent.md`, `docs/roles/teacher.md`, `docs/roles/admin.md`
-- API surface → `docs/features.md#api-surface-v1`
-- CI/CD → `docs/ci-cd.md`
-- Docker → `docs/docker.md`
-
-## Quick start
+## 🚀 Quick Start
 
 ### Local Development (Recommended)
 
@@ -32,46 +29,128 @@ gsdta-web/
 ./start-dev-local.sh
 ```
 
-Then visit:
+Choose option 1 (local) or 2 (Docker), then visit:
 - **UI**: http://localhost:3000
+- **API**: http://localhost:8080
 - **Emulator UI**: http://localhost:4445
-- **Sign in with**: teacher@test.com / teacher123
 
-**Complete guide**: See `docs/local-development.md` for detailed instructions.
+**Test credentials**:
+- Admin: admin@test.com / admin123
+- Teacher: teacher@test.com / teacher123
+- Parent: parent@test.com / parent123
 
-### Package-Specific READMEs
-- UI → `ui/README.md`
-- API → `api/README.md`
-- Persistence → `persistence/README.md`
+**Complete setup guide**: See [QUICKSTART-EMULATORS.md](./QUICKSTART-EMULATORS.md)
 
-## Local development details
-- **UI dev server**: http://localhost:3000
-- **API dev server**: http://localhost:8080
+### Development Services
+
+- **UI Dev Server**: Next.js on port 3000
+- **API Dev Server**: Express on port 8080  
 - **Firebase Emulators**: Auth (9099), Firestore (8889), UI (4445)
-- **Test data**: Automatically seeded (5 users, 3 students, 3 invites)
-- UI proxies to API via Next.js rewrites (`/api/*` → http://localhost:8080/api/*)
+- **Test Data**: Automatically seeded (5 users, seed script available)
 
-## Testing
-- **E2E Tests**: See `RUN-E2E-TESTS.md` for running Playwright tests locally ⭐
-- **Quick E2E**: Run `./run-e2e-tests.sh` (automated script)
-- UI: lint, typecheck, unit, and Playwright E2E (spawns API + UI servers automatically). See `ui/README.md`.
-- API: lint, typecheck, unit, and Cucumber E2E. See `api/README.md`.
+## 🧪 Testing
 
-## Docs index
-All docs live under `docs/`. Highlights:
-- **Local Development** → `docs/local-development.md` ⭐ **START HERE**
-- Architecture → `docs/architecture.md`
-- UI guide → `docs/ui.md`
-- CI/CD → `docs/ci-cd.md`
-- Infra & Deploy to GCP → `docs/infra.md`, `docs/gcp-deploy.md`
-- Custom domain → `docs/custom-domain.md`
-- CORS troubleshooting → `docs/cors-troubleshooting.md`
+### Quick Test Commands
+```bash
+# E2E Tests (automated)
+./run-e2e-tests.sh
 
-## Quick Reference
-- **Test Credentials**: admin@test.com / admin123, teacher@test.com / teacher123, parent@test.com / parent123
-- **Emulator UI**: http://localhost:4445 (view test data)
-- **Seed Data**: `npm run seed` (create test users and data)
-- **Reset Data**: `npm run seed:clear && npm run seed`
+# Unit Tests
+npm run test:ui    # UI tests
+npm run test:api   # API tests
 
-## License
-See `LICENSE`.
+# Linting & Type Checking
+npm run lint:ui
+npm run typecheck:ui
+```
+
+**Detailed guides**:
+- [RUN-TESTS.md](./RUN-TESTS.md) - Unit tests
+- [RUN-E2E-TESTS.md](./RUN-E2E-TESTS.md) - E2E tests with Playwright
+
+## 📚 Documentation
+
+### Essential Docs (Start Here)
+
+| Document | Description |
+|----------|-------------|
+| [QUICKSTART-EMULATORS.md](./QUICKSTART-EMULATORS.md) | Quick dev environment setup ⭐ |
+| [docs/FEATURES.md](./docs/FEATURES.md) | Implemented features status |
+| [docs/ROLES.md](./docs/ROLES.md) | Complete role capability matrix |
+| [RUN-TESTS.md](./RUN-TESTS.md) | Testing guide |
+
+### Technical Reference
+
+| Document | Description |
+|----------|-------------|
+| [docs/TECH-STACK.md](./docs/TECH-STACK.md) | Technology stack reference |
+| [docs/FIRESTORE-COLLECTIONS.md](./docs/FIRESTORE-COLLECTIONS.md) | Data model |
+| [docs/TESTING.md](./docs/TESTING.md) | Test infrastructure |
+| [docs/PROJECT-STATUS.md](./docs/PROJECT-STATUS.md) | Project overview |
+
+### Deployment & Infrastructure
+
+| Document | Description |
+|----------|-------------|
+| [docs/INFRASTRUCTURE-SETUP.md](./docs/INFRASTRUCTURE-SETUP.md) | GCP deployment guide |
+| [docs/PRODUCTION-READINESS.md](./docs/PRODUCTION-READINESS.md) | Launch checklist |
+| [docs/GCLOUD-COMMANDS.md](./docs/GCLOUD-COMMANDS.md) | GCloud CLI reference |
+
+### AI Assistant Guidelines
+
+| Document | Description |
+|----------|-------------|
+| [AGENTS.md](./AGENTS.md) | AI assistant instructions |
+| [.github/copilot-instructions.md](./.github/copilot-instructions.md) | GitHub Copilot config |
+
+## 🏗️ Tech Stack
+
+- **Frontend**: Next.js 15 + React 19 + TypeScript
+- **Backend**: Express.js + TypeScript
+- **Database**: Google Cloud Firestore
+- **Auth**: Firebase Authentication
+- **Hosting**: Google Cloud Run
+- **CI/CD**: GitHub Actions
+- **Testing**: Jest, Playwright, Cucumber
+
+See [docs/TECH-STACK.md](./docs/TECH-STACK.md) for complete details.
+
+## 📦 Quick Reference
+
+### Common Commands
+```bash
+# Start development
+./start-dev-local.sh
+
+# Seed emulator data
+npm run seed
+
+# Reset emulator data
+npm run seed:clear && npm run seed
+
+# Run all tests
+npm run test:ui && npm run test:api
+
+# E2E tests
+./run-e2e-tests.sh
+```
+
+### Useful Links
+- Emulator UI: http://localhost:4445
+- Firestore Emulator: http://localhost:8889
+- Auth Emulator: http://localhost:9099
+
+## 🤝 Contributing
+
+1. Follow code patterns in `.github/copilot-instructions.md`
+2. Run tests before committing
+3. Update documentation when adding features
+4. See [docs/FEATURES.md](./docs/FEATURES.md) for feature status
+
+## 📄 License
+
+See [LICENSE](./LICENSE).
+
+---
+
+**Need help?** Start with [QUICKSTART-EMULATORS.md](./QUICKSTART-EMULATORS.md) for local development setup.
