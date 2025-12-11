@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { loginAsAdmin } from './helpers/auth';
 
 test.describe('Admin Layout Navigation', () => {
   test('should require authentication', async ({ page }) => {
@@ -12,15 +13,18 @@ test.describe('Admin Layout Navigation', () => {
   });
 
   test.describe('Authenticated as Admin', () => {
-    test.skip('should display admin portal header', async ({ page }) => {
-      // TODO: Implement with admin auth mock
+    test.beforeEach(async ({ page }) => {
+      await loginAsAdmin(page);
+      await page.goto('/admin');
+    });
+
+    test('should display admin portal header', async ({ page }) => {
       await page.goto('/admin');
       
       await expect(page.getByText('Admin Portal')).toBeVisible();
     });
 
-    test.skip('should display navigation sections in header', async ({ page }) => {
-      // TODO: Implement with admin auth mock
+    test('should display navigation sections in header', async ({ page }) => {
       await page.goto('/admin');
       
       // Should show three main navigation buttons
@@ -29,8 +33,7 @@ test.describe('Admin Layout Navigation', () => {
       await expect(page.getByRole('button', { name: /content/i })).toBeVisible();
     });
 
-    test.skip('should show dropdown menu on click', async ({ page }) => {
-      // TODO: Implement with admin auth mock
+    test('should show dropdown menu on click', async ({ page }) => {
       await page.goto('/admin');
       
       // Click Teachers dropdown
@@ -41,8 +44,7 @@ test.describe('Admin Layout Navigation', () => {
       await expect(page.getByRole('link', { name: /invite teacher/i })).toBeVisible();
     });
 
-    test.skip('should navigate from dropdown', async ({ page }) => {
-      // TODO: Implement with admin auth mock
+    test('should navigate from dropdown', async ({ page }) => {
       await page.goto('/admin');
       
       // Open Teachers dropdown
@@ -55,8 +57,7 @@ test.describe('Admin Layout Navigation', () => {
       await page.waitForURL('/admin/users/teachers/list');
     });
 
-    test.skip('should show sidebar when in section', async ({ page }) => {
-      // TODO: Implement with admin auth mock
+    test('should show sidebar when in section', async ({ page }) => {
       await page.goto('/admin/users/teachers/list');
       
       // Sidebar should be visible (desktop only)
@@ -68,8 +69,7 @@ test.describe('Admin Layout Navigation', () => {
       await expect(sidebar.getByText('Teachers')).toBeVisible();
     });
 
-    test.skip('should highlight active section', async ({ page }) => {
-      // TODO: Implement with admin auth mock
+    test('should highlight active section', async ({ page }) => {
       await page.goto('/admin/content/hero');
       
       // Content button should be highlighted
@@ -77,8 +77,7 @@ test.describe('Admin Layout Navigation', () => {
       await expect(contentButton).toHaveClass(/bg-blue-50/);
     });
 
-    test.skip('should show mobile menu', async ({ page }) => {
-      // TODO: Implement with admin auth mock
+    test('should show mobile menu', async ({ page }) => {
       await page.setViewportSize({ width: 375, height: 667 }); // Mobile
       await page.goto('/admin');
       
@@ -95,8 +94,7 @@ test.describe('Admin Layout Navigation', () => {
       await expect(page.getByText('Content')).toBeVisible();
     });
 
-    test.skip('should close dropdown when clicking outside', async ({ page }) => {
-      // TODO: Implement with admin auth mock
+    test('should close dropdown when clicking outside', async ({ page }) => {
       await page.goto('/admin');
       
       // Open dropdown
@@ -112,8 +110,7 @@ test.describe('Admin Layout Navigation', () => {
       await expect(page.getByRole('link', { name: /all teachers/i })).not.toBeVisible();
     });
 
-    test.skip('should maintain navigation state across pages', async ({ page }) => {
-      // TODO: Implement with admin auth mock
+    test('should maintain navigation state across pages', async ({ page }) => {
       await page.goto('/admin/users/teachers/list');
       
       // Teachers section should be active
@@ -129,8 +126,7 @@ test.describe('Admin Layout Navigation', () => {
 });
 
 test.describe('Admin Layout Sidebar', () => {
-  test.skip('should show sidebar items for Teachers section', async ({ page }) => {
-    // TODO: Implement with admin auth mock
+  test('should show sidebar items for Teachers section', async ({ page }) => {
     await page.setViewportSize({ width: 1024, height: 768 });
     await page.goto('/admin/users/teachers/list');
     
@@ -144,8 +140,7 @@ test.describe('Admin Layout Sidebar', () => {
     await expect(sidebar.getByRole('link', { name: /invite teacher/i })).toBeVisible();
   });
 
-  test.skip('should show sidebar items for Content section', async ({ page }) => {
-    // TODO: Implement with admin auth mock
+  test('should show sidebar items for Content section', async ({ page }) => {
     await page.setViewportSize({ width: 1024, height: 768 });
     await page.goto('/admin/content/hero');
     
@@ -158,8 +153,7 @@ test.describe('Admin Layout Sidebar', () => {
     await expect(sidebar.getByRole('link', { name: /hero content/i })).toBeVisible();
   });
 
-  test.skip('should not show sidebar on dashboard', async ({ page }) => {
-    // TODO: Implement with admin auth mock
+  test('should not show sidebar on dashboard', async ({ page }) => {
     await page.goto('/admin');
     
     // Sidebar should not exist on dashboard
@@ -167,8 +161,7 @@ test.describe('Admin Layout Sidebar', () => {
     await expect(sidebar).not.toBeVisible();
   });
 
-  test.skip('should highlight active page in sidebar', async ({ page }) => {
-    // TODO: Implement with admin auth mock
+  test('should highlight active page in sidebar', async ({ page }) => {
     await page.setViewportSize({ width: 1024, height: 768 });
     await page.goto('/admin/users/teachers/list');
     
@@ -179,8 +172,7 @@ test.describe('Admin Layout Sidebar', () => {
     await expect(allTeachersLink).toHaveClass(/bg-blue-50/);
   });
 
-  test.skip('should be sticky on desktop', async ({ page }) => {
-    // TODO: Implement with admin auth mock
+  test('should be sticky on desktop', async ({ page }) => {
     await page.setViewportSize({ width: 1024, height: 768 });
     await page.goto('/admin/users/teachers/list');
     
@@ -190,8 +182,7 @@ test.describe('Admin Layout Sidebar', () => {
     await expect(sidebar).toHaveCSS('position', 'sticky');
   });
 
-  test.skip('should not show on mobile', async ({ page }) => {
-    // TODO: Implement with admin auth mock
+  test('should not show on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/admin/users/teachers/list');
     
