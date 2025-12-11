@@ -123,23 +123,27 @@ jobs:
           npm run seed
           echo "✅ Test data seeded"
       
-      - name: Build API for E2E tests
+      - name: Build API and UI for E2E tests
         run: |
-          echo "🔨 Building API for E2E tests..."
+          echo "🔨 Building API..."
           cd api
-          npm run build:test
-          echo "✅ API built"
-      
-      - name: Build UI for E2E tests
-        run: |
-          echo "🔨 Building UI for E2E tests..."
-          cd ui
-          echo "Current directory: $(pwd)"
-          echo "Running: npm run build"
           npm run build
-          echo "Checking if .next exists..."
-          ls -la .next/ || echo "ERROR: .next directory not found!"
-          echo "✅ UI built successfully"
+          cd ..
+          echo "✅ API built"
+          
+          echo "🔨 Building UI..."
+          cd ui
+          pwd
+          npm run build
+          
+          # Verify build exists
+          if [ -d ".next" ]; then
+            echo "✅ UI built successfully (.next directory exists)"
+            ls -la .next/
+          else
+            echo "❌ ERROR: .next directory not found!"
+            exit 1
+          fi
       
       - name: Run Playwright E2E tests
         run: |
