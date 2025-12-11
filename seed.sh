@@ -19,11 +19,34 @@ fi
 echo "✅ Emulators detected at http://localhost:4445"
 echo ""
 
+# Check if seed script dependencies are installed (check for firebase-admin specifically)
+if [ ! -d "scripts/node_modules/firebase-admin" ]; then
+    echo "📦 Installing seed script dependencies..."
+    cd scripts && npm install && cd ..
+    if [ $? -ne 0 ]; then
+        echo "❌ Failed to install dependencies"
+        exit 1
+    fi
+    echo "✅ Dependencies installed"
+    echo ""
+fi
+
 # Set emulator environment variables
 export FIRESTORE_EMULATOR_HOST=localhost:8889
 export FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
 
 # Run seed script
+echo "🌱 Running seed script..."
 cd scripts
 node seed-emulator.js
+SEED_EXIT_CODE=$?
 cd ..
+
+if [ $SEED_EXIT_CODE -eq 0 ]; then
+    echo ""
+    echo "✅ Seed completed successfully!"
+else
+    echo ""
+    echo "❌ Seed failed with exit code $SEED_EXIT_CODE"
+    exit $SEED_EXIT_CODE
+fi
