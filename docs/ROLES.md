@@ -231,20 +231,21 @@ Admins manage day-to-day school operations including users, content, and communi
 - No Firestore storage - all client-side for performance
 - No admin management needed for Thirukkural rotation
 
-**Event Banner Override:**
-When admin publishes an event banner, it replaces the Thirukkural display for the specified time period.
+**Event Banner with Carousel:**
+When admin publishes an event banner, it alternates with Thirukkural in a sliding carousel (10s per slide).
 
 - [x] Create event banner (upload image + bilingual text) - **✅ Complete**
 - [x] Set event display period (start date/time → end date/time) - **✅ Complete**
 - [x] Add event title and description (bilingual: Tamil + English) - **✅ Complete**
 - [x] Add call-to-action button with text (bilingual) and link - **✅ Complete**
 - [x] Set banner priority (if multiple concurrent events, show highest priority) - **✅ Complete**
+- [x] Auto-slide carousel between event and Thirukkural (10s intervals) - **✅ Complete**
+- [x] Manual slide navigation with indicators - **✅ Complete**
 - [ ] Preview banner before publishing - **UI Future Enhancement**
 - [x] Schedule banner activation (future start date) - **✅ Complete**
 - [x] Auto-activate at start date/time - **✅ Complete**
 - [x] Auto-deactivate at end date/time - **✅ Complete**
-- [x] Override Thirukkural display during active event period - **✅ Complete**
-- [x] Automatically return to Thirukkural after event ends - **✅ Complete**
+- [x] Show both event and Thirukkural in rotation - **✅ Complete**
 - [x] Edit active event banners - **✅ Complete (via activate/deactivate)**
 - [x] Deactivate event banner manually (before end date) - **✅ Complete**
 - [ ] Duplicate event banner as template - **UI Future Enhancement**
@@ -253,15 +254,17 @@ When admin publishes an event banner, it replaces the Thirukkural display for th
 **Implementation Status**:
 - ✅ **Backend**: API endpoints, security rules, tests, seeding - COMPLETE
 - ✅ **UI**: Hook with caching, event banner component, admin page - COMPLETE
+- ✅ **Carousel**: Auto-slide + manual navigation - COMPLETE (Dec 2025)
 - ✅ **Caching**: 5-min TTL with real-time listeners - COMPLETE
 - ✅ **Bilingual**: Tamil + English support - COMPLETE
 - ✅ **Mobile**: Responsive design - COMPLETE
-- 📝 See `/docs/HERO-CONTENT-FEATURE.md` and `/docs/HERO-CONTENT-UI-COMPLETE.md`
+- 📝 See `/HERO-CONTENT-README.md` for carousel documentation
 
 **Client Behavior:**
 - Client checks Firestore for active event banners (where `isActive: true` and current time is between `startDate` and `endDate`)
-- If active event banner exists → Show event banner
-- If no active event banner → Show Thirukkural (static client-side rotation)
+- If active event banner exists → Show carousel alternating event banner and Thirukkural
+- If no active event banner → Show Thirukkural only (static client-side rotation)
+- Carousel auto-slides every 10 seconds, with manual navigation via indicators
 - Cache event banner data with 5-minute TTL
 - Real-time listener on `heroContent` collection to immediately show/hide event banners
 - Force cache eviction when admin publishes/updates event banner
@@ -498,12 +501,21 @@ When admin publishes an event banner, it replaces the Thirukkural display for th
 
 ### Admin Dashboard Routes
 
+**Layout & Navigation** (✅ Implemented Dec 2025):
+- ✅ Header navigation with dropdown menus for Teachers, Classes, Content
+- ✅ Two-pane layout: Left sidebar for section navigation, right pane for content
+- ✅ Mobile-responsive with hamburger menu
+- ✅ Active section and page highlighting
+- ✅ Centralized Protected wrapper in layout
+- 📝 See `/ADMIN-LAYOUT-CHANGES.md` for implementation details
+
 ```
 /admin
 ├── /dashboard              - Overview, stats, recent activity
 ├── /users
 │   ├── /teachers           - Teacher management
-│   │   ├── /list           - All teachers with filters
+│   │   ├── /list           - ✅ All teachers with filters (IMPLEMENTED)
+│   │   ├── /invite         - ✅ Send teacher invites (IMPLEMENTED)
 │   │   ├── /:id            - Teacher details
 │   │   ├── /:id/edit       - Edit teacher profile
 │   │   └── /inactive       - Inactive/archived teachers
@@ -521,13 +533,15 @@ When admin publishes an event banner, it replaces the Thirukkural display for th
 │   │   └── /inactive       - Inactive parents
 │   └── /search             - Global user search
 ├── /content
-│   ├── /hero               - Hero section editor
+│   ├── /hero               - ✅ Hero section editor (IMPLEMENTED)
 │   ├── /news               - News/announcements
 │   ├── /pages              - Static page editor
 │   ├── /media              - Media library
 │   └── /galleries          - Photo galleries
 ├── /calendar               - Calendar management
-├── /classes                - Class management
+├── /classes                - Class management (placeholder pages created)
+│   ├── /list               - All classes
+│   └── /create             - Create new class
 ├── /communications         - Send announcements
 ├── /reports                - Analytics and reports
 │   ├── /students           - Student reports
@@ -2507,7 +2521,9 @@ For E2E testing, the API accepts special test tokens:
 - [ ] Basic admin dashboard
 
 ### Phase 2: Content Management System (Weeks 5-8)
-- [ ] Hero section editor with preview
+- [x] Admin portal layout with header navigation and sidebar - **✅ Complete (Dec 2025)**
+- [x] Hero section editor with real-time preview - **✅ Complete**
+- [x] Hero section carousel (event + Thirukkural rotation) - **✅ Complete (Dec 2025)**
 - [ ] News/announcement system
   - [ ] Rich text editor integration
   - [ ] Image upload and management

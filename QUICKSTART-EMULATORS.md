@@ -1,5 +1,18 @@
 # 🚀 Firebase Emulator Quick Reference
 
+## Prerequisites
+
+Before starting, ensure you have:
+
+1. **Node.js** (v18 or later)
+2. **Firebase CLI** - `npm install -g firebase-tools`
+3. **Java Runtime** (required for Firebase Emulators)
+   - macOS: `brew install openjdk@11`
+   - Or download from [Adoptium](https://adoptium.net/)
+4. **Docker** (optional, for Docker mode)
+
+The `start-dev-local.sh` script will check these and guide you through installation.
+
 ## One-Command Start
 
 ```bash
@@ -114,10 +127,13 @@ cp api/.env.local.emulator api/.env.local
 
 | Issue | Solution |
 |-------|----------|
+| Java not found | Install Java: `brew install openjdk@11` (macOS) or visit [Adoptium](https://adoptium.net/) |
 | Firebase CLI not found | `npm install -g firebase-tools` |
-| Port conflict | Stop other services or change ports in config |
+| Module not found errors | Run `cd scripts && npm install` |
+| Port conflict | Stop other services or change ports in firebase.json |
 | Docker not starting | `docker-compose down --volumes && docker-compose up --build` |
 | Can't connect to emulator | Check firewall, ensure emulators started successfully |
+| Emulators fail to start | Check Java installation: `java -version` |
 
 ## Next Steps
 

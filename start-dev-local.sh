@@ -1,17 +1,6 @@
 #!/bin/bash
 set -e
 
-EMULATOR_PID=""
-
-cleanup() {
-    # Stop background emulators if the script exits early
-    if [ -n "$EMULATOR_PID" ]; then
-        kill "$EMULATOR_PID" > /dev/null 2>&1 || true
-    fi
-}
-
-trap cleanup EXIT
-
 echo "🚀 Starting GSDTA Local Development Stack with Firebase Emulators"
 echo ""
 
@@ -42,19 +31,23 @@ if ! command -v firebase &> /dev/null; then
     echo ""
 fi
 
-# Check if Java is installed (required for Firebase emulators)
-if ! command -v java > /dev/null 2>&1; then
-    echo "❌ Java (JRE/JDK 11+) not found - required for Firebase Emulators."
+# Check for Java (required by Firebase Emulators)
+if ! java -version &> /dev/null; then
+    echo "❌ Java Runtime not found!"
+    echo ""
+    echo "Firebase Emulators require Java to run."
     echo ""
     echo "Please install Java using one of these methods:"
-    echo "  Homebrew (macOS): brew install openjdk@21"
-    echo "  SDKMAN:           curl -s \"https://get.sdkman.io\" | bash && sdk install java 21.0.4-tem"
-    echo "  Manual download:  https://adoptium.net/"
-    exit 1
-fi
-
-if ! java -version > /dev/null 2>&1; then
-    echo "❌ Java command found but failed to run. Ensure Java 11+ is installed and on your PATH."
+    echo ""
+    echo "Option 1 (Homebrew - Recommended for macOS):"
+    echo "  brew install openjdk@11"
+    echo "  sudo ln -sfn /usr/local/opt/openjdk@11/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-11.jdk"
+    echo ""
+    echo "Option 2 (Download from Oracle/OpenJDK):"
+    echo "  Visit: https://www.oracle.com/java/technologies/downloads/"
+    echo "  Or: https://adoptium.net/"
+    echo ""
+    echo "After installing, restart your terminal and run this script again."
     exit 1
 fi
 
@@ -83,25 +76,29 @@ case $choice in
         echo ""
         echo "🔥 Starting Firebase Emulators..."
         echo ""
-
-        EMULATOR_DATA_DIR="firebase-data"
-        SEED_AFTER_START=false
+        
+        # Check if seed script dependencies are installed
+        if [ ! -d "scripts/node_modules" ]; then
+            echo "📦 Installing seed script dependencies..."
+            cd scripts && npm install && cd ..
+            echo "✅ Dependencies installed"
+            echo ""
+        fi
         
         # Check if we should seed data
-        if [ -d "$EMULATOR_DATA_DIR" ] && [ "$(ls -A "$EMULATOR_DATA_DIR")" ]; then
+        if [ -d "firebase-data" ]; then
             echo "Existing emulator data found."
-            read -p "Do you want to seed/reseed data after the emulators start? (y/n): " seed_choice
+            read -p "Do you want to seed/reseed data? (y/n): " seed_choice
             if [ "$seed_choice" = "y" ] || [ "$seed_choice" = "Y" ]; then
-                SEED_AFTER_START=true
+                echo ""
+                echo "🌱 Seeding emulator data..."
+                cd scripts && npm run seed && cd ..
+                echo ""
             fi
         else
             echo "No existing emulator data. Will seed after emulators start."
             echo ""
-            SEED_AFTER_START=true
         fi
-
-        # Ensure the import/export directory exists for the emulator
-        mkdir -p "$EMULATOR_DATA_DIR"
         
         echo "   You'll need to open two more terminals:"
         echo "   Terminal 2: cd api && npm install && npm run dev"
@@ -113,50 +110,56 @@ case $choice in
         echo "   Emulator UI:  http://localhost:4445"
         echo ""
         
-        # Start emulators in foreground
-        firebase emulators:start --project demo-gsdta --import="./$EMULATOR_DATA_DIR" --export-on-exit &
+        # Start emulators in background
+        firebase emulators:start --project demo-gsdta --import=./firebase-data --export-on-exit &
         EMULATOR_PID=$!
         
         # Wait for emulators to start
         echo "⏳ Waiting for emulators to start..."
-        EMULATOR_READY=0
-        for attempt in {1..15}; do
-            if ! kill -0 "$EMULATOR_PID" > /dev/null 2>&1; then
-                echo "❌ Firebase emulators process exited early. Check the logs above for errors."
-                exit 1
-            fi
-
-            if curl -s http://localhost:4445 > /dev/null 2>&1; then
-                EMULATOR_READY=1
-                break
-            fi
-            sleep 2
-        done
-
-        if [ "$EMULATOR_READY" -ne 1 ]; then
-            echo "❌ Emulator UI did not become ready in time. Check the logs above."
+        sleep 8
+        
+        # Check if emulators are actually running
+        if ! ps -p $EMULATOR_PID > /dev/null; then
+            echo "❌ Emulators failed to start. Check the error messages above."
+            echo ""
+            echo "Common issues:"
+            echo "  - Java not properly installed"
+            echo "  - Ports already in use (4445, 8889, 9099)"
+            echo "  - Firebase project configuration issue"
             exit 1
         fi
         
-        # Seed if requested or no existing data
-        if [ "$SEED_AFTER_START" = true ]; then
+        # Seed if no existing data
+        if [ ! -d "firebase-data" ]; then
             echo ""
-            echo "🌱 Seeding emulator data..."
-            if [ ! -d "scripts/node_modules" ]; then
-                echo "📦 Installing seed script dependencies..."
-                (cd scripts && npm install)
-            fi
-            (cd scripts && npm run seed)
+            echo "🌱 Seeding initial data..."
+            cd scripts && npm run seed && cd ..
             echo ""
         fi
         
+        echo "✅ Emulators are running!"
+        echo ""
+        echo "Press Ctrl+C to stop emulators (data will be exported to ./firebase-data)"
+        echo ""
+        
         # Keep emulators running
         wait $EMULATOR_PID
-        EMULATOR_PID=""
         ;;
     2)
         echo ""
         echo "🐳 Starting Docker Compose stack..."
+        echo ""
+        echo "Note: Docker Compose mode includes Java and all dependencies."
+        echo ""
+        
+        # Check if Docker is running
+        if ! docker info &> /dev/null; then
+            echo "❌ Docker is not running!"
+            echo ""
+            echo "Please start Docker Desktop and try again."
+            exit 1
+        fi
+        
         docker-compose -f docker-compose.local.yml up --build
         ;;
     *)
