@@ -51,6 +51,9 @@ Choose option 1 for local processes, then:
   ```bash
   firebase --version
   ```
+- **Java 11+ (OpenJDK 21 recommended)** - required for Firebase Emulators  
+  macOS: `brew install openjdk@21`  
+  SDKMAN: `curl -s "https://get.sdkman.io" | bash && sdk install java 21.0.4-tem`
 
 ### Optional
 - **Docker** - For containerized development
