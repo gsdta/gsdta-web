@@ -134,8 +134,12 @@ jobs:
         run: |
           echo "🔨 Building UI for E2E tests..."
           cd ui
+          echo "Current directory: $(pwd)"
+          echo "Running: npm run build"
           npm run build
-          echo "✅ UI built"
+          echo "Checking if .next exists..."
+          ls -la .next/ || echo "ERROR: .next directory not found!"
+          echo "✅ UI built successfully"
       
       - name: Run Playwright E2E tests
         run: |
