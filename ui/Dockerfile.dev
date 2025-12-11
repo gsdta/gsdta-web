@@ -7,9 +7,9 @@ RUN apk add --no-cache libc6-compat curl
 WORKDIR /app
 
 # Copy package files
-COPY package.json package-lock.json* ./
+COPY package.json package-lock.json ./
 
-# Copy scripts directory (needed for postinstall)
+# Copy scripts directory BEFORE npm install (needed for postinstall)
 COPY scripts ./scripts
 
 # Install all dependencies (including dev dependencies)
