@@ -130,6 +130,13 @@ jobs:
           npm run build:test
           echo "✅ API built"
       
+      - name: Build UI for E2E tests
+        run: |
+          echo "🔨 Building UI for E2E tests..."
+          cd ui
+          npm run build
+          echo "✅ UI built"
+      
       - name: Run Playwright E2E tests
         run: |
           echo "🎭 Running Playwright E2E tests..."
