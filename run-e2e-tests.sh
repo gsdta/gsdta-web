@@ -118,7 +118,20 @@ print_step "Seeding test data..."
 npm run seed
 print_success "Test data seeded"
 
-# Step 5: Run e2e tests
+# Step 5: Build API and UI
+print_step "Building API..."
+cd api
+npm run build
+cd ..
+print_success "API built"
+
+print_step "Building UI..."
+cd ui
+npm run build
+cd ..
+print_success "UI built"
+
+# Step 6: Run e2e tests
 print_step "Running Playwright e2e tests..."
 echo ""
 cd ui
