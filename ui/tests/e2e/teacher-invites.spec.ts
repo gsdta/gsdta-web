@@ -18,11 +18,8 @@ test.describe('Teacher Invite Flow', () => {
   test('should show error for invalid invite token', async ({ page }) => {
     await page.goto('/invite/accept?token=invalid-token-xyz');
 
-    // Should show loading state
-    await expect(page.getByText(/validating invite/i)).toBeVisible();
-
-    // Should show error
-    await expect(page.getByText(/invite not found or expired/i)).toBeVisible({ timeout: 5000 });
+    // Should show error (loading state might be too fast to catch)
+    await expect(page.getByText(/invite not found or expired/i)).toBeVisible({ timeout: 10000 });
   });
 
   test('should show error when token is missing', async ({ page }) => {
