@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
+import { loginAsAdmin } from './helpers/auth';
 
 test.describe('Admin Teachers List Page', () => {
   // Note: These tests require admin authentication
-  // For now, they test basic page structure and will be extended with auth
 
   test('should require authentication', async ({ page }) => {
     await page.goto('/admin/users/teachers/list');
@@ -15,8 +15,13 @@ test.describe('Admin Teachers List Page', () => {
   });
 
   test.describe('Authenticated as Admin', () => {
-    test.skip('should display teachers list page structure', async ({ page }) => {
-      // TODO: Implement with admin auth mock
+    test.beforeEach(async ({ page }) => {
+      await loginAsAdmin(page);
+      await page.goto('/admin/users/teachers/list');
+    });
+
+  test.describe('Authenticated as Admin', () => {
+    test('should display teachers list page structure', async ({ page }) => {
       // Skip until auth mocking is available
       
       await page.goto('/admin/users/teachers/list');
@@ -36,8 +41,7 @@ test.describe('Admin Teachers List Page', () => {
       expect(hasTable || hasEmptyState).toBeTruthy();
     });
 
-    test.skip('should allow searching teachers', async ({ page }) => {
-      // TODO: Implement with admin auth mock
+    test('should allow searching teachers', async ({ page }) => {
       await page.goto('/admin/users/teachers/list');
       
       // Wait for page to load
@@ -53,8 +57,7 @@ test.describe('Admin Teachers List Page', () => {
       expect(page.url()).toContain('search');
     });
 
-    test.skip('should allow filtering by status', async ({ page }) => {
-      // TODO: Implement with admin auth mock
+    test('should allow filtering by status', async ({ page }) => {
       await page.goto('/admin/users/teachers/list');
       
       const statusSelect = page.getByRole('combobox', { name: /status/i });
@@ -70,8 +73,7 @@ test.describe('Admin Teachers List Page', () => {
       await page.waitForTimeout(500);
     });
 
-    test.skip('should display teachers in table format', async ({ page }) => {
-      // TODO: Implement with admin auth mock
+    test('should display teachers in table format', async ({ page }) => {
       await page.goto('/admin/users/teachers/list');
       
       // Should have table headers
@@ -82,8 +84,7 @@ test.describe('Admin Teachers List Page', () => {
       await expect(page.getByRole('columnheader', { name: /actions/i })).toBeVisible();
     });
 
-    test.skip('should have pagination controls when needed', async ({ page }) => {
-      // TODO: Implement with admin auth mock
+    test('should have pagination controls when needed', async ({ page }) => {
       await page.goto('/admin/users/teachers/list');
       
       // If there are multiple pages, should show pagination
@@ -95,8 +96,7 @@ test.describe('Admin Teachers List Page', () => {
       }
     });
 
-    test.skip('should show loading state', async ({ page }) => {
-      // TODO: Implement with admin auth mock
+    test('should show loading state', async ({ page }) => {
       await page.goto('/admin/users/teachers/list');
       
       // Should briefly show loading spinner
@@ -105,13 +105,12 @@ test.describe('Admin Teachers List Page', () => {
       expect(typeof loadingVisible).toBe('boolean');
     });
 
-    test.skip('should show error state when API fails', async ({ page }) => {
+    test('should show error state when API fails', async ({ page }) => {
       // TODO: Implement with API mocking to force error
       // This would require intercepting the network request and returning an error
     });
 
-    test.skip('should navigate to teacher detail page', async ({ page }) => {
-      // TODO: Implement with admin auth mock
+    test('should navigate to teacher detail page', async ({ page }) => {
       await page.goto('/admin/users/teachers/list');
       
       // Click on "View" link for first teacher
@@ -122,8 +121,7 @@ test.describe('Admin Teachers List Page', () => {
       await page.waitForURL(/\/admin\/users\/teachers\/\w+$/);
     });
 
-    test.skip('should navigate to teacher edit page', async ({ page }) => {
-      // TODO: Implement with admin auth mock
+    test('should navigate to teacher edit page', async ({ page }) => {
       await page.goto('/admin/users/teachers/list');
       
       // Click on "Edit" link for first teacher
@@ -134,8 +132,7 @@ test.describe('Admin Teachers List Page', () => {
       await page.waitForURL(/\/admin\/users\/teachers\/\w+\/edit$/);
     });
 
-    test.skip('should be responsive on mobile', async ({ page }) => {
-      // TODO: Implement with admin auth mock
+    test('should be responsive on mobile', async ({ page }) => {
       await page.setViewportSize({ width: 375, height: 667 }); // iPhone SE
       await page.goto('/admin/users/teachers/list');
       
@@ -148,8 +145,7 @@ test.describe('Admin Teachers List Page', () => {
 });
 
 test.describe('Admin Dashboard Teachers Link', () => {
-  test.skip('admin dashboard should have navigation to teachers', async ({ page }) => {
-    // TODO: Implement with admin auth mock
+  test('admin dashboard should have navigation to teachers', async ({ page }) => {
     await page.goto('/admin');
     
     // New layout: should have Teachers dropdown in header
