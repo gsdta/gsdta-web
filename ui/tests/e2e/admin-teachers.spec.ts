@@ -20,7 +20,6 @@ test.describe('Admin Teachers List Page', () => {
       await page.goto('/admin/users/teachers/list');
     });
 
-  test.describe('Authenticated as Admin', () => {
     test('should display teachers list page structure', async ({ page }) => {
       // Skip until auth mocking is available
       
