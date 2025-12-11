@@ -2,19 +2,22 @@
 
 **Project**: GSDTA Web Application  
 **Purpose**: Comprehensive data model for all collections  
-**Last Updated**: December 2025
+**Last Updated**: December 11, 2025
+
+> **🚀 GCP Setup Guide**: See [FIRESTORE-SETUP.md](./FIRESTORE-SETUP.md) for step-by-step deployment instructions
 
 ---
 
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Collection Priority](#collection-priority)
-3. [Admin Flow Collections](#admin-flow-collections)
-4. [Teacher Flow Collections](#teacher-flow-collections)
-5. [Parent Flow Collections](#parent-flow-collections)
-6. [Shared/Common Collections](#sharedcommon-collections)
-7. [System Collections](#system-collections)
+2. [Current Production Status](#current-production-status)
+3. [Collection Priority](#collection-priority)
+4. [Admin Flow Collections](#admin-flow-collections)
+5. [Teacher Flow Collections](#teacher-flow-collections)
+6. [Parent Flow Collections](#parent-flow-collections)
+7. [Shared/Common Collections](#sharedcommon-collections)
+8. [System Collections](#system-collections)
 
 ---
 
@@ -26,17 +29,43 @@ This document outlines all Firestore collections needed for the GSDTA web applic
 - **Firestore Native Mode** (not Datastore mode)
 - **Location**: us-central1
 - **Security**: Firestore Security Rules enforced
-- **Indexes**: Composite indexes defined in firestore.indexes.json
+- **Indexes**: Composite indexes defined in `persistence/firestore.indexes.json`
+
+---
+
+## Current Production Status
+
+### ✅ Collections in GCP Production
+
+1. **users** - User accounts and authentication (DEPLOYED)
+2. **roleInvites** - Teacher/admin invitations (DEPLOYED)
+
+### 🆕 Collections Implemented (Ready to Deploy)
+
+3. **heroContent** - Event banners for homepage hero section (IMPLEMENTED - Dec 2025)
+   - Backend API complete
+   - Admin UI complete
+   - Public carousel complete
+   - **Action**: Deploy indexes to GCP (see [FIRESTORE-SETUP.md](./FIRESTORE-SETUP.md))
+
+### ⏳ Collections Needed for Current Features
+
+None - all current features have required collections implemented.
+
+### 📋 Collections for Upcoming Features
+
+- `students` - For student management (Phase 2)
+- `classes` - For class management (Phase 2)
+- `studentClassEnrollments` - For enrollment tracking (Phase 2)
 
 ---
 
 ## Collection Priority
 
-### Phase 1: Foundation (Weeks 1-4)
-- `users` - User accounts and authentication
-- `roleInvites` - Teacher/admin invitations (already implemented)
-- `auditLog` - System audit trail
-- `systemConfig` - System-wide configuration
+### Phase 1: Foundation (✅ Complete)
+- ✅ `users` - User accounts and authentication
+- ✅ `roleInvites` - Teacher/admin invitations
+- 🆕 `heroContent` - Hero section event banners (implemented, needs GCP deployment)
 
 ### Phase 2: User Management (Weeks 5-8)
 - `students` - Student records
