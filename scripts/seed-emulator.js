@@ -77,40 +77,129 @@ const TEST_USERS = [
   }
 ];
 
-// Sample students data
+// Sample classes data
+const SAMPLE_CLASSES = [
+  {
+    id: 'class-001',
+    name: 'Tamil Beginners - Saturday AM',
+    level: 'Beginner',
+    day: 'Saturday',
+    time: '10:00 AM - 12:00 PM',
+    capacity: 20,
+    enrolled: 2,
+    teacherId: 'test-teacher-uid',
+    teacherName: 'Test Teacher',
+    status: 'active',
+    academicYear: '2024-2025'
+  },
+  {
+    id: 'class-002',
+    name: 'Tamil Intermediate - Saturday PM',
+    level: 'Intermediate',
+    day: 'Saturday',
+    time: '2:00 PM - 4:00 PM',
+    capacity: 15,
+    enrolled: 1,
+    teacherId: 'teacher-test-002',
+    teacherName: 'Sarah Johnson',
+    status: 'active',
+    academicYear: '2024-2025'
+  },
+  {
+    id: 'class-003',
+    name: 'Tamil Advanced - Sunday',
+    level: 'Advanced',
+    day: 'Sunday',
+    time: '10:00 AM - 12:00 PM',
+    capacity: 10,
+    enrolled: 0,
+    status: 'active',
+    academicYear: '2024-2025'
+  }
+];
+
+// Sample students data (updated to match new schema)
 const SAMPLE_STUDENTS = [
   {
     id: 'student-001',
-    name: 'Arun Kumar',
+    firstName: 'Arun',
+    lastName: 'Kumar',
     parentId: 'test-parent-uid',
+    parentEmail: 'parent@test.com',
     grade: '5th Grade',
     schoolName: 'Lincoln Elementary',
     dateOfBirth: '2015-03-15',
-    enrollmentDate: '2024-09-01',
+    priorTamilLevel: 'beginner',
+    medicalNotes: '',
+    photoConsent: true,
+    classId: 'class-001',
+    className: 'Tamil Beginners - Saturday AM',
     status: 'active',
     notes: 'Enthusiastic learner, loves Tamil poetry'
   },
   {
     id: 'student-002',
-    name: 'Priya Sharma',
+    firstName: 'Priya',
+    lastName: 'Sharma',
     parentId: 'test-parent-uid',
+    parentEmail: 'parent@test.com',
     grade: '7th Grade',
     schoolName: 'Lincoln Elementary',
     dateOfBirth: '2013-07-22',
-    enrollmentDate: '2024-09-01',
+    priorTamilLevel: 'intermediate',
+    medicalNotes: '',
+    photoConsent: true,
+    classId: 'class-002',
+    className: 'Tamil Intermediate - Saturday PM',
     status: 'active',
     notes: 'Advanced reader, participates actively'
   },
   {
     id: 'student-003',
-    name: 'Vikram Patel',
+    firstName: 'Vikram',
+    lastName: 'Patel',
     parentId: 'parent-test-002',
+    parentEmail: 'parent2@test.com',
     grade: '6th Grade',
     schoolName: 'Washington Middle School',
     dateOfBirth: '2014-11-08',
-    enrollmentDate: '2024-09-01',
+    priorTamilLevel: 'beginner',
+    medicalNotes: 'Mild peanut allergy',
+    photoConsent: false,
+    classId: 'class-001',
+    className: 'Tamil Beginners - Saturday AM',
     status: 'active',
     notes: 'Good progress in writing'
+  },
+  {
+    id: 'student-004',
+    firstName: 'Meera',
+    lastName: 'Krishnan',
+    parentId: 'parent-test-002',
+    parentEmail: 'parent2@test.com',
+    grade: '4th Grade',
+    schoolName: 'Jefferson Elementary',
+    dateOfBirth: '2016-05-10',
+    priorTamilLevel: 'none',
+    medicalNotes: '',
+    photoConsent: true,
+    status: 'pending',
+    notes: 'New registration - awaiting review'
+  },
+  {
+    id: 'student-005',
+    firstName: 'Raj',
+    lastName: 'Sundar',
+    parentId: 'test-parent-uid',
+    parentEmail: 'parent@test.com',
+    grade: '3rd Grade',
+    schoolName: 'Lincoln Elementary',
+    dateOfBirth: '2017-09-20',
+    priorTamilLevel: 'none',
+    medicalNotes: '',
+    photoConsent: false,
+    status: 'admitted',
+    notes: 'Admitted - needs class assignment'
   }
 ];
 
@@ -218,11 +307,33 @@ async function seedUserProfiles() {
 }
 
 /**
+ * Seed class records
+ */
+async function seedClasses() {
+  console.log('\n📝 Seeding class records...');
+
+  for (const cls of SAMPLE_CLASSES) {
+    try {
+      const classData = {
+        ...cls,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      };
+
+      await db.collection('classes').doc(cls.id).set(classData, { merge: true });
+      console.log(`  ✅ Created class: ${cls.name} (${cls.enrolled}/${cls.capacity} students)`);
+    } catch (error) {
+      console.error(`  ❌ Error creating class ${cls.name}:`, error.message);
+    }
+  }
+}
+
+/**
  * Seed student records
  */
 async function seedStudents() {
   console.log('\n📝 Seeding student records...');
-  
+
   for (const student of SAMPLE_STUDENTS) {
     try {
       const studentData = {
@@ -231,10 +342,18 @@ async function seedStudents() {
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       };
 
+      // Add admittedAt for non-pending students
+      if (student.status === 'admitted' || student.status === 'active') {
+        studentData.admittedAt = admin.firestore.FieldValue.serverTimestamp();
+        studentData.admittedBy = 'test-admin-uid';
+      }
+
       await db.collection('students').doc(student.id).set(studentData, { merge: true });
-      console.log(`  ✅ Created student: ${student.name} (Parent: ${student.parentId})`);
+      const fullName = `${student.firstName} ${student.lastName}`;
+      console.log(`  ✅ Created student: ${fullName} (${student.status})`);
     } catch (error) {
-      console.error(`  ❌ Error creating student ${student.name}:`, error.message);
+      const fullName = `${student.firstName} ${student.lastName}`;
+      console.error(`  ❌ Error creating student ${fullName}:`, error.message);
     }
   }
 }
@@ -381,7 +500,7 @@ async function clearAllData() {
   
   try {
     // Clear Firestore collections
-    const collections = ['users', 'students', 'invites', 'heroContent'];
+    const collections = ['users', 'students', 'classes', 'invites', 'heroContent'];
     for (const collectionName of collections) {
       const snapshot = await db.collection(collectionName).get();
       const batch = db.batch();
@@ -425,6 +544,7 @@ async function main() {
     // Seed all data
     await seedAuthUsers();
     await seedUserProfiles();
+    await seedClasses();
     await seedStudents();
     await seedInvites();
     await seedHeroContent();
@@ -444,6 +564,20 @@ async function main() {
     console.log('  Valid:   test-invite-valid-123');
     console.log('  Expired: test-invite-expired-456');
     console.log('  Used:    test-invite-used-789');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('\nSample Classes:');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('  class-001: Tamil Beginners - Saturday AM');
+    console.log('  class-002: Tamil Intermediate - Saturday PM');
+    console.log('  class-003: Tamil Advanced - Sunday');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('\nSample Students:');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('  student-001: Arun Kumar (active)');
+    console.log('  student-002: Priya Sharma (active)');
+    console.log('  student-003: Vikram Patel (active)');
+    console.log('  student-004: Meera Krishnan (pending)');
+    console.log('  student-005: Raj Sundar (admitted)');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('\nAccess Emulator UI: http://localhost:4445\n');
 
