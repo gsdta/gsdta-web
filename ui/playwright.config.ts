@@ -39,6 +39,8 @@ export default defineConfig({
             timeout: 60_000, // Reduced since no build needed
             env: {
                 // DO NOT use USE_TEST_AUTH=true - we need real Firebase token verification against the emulator
+                // Explicitly force it off so it can't leak in from a developer/CI environment.
+                USE_TEST_AUTH: "false",
                 ALLOW_TEST_INVITES: "1",
                 NODE_ENV: "development",  // Use development mode for real Firebase token verification
                 FIRESTORE_EMULATOR_HOST: process.env.FIRESTORE_EMULATOR_HOST || "localhost:8889",
