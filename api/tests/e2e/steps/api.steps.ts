@@ -134,6 +134,30 @@ Then('the JSON path {string} should equal {string}', async function (jsonPath: s
   assert.strictEqual(String(value), expected);
 });
 
+When('I send a PUT request to {string} with JSON body:', { timeout: 90000 }, async function (path: string, body: string) {
+  const url = resolveUrl(path);
+  const headers: HeadersInit = { 'content-type': 'application/json' };
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+
+  try {
+    lastResponse = await fetch(url, {
+      method: 'PUT',
+      headers,
+      body,
+      signal: controller.signal
+    });
+    lastJson = undefined;
+    hasParsedJson = false;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+});
+
 When('I send a PATCH request to {string} with JSON body:', { timeout: 90000 }, async function (path: string, body: string) {
   const url = resolveUrl(path);
   const headers: HeadersInit = { 'content-type': 'application/json' };
