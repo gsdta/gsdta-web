@@ -199,6 +199,7 @@ async function seedUserProfiles() {
       const userProfile = {
         uid: userData.uid,
         email: userData.email,
+        name: userData.displayName,
         firstName: userData.firstName || userData.displayName?.split(' ')[0] || 'Test',
         lastName: userData.lastName || userData.displayName?.split(' ')[1] || 'User',
         roles: userData.roles,
