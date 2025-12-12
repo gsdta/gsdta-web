@@ -32,6 +32,20 @@ async function loginWithCredentials(
   password: string,
   expectedUrlPattern: RegExp
 ): Promise<void> {
+  // Set up response listener to capture /api/v1/me response for debugging
+  const apiResponses: { url: string; status: number; body?: string }[] = [];
+  page.on('response', async (response) => {
+    const url = response.url();
+    if (url.includes('/api/v1/me') || url.includes('identitytoolkit')) {
+      try {
+        const body = await response.text().catch(() => '');
+        apiResponses.push({ url, status: response.status(), body: body.substring(0, 200) });
+      } catch {
+        apiResponses.push({ url, status: response.status() });
+      }
+    }
+  });
+
   // Go to signin page (Firebase mode login)
   await page.goto('/signin', { waitUntil: 'networkidle' });
 
@@ -42,13 +56,17 @@ async function loginWithCredentials(
   await page.fill('input[type="email"]', email);
   await page.fill('input[type="password"]', password);
 
-  // Click the email sign-in button
+  // Click the email sign-in button and wait for either navigation or API response
   await page.click('button[type="submit"]');
 
   // Wait for redirect after login - use a longer timeout and handle errors
   try {
     await page.waitForURL(expectedUrlPattern, { timeout: 20000 });
   } catch (error) {
+    // Log API responses for debugging
+    console.error('API responses during login attempt:', JSON.stringify(apiResponses, null, 2));
+    console.error('Current URL:', page.url());
+
     // Check if there's an auth error message on the page
     const errorAlert = page.locator('[role="alert"]');
     const count = await errorAlert.count();
@@ -61,10 +79,10 @@ async function loginWithCredentials(
         }
       }
       if (visibleTexts.length > 0) {
-        throw new Error(`Login failed with alerts: ${visibleTexts.join(' | ')}`);
+        throw new Error(`Login failed with alerts: ${visibleTexts.join(' | ')}. API responses: ${JSON.stringify(apiResponses)}`);
       }
     }
-    throw error;
+    throw new Error(`Login timeout. Current URL: ${page.url()}. API responses: ${JSON.stringify(apiResponses)}`);
   }
 
   // Extra wait for page to be fully loaded

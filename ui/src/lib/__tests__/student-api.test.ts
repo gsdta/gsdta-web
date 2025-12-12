@@ -31,7 +31,7 @@ describe('student-api', () => {
       await getMyStudents(mockGetIdToken);
 
       expect(fetchSpy).toHaveBeenCalledWith(
-        expect.stringMatching(/\/api\/v1\/me\/students$/),
+        expect.stringMatching(/\/api\/v1\/me\/students\/?$/),
         expect.any(Object)
       );
     });

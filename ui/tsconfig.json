@@ -46,6 +46,10 @@
     "coverage",
     "playwright-report",
     "test-results",
-    "cypress"
+    "cypress",
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "tests"
   ]
 }

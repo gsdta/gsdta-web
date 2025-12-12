@@ -14,7 +14,8 @@ export async function getProfile(getIdToken: TokenGetter): Promise<ProfileRespon
   const token = await getIdToken();
   if (!token) throw new Error('Not authenticated');
 
-  const res = await fetch('/api/v1/me', {
+  // Use trailing slash to avoid 308 redirect that strips Authorization header
+  const res = await fetch('/api/v1/me/', {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -36,7 +37,8 @@ export async function updateProfile(
   const token = await getIdToken();
   if (!token) throw new Error('Not authenticated');
 
-  const res = await fetch('/api/v1/me', {
+  // Use trailing slash to avoid 308 redirect that strips Authorization header
+  const res = await fetch('/api/v1/me/', {
     method: 'PUT',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -60,7 +62,8 @@ export async function getLinkedStudents(getIdToken: TokenGetter): Promise<Linked
   const token = await getIdToken();
   if (!token) throw new Error('Not authenticated');
 
-  const res = await fetch('/api/v1/me/students', {
+  // Use trailing slash to avoid 308 redirect that strips Authorization header
+  const res = await fetch('/api/v1/me/students/', {
     headers: { Authorization: `Bearer ${token}` },
   });
 

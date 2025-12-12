@@ -190,7 +190,8 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
                         type Me = { uid: string; email: string; name?: string; roles: string[]; emailVerified?: boolean };
                         let data: Me | null = null;
                         try {
-                            data = await apiFetch<Me>(`${base}/v1/me`, { rawUrl: true, headers: { Authorization: `Bearer ${token}` } });
+                            // Use trailing slash to match UI's trailingSlash config and avoid 308 redirect that strips Auth header
+                            data = await apiFetch<Me>(`${base}/v1/me/`, { rawUrl: true, headers: { Authorization: `Bearer ${token}` } });
                         } catch {
                             data = null;
                         }

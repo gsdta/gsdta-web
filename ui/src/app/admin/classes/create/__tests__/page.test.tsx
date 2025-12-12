@@ -78,16 +78,21 @@ describe('CreateClassPage', () => {
 
   test('CCF-005: Capacity validation - min 1', async () => {
     render(<CreateClassPage />);
-    
+
     fireEvent.change(screen.getByLabelText(/Class Name/i), { target: { value: 'Test Class' } });
     fireEvent.change(screen.getByLabelText(/Time/i), { target: { value: '10am' } });
-    const input = screen.getByLabelText(/Capacity/i);
+    const input = screen.getByLabelText(/Capacity/i) as HTMLInputElement;
+    // Set capacity to 0 - parseInt will parse '0' as 0
     fireEvent.change(input, { target: { value: '0' } });
-    fireEvent.blur(input);
-    
-    fireEvent.click(screen.getByRole('button', { name: /Create Class/i }));
 
-    expect(await screen.findByText(/Capacity must be at least 1/i)).toBeInTheDocument();
+    // Submit the form by submitting the form element directly
+    const form = screen.getByRole('button', { name: /Create Class/i }).closest('form')!;
+    fireEvent.submit(form);
+
+    // Wait for validation error to appear
+    await waitFor(() => {
+      expect(screen.getByText(/Capacity must be at least 1/i)).toBeInTheDocument();
+    });
   });
 
   test('CCF-006: Successful submission redirects', async () => {
