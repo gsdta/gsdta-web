@@ -116,9 +116,46 @@ This document tracks all implemented features in the GSDTA web application. For 
 - `/HERO-CONTENT-README.md` - Carousel implementation
 - `/docs/ROLES.md` - Feature description
 
-### 6. Development Tooling
+### 6. Parent Portal - Profile & Students
 
-**Status**: Complete  
+**Status**: Complete
+**Date**: December 2025
+
+#### Backend
+- ✅ Extended UserProfile type (phone, address, language, notifications)
+- ✅ Profile update endpoint (PUT /api/v1/me)
+- ✅ Linked students endpoint (GET /api/v1/me/students)
+- ✅ Zod validation for profile updates
+- ✅ Address and notification preferences support
+
+#### Parent UI
+- ✅ Parent layout with sidebar navigation
+- ✅ Dashboard with welcome message and quick stats
+- ✅ Profile page with view/edit mode
+- ✅ Students page with linked students display
+- ✅ Settings page with preference links
+- ✅ Protected by parent role
+
+**Routes**:
+- `/parent` - Parent dashboard
+- `/parent/profile` - Profile management
+- `/parent/students` - Linked students
+- `/parent/settings` - Settings page
+
+**API Endpoints**:
+- `GET /api/v1/me` - Get user profile
+- `PUT /api/v1/me` - Update user profile
+- `GET /api/v1/me/students` - Get linked students
+
+**Technical**:
+- Component: `/ui/src/app/parent/layout.tsx`
+- Types: `/ui/src/lib/parent-types.ts`
+- API Client: `/ui/src/lib/parent-api.ts`
+- Tests: Cucumber API tests, Playwright E2E tests
+
+### 7. Development Tooling
+
+**Status**: Complete
 **Date**: December 2025
 
 #### Local Development Scripts
@@ -231,9 +268,9 @@ This document tracks all implemented features in the GSDTA web application. For 
 
 ## 📊 Feature Statistics
 
-**Total Features**: 6 completed, 1 in progress  
-**Completion Rate**: 85%  
-**Last Feature**: Hero Content Carousel (Dec 11, 2025)  
+**Total Features**: 7 completed, 1 in progress
+**Completion Rate**: 87%
+**Last Feature**: Parent Portal (Dec 11, 2025)
 **Next Feature**: Class Management (Q1 2026)
 
 ---

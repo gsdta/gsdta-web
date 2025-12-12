@@ -50,10 +50,19 @@ async function loginWithCredentials(
     await page.waitForURL(expectedUrlPattern, { timeout: 20000 });
   } catch (error) {
     // Check if there's an auth error message on the page
-    const errorAlert = page.locator('role=alert');
-    if (await errorAlert.isVisible()) {
-      const errorText = await errorAlert.textContent();
-      throw new Error(`Login failed: ${errorText}`);
+    const errorAlert = page.locator('[role="alert"]');
+    const count = await errorAlert.count();
+    if (count > 0) {
+      const texts = await errorAlert.allInnerTexts();
+      const visibleTexts = [];
+      for (let i = 0; i < count; i++) {
+        if (await errorAlert.nth(i).isVisible()) {
+          visibleTexts.push(texts[i]);
+        }
+      }
+      if (visibleTexts.length > 0) {
+        throw new Error(`Login failed with alerts: ${visibleTexts.join(' | ')}`);
+      }
     }
     throw error;
   }

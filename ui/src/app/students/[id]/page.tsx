@@ -1,10 +1,11 @@
 "use client";
 import React, {useEffect, useState} from "react";
 import {useRouter, useParams} from "next/navigation";
+import {useAuth} from "@/components/AuthProvider";
 import {Protected} from "@/components/Protected";
 import {StudentForm} from "@/components/StudentForm";
 import {getStudent, updateStudent} from "@/lib/student-api";
-import type {Student} from "@/lib/student-types";
+import type {Student, UpdateStudentInput} from "@/lib/student-types";
 import {newStudentDefaults} from "@/lib/student-types";
 
 async function waitForMsw() {
@@ -20,6 +21,7 @@ async function waitForMsw() {
 
 export default function EditStudentPage() {
     const router = useRouter();
+    const { getIdToken } = useAuth();
     const params = useParams<{ id: string }>();
     const id = params?.id as string;
 
@@ -32,7 +34,7 @@ export default function EditStudentPage() {
         (async () => {
             try {
                 await waitForMsw();
-                const s = await getStudent(id);
+                const s = await getStudent(getIdToken, id);
                 if (!cancelled) setStudent(s);
             } catch {
                 if (!cancelled) setError("Not found");
@@ -43,10 +45,10 @@ export default function EditStudentPage() {
         return () => {
             cancelled = true;
         };
-    }, [id]);
+    }, [id, getIdToken]);
 
     async function handleUpdate(values: Partial<Student>) {
-        await updateStudent(id, values);
+        await updateStudent(getIdToken, id, values as unknown as UpdateStudentInput);
         router.replace("/students");
     }
 

@@ -1,19 +1,229 @@
 'use client';
 
-export default function ClassesPage() {
-  return (
-    <div className="max-w-4xl">
-      <div className="bg-white rounded-lg shadow-sm p-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">All Classes</h1>
-        <p className="text-gray-600 mb-6">
-          Class management functionality will be implemented here.
-        </p>
+import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
+import { useAuth } from '@/components/AuthProvider';
+import { adminGetClasses, adminUpdateClass, type Class } from '@/lib/class-api';
 
-        <div className="p-6 bg-blue-50 border border-blue-200 rounded-md">
-          <p className="text-sm text-blue-800">
-            <strong>Coming Soon:</strong> View, search, and manage all classes.
+export default function ClassesPage() {
+  const { getIdToken } = useAuth();
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  const fetchClasses = useCallback(async () => {
+    try {
+      setLoading(true);
+      const result = await adminGetClasses(getIdToken, { status: statusFilter });
+      setClasses(result.classes);
+    } catch (err) {
+      console.error('Failed to fetch classes:', err);
+      setError('Failed to load classes');
+    } finally {
+      setLoading(false);
+    }
+  }, [getIdToken, statusFilter]);
+
+  useEffect(() => {
+    fetchClasses();
+  }, [fetchClasses]);
+
+  const handleToggleStatus = async (classData: Class) => {
+    const newStatus = classData.status === 'active' ? 'inactive' : 'active';
+    if (!confirm(`Are you sure you want to mark this class as ${newStatus}?`)) return;
+
+    setTogglingId(classData.id);
+    try {
+      await adminUpdateClass(getIdToken, classData.id, { status: newStatus });
+      fetchClasses();
+    } catch (err) {
+      console.error('Failed to update class status:', err);
+      alert('Failed to update class status');
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Classes</h1>
+          <p className="mt-1 text-gray-600">
+            Manage Tamil class schedules and assignments.
           </p>
         </div>
+        <Link
+          href="/admin/classes/create"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Create Class
+        </Link>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white rounded-lg shadow p-4">
+        <div className="flex gap-4 items-center">
+          <label htmlFor="statusFilter" className="text-sm font-medium text-gray-700">Filter by status:</label>
+          <select
+            id="statusFilter"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">All Classes</option>
+            <option value="active">Active Only</option>
+            <option value="inactive">Inactive Only</option>
+          </select>
+          <button
+            onClick={() => fetchClasses()}
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+          >
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* Error Alert */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+          {error}
+        </div>
+      )}
+
+      {/* Classes Table */}
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="text-gray-500">Loading classes...</div>
+          </div>
+        ) : classes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-64">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </div>
+            <div className="text-gray-500 mb-2">No classes found</div>
+            <Link
+              href="/admin/classes/create"
+              className="text-blue-600 hover:underline"
+            >
+              Create your first class
+            </Link>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Class
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Schedule
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Students
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Teacher
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {classes.map((cls) => (
+                  <tr key={cls.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{cls.name}</div>
+                        <div className="text-sm text-gray-500">{cls.level}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{cls.day}</div>
+                      <div className="text-sm text-gray-500">{cls.time}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-900">
+                          {cls.enrolled}/{cls.capacity}
+                        </span>
+                        <div className="w-24 bg-gray-200 rounded-full h-2">
+                          <div
+                            className={`h-2 rounded-full ${
+                              cls.enrolled >= cls.capacity
+                                ? 'bg-red-500'
+                                : cls.enrolled >= cls.capacity * 0.8
+                                ? 'bg-yellow-500'
+                                : 'bg-green-500'
+                            }`}
+                            style={{ width: `${Math.min(100, (cls.enrolled / cls.capacity) * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {cls.teacherName || (
+                          <span className="text-gray-400">Not assigned</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          cls.status === 'active'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-gray-100 text-gray-600'
+                        }`}
+                      >
+                        {cls.status === 'active' ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex justify-end gap-2">
+                        <Link
+                          href={`/admin/classes/${cls.id}`}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          Edit
+                        </Link>
+                        <button
+                          onClick={() => handleToggleStatus(cls)}
+                          disabled={togglingId === cls.id}
+                          className={`${
+                            cls.status === 'active'
+                              ? 'text-red-600 hover:text-red-900'
+                              : 'text-green-600 hover:text-green-900'
+                          } disabled:opacity-50`}
+                        >
+                          {togglingId === cls.id
+                            ? '...'
+                            : cls.status === 'active'
+                            ? 'Deactivate'
+                            : 'Activate'}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
