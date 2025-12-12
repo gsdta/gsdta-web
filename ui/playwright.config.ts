@@ -38,6 +38,7 @@ export default defineConfig({
             reuseExistingServer: !isCI, // Allow reusing in local dev for speed
             timeout: 60_000, // Reduced since no build needed
             env: {
+                USE_TEST_AUTH: "true",
                 ALLOW_TEST_INVITES: "1",
                 NODE_ENV: "test",
                 FIRESTORE_EMULATOR_HOST: process.env.FIRESTORE_EMULATOR_HOST || "localhost:8889",

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyIdToken, AuthError } from '@/lib/auth';
-import { getUserProfile, createUserProfile } from '@/lib/firestoreUsers';
+import { AuthError } from '@/lib/auth';
+import { requireAuth } from '@/lib/guard';
+import { createUserProfile } from '@/lib/firestoreUsers';
 import { randomUUID } from 'crypto';
 
 /**
@@ -106,18 +107,28 @@ export async function GET(req: NextRequest) {
 
   try {
     const authz = req.headers.get('authorization');
-    const token = await verifyIdToken(authz);
-
-    let profile = await getUserProfile(token.uid);
-
-    // Auto-create parent profile on first sign-in (Parent Signup Policy - 04)
-    if (!profile) {
-      const email = token.email ?? '';
-      // Get name from email prefix as fallback
-      const name = email.split('@')[0];
-      console.info(JSON.stringify({ requestId, uid: token.uid, action: 'auto-create-parent-profile' }));
-      profile = await createUserProfile(token.uid, email, name, ['parent']);
+    
+    // Use requireAuth for consistent authentication (supports test mode)
+    let authContext;
+    try {
+      authContext = await requireAuth(authz, { requireActive: false });
+    } catch (err) {
+      // If profile not found, auto-create parent profile on first sign-in (Parent Signup Policy - 04)
+      if (err instanceof AuthError && err.code === 'auth/profile-not-found') {
+        // Re-verify token to get user info
+        const { verifyIdToken } = await import('@/lib/auth');
+        const token = await verifyIdToken(authz);
+        const email = token.email ?? '';
+        const name = email.split('@')[0];
+        console.info(JSON.stringify({ requestId, uid: token.uid, action: 'auto-create-parent-profile' }));
+        const profile = await createUserProfile(token.uid, email, name, ['parent']);
+        authContext = { token, profile };
+      } else {
+        throw err;
+      }
     }
+    
+    const { token, profile } = authContext;
 
     if (profile.status !== 'active') {
       return jsonError(403, 'auth/forbidden', 'User status is not active', origin);
