@@ -6,10 +6,9 @@ Feature: Teacher Role Invites API
   Background:
     Given the API is running
 
-  @skip
   Scenario: Verify a valid pending invite token
     # Requires Firebase emulator with test data
-    When I send a GET request to "/api/v1/invites/verify?token=test-valid-token"
+    When I send a GET request to "/api/v1/invites/verify?token=test-invite-valid-123"
     Then the response status should be 200
     And the JSON response should have properties:
       | id         | string |
