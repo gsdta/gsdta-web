@@ -84,21 +84,23 @@ describe('AdminStudentDetailsPage', () => {
 
   test('ASD-001: Renders student details', async () => {
     (adminGetStudent as jest.Mock).mockResolvedValue(mockStudent);
-    
+
     render(
-      <React.Suspense fallback={<div>Loading...</div>}>
+      <React.Suspense fallback={<div>Suspense Loading...</div>}>
         <AdminStudentDetailsPage params={mockParams} />
       </React.Suspense>
     );
-    
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
-    
+
+    // Component shows its own loading state while fetching
+    expect(screen.getByText('Loading student details...')).toBeInTheDocument();
+
     await waitFor(() => expect(adminGetStudent).toHaveBeenCalled());
 
     // Check if error occurred
     expect(screen.queryByText(/Failed/i)).not.toBeInTheDocument();
 
-    expect(await screen.findByText(/Arun Kumar/i)).toBeInTheDocument();
+    // Use heading role to find the specific h1 element with student name
+    expect(await screen.findByRole('heading', { name: /Arun Kumar/i })).toBeInTheDocument();
     expect(screen.getByText('Student Information')).toBeInTheDocument();
   });
 

@@ -59,7 +59,8 @@ export default function ParentProfilePage() {
       try {
         const token = await getIdToken();
         if (!token) return;
-        const res = await fetch('/api/v1/me', {
+        // Use trailing slash to avoid 308 redirect that strips Authorization header
+        const res = await fetch('/api/v1/me/', {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -135,7 +136,8 @@ export default function ParentProfilePage() {
         };
       }
 
-      const res = await fetch('/api/v1/me', {
+      // Use trailing slash to avoid 308 redirect that strips Authorization header
+      const res = await fetch('/api/v1/me/', {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,

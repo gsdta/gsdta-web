@@ -38,9 +38,9 @@ export default defineConfig({
             reuseExistingServer: !isCI, // Allow reusing in local dev for speed
             timeout: 60_000, // Reduced since no build needed
             env: {
-                USE_TEST_AUTH: "true",
+                // DO NOT use USE_TEST_AUTH=true - we need real Firebase token verification against the emulator
                 ALLOW_TEST_INVITES: "1",
-                NODE_ENV: "test",
+                NODE_ENV: "development",  // Use development mode for real Firebase token verification
                 FIRESTORE_EMULATOR_HOST: process.env.FIRESTORE_EMULATOR_HOST || "localhost:8889",
                 FIREBASE_AUTH_EMULATOR_HOST: process.env.FIREBASE_AUTH_EMULATOR_HOST || "localhost:9099",
                 FIREBASE_PROJECT_ID: "demo-gsdta",

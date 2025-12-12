@@ -34,7 +34,8 @@ export async function createStudent(
   const token = await getIdToken();
   if (!token) throw new Error('Not authenticated');
 
-  const res = await fetch('/api/v1/me/students', {
+  // Use trailing slash to avoid 308 redirect that strips Authorization header
+  const res = await fetch('/api/v1/me/students/', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -59,7 +60,8 @@ export async function getMyStudents(getIdToken: TokenGetter): Promise<Student[]>
   const token = await getIdToken();
   if (!token) throw new Error('Not authenticated');
 
-  const res = await fetch('/api/v1/me/students', {
+  // Use trailing slash to avoid 308 redirect that strips Authorization header
+  const res = await fetch('/api/v1/me/students/', {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -82,7 +84,8 @@ export async function getStudentById(
   const token = await getIdToken();
   if (!token) throw new Error('Not authenticated');
 
-  const res = await fetch(`/api/v1/me/students/${studentId}`, {
+  // Use trailing slash to avoid 308 redirect that strips Authorization header
+  const res = await fetch(`/api/v1/me/students/${studentId}/`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -106,7 +109,8 @@ export async function updateStudent(
   const token = await getIdToken();
   if (!token) throw new Error('Not authenticated');
 
-  const res = await fetch(`/api/v1/me/students/${studentId}`, {
+  // Use trailing slash to avoid 308 redirect that strips Authorization header
+  const res = await fetch(`/api/v1/me/students/${studentId}/`, {
     method: 'PUT',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -149,7 +153,8 @@ export async function adminGetStudents(
   if (params.limit) queryParams.set('limit', params.limit.toString());
   if (params.offset) queryParams.set('offset', params.offset.toString());
 
-  const url = `/api/v1/admin/students${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  // Use trailing slash to avoid 308 redirect that strips Authorization header
+  const url = `/api/v1/admin/students/${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
 
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
@@ -174,7 +179,8 @@ export async function adminGetStudent(
   const token = await getIdToken();
   if (!token) throw new Error('Not authenticated');
 
-  const res = await fetch(`/api/v1/admin/students/${studentId}`, {
+  // Use trailing slash to avoid 308 redirect that strips Authorization header
+  const res = await fetch(`/api/v1/admin/students/${studentId}/`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -197,7 +203,8 @@ export async function adminAdmitStudent(
   const token = await getIdToken();
   if (!token) throw new Error('Not authenticated');
 
-  const res = await fetch(`/api/v1/admin/students/${studentId}/admit`, {
+  // Use trailing slash to avoid 308 redirect that strips Authorization header
+  const res = await fetch(`/api/v1/admin/students/${studentId}/admit/`, {
     method: 'PATCH',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -225,7 +232,8 @@ export async function adminAssignClass(
   const token = await getIdToken();
   if (!token) throw new Error('Not authenticated');
 
-  const res = await fetch(`/api/v1/admin/students/${studentId}/assign-class`, {
+  // Use trailing slash to avoid 308 redirect that strips Authorization header
+  const res = await fetch(`/api/v1/admin/students/${studentId}/assign-class/`, {
     method: 'PATCH',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -254,7 +262,8 @@ export async function adminUpdateStudent(
   const token = await getIdToken();
   if (!token) throw new Error('Not authenticated');
 
-  const res = await fetch(`/api/v1/admin/students/${studentId}`, {
+  // Use trailing slash to avoid 308 redirect that strips Authorization header
+  const res = await fetch(`/api/v1/admin/students/${studentId}/`, {
     method: 'PATCH',
     headers: {
       Authorization: `Bearer ${token}`,

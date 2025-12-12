@@ -22,7 +22,8 @@ export default function ParentDashboard() {
       try {
         const token = await getIdToken();
         if (!token) return;
-        const res = await fetch('/api/v1/me/students', {
+        // Use trailing slash to avoid 308 redirect that strips Authorization header
+        const res = await fetch('/api/v1/me/students/', {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
