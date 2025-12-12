@@ -46,47 +46,65 @@ async function loginWithCredentials(
     }
   });
 
-  // Go to signin page (Firebase mode login)
-  await page.goto('/signin', { waitUntil: 'networkidle' });
+  const isCI = !!process.env.CI;
+  const maxAttempts = isCI ? 3 : 2;
 
-  // Wait for login form to be ready
-  await page.waitForSelector('input[type="email"]', { state: 'visible', timeout: 10000 });
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    // Go to signin page (Firebase mode login)
+    await page.goto('/signin', { waitUntil: 'networkidle' });
 
-  // Fill in credentials
-  await page.fill('input[type="email"]', email);
-  await page.fill('input[type="password"]', password);
+    // Wait for login form to be ready
+    await page.waitForSelector('input[type="email"]', { state: 'visible', timeout: 10000 });
 
-  // Click the email sign-in button and wait for either navigation or API response
-  await page.click('button[type="submit"]');
+    // Fill in credentials
+    await page.fill('input[type="email"]', email);
+    await page.fill('input[type="password"]', password);
 
-  // Wait for redirect after login - use a longer timeout and handle errors
-  try {
-    await page.waitForURL(expectedUrlPattern, { timeout: 20000 });
-  } catch (error) {
-    // Log API responses for debugging
-    console.error('API responses during login attempt:', JSON.stringify(apiResponses, null, 2));
-    console.error('Current URL:', page.url());
+    // Click the email sign-in button and wait for either navigation or API response
+    await page.click('button[type="submit"]');
 
-    // Check if there's an auth error message on the page
-    const errorAlert = page.locator('[role="alert"]');
-    const count = await errorAlert.count();
-    if (count > 0) {
-      const texts = await errorAlert.allInnerTexts();
-      const visibleTexts = [];
-      for (let i = 0; i < count; i++) {
-        if (await errorAlert.nth(i).isVisible()) {
-          visibleTexts.push(texts[i]);
+    try {
+      // Wait for redirect after login - use a longer timeout and handle errors
+      await page.waitForURL(expectedUrlPattern, { timeout: 20000 });
+
+      // Extra wait for page to be fully loaded
+      await page.waitForLoadState('networkidle');
+      return;
+    } catch {
+      // Check if there's an auth error message on the page
+      const errorAlert = page.locator('[role="alert"]');
+      const count = await errorAlert.count();
+      const visibleTexts: string[] = [];
+      if (count > 0) {
+        const texts = await errorAlert.allInnerTexts();
+        for (let i = 0; i < count; i++) {
+          if (await errorAlert.nth(i).isVisible()) {
+            visibleTexts.push(texts[i]);
+          }
         }
       }
-      if (visibleTexts.length > 0) {
-        throw new Error(`Login failed with alerts: ${visibleTexts.join(' | ')}. API responses: ${JSON.stringify(apiResponses)}`);
+
+      const joinedAlerts = visibleTexts.join(' | ');
+      const isNetworkFailed = joinedAlerts.includes('auth/network-request-failed');
+
+      if (isNetworkFailed && attempt < maxAttempts) {
+        console.warn(`Login attempt ${attempt} failed with auth/network-request-failed. Retrying...`);
+        await page.waitForTimeout(2000 * attempt);
+        continue;
       }
+
+      // Log API responses for debugging (only on final failure)
+      console.error('API responses during login attempt:', JSON.stringify(apiResponses, null, 2));
+      console.error('Current URL:', page.url());
+
+      if (visibleTexts.length > 0) {
+        throw new Error(`Login failed with alerts: ${joinedAlerts}. API responses: ${JSON.stringify(apiResponses)}`);
+      }
+      throw new Error(`Login timeout. Current URL: ${page.url()}. API responses: ${JSON.stringify(apiResponses)}`);
     }
-    throw new Error(`Login timeout. Current URL: ${page.url()}. API responses: ${JSON.stringify(apiResponses)}`);
   }
 
-  // Extra wait for page to be fully loaded
-  await page.waitForLoadState('networkidle');
+  throw new Error(`Login failed after ${maxAttempts} attempts. Current URL: ${page.url()}. API responses: ${JSON.stringify(apiResponses)}`);
 }
 
 /**
