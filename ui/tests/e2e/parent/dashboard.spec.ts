@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginAsParent } from '../helpers/auth';
+import { loginAsParent, setEnglishLanguage } from '../helpers/auth';
 
 /**
  * Parent Dashboard E2E Tests
@@ -9,7 +9,8 @@ import { loginAsParent } from '../helpers/auth';
  */
 
 test.describe('Parent Dashboard', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, context }) => {
+    await setEnglishLanguage(page, context);
     await loginAsParent(page);
   });
 
@@ -21,16 +22,19 @@ test.describe('Parent Dashboard', () => {
   test('PDE2E-002: Dashboard shows Register Student quick action', async ({ page }) => {
     await page.goto('/parent');
 
-    const registerLink = page.getByRole('link', { name: /Register Student/i }).first();
+    // Find the Register Student link in the Quick Actions grid (the one with blue styling)
+    // The sidebar link has class containing "text-gray-700", the quick action has "text-blue-900"
+    const registerLink = page.locator('a[href*="/parent/students/register"]').filter({ hasText: 'Add a new student' });
     await expect(registerLink).toBeVisible();
-    await expect(registerLink).toHaveAttribute('href', '/parent/students/register');
+    await expect(registerLink).toContainText('Register Student');
   });
 
   test('PDE2E-003: Register Student quick action navigates correctly', async ({ page }) => {
     await page.goto('/parent');
 
-    // Click the Register Student quick action (not the empty state one)
-    const registerLink = page.getByRole('link', { name: /Register Student/i }).first();
+    // Click the Register Student quick action in main content
+    const mainContent = page.locator('main');
+    const registerLink = mainContent.getByRole('link', { name: /Register Student/i }).first();
     await registerLink.click();
 
     await expect(page).toHaveURL(/.*\/parent\/students\/register/);
@@ -40,17 +44,20 @@ test.describe('Parent Dashboard', () => {
   test('PDE2E-004: Dashboard shows all quick action links', async ({ page }) => {
     await page.goto('/parent');
 
-    // Check all quick actions are present
-    await expect(page.getByRole('link', { name: /Register Student/i }).first()).toBeVisible();
-    await expect(page.getByRole('link', { name: /My Students/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: /My Profile/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: /Settings/i })).toBeVisible();
+    // Check quick actions in main content area
+    const mainContent = page.locator('main');
+    await expect(mainContent.getByRole('link', { name: /Register Student/i }).first()).toBeVisible();
+    await expect(mainContent.getByRole('link', { name: /My Students/i }).first()).toBeVisible();
+    await expect(mainContent.getByRole('link', { name: /My Profile/i }).first()).toBeVisible();
+    await expect(mainContent.getByRole('link', { name: /Settings/i }).first()).toBeVisible();
   });
 
   test('PDE2E-005: My Students quick action navigates correctly', async ({ page }) => {
     await page.goto('/parent');
 
-    await page.getByRole('link', { name: /My Students/i }).click();
+    // Click My Students in main content area
+    const mainContent = page.locator('main');
+    await mainContent.getByRole('link', { name: /My Students/i }).first().click();
 
     await expect(page).toHaveURL(/.*\/parent\/students/);
     await expect(page.getByRole('heading', { name: 'My Students' })).toBeVisible();
@@ -59,10 +66,10 @@ test.describe('Parent Dashboard', () => {
   test('PDE2E-006: Dashboard shows student statistics', async ({ page }) => {
     await page.goto('/parent');
 
-    // Check stats cards are present
-    await expect(page.getByText('Linked Students')).toBeVisible();
-    await expect(page.getByText('Active Students')).toBeVisible();
-    await expect(page.getByText('Profile Status')).toBeVisible();
+    // Check stats cards are present - use exact match to avoid multiple matches
+    await expect(page.getByText('Linked Students', { exact: true })).toBeVisible();
+    await expect(page.getByText('Active Students', { exact: true })).toBeVisible();
+    await expect(page.getByText('Profile Status', { exact: true })).toBeVisible();
   });
 
   test('PDE2E-007: Dashboard shows seeded student preview', async ({ page }) => {
@@ -85,5 +92,25 @@ test.describe('Parent Dashboard', () => {
     await page.getByRole('link', { name: /View all/ }).click();
 
     await expect(page).toHaveURL(/.*\/parent\/students/);
+  });
+
+  test('PDE2E-009: Sidebar navigation is visible', async ({ page }) => {
+    await page.goto('/parent');
+
+    // Check sidebar has navigation section headings (h2 elements)
+    const sidebar = page.locator('aside');
+    await expect(sidebar.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+    await expect(sidebar.getByRole('heading', { name: 'Students' })).toBeVisible();
+    await expect(sidebar.getByRole('heading', { name: 'Account' })).toBeVisible();
+  });
+
+  test('PDE2E-010: Sidebar Register Student link works', async ({ page }) => {
+    await page.goto('/parent');
+
+    // Click Register Student in sidebar
+    const sidebar = page.locator('aside');
+    await sidebar.getByRole('link', { name: /Register Student/i }).click();
+
+    await expect(page).toHaveURL(/.*\/parent\/students\/register/);
   });
 });
