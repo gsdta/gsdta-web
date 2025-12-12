@@ -271,3 +271,8 @@ export async function adminUpdateStudent(
 
   return json.data!.student;
 }
+
+// Aliases for legacy/refactored components
+export const getStudent = getStudentById;
+export const listStudents = getMyStudents;
+

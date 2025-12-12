@@ -214,7 +214,7 @@ export async function POST(req: NextRequest) {
     const parseResult = createStudentSchema.safeParse(body);
 
     if (!parseResult.success) {
-      const errorMessage = parseResult.error.errors.map((e) => e.message).join(', ');
+      const errorMessage = parseResult.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
       return jsonError(400, 'validation/invalid-input', errorMessage, origin);
     }
 
@@ -240,6 +240,8 @@ export async function POST(req: NextRequest) {
           medicalNotes: student.medicalNotes,
           photoConsent: student.photoConsent,
           status: student.status,
+          parentId: student.parentId,
+          parentEmail: student.parentEmail,
           createdAt: student.createdAt.toDate().toISOString(),
         },
       },
