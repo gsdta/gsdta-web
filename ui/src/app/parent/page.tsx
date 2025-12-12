@@ -99,15 +99,15 @@ export default function ParentDashboard() {
       {/* Quick Links */}
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Link
-            href="/parent/profile"
-            className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            href="/parent/students/register"
+            className="flex items-center p-4 border-2 border-blue-200 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
           >
-            <span className="text-2xl mr-3">👤</span>
+            <span className="text-2xl mr-3">➕</span>
             <div>
-              <p className="font-medium text-gray-900">My Profile</p>
-              <p className="text-sm text-gray-500">View and update your profile</p>
+              <p className="font-medium text-blue-900">Register Student</p>
+              <p className="text-sm text-blue-600">Add a new student</p>
             </div>
           </Link>
 
@@ -119,6 +119,17 @@ export default function ParentDashboard() {
             <div>
               <p className="font-medium text-gray-900">My Students</p>
               <p className="text-sm text-gray-500">View linked students</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/parent/profile"
+            className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <span className="text-2xl mr-3">👤</span>
+            <div>
+              <p className="font-medium text-gray-900">My Profile</p>
+              <p className="text-sm text-gray-500">View and update your profile</p>
             </div>
           </Link>
 
@@ -182,10 +193,19 @@ export default function ParentDashboard() {
       {!loading && students.length === 0 && (
         <div className="bg-white rounded-lg shadow p-6 text-center">
           <div className="text-4xl mb-4">👨‍👧‍👦</div>
-          <h3 className="text-lg font-medium text-gray-900">No students linked yet</h3>
-          <p className="mt-2 text-gray-500">
-            Students will appear here once they are linked to your account.
+          <h3 className="text-lg font-medium text-gray-900">No students registered yet</h3>
+          <p className="mt-2 text-gray-500 max-w-md mx-auto">
+            Register your child to enroll them in our Tamil school. Click the button below to get started.
           </p>
+          <Link
+            href="/parent/students/register"
+            className="inline-flex items-center gap-2 mt-4 px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Register Your First Student
+          </Link>
         </div>
       )}
     </div>
