@@ -48,13 +48,20 @@ This document outlines all Firestore collections needed for the GSDTA web applic
    - Public carousel complete
    - **Action**: Deploy indexes to GCP (see [FIRESTORE-SETUP.md](./FIRESTORE-SETUP.md))
 
+4. **students** - Student registration and management (IMPLEMENTED - Dec 2025)
+   - Parent self-registration API complete (`POST /api/v1/me/students`)
+   - Parent student list API complete (`GET /api/v1/me/students`)
+   - Admin student management APIs complete
+   - Parent UI complete (register, list, edit)
+   - Admin UI complete (review, admit, assign class)
+   - **Action**: Deploy indexes to GCP (see below)
+
 ### ⏳ Collections Needed for Current Features
 
 None - all current features have required collections implemented.
 
 ### 📋 Collections for Upcoming Features
 
-- `students` - For student management (Phase 2)
 - `classes` - For class management (Phase 2)
 - `studentClassEnrollments` - For enrollment tracking (Phase 2)
 
@@ -66,10 +73,10 @@ None - all current features have required collections implemented.
 - ✅ `users` - User accounts and authentication
 - ✅ `roleInvites` - Teacher/admin invitations
 - 🆕 `heroContent` - Hero section event banners (implemented, needs GCP deployment)
+- 🆕 `students` - Student records (implemented, needs GCP index deployment)
 
 ### Phase 2: User Management (Weeks 5-8)
-- `students` - Student records
-- `parentStudentLinks` - Parent-student relationships
+- `parentStudentLinks` - Parent-student relationships (optional - currently embedded in students)
 - `classes` - Class definitions
 - `teacherClassAssignments` - Teacher-class assignments
 - `studentClassEnrollments` - Student-class enrollments
