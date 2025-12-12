@@ -22,6 +22,7 @@ const testUsers: Record<string, { token: VerifiedToken; profile: UserProfile }> 
     profile: {
       uid: 'test-admin-uid',
       email: 'admin@test.com',
+      name: 'Test Admin',
       firstName: 'Test',
       lastName: 'Admin',
       roles: ['admin'],
@@ -39,6 +40,7 @@ const testUsers: Record<string, { token: VerifiedToken; profile: UserProfile }> 
     profile: {
       uid: 'test-teacher-uid',
       email: 'teacher@test.com',
+      name: 'Test Teacher',
       firstName: 'Test',
       lastName: 'Teacher',
       roles: ['teacher'],
@@ -56,6 +58,7 @@ const testUsers: Record<string, { token: VerifiedToken; profile: UserProfile }> 
     profile: {
       uid: 'test-parent-uid',
       email: 'parent@test.com',
+      name: 'Test Parent',
       firstName: 'Test',
       lastName: 'Parent',
       roles: ['parent'],
