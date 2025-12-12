@@ -8,18 +8,104 @@
  * - Environment variables must be set for emulators
  */
 
-const admin = require('firebase-admin');
-
-// Connect to emulators
+// Connect to emulators (set env BEFORE importing firebase-admin so SDK picks it up reliably)
 process.env.FIRESTORE_EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST || 'localhost:8889';
 process.env.FIREBASE_AUTH_EMULATOR_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST || 'localhost:9099';
 
-const PROJECT_ID = 'demo-gsdta';
+const PROJECT_ID =
+  process.env.FIREBASE_PROJECT_ID ||
+  process.env.GCLOUD_PROJECT ||
+  'demo-gsdta';
+
+const admin = require('firebase-admin');
 
 // Initialize Firebase Admin
 admin.initializeApp({ projectId: PROJECT_ID });
 const auth = admin.auth();
 const db = admin.firestore();
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRetryableError(err) {
+  if (!err) return false;
+  const code = typeof err.code === 'string' ? err.code : '';
+  const message = typeof err.message === 'string' ? err.message : String(err);
+
+  // Common transient network errors (Node)
+  const transientMarkers = [
+    'ECONNREFUSED',
+    'ECONNRESET',
+    'ETIMEDOUT',
+    'EAI_AGAIN',
+    'ENOTFOUND',
+    'socket hang up',
+    'network error',
+  ];
+
+  if (transientMarkers.includes(code)) return true;
+  return transientMarkers.some((m) => message.includes(m));
+}
+
+async function withRetries(fn, { label, attempts = 5, baseDelayMs = 500 } = {}) {
+  let lastErr;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (!isRetryableError(err) || attempt === attempts) throw err;
+      const delay = baseDelayMs * attempt;
+      console.warn(`  ⚠️  ${label || 'operation'} failed (attempt ${attempt}/${attempts}), retrying in ${delay}ms...`);
+      await sleep(delay);
+    }
+  }
+  throw lastErr;
+}
+
+async function waitForEmulatorsReady() {
+  console.log('\n⏳ Waiting for Firebase emulators to be ready...');
+
+  // Auth emulator readiness: listUsers should work without credentials in emulator mode.
+  await withRetries(
+    async () => {
+      await auth.listUsers(1);
+    },
+    { label: 'Auth emulator readiness', attempts: 20, baseDelayMs: 250 }
+  );
+  console.log('  ✅ Auth emulator ready');
+
+  // Firestore emulator readiness: simple read should succeed.
+  await withRetries(
+    async () => {
+      await db.collection('_seedHealth').limit(1).get();
+    },
+    { label: 'Firestore emulator readiness', attempts: 20, baseDelayMs: 250 }
+  );
+  console.log('  ✅ Firestore emulator ready');
+}
+
+async function verifyAuthPasswordSignIn(email, password) {
+  // Match what the browser SDK uses in the emulator: identitytoolkit signInWithPassword + apiKey.
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'fake-api-key-for-emulator';
+  const authHost = process.env.FIREBASE_AUTH_EMULATOR_HOST;
+  if (!authHost) throw new Error('FIREBASE_AUTH_EMULATOR_HOST is not set');
+
+  const url = `http://${authHost}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${encodeURIComponent(apiKey)}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password, returnSecureToken: true }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(
+      `Auth emulator signInWithPassword failed for ${email} (${res.status}). ${body.substring(0, 300)}`
+    );
+  }
+}
 
 // Test users configuration
 const TEST_USERS = [
@@ -238,42 +324,67 @@ const SAMPLE_INVITES = [
  */
 async function seedAuthUsers() {
   console.log('\n📝 Seeding authentication users...');
-  
+
+  const failures = [];
+
   for (const userData of TEST_USERS) {
     try {
-      // Check if user already exists
-      let userRecord;
-      try {
-        userRecord = await auth.getUser(userData.uid);
+      const existing = await withRetries(
+        async () => await auth.getUser(userData.uid),
+        { label: `auth.getUser(${userData.uid})`, attempts: 5, baseDelayMs: 300 }
+      ).catch((err) => {
+        if (err && err.code === 'auth/user-not-found') return null;
+        throw err;
+      });
+
+      if (existing) {
         console.log(`  ⏭️  User ${userData.email} already exists, updating...`);
-        
-        // Update existing user
-        await auth.updateUser(userData.uid, {
-          email: userData.email,
-          displayName: userData.displayName,
-          emailVerified: true,
-          password: userData.password
-        });
-      } catch (error) {
-        // User doesn't exist, create new
-        userRecord = await auth.createUser({
-          uid: userData.uid,
-          email: userData.email,
-          password: userData.password,
-          displayName: userData.displayName,
-          emailVerified: true
-        });
+        await withRetries(
+          async () =>
+            await auth.updateUser(userData.uid, {
+              email: userData.email,
+              displayName: userData.displayName,
+              emailVerified: true,
+              password: userData.password,
+            }),
+          { label: `auth.updateUser(${userData.uid})`, attempts: 5, baseDelayMs: 300 }
+        );
+      } else {
+        await withRetries(
+          async () =>
+            await auth.createUser({
+              uid: userData.uid,
+              email: userData.email,
+              password: userData.password,
+              displayName: userData.displayName,
+              emailVerified: true,
+            }),
+          { label: `auth.createUser(${userData.uid})`, attempts: 10, baseDelayMs: 300 }
+        );
         console.log(`  ✅ Created user: ${userData.email}`);
       }
 
-      // Set custom claims for roles
-      await auth.setCustomUserClaims(userData.uid, { 
-        roles: userData.roles 
-      });
-      
+      await withRetries(
+        async () => await auth.setCustomUserClaims(userData.uid, { roles: userData.roles }),
+        { label: `auth.setCustomUserClaims(${userData.uid})`, attempts: 5, baseDelayMs: 300 }
+      );
     } catch (error) {
-      console.error(`  ❌ Error with user ${userData.email}:`, error.message);
+      failures.push({ email: userData.email, message: error?.message || String(error) });
+      console.error(`  ❌ Error with user ${userData.email}:`, error?.message || error);
     }
+  }
+
+  if (failures.length > 0) {
+    throw new Error(`Failed to seed ${failures.length} auth users: ${failures.map((f) => `${f.email} (${f.message})`).join('; ')}`);
+  }
+
+  // Verify the main E2E credentials can actually sign in via the emulator REST API.
+  const required = ['admin@test.com', 'teacher@test.com', 'parent@test.com'];
+  for (const email of required) {
+    const user = TEST_USERS.find((u) => u.email === email);
+    if (!user) continue;
+    await verifyAuthPasswordSignIn(user.email, user.password);
+    console.log(`  ✅ Verified sign-in: ${user.email}`);
   }
 }
 
@@ -540,6 +651,8 @@ async function main() {
       console.log('Run without --clear flag to seed data.');
       process.exit(0);
     }
+
+    await waitForEmulatorsReady();
 
     // Seed all data
     await seedAuthUsers();
