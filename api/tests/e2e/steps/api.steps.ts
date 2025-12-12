@@ -68,6 +68,14 @@ Given('I am authenticated as a parent', async function () {
   authToken = process.env.TEST_PARENT_TOKEN || 'test-parent-token';
 });
 
+Given('I am not authenticated', async function () {
+  authToken = undefined;
+});
+
+Given('I have no registered students', async function () {
+  authToken = 'test-parent-no-students-token';
+});
+
 When('I send a GET request to {string}', { timeout: 90000 }, async function (path: string) {
   const url = resolveUrl(path);
   const headers: HeadersInit = {};
@@ -248,6 +256,18 @@ Then('the JSON path {string} should be less than or equal to {int}', async funct
   assert(value <= expected, `Expected '${jsonPath}' (${value}) to be <= ${expected}`);
 });
 
+Then('the JSON path {string} should equal false', async function (jsonPath: string) {
+  const json = await getJsonBody();
+  const value = getByPath(json, jsonPath);
+  assert.strictEqual(value, false, `Expected '${jsonPath}' to be false, got ${value}`);
+});
+
+Then('the JSON path {string} should be an array', async function (jsonPath: string) {
+  const json = await getJsonBody();
+  const value = getByPath(json, jsonPath);
+  assert(Array.isArray(value), `Expected '${jsonPath}' to be an array, got ${typeof value}`);
+});
+
 Then('the JSON path {string} should contain {string}', async function (jsonPath: string, expected: string) {
   const json = await getJsonBody();
   const value = getByPath(json, jsonPath);
@@ -259,4 +279,11 @@ Then('the JSON path {string} should contain {string}', async function (jsonPath:
   } else {
     assert.fail(`Expected '${jsonPath}' to be an array or string, got ${typeof value}`);
   }
+});
+
+Then('the JSON path {string} should have length {int}', async function (jsonPath: string, expected: number) {
+  const json = await getJsonBody();
+  const value = getByPath(json, jsonPath);
+  assert(Array.isArray(value), `Expected '${jsonPath}' to be an array, got ${typeof value}`);
+  assert.strictEqual(value.length, expected, `Expected '${jsonPath}' to have length ${expected}, got ${value.length}`);
 });

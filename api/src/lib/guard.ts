@@ -67,6 +67,24 @@ const testUsers: Record<string, { token: VerifiedToken; profile: UserProfile }> 
       updatedAt: new Date().toISOString(),
     },
   },
+  parentNoStudents: {
+    token: {
+      uid: 'test-parent-no-students-uid',
+      email: 'parent_empty@test.com',
+      emailVerified: true,
+    },
+    profile: {
+      uid: 'test-parent-no-students-uid',
+      email: 'parent_empty@test.com',
+      name: 'Test Parent Empty',
+      firstName: 'Test',
+      lastName: 'Empty',
+      roles: ['parent'],
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  },
 };
 
 // Mock verify function for tests
@@ -89,6 +107,8 @@ async function mockVerify(authHeader: string | null | undefined): Promise<Verifi
     return testUsers.teacher.token;
   } else if (token === 'test-parent-token') {
     return testUsers.parent.token;
+  } else if (token === 'test-parent-no-students-token') {
+    return testUsers.parentNoStudents.token;
   }
 
   throw new AuthError(401, 'auth/invalid-token', 'Invalid token');

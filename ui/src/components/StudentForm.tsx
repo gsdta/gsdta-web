@@ -16,7 +16,7 @@ export function StudentForm({initial, onSubmit, submitLabel = "Save"}: StudentFo
         handleSubmit,
         formState: {errors, isSubmitting},
     } = useForm<Omit<Student, "id">>({
-        resolver: zodResolver(studentSchema.omit({id: true})),
+        resolver: zodResolver(studentSchema),
         defaultValues: {...newStudentDefaults, ...(initial ?? {})},
         mode: "onBlur",
     });
@@ -60,24 +60,24 @@ export function StudentForm({initial, onSubmit, submitLabel = "Save"}: StudentFo
                 )}
             </div>
             <div>
-                <label htmlFor="dob" className="block text-sm font-medium">
+                <label htmlFor="dateOfBirth" className="block text-sm font-medium">
                     Date of birth
                 </label>
                 <input
-                    id="dob"
+                    id="dateOfBirth"
                     type="date"
                     className="border rounded px-2 py-1 w-full"
-                    {...register("dob")}
+                    {...register("dateOfBirth")}
                 />
             </div>
             <div>
-                <label htmlFor="priorLevel" className="block text-sm font-medium">
+                <label htmlFor="priorTamilLevel" className="block text-sm font-medium">
                     Prior level
                 </label>
                 <select
-                    id="priorLevel"
+                    id="priorTamilLevel"
                     className="border rounded px-2 py-1 w-full"
-                    {...register("priorLevel")}
+                    {...register("priorTamilLevel")}
                 >
                     <option value="">Select…</option>
                     <option value="Beginner">Beginner</option>

@@ -4,6 +4,7 @@ import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {z} from "zod";
 import Link from "next/link";
+import {useAuth} from "@/components/AuthProvider";
 import type {Student} from "@/lib/student-types";
 import type {Class} from "@/lib/enrollment-types";
 import {listStudents} from "@/lib/student-api";
@@ -22,6 +23,7 @@ interface EnrollmentFormProps {
 }
 
 export function EnrollmentForm({onSuccess}: EnrollmentFormProps) {
+    const { getIdToken } = useAuth();
     const [students, setStudents] = useState<Student[]>([]);
     const [classes, setClasses] = useState<Class[]>([]);
     const [loading, setLoading] = useState(true);
@@ -43,7 +45,7 @@ export function EnrollmentForm({onSuccess}: EnrollmentFormProps) {
     const selectedClass = classes.find((c) => c.id === selectedClassId);
 
     useEffect(() => {
-        void Promise.all([listStudents(), getClasses()])
+        void Promise.all([listStudents(getIdToken), getClasses()])
             .then(([studentsData, classesData]) => {
                 setStudents(studentsData);
                 setClasses(classesData);
@@ -53,7 +55,7 @@ export function EnrollmentForm({onSuccess}: EnrollmentFormProps) {
                 setError(err instanceof Error ? err.message : "Failed to load data");
                 setLoading(false);
             });
-    }, []);
+    }, [getIdToken]);
 
     const onSubmit = async (data: EnrollmentFormData) => {
         setSubmitting(true);

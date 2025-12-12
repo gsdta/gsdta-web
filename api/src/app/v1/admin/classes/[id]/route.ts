@@ -219,7 +219,7 @@ export async function PATCH(
     const parseResult = updateClassSchema.safeParse(body);
 
     if (!parseResult.success) {
-      const errorMessage = parseResult.error.errors.map((e) => e.message).join(', ');
+      const errorMessage = parseResult.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
       return jsonError(400, 'validation/invalid-input', errorMessage, origin);
     }
 
