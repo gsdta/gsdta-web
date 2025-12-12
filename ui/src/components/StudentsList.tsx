@@ -1,12 +1,14 @@
 "use client";
 import React, {useCallback, useEffect, useState} from "react";
 import Link from "next/link";
+import {useAuth} from "@/components/AuthProvider";
 import {listStudents} from "@/lib/student-api";
 import type {Student} from "@/lib/student-types";
 import { useI18n } from "@/i18n/LanguageProvider";
 
 export function StudentsList() {
     const { t } = useI18n();
+    const { getIdToken } = useAuth();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [students, setStudents] = useState<Student[]>([]);
@@ -27,14 +29,14 @@ export function StudentsList() {
         setError(null);
         try {
             await waitForMsw();
-            const data = await listStudents();
+            const data = await listStudents(getIdToken);
             setStudents(data);
         } catch (e) {
             setError((e as Error).message);
         } finally {
             setLoading(false);
         }
-    }, [waitForMsw]);
+    }, [waitForMsw, getIdToken]);
 
     useEffect(() => {
         fetchStudents();
@@ -84,8 +86,8 @@ export function StudentsList() {
                             <td className="p-2">
                                 {s.firstName} {s.lastName}
                             </td>
-                            <td className="p-2">{s.dob ?? "—"}</td>
-                            <td className="p-2">{s.priorLevel || "—"}</td>
+                            <td className="p-2">{s.dateOfBirth ?? "—"}</td>
+                            <td className="p-2">{s.priorTamilLevel || "—"}</td>
                             <td className="p-2">
                                 <Link href={`/students/${s.id}`} className="text-blue-600 hover:underline">
                                     {t("students.edit")}

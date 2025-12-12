@@ -15,6 +15,13 @@ interface NavSection {
 
 const adminNav: NavSection[] = [
   {
+    label: 'Students',
+    items: [
+      { label: 'All Students', href: '/admin/students' },
+      { label: 'Pending Review', href: '/admin/students?status=pending' },
+    ],
+  },
+  {
     label: 'Teachers',
     items: [
       { label: 'All Teachers', href: '/admin/users/teachers/list' },

@@ -48,5 +48,13 @@ export function getAdminApp(): App {
 }
 
 export const adminAuth = () => getAuth(getAdminApp());
-export const adminDb = () => getFirestore(getAdminApp());
+export const adminDb = () => {
+  const db = getFirestore(getAdminApp());
+  try {
+    db.settings({ ignoreUndefinedProperties: true });
+  } catch (e) {
+    // Ignore error if settings already locked
+  }
+  return db;
+};
 

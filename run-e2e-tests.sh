@@ -118,6 +118,19 @@ print_step "Seeding test data..."
 npm run seed
 print_success "Test data seeded"
 
+# Set environment variables for build
+export NEXT_PUBLIC_AUTH_MODE=firebase
+export NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
+export NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST=localhost:8889
+export NEXT_PUBLIC_FIREBASE_PROJECT_ID=demo-gsdta
+export NEXT_PUBLIC_FIREBASE_API_KEY=fake-api-key-for-emulator
+export NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=demo-gsdta.firebaseapp.com
+export NEXT_PUBLIC_FIREBASE_APP_ID=1:1234567890:web:abcdef123456
+export NEXT_PUBLIC_API_BASE_URL=/api
+export USE_TEST_AUTH=true
+export ALLOW_TEST_INVITES=1
+export NODE_ENV=test
+
 # Step 5: Build API and UI
 print_step "Building API..."
 cd api

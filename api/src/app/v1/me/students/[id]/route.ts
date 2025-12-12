@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
-import { getStudentsByParentId, createStudent } from '@/lib/firestoreStudents';
+import { getStudentById, updateStudent } from '@/lib/firestoreStudents';
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
 
-// Zod schema for student registration
-const createStudentSchema = z.object({
-  firstName: z.string().min(1, 'First name is required').max(100),
-  lastName: z.string().min(1, 'Last name is required').max(100),
-  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+// Zod schema for student update
+const updateStudentSchema = z.object({
+  firstName: z.string().min(1).max(100).optional(),
+  lastName: z.string().min(1).max(100).optional(),
+  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format').optional(),
   grade: z.string().max(50).optional(),
   schoolName: z.string().max(200).optional(),
   priorTamilLevel: z.string().max(50).optional(),
@@ -17,51 +17,6 @@ const createStudentSchema = z.object({
   photoConsent: z.boolean().optional(),
 });
 
-/**
- * @swagger
- * /api/v1/me/students:
- *   get:
- *     summary: Get students linked to current user
- *     description: Returns all students where the current user is set as the parent.
- *     tags:
- *       - Parent
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: List of linked students
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   type: object
- *                   properties:
- *                     students:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           id:
- *                             type: string
- *                           name:
- *                             type: string
- *                           grade:
- *                             type: string
- *                           schoolName:
- *                             type: string
- *                           enrollmentDate:
- *                             type: string
- *                           status:
- *                             type: string
- *       401:
- *         description: Missing or invalid token
- *       403:
- *         description: User not active
- */
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -89,7 +44,7 @@ function corsHeaders(origin: string | null) {
   const allow = allowedOrigin(origin);
   const headers: Record<string, string> = {
     'Vary': 'Origin, Access-Control-Request-Headers, Access-Control-Request-Method',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, PUT, OPTIONS',
     'Access-Control-Allow-Headers': 'Authorization, Content-Type',
   };
   if (allow) {
@@ -115,115 +70,56 @@ export async function OPTIONS(req: NextRequest) {
 }
 
 /**
- * GET /api/v1/me/students
- * Returns students linked to the current authenticated user.
- */
-export async function GET(req: NextRequest) {
-  const origin = req.headers.get('origin');
-  const requestId = randomUUID();
-
-  try {
-    const authz = req.headers.get('authorization');
-    const authContext = await requireAuth(authz, { requireActive: true });
-    const { token } = authContext;
-
-    // Get students linked to this parent
-    const students = await getStudentsByParentId(token.uid);
-
-    const responseBody = {
-      success: true,
-      data: {
-        students,
-      },
-    };
-
-    const res = NextResponse.json(responseBody, { status: 200 });
-    const headers = corsHeaders(origin);
-    Object.entries(headers).forEach(([k, v]) => res.headers.set(k, v));
-    console.info(JSON.stringify({ requestId, uid: token.uid, path: '/api/v1/me/students', method: 'GET', count: students.length }));
-    return res;
-  } catch (err) {
-    if (err instanceof AuthError) {
-      return jsonError(err.status, err.code, err.message, origin);
-    }
-    console.error(JSON.stringify({ requestId, path: '/api/v1/me/students', method: 'GET', error: 'internal' }));
-    return jsonError(500, 'internal/error', 'Internal server error', origin);
-  }
-}
-
-/**
  * @swagger
- * /api/v1/me/students:
- *   post:
- *     summary: Register a new student (parent registration)
- *     description: Creates a new student linked to the current authenticated parent with pending status.
+ * /api/v1/me/students/{id}:
+ *   get:
+ *     summary: Get a specific student's details
+ *     description: Returns the details of a student owned by the current parent.
  *     tags:
  *       - Parent
  *     security:
  *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - firstName
- *               - lastName
- *               - dateOfBirth
- *             properties:
- *               firstName:
- *                 type: string
- *               lastName:
- *                 type: string
- *               dateOfBirth:
- *                 type: string
- *                 description: Date in YYYY-MM-DD format
- *               grade:
- *                 type: string
- *               schoolName:
- *                 type: string
- *               priorTamilLevel:
- *                 type: string
- *               medicalNotes:
- *                 type: string
- *               photoConsent:
- *                 type: boolean
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Student ID
  *     responses:
- *       201:
- *         description: Student created successfully
- *       400:
- *         description: Validation error
+ *       200:
+ *         description: Student details
  *       401:
  *         description: Missing or invalid token
  *       403:
- *         description: User not active or not a parent
+ *         description: User not active or not the student's parent
+ *       404:
+ *         description: Student not found
  */
-export async function POST(req: NextRequest) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const origin = req.headers.get('origin');
   const requestId = randomUUID();
+  const { id } = await params;
 
   try {
     const authz = req.headers.get('authorization');
-    // Require parent role for student registration
     const authContext = await requireAuth(authz, { requireActive: true, requireRoles: ['parent'] });
-    const { token, profile } = authContext;
+    const { token } = authContext;
 
-    // Parse and validate request body
-    const body = await req.json();
-    const parseResult = createStudentSchema.safeParse(body);
+    // Get the student
+    const student = await getStudentById(id);
 
-    if (!parseResult.success) {
-      const errorMessage = parseResult.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
-      return jsonError(400, 'validation/invalid-input', errorMessage, origin);
+    if (!student) {
+      return jsonError(404, 'student/not-found', 'Student not found', origin);
     }
 
-    // Create the student with pending status
-    const student = await createStudent(
-      token.uid,
-      profile.email || '',
-      parseResult.data
-    );
+    // Verify ownership
+    if (student.parentId !== token.uid) {
+      return jsonError(403, 'auth/forbidden', 'You do not have access to this student', origin);
+    }
 
     const responseBody = {
       success: true,
@@ -239,18 +135,137 @@ export async function POST(req: NextRequest) {
           priorTamilLevel: student.priorTamilLevel,
           medicalNotes: student.medicalNotes,
           photoConsent: student.photoConsent,
+          classId: student.classId,
+          className: student.className,
           status: student.status,
-          parentId: student.parentId,
-          parentEmail: student.parentEmail,
-          createdAt: student.createdAt.toDate().toISOString(),
+          createdAt: student.createdAt?.toDate?.()?.toISOString() ?? '',
+          updatedAt: student.updatedAt?.toDate?.()?.toISOString() ?? '',
         },
       },
     };
 
-    const res = NextResponse.json(responseBody, { status: 201 });
+    const res = NextResponse.json(responseBody, { status: 200 });
     const headers = corsHeaders(origin);
     Object.entries(headers).forEach(([k, v]) => res.headers.set(k, v));
-    console.info(JSON.stringify({ requestId, uid: token.uid, path: '/api/v1/me/students', method: 'POST', studentId: student.id }));
+    console.info(JSON.stringify({ requestId, uid: token.uid, path: `/api/v1/me/students/${id}`, method: 'GET' }));
+    return res;
+  } catch (err) {
+    if (err instanceof AuthError) {
+      return jsonError(err.status, err.code, err.message, origin);
+    }
+    console.error(JSON.stringify({ requestId, path: `/api/v1/me/students/${id}`, method: 'GET', error: String(err) }));
+    return jsonError(500, 'internal/error', 'Internal server error', origin);
+  }
+}
+
+/**
+ * @swagger
+ * /api/v1/me/students/{id}:
+ *   put:
+ *     summary: Update a student's details
+ *     description: Updates a student owned by the current parent. Only allowed for students with pending or admitted status.
+ *     tags:
+ *       - Parent
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Student ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               dateOfBirth:
+ *                 type: string
+ *               grade:
+ *                 type: string
+ *               schoolName:
+ *                 type: string
+ *               priorTamilLevel:
+ *                 type: string
+ *               medicalNotes:
+ *                 type: string
+ *               photoConsent:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Student updated successfully
+ *       400:
+ *         description: Validation error or student cannot be updated in current status
+ *       401:
+ *         description: Missing or invalid token
+ *       403:
+ *         description: User not active or not the student's parent
+ *       404:
+ *         description: Student not found
+ */
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const origin = req.headers.get('origin');
+  const requestId = randomUUID();
+  const { id } = await params;
+
+  try {
+    const authz = req.headers.get('authorization');
+    const authContext = await requireAuth(authz, { requireActive: true, requireRoles: ['parent'] });
+    const { token } = authContext;
+
+    // Parse and validate request body
+    const body = await req.json();
+    const parseResult = updateStudentSchema.safeParse(body);
+
+    if (!parseResult.success) {
+      const errorMessage = parseResult.error.issues.map((e) => e.message).join(', ');
+      return jsonError(400, 'validation/invalid-input', errorMessage, origin);
+    }
+
+    // Update the student (checkParentId ensures ownership)
+    const student = await updateStudent(id, parseResult.data, token.uid);
+
+    if (!student) {
+      return jsonError(404, 'student/not-found', 'Student not found or you do not have access', origin);
+    }
+
+    const responseBody = {
+      success: true,
+      data: {
+        student: {
+          id: student.id,
+          firstName: student.firstName,
+          lastName: student.lastName,
+          name: `${student.firstName} ${student.lastName}`,
+          dateOfBirth: student.dateOfBirth,
+          grade: student.grade,
+          schoolName: student.schoolName,
+          priorTamilLevel: student.priorTamilLevel,
+          medicalNotes: student.medicalNotes,
+          photoConsent: student.photoConsent,
+          classId: student.classId,
+          className: student.className,
+          status: student.status,
+          createdAt: student.createdAt?.toDate?.()?.toISOString() ?? '',
+          updatedAt: student.updatedAt?.toDate?.()?.toISOString() ?? '',
+        },
+      },
+    };
+
+    const res = NextResponse.json(responseBody, { status: 200 });
+    const headers = corsHeaders(origin);
+    Object.entries(headers).forEach(([k, v]) => res.headers.set(k, v));
+    console.info(JSON.stringify({ requestId, uid: token.uid, path: `/api/v1/me/students/${id}`, method: 'PUT' }));
     return res;
   } catch (err) {
     if (err instanceof AuthError) {
@@ -259,7 +274,10 @@ export async function POST(req: NextRequest) {
     if (err instanceof SyntaxError) {
       return jsonError(400, 'validation/invalid-json', 'Invalid JSON in request body', origin);
     }
-    console.error(JSON.stringify({ requestId, path: '/api/v1/me/students', method: 'POST', error: String(err) }));
+    if (err instanceof Error && err.message.includes('Cannot update student')) {
+      return jsonError(400, 'student/invalid-status', err.message, origin);
+    }
+    console.error(JSON.stringify({ requestId, path: `/api/v1/me/students/${id}`, method: 'PUT', error: String(err) }));
     return jsonError(500, 'internal/error', 'Internal server error', origin);
   }
 }

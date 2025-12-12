@@ -77,6 +77,8 @@ GSDTA Web is a modern full-stack web application built with Next.js for both fro
 
 #### Authenticated Endpoints
 - ✅ `GET /api/v1/me` - Current user profile
+- ✅ `PUT /api/v1/me` - Update user profile
+- ✅ `GET /api/v1/me/students` - Get linked students (parent)
 - ✅ `POST /api/v1/invites/accept` - Accept teacher invite
 
 #### Admin Endpoints
@@ -105,7 +107,11 @@ GSDTA Web is a modern full-stack web application built with Next.js for both fro
 
 #### Authenticated Features
 - ✅ User dashboard (role-based routing)
-- ✅ Parent portal (with student associations)
+- ✅ Parent portal with full profile management
+  - ✅ Dashboard with welcome message and quick stats
+  - ✅ Profile page with view/edit mode (phone, address, language, notifications)
+  - ✅ Linked students page
+  - ✅ Settings page
 - ✅ Teacher portal
 - ✅ Admin portal
 - ✅ Signup flow with validation
