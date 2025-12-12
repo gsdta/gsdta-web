@@ -223,3 +223,16 @@ Then('the JSON path {string} should be less than or equal to {int}', async funct
   assert(typeof value === 'number', `Expected '${jsonPath}' to be a number, got ${typeof value}`);
   assert(value <= expected, `Expected '${jsonPath}' (${value}) to be <= ${expected}`);
 });
+
+Then('the JSON path {string} should contain {string}', async function (jsonPath: string, expected: string) {
+  const json = await getJsonBody();
+  const value = getByPath(json, jsonPath);
+  
+  if (Array.isArray(value)) {
+    assert(value.includes(expected), `Expected array '${jsonPath}' to contain '${expected}', got ${JSON.stringify(value)}`);
+  } else if (typeof value === 'string') {
+    assert(value.includes(expected), `Expected string '${jsonPath}' to contain '${expected}', got '${value}'`);
+  } else {
+    assert.fail(`Expected '${jsonPath}' to be an array or string, got ${typeof value}`);
+  }
+});

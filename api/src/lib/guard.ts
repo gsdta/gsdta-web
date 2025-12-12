@@ -103,12 +103,16 @@ async function mockGetUserProfile(uid: string): Promise<UserProfile | null> {
 
 // Function to get verify function based on runtime env
 function getVerifyFunction() {
-  return process.env.USE_TEST_AUTH === 'true' ? mockVerify : verifyIdToken;
+  // Enable test mode if USE_TEST_AUTH is explicitly set OR if NODE_ENV is test
+  const useTestMode = process.env.USE_TEST_AUTH === 'true' || process.env.NODE_ENV === 'test';
+  return useTestMode ? mockVerify : verifyIdToken;
 }
 
 // Function to get getUserProfile based on runtime env
 function getGetProfileFunction() {
-  return process.env.USE_TEST_AUTH === 'true' ? mockGetUserProfile : getUserProfile;
+  // Enable test mode if USE_TEST_AUTH is explicitly set OR if NODE_ENV is test
+  const useTestMode = process.env.USE_TEST_AUTH === 'true' || process.env.NODE_ENV === 'test';
+  return useTestMode ? mockGetUserProfile : getUserProfile;
 }
 
 export function __setGuardDepsForTests(

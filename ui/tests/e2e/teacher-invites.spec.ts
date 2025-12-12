@@ -32,7 +32,7 @@ test.describe('Teacher Invite Flow', () => {
 
 test.describe('Admin Teacher Invite Creation', () => {
   // Note: These tests require admin authentication
-  // They should be implemented when auth mocking is available in E2E tests
+  // They will be implemented when auth mocking is available in E2E tests
 
   test.skip('admin can create teacher invite', async ({ page }) => {
     // TODO: Implement when admin auth is available
