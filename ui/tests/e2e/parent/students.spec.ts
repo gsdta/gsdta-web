@@ -4,11 +4,10 @@ import { loginAsParent } from '../helpers/auth';
 /**
  * Parent Student Management E2E Tests
  *
- * NOTE: These tests are temporarily skipped because Firebase Auth
- * emulator authentication from the browser is experiencing connectivity issues.
- * The tests are ready and will work once auth flow is resolved.
+ * These tests verify the parent student management UI functionality
+ * with Firebase Auth emulator authentication.
  *
- * API-level student functionality is covered by Cucumber tests in:
+ * API-level student functionality is also covered by Cucumber tests in:
  * api/tests/e2e/features/parent-student-registration.feature
  */
 
@@ -17,7 +16,7 @@ test.describe('Parent Student Management', () => {
     await loginAsParent(page);
   });
 
-  test.skip('PE2E-002: Logged in parent sees students list', async ({ page }) => {
+  test('PE2E-002: Logged in parent sees students list', async ({ page }) => {
     await page.goto('/parent/students');
     await expect(page.getByRole('heading', { name: 'My Students' })).toBeVisible();
     

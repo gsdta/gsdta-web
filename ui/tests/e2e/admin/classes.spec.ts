@@ -4,10 +4,10 @@ import { loginAsAdmin } from '../helpers/auth';
 /**
  * Admin Class Management E2E Tests
  *
- * NOTE: These tests are temporarily skipped because Firebase Auth
- * emulator authentication from the browser is experiencing connectivity issues.
- * The tests are ready and will work once auth flow is resolved.
+ * These tests verify the admin class management UI functionality
+ * with Firebase Auth emulator authentication.
  *
+ * NOTE: Some tests are skipped as they require UI implementation.
  * API-level class functionality is covered by Cucumber tests.
  */
 

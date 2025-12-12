@@ -50,7 +50,8 @@ export async function adminGetClasses(
   if (params.status) queryParams.set('status', params.status);
   if (params.level) queryParams.set('level', params.level);
 
-  const url = `/api/v1/admin/classes${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  // Use trailing slash to avoid 308 redirect that strips Authorization header
+  const url = `/api/v1/admin/classes/${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
 
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
@@ -72,7 +73,8 @@ export async function adminGetClassOptions(getIdToken: TokenGetter): Promise<Cla
   const token = await getIdToken();
   if (!token) throw new Error('Not authenticated');
 
-  const res = await fetch('/api/v1/admin/classes?options=true', {
+  // Use trailing slash to avoid 308 redirect that strips Authorization header
+  const res = await fetch('/api/v1/admin/classes/?options=true', {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -95,7 +97,8 @@ export async function adminGetClass(
   const token = await getIdToken();
   if (!token) throw new Error('Not authenticated');
 
-  const res = await fetch(`/api/v1/admin/classes/${classId}`, {
+  // Use trailing slash to avoid 308 redirect that strips Authorization header
+  const res = await fetch(`/api/v1/admin/classes/${classId}/`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -129,7 +132,8 @@ export async function adminCreateClass(
   const token = await getIdToken();
   if (!token) throw new Error('Not authenticated');
 
-  const res = await fetch('/api/v1/admin/classes', {
+  // Use trailing slash to avoid 308 redirect that strips Authorization header
+  const res = await fetch('/api/v1/admin/classes/', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -158,7 +162,8 @@ export async function adminUpdateClass(
   const token = await getIdToken();
   if (!token) throw new Error('Not authenticated');
 
-  const res = await fetch(`/api/v1/admin/classes/${classId}`, {
+  // Use trailing slash to avoid 308 redirect that strips Authorization header
+  const res = await fetch(`/api/v1/admin/classes/${classId}/`, {
     method: 'PATCH',
     headers: {
       Authorization: `Bearer ${token}`,
