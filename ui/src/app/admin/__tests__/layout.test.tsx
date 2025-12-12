@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import AdminLayout from '../layout';
 import { usePathname } from 'next/navigation';
 
@@ -23,9 +24,9 @@ describe('AdminLayout', () => {
     jest.clearAllMocks();
   });
 
-  test('should render Protected wrapper', () => {
+  test('AL-001: Renders Protected wrapper', () => {
     mockUsePathname.mockReturnValue('/admin');
-    
+
     render(
       <AdminLayout>
         <div>Test Content</div>
@@ -35,9 +36,9 @@ describe('AdminLayout', () => {
     expect(screen.getByTestId('protected')).toBeInTheDocument();
   });
 
-  test('should render admin portal header', () => {
+  test('AL-002: Renders admin portal header', () => {
     mockUsePathname.mockReturnValue('/admin');
-    
+
     render(
       <AdminLayout>
         <div>Test Content</div>
@@ -47,37 +48,69 @@ describe('AdminLayout', () => {
     expect(screen.getByText('Admin Portal')).toBeInTheDocument();
   });
 
-  test('should render navigation sections', () => {
+  test('AL-003: Renders dashboard and home links in header', () => {
     mockUsePathname.mockReturnValue('/admin');
-    
+
     render(
       <AdminLayout>
         <div>Test Content</div>
       </AdminLayout>
     );
 
-    // Desktop navigation
-    expect(screen.getByRole('button', { name: /teachers/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /classes/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /content/i })).toBeInTheDocument();
+    // Desktop navigation links (not dropdowns)
+    const dashboardLinks = screen.getAllByRole('link', { name: /dashboard/i });
+    expect(dashboardLinks.length).toBeGreaterThan(0);
+    expect(screen.getByRole('link', { name: /^home$/i })).toBeInTheDocument();
   });
 
-  test('should highlight active section based on pathname', () => {
-    mockUsePathname.mockReturnValue('/admin/users/teachers/list');
-    
+  test('AL-004: Renders sidebar with all navigation sections', () => {
+    mockUsePathname.mockReturnValue('/admin');
+
     render(
       <AdminLayout>
         <div>Test Content</div>
       </AdminLayout>
     );
 
-    const teachersButton = screen.getByRole('button', { name: /teachers/i });
-    expect(teachersButton).toHaveClass('bg-blue-50', 'text-blue-700');
+    // Sidebar should show all sections
+    expect(screen.getByText('Students')).toBeInTheDocument();
+    expect(screen.getByText('Teachers')).toBeInTheDocument();
+    expect(screen.getByText('Classes')).toBeInTheDocument();
+    expect(screen.getByText('Content')).toBeInTheDocument();
   });
 
-  test('should render children content', () => {
+  test('AL-005: Sidebar shows navigation links', () => {
     mockUsePathname.mockReturnValue('/admin');
-    
+
+    render(
+      <AdminLayout>
+        <div>Test Content</div>
+      </AdminLayout>
+    );
+
+    // Check for navigation links in sidebar
+    expect(screen.getByRole('link', { name: /all students/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /all teachers/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /all classes/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /hero content/i })).toBeInTheDocument();
+  });
+
+  test('AL-006: Highlights active link based on pathname', () => {
+    mockUsePathname.mockReturnValue('/admin/students');
+
+    render(
+      <AdminLayout>
+        <div>Test Content</div>
+      </AdminLayout>
+    );
+
+    const studentsLink = screen.getByRole('link', { name: /all students/i });
+    expect(studentsLink).toHaveClass('bg-blue-50', 'text-blue-700');
+  });
+
+  test('AL-007: Renders children content', () => {
+    mockUsePathname.mockReturnValue('/admin');
+
     render(
       <AdminLayout>
         <div data-testid="child-content">Test Content</div>
@@ -88,17 +121,29 @@ describe('AdminLayout', () => {
     expect(screen.getByText('Test Content')).toBeInTheDocument();
   });
 
-  test('should not show sidebar when on admin home', () => {
+  test('AL-008: Sidebar always visible on desktop', () => {
     mockUsePathname.mockReturnValue('/admin');
-    
+
     render(
       <AdminLayout>
         <div>Test Content</div>
       </AdminLayout>
     );
 
-    // Sidebar should not exist when no active section
-    const sidebar = screen.queryByRole('complementary', { hidden: true });
-    expect(sidebar).not.toBeInTheDocument();
+    // Sidebar should be present (has aside element)
+    const sidebar = screen.getByRole('complementary');
+    expect(sidebar).toBeInTheDocument();
+  });
+
+  test('AL-009: Mobile menu button exists', () => {
+    mockUsePathname.mockReturnValue('/admin');
+
+    render(
+      <AdminLayout>
+        <div>Test Content</div>
+      </AdminLayout>
+    );
+
+    expect(screen.getByRole('button', { name: /toggle menu/i })).toBeInTheDocument();
   });
 });
