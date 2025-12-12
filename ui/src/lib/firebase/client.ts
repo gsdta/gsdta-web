@@ -12,10 +12,20 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
 };
 
+// Debug: Log emulator config on load
+if (typeof window !== 'undefined') {
+  console.log('[Firebase Config]', {
+    projectId: firebaseConfig.projectId,
+    authEmulator: process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST,
+    firestoreEmulator: process.env.NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST,
+  });
+}
+
 let appInstance: FirebaseApp | null = null;
 let authInstance: Auth | null = null;
 let dbInstance: Firestore | null = null;
-let emulatorsConnected = false;
+let authEmulatorConnected = false;
+let firestoreEmulatorConnected = false;
 
 export function getFirebaseApp(): FirebaseApp {
   if (!appInstance) {
@@ -23,6 +33,7 @@ export function getFirebaseApp(): FirebaseApp {
     if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId || !firebaseConfig.appId) {
       throw new Error("Firebase config env vars are missing. Set NEXT_PUBLIC_FIREBASE_* in .env.local");
     }
+    console.log(`[Firebase] Initializing app with project: ${firebaseConfig.projectId}`);
     appInstance = getApps().length ? getApps()[0]! : initializeApp(firebaseConfig);
   }
   return appInstance;
@@ -32,16 +43,19 @@ export function getFirebaseAuth(): Auth {
   if (!authInstance) {
     const app = getFirebaseApp();
     authInstance = getAuth(app);
-    
+
     // Connect to Auth emulator if configured (only once)
-    if (!emulatorsConnected) {
+    if (!authEmulatorConnected) {
       const authEmulatorHost = process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST;
       if (authEmulatorHost) {
-        const url = authEmulatorHost.startsWith('http') 
-          ? authEmulatorHost 
+        const url = authEmulatorHost.startsWith('http')
+          ? authEmulatorHost
           : `http://${authEmulatorHost}`;
         connectAuthEmulator(authInstance, url, { disableWarnings: true });
+        authEmulatorConnected = true;
         console.log(`[Firebase] Connected to Auth emulator: ${url}`);
+      } else {
+        console.log(`[Firebase] No Auth emulator configured, using production Firebase`);
       }
     }
   }
@@ -52,17 +66,17 @@ export function getFirebaseDb(): Firestore {
   if (!dbInstance) {
     const app = getFirebaseApp();
     dbInstance = getFirestore(app);
-    
+
     // Connect to Firestore emulator if configured (only once)
-    if (!emulatorsConnected) {
+    if (!firestoreEmulatorConnected) {
       const firestoreEmulatorHost = process.env.NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST;
       if (firestoreEmulatorHost) {
         const [host, portStr] = firestoreEmulatorHost.split(':');
         const port = parseInt(portStr || '8889', 10);
         connectFirestoreEmulator(dbInstance, host!, port);
+        firestoreEmulatorConnected = true;
         console.log(`[Firebase] Connected to Firestore emulator: ${host}:${port}`);
       }
-      emulatorsConnected = true;
     }
   }
   return dbInstance;
