@@ -75,13 +75,19 @@ test.describe('Parent Dashboard', () => {
   test('PDE2E-007: Dashboard shows student section or empty state', async ({ page }) => {
     await page.goto('/parent');
 
-    // Wait for loading to complete - either students appear or empty state
-    // The page will show either "Your Students" (if seeded) or "No students registered yet"
-    await page.waitForLoadState('networkidle');
+    // Wait for loading to complete - either students appear or empty state.
+    // We avoid relying on 'networkidle' here since the students fetch happens client-side
+    // and can be timing-sensitive in CI.
+    const studentsSection = page.getByText('Your Students');
+    const emptyState = page.getByText('No students registered yet');
+    await Promise.race([
+      studentsSection.waitFor({ state: 'visible', timeout: 20000 }).catch(() => null),
+      emptyState.waitFor({ state: 'visible', timeout: 20000 }).catch(() => null),
+    ]);
 
     // Check that either the student list OR empty state is visible
-    const hasStudents = await page.getByText('Your Students').isVisible().catch(() => false);
-    const hasEmptyState = await page.getByText('No students registered yet').isVisible().catch(() => false);
+    const hasStudents = await studentsSection.isVisible().catch(() => false);
+    const hasEmptyState = await emptyState.isVisible().catch(() => false);
 
     expect(hasStudents || hasEmptyState).toBe(true);
   });
@@ -89,11 +95,15 @@ test.describe('Parent Dashboard', () => {
   test('PDE2E-008: Dashboard handles student data loading', async ({ page }) => {
     await page.goto('/parent');
 
-    // Wait for page to load
-    await page.waitForLoadState('networkidle');
+    const studentsSection = page.getByText('Your Students');
+    const emptyState = page.getByText('No students registered yet');
+    await Promise.race([
+      studentsSection.waitFor({ state: 'visible', timeout: 20000 }).catch(() => null),
+      emptyState.waitFor({ state: 'visible', timeout: 20000 }).catch(() => null),
+    ]);
 
     // If students exist, View all link should be present
-    const hasStudents = await page.getByText('Your Students').isVisible().catch(() => false);
+    const hasStudents = await studentsSection.isVisible().catch(() => false);
 
     if (hasStudents) {
       await expect(page.getByRole('link', { name: /View all/ })).toBeVisible();
