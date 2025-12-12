@@ -75,6 +75,9 @@ jobs:
       FIRESTORE_EMULATOR_HOST: localhost:8889
       FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
       FIREBASE_PROJECT_ID: demo-gsdta
+      USE_TEST_AUTH: 'true'
+      ALLOW_TEST_INVITES: '1'
+      NODE_ENV: test
       NEXT_PUBLIC_AUTH_MODE: firebase
       NEXT_PUBLIC_USE_MSW: false
       NEXT_PUBLIC_FIREBASE_API_KEY: demo-key
@@ -111,12 +114,21 @@ jobs:
       - name: Verify bindings
         run: cd ui && node -e "require('lightningcss')" && node -e "require('@tailwindcss/oxide')"
       - name: Start emulators
-        run: firebase emulators:start --project demo-gsdta --only auth,firestore & sleep 10
+        run: |
+          firebase emulators:start --project demo-gsdta --only auth,firestore &
+          # Wait for emulators to be ready (up to 60 seconds)
+          for i in {1..60}; do
+            if curl -s http://localhost:9099 >/dev/null 2>&1; then
+              echo "✅ Emulators ready after ${i}s"
+              break
+            fi
+            sleep 1
+          done
       - run: npm run seed
       - name: API E2E (Cucumber)
         run: cd api && npm run test:e2e
-      - name: Build API for UI E2E
-        run: cd api && npm run build:test
+      - name: Build UI for E2E
+        run: cd ui && npm run build
       - name: UI E2E (Playwright)
         run: cd ui && npm run e2e:ci
       - uses: actions/upload-artifact@v4
