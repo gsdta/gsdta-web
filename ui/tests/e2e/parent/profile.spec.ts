@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * Parent RBAC E2E Tests
+ * Parent Profile E2E Tests
  *
  * NOTE: Tests requiring Firebase Auth login are currently experiencing
  * connectivity issues with the emulator from the browser context.
@@ -19,7 +19,7 @@ test.beforeEach(async ({ page, context }) => {
   });
 });
 
-test.describe('Parent Pages - Structure Tests', () => {
+test.describe('Parent Dashboard - Structure Tests', () => {
   test('parent dashboard page is protected', async ({ page }) => {
     await page.goto('/parent');
 
@@ -37,10 +37,13 @@ test.describe('Parent Pages - Structure Tests', () => {
       ).toBeTruthy();
     }
   });
+});
 
+test.describe('Parent Profile Page - Structure Tests', () => {
   test('parent profile page is protected', async ({ page }) => {
     await page.goto('/parent/profile');
 
+    // Wait for either redirect to signin OR show loading (auth checking)
     try {
       await page.waitForURL(/\/signin/, { timeout: 15000 });
       await expect(page).toHaveURL(/\/signin/);
@@ -53,10 +56,13 @@ test.describe('Parent Pages - Structure Tests', () => {
       ).toBeTruthy();
     }
   });
+});
 
+test.describe('Parent Students Page - Structure Tests', () => {
   test('parent students page is protected', async ({ page }) => {
     await page.goto('/parent/students');
 
+    // Wait for either redirect to signin OR show loading (auth checking)
     try {
       await page.waitForURL(/\/signin/, { timeout: 15000 });
       await expect(page).toHaveURL(/\/signin/);
@@ -69,10 +75,13 @@ test.describe('Parent Pages - Structure Tests', () => {
       ).toBeTruthy();
     }
   });
+});
 
+test.describe('Parent Settings Page - Structure Tests', () => {
   test('parent settings page is protected', async ({ page }) => {
     await page.goto('/parent/settings');
 
+    // Wait for either redirect to signin OR show loading (auth checking)
     try {
       await page.waitForURL(/\/signin/, { timeout: 15000 });
       await expect(page).toHaveURL(/\/signin/);
