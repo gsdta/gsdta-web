@@ -56,6 +56,14 @@ Implement admin functionality for managing grades and classes with multiple teac
 - [ ] Create class edit page (`ui/src/app/admin/classes/[id]/edit/page.tsx`)
 - [ ] Create teacher assignment component (`ui/src/components/admin/ClassTeacherManager.tsx`)
 
+### Phase 6: Bulk Teacher Assignment Page (NEW - Dec 2025)
+- [ ] Create teacher assignment page (`ui/src/app/admin/teachers/assign/page.tsx`)
+- [ ] Add navigation link in AdminLayoutClient
+- [ ] Implement auto-save for teacher assignments
+- [ ] Add teacher workload summary
+- [ ] Add filtering (by grade, unassigned only)
+- [ ] See detailed plan: `docs/TEACHER-ASSIGNMENT-PAGE.md`
+
 ---
 
 ## Files Created/Modified
