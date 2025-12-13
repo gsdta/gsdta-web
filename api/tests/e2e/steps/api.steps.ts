@@ -25,7 +25,9 @@ function resolveUrl(path: string) {
 }
 
 function getByPath(obj: unknown, path: string): unknown {
-  const keys = path.split('.');
+  // Normalize path: users[0].id -> users.0.id
+  const normalizedPath = path.replace(/\[(\d+)\]/g, '.$1');
+  const keys = normalizedPath.split('.');
   let curr: unknown = obj;
   for (const key of keys) {
     if (typeof curr === 'object' && curr !== null && key in (curr as Record<string, unknown>)) {
