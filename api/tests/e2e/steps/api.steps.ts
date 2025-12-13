@@ -11,10 +11,17 @@ let lastResponse: Response | undefined;
 let lastJson: unknown;
 let hasParsedJson = false;
 let authToken: string | undefined;
+let variables: Record<string, string> = {};
 
 function resolveUrl(path: string) {
-  if (path.startsWith('http://') || path.startsWith('https://')) return path;
-  return `${BASE_URL}${path}`;
+  let finalPath = path;
+  // Replace variables in path (e.g. {classId})
+  for (const [key, value] of Object.entries(variables)) {
+    finalPath = finalPath.replace(`{${key}}`, value);
+  }
+  
+  if (finalPath.startsWith('http://') || finalPath.startsWith('https://')) return finalPath;
+  return `${BASE_URL}${finalPath}`;
 }
 
 function getByPath(obj: unknown, path: string): unknown {
@@ -46,6 +53,7 @@ Before(function () {
   lastJson = undefined;
   hasParsedJson = false;
   authToken = undefined;
+  variables = {};
 });
 
 Given('the API is running', async function () {
@@ -287,3 +295,19 @@ Then('the JSON path {string} should have length {int}', async function (jsonPath
   assert(Array.isArray(value), `Expected '${jsonPath}' to be an array, got ${typeof value}`);
   assert.strictEqual(value.length, expected, `Expected '${jsonPath}' to have length ${expected}, got ${value.length}`);
 });
+
+Then('I save the JSON path {string} as variable {string}', async function (jsonPath: string, varName: string) {
+  const json = await getJsonBody();
+  const value = getByPath(json, jsonPath);
+  assert.notStrictEqual(value, undefined, `Expected '${jsonPath}' to exist`);
+  variables[varName] = String(value);
+});
+
+Then('the JSON path {string} should be greater than or equal to {int}', async function (jsonPath: string, expected: number) {
+  const json = await getJsonBody();
+  const value = getByPath(json, jsonPath);
+  assert(typeof value === 'number', `Expected '${jsonPath}' to be a number, got ${typeof value}`);
+  assert(value >= expected, `Expected '${jsonPath}' (${value}) to be >= ${expected}`);
+});
+
+
