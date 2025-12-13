@@ -388,7 +388,8 @@ When admin publishes an event banner, it alternates with Thirukkural in a slidin
 - [x] Create classes (IMPLEMENTED Dec 2025)
 - [x] Edit class details (name, grade, day, time, capacity) (IMPLEMENTED Dec 2025)
 - [x] Set class schedule (day, time) (IMPLEMENTED Dec 2025)
-- [x] Assign teachers to classes (primary + assistants) (IMPLEMENTED Dec 2025)
+- [x] Assign teachers to classes (primary + assistants) - Individual (IMPLEMENTED Dec 2025)
+- [ ] Assign teachers to classes - Bulk assignment page (PLANNED)
 - [ ] Assign students to classes
 - [x] Set class capacity limits (IMPLEMENTED Dec 2025)
 - [ ] View class rosters
