@@ -77,7 +77,7 @@ describe('ClassesPage', () => {
     
     await waitFor(() => expect(screen.queryByText('Loading classes...')).not.toBeInTheDocument());
 
-    const select = screen.getByLabelText(/Filter by status:/i);
+    const select = screen.getByLabelText(/Status:/i);
     fireEvent.change(select, { target: { value: 'active' } });
 
     await waitFor(() => {
@@ -101,7 +101,7 @@ describe('ClassesPage', () => {
     await waitFor(() => {
       // Find 'Edit' link for first class
       const editLinks = screen.getAllByText('Edit');
-      expect(editLinks[0]).toHaveAttribute('href', '/admin/classes/class-1');
+      expect(editLinks[0]).toHaveAttribute('href', '/admin/classes/class-1/edit');
     });
   });
 
