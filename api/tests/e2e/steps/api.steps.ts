@@ -298,6 +298,12 @@ Then('the JSON path {string} should have length {int}', async function (jsonPath
   assert.strictEqual(value.length, expected, `Expected '${jsonPath}' to have length ${expected}, got ${value.length}`);
 });
 
+Then('the JSON path {string} should not exist', async function (jsonPath: string) {
+  const json = await getJsonBody();
+  const value = getByPath(json, jsonPath);
+  assert.strictEqual(value, undefined, `Expected '${jsonPath}' to not exist, but found ${value}`);
+});
+
 Then('I save the JSON path {string} as variable {string}', async function (jsonPath: string, varName: string) {
   const json = await getJsonBody();
   const value = getByPath(json, jsonPath);
