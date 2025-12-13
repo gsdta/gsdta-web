@@ -322,3 +322,121 @@ export async function countStudentsByStatus(): Promise<Record<StudentStatus, num
 
   return counts;
 }
+
+/**
+ * Get students by class ID (for class roster)
+ */
+export async function getStudentsByClassId(classId: string): Promise<Student[]> {
+  const snap = await getDb()
+    .collection(STUDENTS_COLLECTION)
+    .where('classId', '==', classId)
+    .where('status', 'in', ['active', 'admitted'])
+    .orderBy('lastName')
+    .orderBy('firstName')
+    .get();
+
+  if (snap.empty) return [];
+
+  return snap.docs.map((doc) => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      ...data,
+    } as Student;
+  });
+}
+
+/**
+ * Bulk assign students to a class (admin action)
+ */
+export async function bulkAssignStudentsToClass(
+  classId: string,
+  className: string,
+  studentIds: string[]
+): Promise<void> {
+  const batch = getDb().batch();
+
+  for (const studentId of studentIds) {
+    const studentRef = getDb().collection(STUDENTS_COLLECTION).doc(studentId);
+    
+    // Get student to validate
+    const studentDoc = await studentRef.get();
+    if (!studentDoc.exists) {
+      throw new Error(`Student ${studentId} not found`);
+    }
+
+    const student = studentDoc.data() as Student;
+
+    // Only allow assigning class to admitted or active students
+    if (!['admitted', 'active'].includes(student.status)) {
+      throw new Error(`Cannot assign class to student ${studentId} with status ${student.status}`);
+    }
+
+    // Update student with class assignment
+    const updateData: Record<string, unknown> = {
+      classId,
+      className,
+      updatedAt: Timestamp.now(),
+    };
+
+    // If student was admitted, change to active when assigning class
+    if (student.status === 'admitted') {
+      updateData.status = 'active';
+    }
+
+    batch.update(studentRef, updateData);
+  }
+
+  // Update class enrolled count
+  const classRef = getDb().collection('classes').doc(classId);
+  batch.update(classRef, {
+    enrolled: FieldValue.increment(studentIds.length),
+    updatedAt: Timestamp.now(),
+  });
+
+  await batch.commit();
+}
+
+/**
+ * Remove a student from a class (admin action)
+ */
+export async function removeStudentFromClass(
+  studentId: string,
+  classId: string
+): Promise<Student | null> {
+  const batch = getDb().batch();
+
+  // Update student
+  const studentRef = getDb().collection(STUDENTS_COLLECTION).doc(studentId);
+  const studentDoc = await studentRef.get();
+  
+  if (!studentDoc.exists) {
+    throw new Error(`Student ${studentId} not found`);
+  }
+
+  const student = studentDoc.data() as Student;
+
+  // Change status back to admitted if was active
+  const updateData: Record<string, unknown> = {
+    classId: null,
+    className: null,
+    updatedAt: Timestamp.now(),
+  };
+
+  if (student.status === 'active') {
+    updateData.status = 'admitted';
+  }
+
+  batch.update(studentRef, updateData);
+
+  // Decrement class enrolled count
+  const classRef = getDb().collection('classes').doc(classId);
+  batch.update(classRef, {
+    enrolled: FieldValue.increment(-1),
+    updatedAt: Timestamp.now(),
+  });
+
+  await batch.commit();
+
+  return getStudentById(studentId);
+}
