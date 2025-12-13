@@ -11,12 +11,10 @@ export const dynamic = 'force-dynamic';
 // Validation schema for updating a class
 const updateClassSchema = z.object({
   name: z.string().min(1).max(200).optional(),
-  level: z.enum(['Beginner', 'Intermediate', 'Advanced']).optional(),
+  gradeId: z.string().min(1).max(50).optional(),
   day: z.string().min(1).max(20).optional(),
   time: z.string().min(1).max(50).optional(),
   capacity: z.number().int().min(1).max(100).optional(),
-  teacherId: z.string().optional(),
-  teacherName: z.string().max(100).optional(),
   status: z.enum(['active', 'inactive']).optional(),
   academicYear: z.string().max(20).optional(),
 });
@@ -112,18 +110,28 @@ export async function GET(
       return jsonError(404, 'class/not-found', 'Class not found', origin);
     }
 
+    // Format teachers for response
+    const formattedTeachers = (classData.teachers || []).map((t) => ({
+      ...t,
+      assignedAt: t.assignedAt?.toDate?.()?.toISOString() ?? '',
+    }));
+
     const responseBody = {
       success: true,
       data: {
         class: {
           id: classData.id,
           name: classData.name,
-          level: classData.level,
+          gradeId: classData.gradeId || '',
+          gradeName: classData.gradeName || classData.level || '',
           day: classData.day,
           time: classData.time,
           capacity: classData.capacity,
           enrolled: classData.enrolled,
           available: classData.capacity - classData.enrolled,
+          teachers: formattedTeachers,
+          // Legacy fields for backward compatibility
+          level: classData.level,
           teacherId: classData.teacherId,
           teacherName: classData.teacherName,
           status: classData.status,
@@ -173,19 +181,15 @@ export async function GET(
  *             properties:
  *               name:
  *                 type: string
- *               level:
+ *               gradeId:
  *                 type: string
- *                 enum: [Beginner, Intermediate, Advanced]
+ *                 description: Reference to grades collection
  *               day:
  *                 type: string
  *               time:
  *                 type: string
  *               capacity:
  *                 type: integer
- *               teacherId:
- *                 type: string
- *               teacherName:
- *                 type: string
  *               status:
  *                 type: string
  *                 enum: [active, inactive]
@@ -229,18 +233,28 @@ export async function PATCH(
       return jsonError(404, 'class/not-found', 'Class not found', origin);
     }
 
+    // Format teachers for response
+    const formattedTeachers = (classData.teachers || []).map((t) => ({
+      ...t,
+      assignedAt: t.assignedAt?.toDate?.()?.toISOString() ?? '',
+    }));
+
     const responseBody = {
       success: true,
       data: {
         class: {
           id: classData.id,
           name: classData.name,
-          level: classData.level,
+          gradeId: classData.gradeId || '',
+          gradeName: classData.gradeName || classData.level || '',
           day: classData.day,
           time: classData.time,
           capacity: classData.capacity,
           enrolled: classData.enrolled,
           available: classData.capacity - classData.enrolled,
+          teachers: formattedTeachers,
+          // Legacy fields for backward compatibility
+          level: classData.level,
           teacherId: classData.teacherId,
           teacherName: classData.teacherName,
           status: classData.status,
@@ -262,6 +276,10 @@ export async function PATCH(
     }
     if (err instanceof SyntaxError) {
       return jsonError(400, 'validation/invalid-json', 'Invalid JSON in request body', origin);
+    }
+    // Handle grade not found error
+    if (err instanceof Error && err.message.includes('Grade not found')) {
+      return jsonError(400, 'validation/invalid-grade', err.message, origin);
     }
     console.error(JSON.stringify({ requestId, path: `/api/v1/admin/classes/${id}`, method: 'PATCH', error: String(err) }));
     return jsonError(500, 'internal/error', 'Internal server error', origin);

@@ -45,7 +45,25 @@ service cloud.firestore {
     match /heroContent/{contentId} {
       // Anyone can read active hero content
       allow get, list: if true;
-      
+
+      // Only admins can create, update, delete
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Grades: public read (for class enrollment), admin write
+    match /grades/{gradeId} {
+      // Anyone can read grades
+      allow get, list: if true;
+
+      // Only admins can create, update, delete
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Classes: public read (for enrollment), admin write
+    match /classes/{classId} {
+      // Anyone can read classes
+      allow get, list: if true;
+
       // Only admins can create, update, delete
       allow create, update, delete: if isAdmin();
     }

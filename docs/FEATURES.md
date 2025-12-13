@@ -1,6 +1,6 @@
 # Implemented Features
 
-**Last Updated**: December 11, 2025
+**Last Updated**: December 12, 2025
 
 This document tracks all implemented features in the GSDTA web application. For complete role-based capability descriptions, see [ROLES.md](./ROLES.md).
 
@@ -189,25 +189,56 @@ This document tracks all implemented features in the GSDTA web application. For 
 
 ---
 
+### 8. Grades & Classes Management
+
+**Status**: Complete
+**Date**: December 2025
+
+#### Grades Management
+- ✅ 11 default grades (ps-1, ps-2, kg, grade-1 through grade-8)
+- ✅ Grade CRUD API endpoints
+- ✅ Seed default grades endpoint
+- ✅ Admin grades page with inline editing
+- ✅ Status toggle (active/inactive)
+- ✅ Display order management
+
+#### Classes Management
+- ✅ Classes belong to grades (gradeId instead of level)
+- ✅ Multiple teacher support (primary + assistant roles)
+- ✅ Class CRUD API endpoints
+- ✅ Teacher assignment API endpoints
+- ✅ Admin classes list with grade filter
+- ✅ Create class page with grade dropdown
+- ✅ Edit class page with teacher management
+- ✅ Capacity and enrollment tracking
+
+**Routes**:
+- `/admin/grades` - Grade management
+- `/admin/classes` - Classes list
+- `/admin/classes/create` - Create new class
+- `/admin/classes/[id]/edit` - Edit class & manage teachers
+
+**API Endpoints**:
+- `GET/POST /api/v1/admin/grades/` - List/create grades
+- `GET/PATCH /api/v1/admin/grades/[id]/` - Get/update grade
+- `GET/POST /api/v1/admin/grades/seed/` - Check/seed default grades
+- `GET/POST /api/v1/admin/classes/` - List/create classes
+- `GET/PATCH /api/v1/admin/classes/[id]/` - Get/update class
+- `GET/POST/DELETE/PATCH /api/v1/admin/classes/[id]/teachers/` - Teacher assignments
+
+---
+
 ## 🚧 In Progress
 
-### 1. Class Management
+### 1. Student Management
 
-**Status**: Placeholder pages created  
-**Next Steps**: Implement CRUD operations
+**Status**: Partially complete
+**Next Steps**: Class enrollment integration
 
-- ⏳ `/admin/classes` - Classes list (placeholder)
-- ⏳ `/admin/classes/create` - Create class (placeholder)
-
-### 2. Student Management
-
-**Status**: Not started  
-**Next Steps**: Design data model, create UI
-
-- ⏳ Student CRUD operations
+- ✅ Student CRUD operations
 - ⏳ Bulk import from CSV
-- ⏳ Grade management
-- ⏳ Parent associations
+- ✅ Grade management (via grades collection)
+- ✅ Parent associations
 
 ---
 
@@ -215,17 +246,12 @@ This document tracks all implemented features in the GSDTA web application. For 
 
 ### High Priority
 
-1. **Student Management**
-   - Complete student CRUD
-   - Parent associations
-   - Class assignments
+1. **Student-Class Enrollment**
+   - Assign students to classes
+   - View class rosters
+   - Enrollment history
 
-2. **Class Management**
-   - Create/edit classes
-   - Teacher assignments
-   - Student roster management
-
-3. **Attendance Tracking**
+2. **Attendance Tracking**
    - Daily attendance marking
    - Reports and analytics
    - Parent notifications
@@ -268,10 +294,10 @@ This document tracks all implemented features in the GSDTA web application. For 
 
 ## 📊 Feature Statistics
 
-**Total Features**: 7 completed, 1 in progress
-**Completion Rate**: 87%
-**Last Feature**: Parent Portal (Dec 11, 2025)
-**Next Feature**: Class Management (Q1 2026)
+**Total Features**: 8 completed, 1 in progress
+**Completion Rate**: 89%
+**Last Feature**: Grades & Classes Management (Dec 12, 2025)
+**Next Feature**: Student-Class Enrollment
 
 ---
 
