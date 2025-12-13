@@ -24,36 +24,47 @@ test.describe('Parent Student Management', () => {
     await expect(page.getByText('Arun Kumar')).toBeVisible();
   });
 
-  test.skip('PE2E-003: Register new student link works', async ({ page }) => {
+  test('PE2E-003: Register new student link works', async ({ page }) => {
     await page.goto('/parent/students');
-    const registerLinks = await page.getByRole('link', { name: /Register New Student/i }).all();
-    // Use the first one (header)
-    await registerLinks[0].click();
-    
+
+    // Wait for page to load
+    await expect(page.getByRole('heading', { name: 'My Students' })).toBeVisible();
+
+    // Click the register link in the header
+    await page.getByRole('link', { name: /Register New Student/i }).first().click();
+
     await expect(page).toHaveURL(/.*\/parent\/students\/register/);
     await expect(page.getByRole('heading', { name: 'Register New Student' })).toBeVisible();
   });
 
-  test.skip('PE2E-004: Complete student registration flow', async ({ page }) => {
+  test('PE2E-004: Complete student registration flow', async ({ page }) => {
     await page.goto('/parent/students/register');
-    
+
+    // Wait for page to load
+    await expect(page.getByRole('heading', { name: 'Register New Student' })).toBeVisible();
+
+    // Fill required fields
     await page.fill('input[name="firstName"]', 'TestChild');
     await page.fill('input[name="lastName"]', 'Playwright');
     await page.fill('input[name="dateOfBirth"]', '2015-06-15');
+
     // Optional fields
     await page.fill('input[name="grade"]', '3rd Grade');
-    
-    await page.click('button[type="submit"]');
-    
-    // Should redirect to students list
-    await expect(page).toHaveURL(/.*\/parent\/students/);
-    
-    // Should see new student
+    await page.fill('input[name="schoolName"]', 'Test Elementary');
+
+    // Submit the form
+    await page.getByRole('button', { name: /Register Student/i }).click();
+
+    // Should redirect to students list with success message (allow optional trailing slash)
+    await expect(page).toHaveURL(/.*\/parent\/students\/?\?registered=true/);
+
+    // Should see success message
+    await expect(page.getByText(/Student registered successfully/i)).toBeVisible();
+
+    // Should see new student in list
     await expect(page.getByText('TestChild Playwright')).toBeVisible();
-    
-    // Find the badge for this student. Might need to be specific if multiple "Pending"
-    // Ideally we'd scope to the card.
-    // Simple check:
-    await expect(page.getByText('Pending Review').first()).toBeVisible();
+
+    // New student should have Pending status
+    await expect(page.getByText('Pending').first()).toBeVisible();
   });
 });
