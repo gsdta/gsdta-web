@@ -163,48 +163,98 @@ const TEST_USERS = [
   }
 ];
 
+// Sample grades data
+const SAMPLE_GRADES = [
+  { id: 'ps-1', name: 'PS-1', displayName: 'Pre-School 1', displayOrder: 1, status: 'active' },
+  { id: 'ps-2', name: 'PS-2', displayName: 'Pre-School 2', displayOrder: 2, status: 'active' },
+  { id: 'kg', name: 'KG', displayName: 'Kindergarten', displayOrder: 3, status: 'active' },
+  { id: 'grade-1', name: 'Grade-1', displayName: 'Grade 1', displayOrder: 4, status: 'active' },
+  { id: 'grade-2', name: 'Grade-2', displayName: 'Grade 2', displayOrder: 5, status: 'active' },
+  { id: 'grade-3', name: 'Grade-3', displayName: 'Grade 3', displayOrder: 6, status: 'active' },
+  { id: 'grade-4', name: 'Grade-4', displayName: 'Grade 4', displayOrder: 7, status: 'active' },
+  { id: 'grade-5', name: 'Grade-5', displayName: 'Grade 5', displayOrder: 8, status: 'active' },
+  { id: 'grade-6', name: 'Grade-6', displayName: 'Grade 6', displayOrder: 9, status: 'active' },
+  { id: 'grade-7', name: 'Grade-7', displayName: 'Grade 7', displayOrder: 10, status: 'active' },
+  { id: 'grade-8', name: 'Grade-8', displayName: 'Grade 8', displayOrder: 11, status: 'active' }
+];
+
 // Sample classes data
 const SAMPLE_CLASSES = [
   {
     id: 'class-001',
-    name: 'Tamil Beginners - Saturday AM',
-    level: 'Beginner',
+    name: 'PS-1 Section A - Saturday AM',
+    gradeId: 'ps-1',
+    gradeName: 'Pre-School 1',
+    level: 'Beginner', // Legacy field
     day: 'Saturday',
     time: '10:00 AM - 12:00 PM',
-    capacity: 20,
+    capacity: 15,
     enrolled: 2,
-    teacherId: 'test-teacher-uid',
-    teacherName: 'Test Teacher',
+    teacherId: 'test-teacher-uid', // Legacy field
+    teacherName: 'Test Teacher', // Legacy field
+    teachers: [
+      {
+        userId: 'test-teacher-uid',
+        name: 'Test Teacher',
+        role: 'primary',
+        assignedAt: new Date()
+      }
+    ],
     status: 'active',
     academicYear: '2024-2025'
   },
   {
     id: 'class-002',
-    name: 'Tamil Intermediate - Saturday PM',
-    level: 'Intermediate',
+    name: 'Grade 3 Section A - Saturday PM',
+    gradeId: 'grade-3',
+    gradeName: 'Grade 3',
+    level: 'Intermediate', // Legacy field
     day: 'Saturday',
     time: '2:00 PM - 4:00 PM',
-    capacity: 15,
+    capacity: 20,
     enrolled: 1,
-    teacherId: 'teacher-test-002',
-    teacherName: 'Sarah Johnson',
+    teacherId: 'teacher-test-002', // Legacy field
+    teacherName: 'Sarah Johnson', // Legacy field
+    teachers: [
+      {
+        userId: 'teacher-test-002',
+        name: 'Sarah Johnson',
+        role: 'primary',
+        assignedAt: new Date()
+      }
+    ],
     status: 'active',
     academicYear: '2024-2025'
   },
   {
     id: 'class-003',
-    name: 'Tamil Advanced - Sunday',
-    level: 'Advanced',
+    name: 'Grade 8 Advanced - Sunday',
+    gradeId: 'grade-8',
+    gradeName: 'Grade 8',
+    level: 'Advanced', // Legacy field
     day: 'Sunday',
     time: '10:00 AM - 12:00 PM',
-    capacity: 10,
+    capacity: 15,
+    enrolled: 0,
+    status: 'active',
+    academicYear: '2024-2025'
+  },
+  {
+    id: 'class-004',
+    name: 'KG Section B - Sunday PM',
+    gradeId: 'kg',
+    gradeName: 'Kindergarten',
+    level: 'Beginner', // Legacy field
+    day: 'Sunday',
+    time: '2:00 PM - 4:00 PM',
+    capacity: 18,
     enrolled: 0,
     status: 'active',
     academicYear: '2024-2025'
   }
 ];
 
-// Sample students data (updated to match new schema)
+// Sample students data (updated to match new schema and grade levels)
 const SAMPLE_STUDENTS = [
   {
     id: 'student-001',
@@ -212,16 +262,17 @@ const SAMPLE_STUDENTS = [
     lastName: 'Kumar',
     parentId: 'test-parent-uid',
     parentEmail: 'parent@test.com',
-    grade: '5th Grade',
+    grade: 'Pre-School 1',
+    gradeId: 'ps-1',
     schoolName: 'Lincoln Elementary',
-    dateOfBirth: '2015-03-15',
+    dateOfBirth: '2020-03-15',
     priorTamilLevel: 'beginner',
     medicalNotes: '',
     photoConsent: true,
     classId: 'class-001',
-    className: 'Tamil Beginners - Saturday AM',
+    className: 'PS-1 Section A - Saturday AM',
     status: 'active',
-    notes: 'Enthusiastic learner, loves Tamil poetry'
+    notes: 'Enthusiastic learner, loves Tamil stories'
   },
   {
     id: 'student-002',
@@ -229,14 +280,15 @@ const SAMPLE_STUDENTS = [
     lastName: 'Sharma',
     parentId: 'test-parent-uid',
     parentEmail: 'parent@test.com',
-    grade: '7th Grade',
+    grade: 'Grade 3',
+    gradeId: 'grade-3',
     schoolName: 'Lincoln Elementary',
-    dateOfBirth: '2013-07-22',
+    dateOfBirth: '2016-07-22',
     priorTamilLevel: 'intermediate',
     medicalNotes: '',
     photoConsent: true,
     classId: 'class-002',
-    className: 'Tamil Intermediate - Saturday PM',
+    className: 'Grade 3 Section A - Saturday PM',
     status: 'active',
     notes: 'Advanced reader, participates actively'
   },
@@ -246,14 +298,15 @@ const SAMPLE_STUDENTS = [
     lastName: 'Patel',
     parentId: 'parent-test-002',
     parentEmail: 'parent2@test.com',
-    grade: '6th Grade',
+    grade: 'Pre-School 1',
+    gradeId: 'ps-1',
     schoolName: 'Washington Middle School',
-    dateOfBirth: '2014-11-08',
-    priorTamilLevel: 'beginner',
+    dateOfBirth: '2020-11-08',
+    priorTamilLevel: 'none',
     medicalNotes: 'Mild peanut allergy',
     photoConsent: false,
     classId: 'class-001',
-    className: 'Tamil Beginners - Saturday AM',
+    className: 'PS-1 Section A - Saturday AM',
     status: 'active',
     notes: 'Good progress in writing'
   },
@@ -263,9 +316,10 @@ const SAMPLE_STUDENTS = [
     lastName: 'Krishnan',
     parentId: 'parent-test-002',
     parentEmail: 'parent2@test.com',
-    grade: '4th Grade',
+    grade: 'Kindergarten',
+    gradeId: 'kg',
     schoolName: 'Jefferson Elementary',
-    dateOfBirth: '2016-05-10',
+    dateOfBirth: '2019-05-10',
     priorTamilLevel: 'none',
     medicalNotes: '',
     photoConsent: true,
@@ -278,14 +332,31 @@ const SAMPLE_STUDENTS = [
     lastName: 'Sundar',
     parentId: 'test-parent-uid',
     parentEmail: 'parent@test.com',
-    grade: '3rd Grade',
+    grade: 'Grade 8',
+    gradeId: 'grade-8',
     schoolName: 'Lincoln Elementary',
-    dateOfBirth: '2017-09-20',
-    priorTamilLevel: 'none',
+    dateOfBirth: '2011-09-20',
+    priorTamilLevel: 'advanced',
     medicalNotes: '',
     photoConsent: false,
     status: 'admitted',
     notes: 'Admitted - needs class assignment'
+  },
+  {
+    id: 'student-006',
+    firstName: 'Lakshmi',
+    lastName: 'Iyer',
+    parentId: 'test-parent-uid',
+    parentEmail: 'parent@test.com',
+    grade: 'Pre-School 2',
+    gradeId: 'ps-2',
+    schoolName: 'Lincoln Elementary',
+    dateOfBirth: '2019-02-14',
+    priorTamilLevel: 'beginner',
+    medicalNotes: '',
+    photoConsent: true,
+    status: 'pending',
+    notes: 'Sibling of existing student'
   }
 ];
 
@@ -418,6 +489,28 @@ async function seedUserProfiles() {
 }
 
 /**
+ * Seed grade records
+ */
+async function seedGrades() {
+  console.log('\n📝 Seeding grade records...');
+
+  for (const grade of SAMPLE_GRADES) {
+    try {
+      const gradeData = {
+        ...grade,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      };
+
+      await db.collection('grades').doc(grade.id).set(gradeData, { merge: true });
+      console.log(`  ✅ Created grade: ${grade.displayName} (${grade.name})`);
+    } catch (error) {
+      console.error(`  ❌ Error creating grade ${grade.name}:`, error.message);
+    }
+  }
+}
+
+/**
  * Seed class records
  */
 async function seedClasses() {
@@ -425,8 +518,13 @@ async function seedClasses() {
 
   for (const cls of SAMPLE_CLASSES) {
     try {
+      // Convert teacher dates to Firestore timestamps
       const classData = {
         ...cls,
+        teachers: cls.teachers ? cls.teachers.map(t => ({
+          ...t,
+          assignedAt: admin.firestore.Timestamp.fromDate(t.assignedAt)
+        })) : undefined,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       };
@@ -611,7 +709,7 @@ async function clearAllData() {
   
   try {
     // Clear Firestore collections
-    const collections = ['users', 'students', 'classes', 'invites', 'heroContent'];
+    const collections = ['users', 'students', 'classes', 'grades', 'invites', 'heroContent'];
     for (const collectionName of collections) {
       const snapshot = await db.collection(collectionName).get();
       const batch = db.batch();
@@ -657,6 +755,7 @@ async function main() {
     // Seed all data
     await seedAuthUsers();
     await seedUserProfiles();
+    await seedGrades();
     await seedClasses();
     await seedStudents();
     await seedInvites();
@@ -678,19 +777,25 @@ async function main() {
     console.log('  Expired: test-invite-expired-456');
     console.log('  Used:    test-invite-used-789');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('\nSample Grades:');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('  11 grades: PS-1, PS-2, KG, Grade 1-8');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('\nSample Classes:');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('  class-001: Tamil Beginners - Saturday AM');
-    console.log('  class-002: Tamil Intermediate - Saturday PM');
-    console.log('  class-003: Tamil Advanced - Sunday');
+    console.log('  class-001: PS-1 Section A - Saturday AM');
+    console.log('  class-002: Grade 3 Section A - Saturday PM');
+    console.log('  class-003: Grade 8 Advanced - Sunday');
+    console.log('  class-004: KG Section B - Sunday PM');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('\nSample Students:');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('  student-001: Arun Kumar (active)');
-    console.log('  student-002: Priya Sharma (active)');
-    console.log('  student-003: Vikram Patel (active)');
-    console.log('  student-004: Meera Krishnan (pending)');
-    console.log('  student-005: Raj Sundar (admitted)');
+    console.log('  student-001: Arun Kumar (PS-1, active)');
+    console.log('  student-002: Priya Sharma (Grade 3, active)');
+    console.log('  student-003: Vikram Patel (PS-1, active)');
+    console.log('  student-004: Meera Krishnan (KG, pending)');
+    console.log('  student-005: Raj Sundar (Grade 8, admitted)');
+    console.log('  student-006: Lakshmi Iyer (PS-2, pending)');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('\nAccess Emulator UI: http://localhost:4445\n');
 

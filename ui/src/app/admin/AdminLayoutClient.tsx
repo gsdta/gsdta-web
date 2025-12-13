@@ -33,6 +33,7 @@ const adminNav: NavSection[] = [
     items: [
       { label: 'All Teachers', href: '/admin/users/teachers/list', icon: '👩‍🏫' },
       { label: 'Invite Teacher', href: '/admin/teachers/invite', icon: '✉️' },
+      { label: 'Assign to Classes', href: '/admin/teachers/assign', icon: '📋' },
     ],
   },
   {
@@ -127,7 +128,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
         {/* Two-pane layout */}
         <div className="flex">
           {/* Left Sidebar - Desktop only */}
-          <aside className="hidden md:block w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-4rem)] sticky top-16">
+          <aside className="hidden md:block w-64 flex-shrink-0 bg-white border-r border-gray-200 min-h-[calc(100vh-4rem)] sticky top-16">
             <div className="p-4">
               {adminNav.map((section) => (
                 <div key={section.label} className="mb-6">
@@ -156,7 +157,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
           </aside>
 
           {/* Main content area */}
-          <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+          <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8">{children}</main>
         </div>
       </div>
     </Protected>
