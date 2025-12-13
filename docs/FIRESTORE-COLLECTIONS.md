@@ -2,7 +2,7 @@
 
 **Project**: GSDTA Web Application  
 **Purpose**: Comprehensive data model for all collections  
-**Last Updated**: December 11, 2025
+**Last Updated**: December 12, 2025
 
 > **🚀 GCP Setup Guide**: See [FIRESTORE-SETUP.md](./FIRESTORE-SETUP.md) for step-by-step deployment instructions
 
@@ -60,9 +60,22 @@ This document outlines all Firestore collections needed for the GSDTA web applic
 
 None - all current features have required collections implemented.
 
+### 📋 Collections Implemented (December 2025)
+
+5. **grades** - Grade level definitions (IMPLEMENTED - Dec 2025)
+   - 11 grades: ps-1, ps-2, kg, grade-1 through grade-8
+   - Matches textbooks section for consistency
+   - Admin CRUD + seed default grades
+   - **Action**: Deploy indexes to GCP
+
+6. **classes** - Class definitions with teacher assignments (IMPLEMENTED - Dec 2025)
+   - Classes belong to grades (gradeId reference)
+   - Multiple teacher support (primary + assistants)
+   - Schedule, capacity, enrollment tracking
+   - **Action**: Deploy indexes to GCP
+
 ### 📋 Collections for Upcoming Features
 
-- `classes` - For class management (Phase 2)
 - `studentClassEnrollments` - For enrollment tracking (Phase 2)
 
 ---
@@ -77,8 +90,8 @@ None - all current features have required collections implemented.
 
 ### Phase 2: User Management (Weeks 5-8)
 - `parentStudentLinks` - Parent-student relationships (optional - currently embedded in students)
-- `classes` - Class definitions
-- `teacherClassAssignments` - Teacher-class assignments
+- ✅ `grades` - Grade level definitions (ps-1, ps-2, kg, grade-1 through grade-8)
+- ✅ `classes` - Class definitions with gradeId and multiple teacher assignments
 - `studentClassEnrollments` - Student-class enrollments
 
 ### Phase 3: Content Management (Weeks 9-12)

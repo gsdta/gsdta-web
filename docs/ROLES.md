@@ -385,17 +385,23 @@ When admin publishes an event banner, it alternates with Thirukkural in a slidin
 
 #### Class Management
 
-- [ ] Create classes
-- [ ] Edit class details (name, grade, teacher)
-- [ ] Set class schedule (day, time, location)
-- [ ] Assign teachers to classes
+- [x] Create classes (IMPLEMENTED Dec 2025)
+- [x] Edit class details (name, grade, day, time, capacity) (IMPLEMENTED Dec 2025)
+- [x] Set class schedule (day, time) (IMPLEMENTED Dec 2025)
+- [x] Assign teachers to classes (primary + assistants) (IMPLEMENTED Dec 2025)
 - [ ] Assign students to classes
-- [ ] Set class capacity limits
+- [x] Set class capacity limits (IMPLEMENTED Dec 2025)
 - [ ] View class rosters
 - [ ] Transfer students between classes
-- [ ] Archive/delete classes
-- [ ] Set academic year per class
+- [x] Deactivate/reactivate classes (soft delete) (IMPLEMENTED Dec 2025)
+- [x] Set academic year per class (IMPLEMENTED Dec 2025)
 - [ ] Bulk assign students to classes
+
+**Grade Management** (IMPLEMENTED Dec 2025):
+- [x] View all grades (11 grades: ps-1, ps-2, kg, grade-1 through grade-8)
+- [x] Edit grade display name and order
+- [x] Activate/deactivate grades
+- [x] Seed default grades
 
 #### Reports & Analytics
 
@@ -539,9 +545,11 @@ When admin publishes an event banner, it alternates with Thirukkural in a slidin
 │   ├── /media              - Media library
 │   └── /galleries          - Photo galleries
 ├── /calendar               - Calendar management
-├── /classes                - Class management (placeholder pages created)
-│   ├── /list               - All classes
-│   └── /create             - Create new class
+├── /grades                 - ✅ Grade management (IMPLEMENTED Dec 2025)
+├── /classes                - ✅ Class management (IMPLEMENTED Dec 2025)
+│   ├── /                   - All classes with grade filter
+│   ├── /create             - Create new class
+│   └── /[id]/edit          - Edit class & manage teachers
 ├── /communications         - Send announcements
 ├── /reports                - Analytics and reports
 │   ├── /students           - Student reports

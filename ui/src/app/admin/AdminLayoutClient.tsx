@@ -40,6 +40,7 @@ const adminNav: NavSection[] = [
     items: [
       { label: 'All Classes', href: '/admin/classes', icon: '📚' },
       { label: 'Create Class', href: '/admin/classes/create', icon: '➕' },
+      { label: 'Grades', href: '/admin/grades', icon: '📊' },
     ],
   },
   {

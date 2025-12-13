@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
 import { createClass, getAllClasses, getActiveClassOptions } from '@/lib/firestoreClasses';
-import type { TamilLevel } from '@/types/class';
 import { randomUUID } from 'crypto';
 
 export const runtime = 'nodejs';
@@ -12,12 +11,10 @@ export const dynamic = 'force-dynamic';
 // Validation schema for creating a class
 const createClassSchema = z.object({
   name: z.string().min(1, 'Name is required').max(200),
-  level: z.enum(['Beginner', 'Intermediate', 'Advanced']),
+  gradeId: z.string().min(1, 'Grade is required').max(50),
   day: z.string().min(1, 'Day is required').max(20),
   time: z.string().min(1, 'Time is required').max(50),
   capacity: z.number().int().min(1).max(100),
-  teacherId: z.string().optional(),
-  teacherName: z.string().max(100).optional(),
   academicYear: z.string().max(20).optional(),
 });
 
@@ -86,11 +83,10 @@ export async function OPTIONS(req: NextRequest) {
  *           enum: [active, inactive, all]
  *         description: Filter by class status
  *       - in: query
- *         name: level
+ *         name: gradeId
  *         schema:
  *           type: string
- *           enum: [Beginner, Intermediate, Advanced]
- *         description: Filter by Tamil level
+ *         description: Filter by grade ID
  *       - in: query
  *         name: options
  *         schema:
@@ -114,16 +110,24 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status') as 'active' | 'inactive' | 'all' | null;
-    const level = searchParams.get('level') as TamilLevel | null;
+    const gradeId = searchParams.get('gradeId');
     const optionsOnly = searchParams.get('options') === 'true';
 
     // If requesting options, return simplified list
     if (optionsOnly) {
       const options = await getActiveClassOptions();
+      // Convert timestamps for JSON response
+      const formattedOptions = options.map((opt) => ({
+        ...opt,
+        teachers: opt.teachers.map((t) => ({
+          ...t,
+          assignedAt: t.assignedAt?.toDate?.()?.toISOString() ?? '',
+        })),
+      }));
       const responseBody = {
         success: true,
         data: {
-          options,
+          options: formattedOptions,
         },
       };
 
@@ -136,19 +140,26 @@ export async function GET(req: NextRequest) {
     // Get full class list with filters
     const result = await getAllClasses({
       status: status || 'all',
-      level: level || undefined,
+      gradeId: gradeId || undefined,
     });
 
     // Format classes for response
     const formattedClasses = result.classes.map((c) => ({
       id: c.id,
       name: c.name,
-      level: c.level,
+      gradeId: c.gradeId || '',
+      gradeName: c.gradeName || c.level || '', // Fallback to level for legacy
       day: c.day,
       time: c.time,
       capacity: c.capacity,
       enrolled: c.enrolled,
       available: c.capacity - c.enrolled,
+      teachers: (c.teachers || []).map((t) => ({
+        ...t,
+        assignedAt: t.assignedAt?.toDate?.()?.toISOString() ?? '',
+      })),
+      // Legacy fields for backward compatibility
+      level: c.level,
       teacherId: c.teacherId,
       teacherName: c.teacherName,
       status: c.status,
@@ -197,26 +208,22 @@ export async function GET(req: NextRequest) {
  *             type: object
  *             required:
  *               - name
- *               - level
+ *               - gradeId
  *               - day
  *               - time
  *               - capacity
  *             properties:
  *               name:
  *                 type: string
- *               level:
+ *               gradeId:
  *                 type: string
- *                 enum: [Beginner, Intermediate, Advanced]
+ *                 description: Reference to grades collection
  *               day:
  *                 type: string
  *               time:
  *                 type: string
  *               capacity:
  *                 type: integer
- *               teacherId:
- *                 type: string
- *               teacherName:
- *                 type: string
  *               academicYear:
  *                 type: string
  *     responses:
@@ -255,14 +262,14 @@ export async function POST(req: NextRequest) {
         class: {
           id: newClass.id,
           name: newClass.name,
-          level: newClass.level,
+          gradeId: newClass.gradeId,
+          gradeName: newClass.gradeName,
           day: newClass.day,
           time: newClass.time,
           capacity: newClass.capacity,
           enrolled: newClass.enrolled,
           available: newClass.capacity - newClass.enrolled,
-          teacherId: newClass.teacherId,
-          teacherName: newClass.teacherName,
+          teachers: newClass.teachers || [],
           status: newClass.status,
           academicYear: newClass.academicYear,
           createdAt: newClass.createdAt?.toDate?.()?.toISOString() ?? '',
@@ -281,6 +288,10 @@ export async function POST(req: NextRequest) {
     }
     if (err instanceof SyntaxError) {
       return jsonError(400, 'validation/invalid-json', 'Invalid JSON in request body', origin);
+    }
+    // Handle grade not found error
+    if (err instanceof Error && err.message.includes('Grade not found')) {
+      return jsonError(400, 'validation/invalid-grade', err.message, origin);
     }
     console.error(JSON.stringify({ requestId, path: '/api/v1/admin/classes', method: 'POST', error: String(err) }));
     return jsonError(500, 'internal/error', 'Internal server error', origin);
