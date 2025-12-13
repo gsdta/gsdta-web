@@ -36,8 +36,6 @@ export interface ClassOption {
   available: number;
   status: 'active' | 'inactive';
   teachers: ClassTeacher[];
-  // Legacy fields for backward compatibility
-  level?: string;
 }
 
 export interface Class extends Omit<ClassOption, 'available'> {

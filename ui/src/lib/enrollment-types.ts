@@ -13,7 +13,7 @@ export interface Enrollment {
 export interface Class {
     id: string;
     name: string;
-    level: string;
+    gradeName: string;
     day: string;
     time: string;
     capacity: number;

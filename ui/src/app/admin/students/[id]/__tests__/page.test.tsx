@@ -61,7 +61,7 @@ describe('AdminStudentDetailsPage', () => {
   };
 
   const mockClasses = [
-    { id: 'class-1', name: 'Class 1', level: 'Beginner', day: 'Sat', time: '10am', capacity: 20, enrolled: 5, available: 15 },
+    { id: 'class-1', name: 'Class 1', gradeName: 'Beginner', day: 'Sat', time: '10am', capacity: 20, enrolled: 5, available: 15 },
   ];
 
   beforeEach(() => {

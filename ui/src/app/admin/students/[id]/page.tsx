@@ -199,7 +199,7 @@ export default function AdminStudentDetailsPage({
               <dd className="text-sm text-gray-900">{student.schoolName || '-'}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-sm font-medium text-gray-500">Prior Tamil Level</dt>
+              <dt className="text-sm font-medium text-gray-500">Prior Tamil Experience</dt>
               <dd className="text-sm text-gray-900">{student.priorTamilLevel || '-'}</dd>
             </div>
             <div className="flex justify-between">
@@ -338,7 +338,7 @@ export default function AdminStudentDetailsPage({
                         <div className="text-sm">
                           <p className="font-medium text-gray-900">{selected.name}</p>
                           <p className="text-gray-600">
-                            {selected.level} - {selected.day} {selected.time}
+                            {selected.gradeName} - {selected.day} {selected.time}
                           </p>
                           <p className="text-gray-600">
                             {selected.enrolled}/{selected.capacity} students ({selected.available} spots available)

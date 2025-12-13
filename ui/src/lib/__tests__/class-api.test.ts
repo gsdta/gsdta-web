@@ -69,7 +69,7 @@ describe('class-api', () => {
   describe('adminCreateClass', () => {
     const mockClassData = {
       name: 'New Class',
-      level: 'Beginner',
+      gradeId: 'test-grade-id',
       day: 'Saturday',
       time: '10am',
       capacity: 20,

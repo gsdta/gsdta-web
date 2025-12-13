@@ -143,7 +143,7 @@ export async function getActiveClassOptions(): Promise<ClassOption[]> {
       id: doc.id,
       name: data.name,
       gradeId: data.gradeId || '',
-      gradeName: data.gradeName || data.level || '', // Fallback to level for legacy
+      gradeName: data.gradeName || '',
       day: data.day,
       time: data.time,
       capacity: data.capacity,

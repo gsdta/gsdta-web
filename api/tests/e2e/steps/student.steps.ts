@@ -46,7 +46,8 @@ Given('the class {string} has {int} students enrolled', async function (classId:
   await db.collection(CLASSES_COLLECTION).doc(classId).set({
     id: classId,
     name: 'Test Class',
-    level: 'Beginner',
+    gradeId: 'test-grade-id',
+    gradeName: 'Beginner',
     status: 'active',
     enrolled: count,
     capacity: 20,

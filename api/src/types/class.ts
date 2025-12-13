@@ -1,12 +1,6 @@
 import { Timestamp } from 'firebase-admin/firestore';
 
 /**
- * Tamil proficiency levels for classes (LEGACY - use gradeId instead)
- * @deprecated Use gradeId field instead
- */
-export type TamilLevel = 'Beginner' | 'Intermediate' | 'Advanced';
-
-/**
  * Class status
  */
 export type ClassStatus = 'active' | 'inactive';
@@ -48,8 +42,6 @@ export interface Class {
   teachers: ClassTeacher[];         // Array of teacher assignments
 
   // Legacy fields - kept for backward compatibility
-  /** @deprecated Use gradeId instead */
-  level?: TamilLevel;               // LEGACY: Proficiency level
   /** @deprecated Use teachers array instead */
   teacherId?: string;               // LEGACY: Single assigned teacher UID
   /** @deprecated Use teachers array instead */

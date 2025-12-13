@@ -123,7 +123,7 @@ export async function GET(
           id: classData.id,
           name: classData.name,
           gradeId: classData.gradeId || '',
-          gradeName: classData.gradeName || classData.level || '',
+          gradeName: classData.gradeName || '',
           day: classData.day,
           time: classData.time,
           capacity: classData.capacity,
@@ -131,7 +131,6 @@ export async function GET(
           available: classData.capacity - classData.enrolled,
           teachers: formattedTeachers,
           // Legacy fields for backward compatibility
-          level: classData.level,
           teacherId: classData.teacherId,
           teacherName: classData.teacherName,
           status: classData.status,
@@ -246,7 +245,7 @@ export async function PATCH(
           id: classData.id,
           name: classData.name,
           gradeId: classData.gradeId || '',
-          gradeName: classData.gradeName || classData.level || '',
+          gradeName: classData.gradeName || '',
           day: classData.day,
           time: classData.time,
           capacity: classData.capacity,
@@ -254,7 +253,6 @@ export async function PATCH(
           available: classData.capacity - classData.enrolled,
           teachers: formattedTeachers,
           // Legacy fields for backward compatibility
-          level: classData.level,
           teacherId: classData.teacherId,
           teacherName: classData.teacherName,
           status: classData.status,

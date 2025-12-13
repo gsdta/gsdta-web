@@ -81,7 +81,7 @@ export default function ClassesPage() {
                                 <h2 className="text-xl font-semibold text-gray-900">{cls.name}</h2>
                                 <div className="mt-3 space-y-1 text-sm text-gray-600">
                                     <p>
-                                        <strong>{t("classes.level")}</strong> {cls.level}
+                                        <strong>{t("classes.grade")}</strong> {cls.gradeName}
                                     </p>
                                     <p>
                                         <strong>{t("classes.schedule")}</strong> {cls.day} {cls.time}

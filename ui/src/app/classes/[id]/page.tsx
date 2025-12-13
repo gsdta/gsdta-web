@@ -72,8 +72,8 @@ export default function ClassDetailPage() {
                             <h2 className="mb-4 text-xl font-semibold text-gray-900">Class Information</h2>
                             <div className="grid gap-4 md:grid-cols-2">
                                 <div>
-                                    <p className="text-sm text-gray-600">Level</p>
-                                    <p className="font-medium text-gray-900">{classData.level}</p>
+                                    <p className="text-sm text-gray-600">Grade</p>
+                                    <p className="font-medium text-gray-900">{classData.gradeName}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-600">Schedule</p>
