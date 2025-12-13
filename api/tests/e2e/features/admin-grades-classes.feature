@@ -17,7 +17,7 @@ Feature: Admin Grades and Classes Management
     Then the response status should be 200
     And the JSON path "data.grades" should be an array
     And the JSON path "data.total" should be greater than or equal to 0
-    # And the JSON path "data.grades[0].id" should exist
+    And the JSON path "data.grades[0].id" should exist
 
   Scenario: Admin can create a class linked to a grade
     # Create class
