@@ -1,5 +1,16 @@
 import '@testing-library/jest-dom';
 
+// Global fetch mock
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    json: () => Promise.resolve({}),
+    text: () => Promise.resolve(''),
+    ok: true,
+    status: 200,
+    headers: new Headers(),
+  } as Response)
+);
+
 // Suppress React act() warnings in tests
 // These are expected for async state updates and are handled by waitFor
 const originalError = console.error;
