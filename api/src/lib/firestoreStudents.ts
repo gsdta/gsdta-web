@@ -418,8 +418,8 @@ export async function removeStudentFromClass(
 
   // Change status back to admitted if was active
   const updateData: Record<string, unknown> = {
-    classId: null,
-    className: null,
+    classId: FieldValue.delete(),
+    className: FieldValue.delete(),
     updatedAt: Timestamp.now(),
   };
 

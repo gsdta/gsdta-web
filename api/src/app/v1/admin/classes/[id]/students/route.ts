@@ -268,7 +268,7 @@ export async function POST(
     if (err instanceof SyntaxError) {
       return jsonError(400, 'validation/invalid-json', 'Invalid JSON in request body', origin);
     }
-    if (err instanceof Error && (err.message.includes('admitted') || err.message.includes('grade'))) {
+    if (err instanceof Error && (err.message.includes('admitted') || err.message.includes('pending') || err.message.includes('grade') || err.message.includes('status'))) {
       return jsonError(400, 'student/invalid-status', err.message, origin);
     }
     console.error(JSON.stringify({ requestId, path: `/api/v1/admin/classes/${id}/students`, method: 'POST', error: String(err) }));
