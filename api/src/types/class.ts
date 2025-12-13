@@ -1,7 +1,8 @@
 import { Timestamp } from 'firebase-admin/firestore';
 
 /**
- * Tamil proficiency levels for classes
+ * Tamil proficiency levels for classes (LEGACY - use gradeId instead)
+ * @deprecated Use gradeId field instead
  */
 export type TamilLevel = 'Beginner' | 'Intermediate' | 'Advanced';
 
@@ -11,20 +12,48 @@ export type TamilLevel = 'Beginner' | 'Intermediate' | 'Advanced';
 export type ClassStatus = 'active' | 'inactive';
 
 /**
+ * Teacher role within a class
+ */
+export type ClassTeacherRole = 'primary' | 'assistant';
+
+/**
+ * Teacher assignment within a class
+ */
+export interface ClassTeacher {
+  teacherId: string;                // Teacher's user UID
+  teacherName: string;              // Denormalized teacher name
+  teacherEmail?: string;            // Denormalized teacher email
+  role: ClassTeacherRole;           // Role in class (primary or assistant)
+  assignedAt: Timestamp;            // When assigned
+  assignedBy: string;               // Admin UID who assigned
+}
+
+/**
  * Full Class record as stored in Firestore
  */
 export interface Class {
   id: string;
-  name: string;                     // e.g., "Tamil Beginners - Saturday 10AM"
-  level: TamilLevel;                // Proficiency level
+  name: string;                     // e.g., "PS-1 Class A - Saturday 10AM"
+
+  // Grade reference (replaces level)
+  gradeId: string;                  // Reference to grades collection (e.g., "ps-1", "grade-5")
+  gradeName?: string;               // Denormalized grade name for display
+
   day: string;                      // e.g., "Saturday"
   time: string;                     // e.g., "10:00 AM - 12:00 PM"
   capacity: number;                 // Max students
   enrolled: number;                 // Current count (denormalized)
 
-  // Teacher assignment
-  teacherId?: string;               // Assigned teacher UID
-  teacherName?: string;             // Denormalized teacher name
+  // Multiple teacher assignments
+  teachers: ClassTeacher[];         // Array of teacher assignments
+
+  // Legacy fields - kept for backward compatibility
+  /** @deprecated Use gradeId instead */
+  level?: TamilLevel;               // LEGACY: Proficiency level
+  /** @deprecated Use teachers array instead */
+  teacherId?: string;               // LEGACY: Single assigned teacher UID
+  /** @deprecated Use teachers array instead */
+  teacherName?: string;             // LEGACY: Denormalized teacher name
 
   // Status
   status: ClassStatus;
@@ -40,13 +69,12 @@ export interface Class {
  */
 export interface CreateClassDto {
   name: string;
-  level: TamilLevel;
+  gradeId: string;                  // Reference to grades collection
   day: string;
   time: string;
   capacity: number;
-  teacherId?: string;
-  teacherName?: string;
   academicYear?: string;
+  // Teachers are assigned separately after creation via teacher assignment endpoint
 }
 
 /**
@@ -54,14 +82,34 @@ export interface CreateClassDto {
  */
 export interface UpdateClassDto {
   name?: string;
-  level?: TamilLevel;
+  gradeId?: string;
   day?: string;
   time?: string;
   capacity?: number;
-  teacherId?: string;
-  teacherName?: string;
   status?: ClassStatus;
   academicYear?: string;
+}
+
+/**
+ * DTO for assigning a teacher to a class
+ */
+export interface AssignTeacherDto {
+  teacherId: string;
+  role: ClassTeacherRole;
+}
+
+/**
+ * DTO for removing a teacher from a class
+ */
+export interface RemoveTeacherDto {
+  teacherId: string;
+}
+
+/**
+ * DTO for updating a teacher's role in a class
+ */
+export interface UpdateTeacherRoleDto {
+  role: ClassTeacherRole;
 }
 
 /**
@@ -69,8 +117,8 @@ export interface UpdateClassDto {
  */
 export interface ClassListFilters {
   status?: ClassStatus | 'all';
-  level?: TamilLevel;
-  teacherId?: string;
+  gradeId?: string;                 // Filter by grade
+  teacherId?: string;               // Filter by assigned teacher
   limit?: number;
   offset?: number;
 }
@@ -89,11 +137,13 @@ export interface ClassListResponse {
 export interface ClassOption {
   id: string;
   name: string;
-  level: TamilLevel;
+  gradeId: string;
+  gradeName?: string;
   day: string;
   time: string;
   capacity: number;
   enrolled: number;
   available: number;                // Computed: capacity - enrolled
   status: ClassStatus;
+  teachers: ClassTeacher[];
 }

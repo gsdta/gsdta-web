@@ -3,20 +3,36 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
-import { adminGetClasses, adminUpdateClass, type Class } from '@/lib/class-api';
+import { adminGetClasses, adminUpdateClass, formatTeachersDisplay, type Class } from '@/lib/class-api';
+import { adminGetGradeOptions } from '@/lib/grade-api';
+import type { GradeOption } from '@/lib/grade-types';
 
 export default function ClassesPage() {
   const { getIdToken } = useAuth();
   const [classes, setClasses] = useState<Class[]>([]);
+  const [grades, setGrades] = useState<GradeOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [gradeFilter, setGradeFilter] = useState<string>('');
   const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  const fetchGrades = useCallback(async () => {
+    try {
+      const gradeOptions = await adminGetGradeOptions(getIdToken);
+      setGrades(gradeOptions);
+    } catch (err) {
+      console.error('Failed to fetch grades:', err);
+    }
+  }, [getIdToken]);
 
   const fetchClasses = useCallback(async () => {
     try {
       setLoading(true);
-      const result = await adminGetClasses(getIdToken, { status: statusFilter });
+      const result = await adminGetClasses(getIdToken, {
+        status: statusFilter,
+        gradeId: gradeFilter || undefined,
+      });
       setClasses(result.classes);
     } catch (err) {
       console.error('Failed to fetch classes:', err);
@@ -24,7 +40,11 @@ export default function ClassesPage() {
     } finally {
       setLoading(false);
     }
-  }, [getIdToken, statusFilter]);
+  }, [getIdToken, statusFilter, gradeFilter]);
+
+  useEffect(() => {
+    fetchGrades();
+  }, [fetchGrades]);
 
   useEffect(() => {
     fetchClasses();
@@ -69,21 +89,43 @@ export default function ClassesPage() {
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow p-4">
-        <div className="flex gap-4 items-center">
-          <label htmlFor="statusFilter" className="text-sm font-medium text-gray-700">Filter by status:</label>
-          <select
-            id="statusFilter"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="all">All Classes</option>
-            <option value="active">Active Only</option>
-            <option value="inactive">Inactive Only</option>
-          </select>
+        <div className="flex flex-wrap gap-4 items-center">
+          <div className="flex items-center gap-2">
+            <label htmlFor="statusFilter" className="text-sm font-medium text-gray-700">
+              Status:
+            </label>
+            <select
+              id="statusFilter"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            >
+              <option value="all">All</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <label htmlFor="gradeFilter" className="text-sm font-medium text-gray-700">
+              Grade:
+            </label>
+            <select
+              id="gradeFilter"
+              value={gradeFilter}
+              onChange={(e) => setGradeFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            >
+              <option value="">All Grades</option>
+              {grades.map((grade) => (
+                <option key={grade.id} value={grade.id}>
+                  {grade.name} - {grade.displayName}
+                </option>
+              ))}
+            </select>
+          </div>
           <button
             onClick={() => fetchClasses()}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-sm"
           >
             Refresh
           </button>
@@ -127,13 +169,16 @@ export default function ClassesPage() {
                     Class
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Grade
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Schedule
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Students
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Teacher
+                    Teacher(s)
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
@@ -147,10 +192,12 @@ export default function ClassesPage() {
                 {classes.map((cls) => (
                   <tr key={cls.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{cls.name}</div>
-                        <div className="text-sm text-gray-500">{cls.level}</div>
-                      </div>
+                      <div className="text-sm font-medium text-gray-900">{cls.name}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                        {cls.gradeName || cls.level || 'N/A'}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{cls.day}</div>
@@ -177,7 +224,11 @@ export default function ClassesPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {cls.teacherName || (
+                        {cls.teachers && cls.teachers.length > 0 ? (
+                          formatTeachersDisplay(cls.teachers)
+                        ) : cls.teacherName ? (
+                          cls.teacherName
+                        ) : (
                           <span className="text-gray-400">Not assigned</span>
                         )}
                       </div>
@@ -196,7 +247,7 @@ export default function ClassesPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end gap-2">
                         <Link
-                          href={`/admin/classes/${cls.id}`}
+                          href={`/admin/classes/${cls.id}/edit`}
                           className="text-blue-600 hover:text-blue-900"
                         >
                           Edit

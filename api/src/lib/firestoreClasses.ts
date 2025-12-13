@@ -2,13 +2,17 @@ import { adminDb } from './firebaseAdmin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import type {
   Class,
+  ClassTeacher,
+  ClassTeacherRole,
   CreateClassDto,
   UpdateClassDto,
   ClassListFilters,
   ClassListResponse,
   ClassOption,
   ClassStatus,
+  AssignTeacherDto,
 } from '@/types/class';
+import { getGradeById } from './firestoreGrades';
 
 // Test hook: allow overriding adminDb provider during tests
 let getDb = adminDb;
@@ -24,15 +28,21 @@ const CLASSES_COLLECTION = 'classes';
 export async function createClass(data: CreateClassDto): Promise<Class> {
   const now = Timestamp.now();
 
+  // Fetch grade info for denormalization
+  const grade = await getGradeById(data.gradeId);
+  if (!grade) {
+    throw new Error(`Grade not found: ${data.gradeId}`);
+  }
+
   const classData: Omit<Class, 'id'> = {
     name: data.name,
-    level: data.level,
+    gradeId: data.gradeId,
+    gradeName: grade.name,
     day: data.day,
     time: data.time,
     capacity: data.capacity,
     enrolled: 0,
-    teacherId: data.teacherId,
-    teacherName: data.teacherName,
+    teachers: [], // Initialize empty teachers array
     status: 'active',
     academicYear: data.academicYear,
     createdAt: now,
@@ -66,7 +76,7 @@ export async function getClassById(id: string): Promise<Class | null> {
  * Get all classes with filters
  */
 export async function getAllClasses(filters: ClassListFilters = {}): Promise<ClassListResponse> {
-  const { status = 'all', level, teacherId, limit = 50, offset = 0 } = filters;
+  const { status = 'all', gradeId, teacherId, limit = 50, offset = 0 } = filters;
 
   let query = getDb().collection(CLASSES_COLLECTION) as FirebaseFirestore.Query;
 
@@ -74,12 +84,12 @@ export async function getAllClasses(filters: ClassListFilters = {}): Promise<Cla
   if (status !== 'all') {
     query = query.where('status', '==', status);
   }
-  if (level) {
-    query = query.where('level', '==', level);
+  if (gradeId) {
+    query = query.where('gradeId', '==', gradeId);
   }
-  if (teacherId) {
-    query = query.where('teacherId', '==', teacherId);
-  }
+  // Note: filtering by teacherId now requires checking teachers array
+  // This is a simplified filter that checks if any teacher matches
+  // For complex teacher filtering, use a different approach
 
   // Order by name
   query = query.orderBy('name', 'asc');
@@ -93,17 +103,27 @@ export async function getAllClasses(filters: ClassListFilters = {}): Promise<Cla
 
   const snap = await query.get();
 
-  const classes = snap.docs.map((doc) => {
+  let classes = snap.docs.map((doc) => {
     const data = doc.data();
     return {
       id: doc.id,
       ...data,
+      // Ensure teachers array exists (for backward compatibility)
+      teachers: data.teachers || [],
     } as Class;
   });
 
+  // Post-filter by teacherId if specified (checks teachers array)
+  if (teacherId) {
+    classes = classes.filter((cls) =>
+      cls.teachers.some((t) => t.teacherId === teacherId) ||
+      cls.teacherId === teacherId // Legacy field support
+    );
+  }
+
   return {
     classes,
-    total,
+    total: teacherId ? classes.length : total, // Adjust count if post-filtered
   };
 }
 
@@ -122,13 +142,15 @@ export async function getActiveClassOptions(): Promise<ClassOption[]> {
     return {
       id: doc.id,
       name: data.name,
-      level: data.level,
+      gradeId: data.gradeId || '',
+      gradeName: data.gradeName || data.level || '', // Fallback to level for legacy
       day: data.day,
       time: data.time,
       capacity: data.capacity,
       enrolled: data.enrolled ?? 0,
       available: data.capacity - (data.enrolled ?? 0),
       status: data.status,
+      teachers: data.teachers || [],
     } as ClassOption;
   });
 }
@@ -146,12 +168,18 @@ export async function updateClass(id: string, data: UpdateClassDto): Promise<Cla
   };
 
   if (data.name !== undefined) updateData.name = data.name;
-  if (data.level !== undefined) updateData.level = data.level;
+  if (data.gradeId !== undefined) {
+    // Fetch grade info for denormalization when gradeId changes
+    const grade = await getGradeById(data.gradeId);
+    if (!grade) {
+      throw new Error(`Grade not found: ${data.gradeId}`);
+    }
+    updateData.gradeId = data.gradeId;
+    updateData.gradeName = grade.name;
+  }
   if (data.day !== undefined) updateData.day = data.day;
   if (data.time !== undefined) updateData.time = data.time;
   if (data.capacity !== undefined) updateData.capacity = data.capacity;
-  if (data.teacherId !== undefined) updateData.teacherId = data.teacherId;
-  if (data.teacherName !== undefined) updateData.teacherName = data.teacherName;
   if (data.status !== undefined) updateData.status = data.status;
   if (data.academicYear !== undefined) updateData.academicYear = data.academicYear;
 
@@ -196,4 +224,157 @@ export async function decrementEnrolled(id: string): Promise<void> {
     enrolled: newEnrolled,
     updatedAt: Timestamp.now(),
   });
+}
+
+/**
+ * Assign a teacher to a class
+ */
+export async function assignTeacherToClass(
+  classId: string,
+  teacherData: {
+    teacherId: string;
+    teacherName: string;
+    teacherEmail?: string;
+    role: ClassTeacherRole;
+  },
+  adminId: string
+): Promise<Class | null> {
+  const doc = await getDb().collection(CLASSES_COLLECTION).doc(classId).get();
+
+  if (!doc.exists) return null;
+
+  const classData = doc.data()!;
+  const teachers: ClassTeacher[] = classData.teachers || [];
+
+  // Check if teacher is already assigned
+  const existingIndex = teachers.findIndex((t) => t.teacherId === teacherData.teacherId);
+  if (existingIndex !== -1) {
+    throw new Error('Teacher is already assigned to this class');
+  }
+
+  // If assigning as primary, demote existing primary to assistant
+  if (teacherData.role === 'primary') {
+    const existingPrimaryIndex = teachers.findIndex((t) => t.role === 'primary');
+    if (existingPrimaryIndex !== -1) {
+      teachers[existingPrimaryIndex] = {
+        ...teachers[existingPrimaryIndex],
+        role: 'assistant',
+      };
+    }
+  }
+
+  // Add new teacher
+  const newTeacher: ClassTeacher = {
+    teacherId: teacherData.teacherId,
+    teacherName: teacherData.teacherName,
+    teacherEmail: teacherData.teacherEmail,
+    role: teacherData.role,
+    assignedAt: Timestamp.now(),
+    assignedBy: adminId,
+  };
+  teachers.push(newTeacher);
+
+  await doc.ref.update({
+    teachers,
+    updatedAt: Timestamp.now(),
+  });
+
+  return getClassById(classId);
+}
+
+/**
+ * Remove a teacher from a class
+ */
+export async function removeTeacherFromClass(
+  classId: string,
+  teacherId: string
+): Promise<Class | null> {
+  const doc = await getDb().collection(CLASSES_COLLECTION).doc(classId).get();
+
+  if (!doc.exists) return null;
+
+  const classData = doc.data()!;
+  const teachers: ClassTeacher[] = classData.teachers || [];
+
+  // Find and remove the teacher
+  const teacherIndex = teachers.findIndex((t) => t.teacherId === teacherId);
+  if (teacherIndex === -1) {
+    throw new Error('Teacher is not assigned to this class');
+  }
+
+  teachers.splice(teacherIndex, 1);
+
+  await doc.ref.update({
+    teachers,
+    updatedAt: Timestamp.now(),
+  });
+
+  return getClassById(classId);
+}
+
+/**
+ * Update a teacher's role in a class
+ */
+export async function updateTeacherRole(
+  classId: string,
+  teacherId: string,
+  newRole: ClassTeacherRole
+): Promise<Class | null> {
+  const doc = await getDb().collection(CLASSES_COLLECTION).doc(classId).get();
+
+  if (!doc.exists) return null;
+
+  const classData = doc.data()!;
+  const teachers: ClassTeacher[] = classData.teachers || [];
+
+  // Find the teacher
+  const teacherIndex = teachers.findIndex((t) => t.teacherId === teacherId);
+  if (teacherIndex === -1) {
+    throw new Error('Teacher is not assigned to this class');
+  }
+
+  // If setting as primary, demote existing primary to assistant
+  if (newRole === 'primary') {
+    const existingPrimaryIndex = teachers.findIndex((t) => t.role === 'primary');
+    if (existingPrimaryIndex !== -1 && existingPrimaryIndex !== teacherIndex) {
+      teachers[existingPrimaryIndex] = {
+        ...teachers[existingPrimaryIndex],
+        role: 'assistant',
+      };
+    }
+  }
+
+  // Update the teacher's role
+  teachers[teacherIndex] = {
+    ...teachers[teacherIndex],
+    role: newRole,
+  };
+
+  await doc.ref.update({
+    teachers,
+    updatedAt: Timestamp.now(),
+  });
+
+  return getClassById(classId);
+}
+
+/**
+ * Get the primary teacher for a class
+ */
+export async function getPrimaryTeacher(classId: string): Promise<ClassTeacher | null> {
+  const classDoc = await getClassById(classId);
+  if (!classDoc) return null;
+
+  const teachers = classDoc.teachers || [];
+  return teachers.find((t) => t.role === 'primary') || null;
+}
+
+/**
+ * Get all teachers assigned to a class
+ */
+export async function getClassTeachers(classId: string): Promise<ClassTeacher[]> {
+  const classDoc = await getClassById(classId);
+  if (!classDoc) return [];
+
+  return classDoc.teachers || [];
 }

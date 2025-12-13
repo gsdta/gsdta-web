@@ -1,32 +1,54 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
 import { adminCreateClass, type CreateClassInput } from '@/lib/class-api';
+import { adminGetGradeOptions } from '@/lib/grade-api';
+import type { GradeOption } from '@/lib/grade-types';
 
-const levelOptions = ['Beginner', 'Intermediate', 'Advanced'];
 const dayOptions = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export default function CreateClassPage() {
   const router = useRouter();
   const { getIdToken } = useAuth();
 
+  const [grades, setGrades] = useState<GradeOption[]>([]);
+  const [loadingGrades, setLoadingGrades] = useState(true);
+
   const [formData, setFormData] = useState<CreateClassInput>({
     name: '',
-    level: 'Beginner',
+    gradeId: '',
     day: 'Saturday',
     time: '',
     capacity: 20,
-    teacherId: '',
-    teacherName: '',
     academicYear: new Date().getFullYear() + '-' + (new Date().getFullYear() + 1),
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const fetchGrades = useCallback(async () => {
+    try {
+      setLoadingGrades(true);
+      const gradeOptions = await adminGetGradeOptions(getIdToken);
+      setGrades(gradeOptions);
+      // Set default grade if we have grades and none selected
+      if (gradeOptions.length > 0 && !formData.gradeId) {
+        setFormData((prev) => ({ ...prev, gradeId: gradeOptions[0].id }));
+      }
+    } catch (err) {
+      console.error('Failed to fetch grades:', err);
+    } finally {
+      setLoadingGrades(false);
+    }
+  }, [getIdToken, formData.gradeId]);
+
+  useEffect(() => {
+    fetchGrades();
+  }, [fetchGrades]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -45,8 +67,8 @@ export default function CreateClassPage() {
     if (!formData.name.trim()) {
       newErrors.name = 'Class name is required';
     }
-    if (!formData.level) {
-      newErrors.level = 'Level is required';
+    if (!formData.gradeId) {
+      newErrors.gradeId = 'Grade is required';
     }
     if (!formData.day) {
       newErrors.day = 'Day is required';
@@ -95,7 +117,7 @@ export default function CreateClassPage() {
         </Link>
         <h1 className="text-2xl font-bold text-gray-900 mt-2">Create New Class</h1>
         <p className="mt-1 text-gray-600">
-          Set up a new Tamil class with schedule and capacity.
+          Set up a new Tamil class with schedule and capacity. Teachers can be assigned after creation.
         </p>
       </div>
 
@@ -122,33 +144,47 @@ export default function CreateClassPage() {
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
               errors.name ? 'border-red-500' : 'border-gray-300'
             }`}
-            placeholder="e.g., Tamil Beginners - Saturday 10AM"
+            placeholder="e.g., PS-1 Class A, Grade-5 Saturday"
           />
           {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
         </div>
 
-        {/* Level and Day */}
+        {/* Grade and Day */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="level" className="block text-sm font-medium text-gray-700 mb-1">
-              Tamil Level <span className="text-red-500">*</span>
+            <label htmlFor="gradeId" className="block text-sm font-medium text-gray-700 mb-1">
+              Grade <span className="text-red-500">*</span>
             </label>
-            <select
-              id="level"
-              name="level"
-              value={formData.level}
-              onChange={handleInputChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.level ? 'border-red-500' : 'border-gray-300'
-              }`}
-            >
-              {levelOptions.map((level) => (
-                <option key={level} value={level}>
-                  {level}
-                </option>
-              ))}
-            </select>
-            {errors.level && <p className="mt-1 text-sm text-red-600">{errors.level}</p>}
+            {loadingGrades ? (
+              <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500">
+                Loading grades...
+              </div>
+            ) : grades.length === 0 ? (
+              <div className="w-full px-3 py-2 border border-yellow-300 rounded-md bg-yellow-50 text-yellow-700 text-sm">
+                No grades available.{' '}
+                <Link href="/admin/grades" className="underline">
+                  Seed grades first
+                </Link>
+              </div>
+            ) : (
+              <select
+                id="gradeId"
+                name="gradeId"
+                value={formData.gradeId}
+                onChange={handleInputChange}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.gradeId ? 'border-red-500' : 'border-gray-300'
+                }`}
+              >
+                <option value="">Select a grade</option>
+                {grades.map((grade) => (
+                  <option key={grade.id} value={grade.id}>
+                    {grade.name} - {grade.displayName}
+                  </option>
+                ))}
+              </select>
+            )}
+            {errors.gradeId && <p className="mt-1 text-sm text-red-600">{errors.gradeId}</p>}
           </div>
 
           <div>
@@ -214,25 +250,6 @@ export default function CreateClassPage() {
           </div>
         </div>
 
-        {/* Teacher (Optional) */}
-        <div>
-          <label htmlFor="teacherName" className="block text-sm font-medium text-gray-700 mb-1">
-            Teacher Name (Optional)
-          </label>
-          <input
-            type="text"
-            id="teacherName"
-            name="teacherName"
-            value={formData.teacherName}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Teacher's name"
-          />
-          <p className="mt-1 text-sm text-gray-500">
-            You can assign a teacher later from the class edit page.
-          </p>
-        </div>
-
         {/* Academic Year */}
         <div>
           <label htmlFor="academicYear" className="block text-sm font-medium text-gray-700 mb-1">
@@ -249,6 +266,13 @@ export default function CreateClassPage() {
           />
         </div>
 
+        {/* Info Box */}
+        <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+          <p className="text-sm text-blue-700">
+            <strong>Note:</strong> Teachers can be assigned to this class after creation from the class edit page.
+          </p>
+        </div>
+
         {/* Submit Buttons */}
         <div className="flex justify-end gap-3 pt-4 border-t">
           <Link
@@ -259,7 +283,7 @@ export default function CreateClassPage() {
           </Link>
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || loadingGrades || grades.length === 0}
             className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isSubmitting ? (
