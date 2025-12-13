@@ -114,13 +114,18 @@ test.describe('Admin Teacher Assignments', () => {
     // Wait for page to load
     await expect(page.getByText('Teacher Assignments')).toBeVisible();
     
+    // Wait for classes to render (indicating data is loaded)
+    await expect(page.getByText('PS-1 Section A')).toBeVisible({ timeout: 10000 });
+    
     // Find a primary teacher dropdown
     const primarySelects = page.locator('select[id^="primary-"]');
     const firstSelect = primarySelects.first();
     
-    // Should have teacher options
-    const options = await firstSelect.locator('option').allTextContents();
-    expect(options.length).toBeGreaterThan(1); // At least one teacher + empty option
+    // Wait for the dropdown to have options loaded (more than just the empty option)
+    await expect(async () => {
+      const options = await firstSelect.locator('option').allTextContents();
+      expect(options.length).toBeGreaterThan(1); // At least one teacher + empty option
+    }).toPass({ timeout: 10000 });
   });
 
   test('TA-E2E-009: Assistant teacher section is visible', async ({ page }) => {
