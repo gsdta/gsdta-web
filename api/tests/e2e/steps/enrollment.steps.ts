@@ -1,10 +1,54 @@
-import { Given } from '@cucumber/cucumber';
+import { Given, After } from '@cucumber/cucumber';
 import { adminDb } from '../../../src/lib/firebaseAdmin';
 import { Timestamp } from 'firebase-admin/firestore';
 
 const STUDENTS_COLLECTION = 'students';
 const CLASSES_COLLECTION = 'classes';
 const GRADES_COLLECTION = 'grades';
+
+// Track test data created during each scenario for cleanup
+let testDataIds: {
+  students: string[];
+  classes: string[];
+  grades: string[];
+} = {
+  students: [],
+  classes: [],
+  grades: [],
+};
+
+// Clean up test data after each scenario
+After(async function () {
+  const db = adminDb();
+  const batch = db.batch();
+  
+  // Delete test students
+  for (const studentId of testDataIds.students) {
+    batch.delete(db.collection(STUDENTS_COLLECTION).doc(studentId));
+  }
+  
+  // Delete test classes
+  for (const classId of testDataIds.classes) {
+    batch.delete(db.collection(CLASSES_COLLECTION).doc(classId));
+  }
+  
+  // Delete test grades
+  for (const gradeId of testDataIds.grades) {
+    batch.delete(db.collection(GRADES_COLLECTION).doc(gradeId));
+  }
+  
+  // Commit deletions
+  if (testDataIds.students.length > 0 || testDataIds.classes.length > 0 || testDataIds.grades.length > 0) {
+    await batch.commit();
+  }
+  
+  // Reset tracking
+  testDataIds = {
+    students: [],
+    classes: [],
+    grades: [],
+  };
+});
 
 Given('there is a grade with id {string} and name {string}', async function (id: string, name: string) {
   const db = adminDb();
@@ -17,6 +61,7 @@ Given('there is a grade with id {string} and name {string}', async function (id:
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
   });
+  testDataIds.grades.push(id);
 });
 
 Given('there is a class with id {string} for grade {string} with capacity {int}', async function (
@@ -44,6 +89,7 @@ Given('there is a class with id {string} for grade {string} with capacity {int}'
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
   });
+  testDataIds.classes.push(classId);
 });
 
 Given('there is an inactive class with id {string} for grade {string}', async function (
@@ -69,6 +115,7 @@ Given('there is an inactive class with id {string} for grade {string}', async fu
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
   });
+  testDataIds.classes.push(classId);
 });
 
 Given('there is an admitted student with id {string} in grade {string}', async function (
@@ -91,6 +138,7 @@ Given('there is an admitted student with id {string} in grade {string}', async f
     admittedAt: Timestamp.now(),
     admittedBy: 'admin-uid',
   });
+  testDataIds.students.push(studentId);
 });
 
 Given('there is a pending student with id {string} in grade {string}', async function (
@@ -111,6 +159,7 @@ Given('there is a pending student with id {string} in grade {string}', async fun
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
   });
+  testDataIds.students.push(studentId);
 });
 
 Given('student {string} is assigned to class {string}', async function (
