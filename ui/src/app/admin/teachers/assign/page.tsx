@@ -385,7 +385,7 @@ export default function TeacherAssignmentPage() {
                       )}
                     </div>
                     <div className="mt-1 text-sm text-gray-600">
-                      <span className="font-medium">{cls.gradeName || cls.level}</span>
+                      <span className="font-medium">{cls.gradeName || 'N/A'}</span>
                       <span className="mx-2">•</span>
                       <span>{cls.day}, {cls.time}</span>
                       <span className="mx-2">•</span>

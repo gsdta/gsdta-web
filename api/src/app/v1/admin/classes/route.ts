@@ -148,7 +148,7 @@ export async function GET(req: NextRequest) {
       id: c.id,
       name: c.name,
       gradeId: c.gradeId || '',
-      gradeName: c.gradeName || c.level || '', // Fallback to level for legacy
+      gradeName: c.gradeName || '',
       day: c.day,
       time: c.time,
       capacity: c.capacity,
@@ -159,7 +159,6 @@ export async function GET(req: NextRequest) {
         assignedAt: t.assignedAt?.toDate?.()?.toISOString() ?? '',
       })),
       // Legacy fields for backward compatibility
-      level: c.level,
       teacherId: c.teacherId,
       teacherName: c.teacherName,
       status: c.status,

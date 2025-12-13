@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { loginAsAdmin, loginAsParent } from './helpers/auth';
 
 test.describe('Teacher Invite Flow', () => {
   test('should display invite verification page and show invite details', async ({ page }) => {
@@ -30,22 +31,35 @@ test.describe('Teacher Invite Flow', () => {
 });
 
 test.describe('Admin Teacher Invite Creation', () => {
-  // Note: These tests require admin authentication
-  // They will be implemented when auth mocking is available in E2E tests
+  test('admin can create teacher invite', async ({ page }) => {
+    await loginAsAdmin(page);
 
-  test.skip('admin can create teacher invite', async ({ page }) => {
-    // TODO: Implement when admin auth is available
-    // 1. Sign in as admin
-    // 2. Go to /admin
-    // 3. Fill in teacher email
-    // 4. Click create invite
-    // 5. Verify invite link is generated
+    // Navigate to invite page
+    await page.goto('/admin/teachers/invite');
+
+    // Wait for page to load
+    await expect(page.getByRole('heading', { name: 'Invite Teacher' })).toBeVisible();
+
+    // Fill in the email field
+    await page.fill('input[type="email"]', 'newtestteacher@example.com');
+
+    // Submit the form
+    await page.getByRole('button', { name: /Create Invite/i }).click();
+
+    // Wait for success message
+    await expect(page.getByText(/Invite created for newtestteacher@example.com/i)).toBeVisible({ timeout: 10000 });
+
+    // Verify invite link is displayed
+    await expect(page.getByText(/Invite Link:/i)).toBeVisible();
   });
 
-  test.skip('non-admin cannot access invite creation', async ({ page }) => {
-    // TODO: Implement when auth is available
-    // 1. Sign in as non-admin (parent/teacher)
-    // 2. Try to go to /admin
-    // 3. Should be redirected or see forbidden message
+  test('non-admin cannot access invite creation', async ({ page }) => {
+    await loginAsParent(page);
+
+    // Try to navigate to admin invite page
+    await page.goto('/admin/teachers/invite');
+
+    // Should be redirected to signin or parent dashboard (not on admin page)
+    await expect(page).not.toHaveURL(/\/admin\/teachers\/invite/);
   });
 });

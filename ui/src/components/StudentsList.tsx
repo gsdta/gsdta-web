@@ -76,7 +76,7 @@ export function StudentsList() {
                     <tr>
                         <th className="text-left p-2">{t("students.name")}</th>
                         <th className="text-left p-2">{t("students.dob")}</th>
-                        <th className="text-left p-2">{t("students.priorLevel")}</th>
+                        <th className="text-left p-2">{t("students.priorExperience")}</th>
                         <th className="text-left p-2">{t("students.actions")}</th>
                     </tr>
                     </thead>

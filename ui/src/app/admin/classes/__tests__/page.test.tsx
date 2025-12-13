@@ -26,8 +26,8 @@ jest.mock('next/link', () => {
 describe('ClassesPage', () => {
   const mockGetIdToken = jest.fn().mockResolvedValue('test-token');
   const mockClasses = [
-    { id: 'class-1', name: 'Class 1', level: 'Beginner', day: 'Sat', time: '10am', capacity: 20, enrolled: 5, status: 'active', available: 15 },
-    { id: 'class-2', name: 'Class 2', level: 'Advanced', day: 'Sun', time: '2pm', capacity: 15, enrolled: 0, status: 'inactive', available: 15 },
+    { id: 'class-1', name: 'Class 1', gradeName: 'Beginner', day: 'Sat', time: '10am', capacity: 20, enrolled: 5, status: 'active', available: 15 },
+    { id: 'class-2', name: 'Class 2', gradeName: 'Advanced', day: 'Sun', time: '2pm', capacity: 15, enrolled: 0, status: 'inactive', available: 15 },
   ];
 
   beforeEach(() => {
@@ -54,7 +54,7 @@ describe('ClassesPage', () => {
     });
   });
 
-  test('CL-003: Displays class name and level', async () => {
+  test('CL-003: Displays class name and grade', async () => {
     (adminGetClasses as jest.Mock).mockResolvedValue({ classes: mockClasses, total: 2 });
     render(<ClassesPage />);
     await waitFor(() => {

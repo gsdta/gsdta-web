@@ -76,7 +76,7 @@ export const messages: Record<Lang, Record<string, string>> = {
         "home.carousel.impact.experience": "200+ Years Experience",
         "home.carousel.impact.volunteers": "25+ Volunteers",
         "home.carousel.programs.title": "Comprehensive Tamil Programs",
-        "home.carousel.programs.description": "From beginner to advanced levels, plus cultural activities",
+        "home.carousel.programs.description": "From beginner to advanced grades, plus cultural activities",
         "home.carousel.programs.link": "View Classes",
         "home.carousel.culture.title": "Celebrating Tamil Culture",
         "home.carousel.culture.description": "Festivals, arts, music, and traditional celebrations",
@@ -183,7 +183,7 @@ export const messages: Record<Lang, Record<string, string>> = {
         // Classes page
         "classes.title": "Classes",
         "classes.subtitle": "View class schedules and rosters.",
-        "classes.level": "Level:",
+        "classes.grade": "Grade:",
         "classes.schedule": "Schedule:",
         "classes.teacher": "Teacher:",
         "classes.enrollment": "Enrollment:",
@@ -207,7 +207,7 @@ export const messages: Record<Lang, Record<string, string>> = {
         "students.loading": "Loading students…",
         "students.name": "Name",
         "students.dob": "DOB",
-        "students.priorLevel": "Prior level",
+        "students.priorExperience": "Prior Tamil Experience",
         "students.actions": "Actions",
         "students.edit": "Edit",
 
@@ -291,7 +291,7 @@ export const messages: Record<Lang, Record<string, string>> = {
         "home.carousel.impact.experience": "200+ ஆண்டுகள் அனுபவம்",
         "home.carousel.impact.volunteers": "25+ தன்னார்வலர்கள்",
         "home.carousel.programs.title": "விரிவான தமிழ்ப் பாடத் திட்டங்கள்",
-        "home.carousel.programs.description": "தொடக்கம் முதல் மேம்பட்ட நிலைகள் வரை, கலாச்சார நடவடிக்கைகளுடன்",
+        "home.carousel.programs.description": "தொடக்கம் முதல் மேம்பட்ட வகுப்புகள் வரை, கலாச்சார நடவடிக்கைகளுடன்",
         "home.carousel.programs.link": "வகுப்புகளைப் பார்க்க",
         "home.carousel.culture.title": "தமிழ் கலாச்சாரத்தைக் கொண்டாடுதல்",
         "home.carousel.culture.description": "திருவிழாக்கள், கலைகள், இசை மற்றும் பாரம்பரிய கொண்டாட்டங்கள்",
@@ -398,7 +398,7 @@ export const messages: Record<Lang, Record<string, string>> = {
         // Classes page
         "classes.title": "வகுப்புகள்",
         "classes.subtitle": "வகுப்பு அட்டவணைகள் மற்றும் பட்டியல்களைப் பார்க்கலாம்.",
-        "classes.level": "நிலை:",
+        "classes.grade": "வகுப்பு:",
         "classes.schedule": "அட்டவணை:",
         "classes.teacher": "ஆசிரியர்:",
         "classes.enrollment": "சேர்க்கை:",
@@ -422,7 +422,7 @@ export const messages: Record<Lang, Record<string, string>> = {
         "students.loading": "மாணவர்களை ஏற்றுகிறது…",
         "students.name": "பெயர்",
         "students.dob": "பிறந்த தேதி",
-        "students.priorLevel": "முன்னைய நிலை",
+        "students.priorExperience": "முந்தைய தமிழ் அனுபவம்",
         "students.actions": "நடவடிக்கைகள்",
         "students.edit": "திருத்து",
 

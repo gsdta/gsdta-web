@@ -107,15 +107,18 @@ export const newStudentDefaults: CreateStudentInput = {
 };
 
 /**
- * Tamil proficiency level options for dropdown
+ * Tamil proficiency options for dropdown (student's prior experience)
  */
-export const tamilLevelOptions = [
-  { value: '', label: 'Select level (optional)' },
+export const tamilProficiencyOptions = [
+  { value: '', label: 'Select experience (optional)' },
   { value: 'none', label: 'No prior experience' },
   { value: 'beginner', label: 'Beginner - Can read basic letters' },
   { value: 'intermediate', label: 'Intermediate - Can read and write simple sentences' },
   { value: 'advanced', label: 'Advanced - Can read and write fluently' },
 ];
+
+// Backward compatibility alias
+export const tamilLevelOptions = tamilProficiencyOptions;
 
 /**
  * Status display configuration
