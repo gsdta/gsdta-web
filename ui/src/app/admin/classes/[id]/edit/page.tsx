@@ -297,10 +297,20 @@ export default function EditClassPage() {
           </svg>
           Back to Classes
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900 mt-2">Edit Class</h1>
-        <p className="mt-1 text-gray-600">
-          Update class details and manage teacher assignments.
-        </p>
+        <div className="flex items-center justify-between mt-2">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Edit Class</h1>
+            <p className="mt-1 text-gray-600">
+              Update class details and manage teacher assignments.
+            </p>
+          </div>
+          <Link
+            href={`/admin/classes/${classId}/roster`}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors"
+          >
+            View Roster
+          </Link>
+        </div>
       </div>
 
       {/* Class Details Form */}
