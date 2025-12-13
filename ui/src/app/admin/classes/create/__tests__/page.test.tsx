@@ -4,6 +4,7 @@ import '@testing-library/jest-dom';
 import CreateClassPage from '../page';
 import { useAuth } from '@/components/AuthProvider';
 import { adminCreateClass } from '@/lib/class-api';
+import { adminGetGradeOptions } from '@/lib/grade-api';
 import { useRouter } from 'next/navigation';
 
 // Mocks
@@ -19,6 +20,10 @@ jest.mock('@/lib/class-api', () => ({
   adminCreateClass: jest.fn(),
 }));
 
+jest.mock('@/lib/grade-api', () => ({
+  adminGetGradeOptions: jest.fn(),
+}));
+
 jest.mock('next/link', () => {
   return ({ children, href, className }: { children: React.ReactNode; href: string; className?: string }) => (
     <a href={href} className={className}>
@@ -30,6 +35,11 @@ jest.mock('next/link', () => {
 describe('CreateClassPage', () => {
   const mockPush = jest.fn();
   const mockGetIdToken = jest.fn().mockResolvedValue('test-token');
+  const mockGrades = [
+    { id: 'g1', name: 'G1', displayName: 'Grade 1', displayOrder: 1 },
+    { id: 'g2', name: 'G2', displayName: 'Grade 2', displayOrder: 2 },
+    { id: 'g3', name: 'G3', displayName: 'Grade 3', displayOrder: 3 },
+  ];
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -39,12 +49,20 @@ describe('CreateClassPage', () => {
     (useRouter as jest.Mock).mockReturnValue({
       push: mockPush,
     });
+    // Default grades mock
+    (adminGetGradeOptions as jest.Mock).mockResolvedValue(mockGrades);
   });
 
-  test('CCF-001: Renders create class form', () => {
+  test('CCF-001: Renders create class form', async () => {
     render(<CreateClassPage />);
+    
+    // Wait for grades to load
+    await waitFor(() => {
+        expect(screen.queryByText('Loading grades...')).not.toBeInTheDocument();
+    });
+
     expect(screen.getByLabelText(/Class Name/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Level/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Grade/i)).toBeInTheDocument(); // Changed from Level to Grade
     expect(screen.getByLabelText(/Day/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Time/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Capacity/i)).toBeInTheDocument();
@@ -53,6 +71,7 @@ describe('CreateClassPage', () => {
 
   test('CCF-003: Name validation - required', async () => {
     render(<CreateClassPage />);
+    await waitFor(() => expect(screen.queryByText('Loading grades...')).not.toBeInTheDocument());
     
     fireEvent.change(screen.getByLabelText(/Time/i), { target: { value: '10am' } });
     
@@ -66,6 +85,7 @@ describe('CreateClassPage', () => {
 
   test('CCF-004: Time validation - required', async () => {
     render(<CreateClassPage />);
+    await waitFor(() => expect(screen.queryByText('Loading grades...')).not.toBeInTheDocument());
     
     fireEvent.change(screen.getByLabelText(/Class Name/i), { target: { value: 'Test Class' } });
     
@@ -78,6 +98,7 @@ describe('CreateClassPage', () => {
 
   test('CCF-005: Capacity validation - min 1', async () => {
     render(<CreateClassPage />);
+    await waitFor(() => expect(screen.queryByText('Loading grades...')).not.toBeInTheDocument());
 
     fireEvent.change(screen.getByLabelText(/Class Name/i), { target: { value: 'Test Class' } });
     fireEvent.change(screen.getByLabelText(/Time/i), { target: { value: '10am' } });
@@ -99,8 +120,11 @@ describe('CreateClassPage', () => {
     (adminCreateClass as jest.Mock).mockResolvedValue({});
 
     render(<CreateClassPage />);
+    await waitFor(() => expect(screen.queryByText('Loading grades...')).not.toBeInTheDocument());
     
     fireEvent.change(screen.getByLabelText(/Class Name/i), { target: { value: 'Test Class' } });
+    // Grade should be auto-selected or we select one
+    fireEvent.change(screen.getByLabelText(/Grade/i), { target: { value: 'g1' } });
     fireEvent.change(screen.getByLabelText(/Time/i), { target: { value: '10am' } });
     
     fireEvent.click(screen.getByRole('button', { name: /Create Class/i }));
@@ -115,8 +139,10 @@ describe('CreateClassPage', () => {
     (adminCreateClass as jest.Mock).mockRejectedValue(new Error('API Error'));
 
     render(<CreateClassPage />);
+    await waitFor(() => expect(screen.queryByText('Loading grades...')).not.toBeInTheDocument());
     
     fireEvent.change(screen.getByLabelText(/Class Name/i), { target: { value: 'Test Class' } });
+    fireEvent.change(screen.getByLabelText(/Grade/i), { target: { value: 'g1' } });
     fireEvent.change(screen.getByLabelText(/Time/i), { target: { value: '10am' } });
     
     fireEvent.click(screen.getByRole('button', { name: /Create Class/i }));
@@ -126,15 +152,19 @@ describe('CreateClassPage', () => {
     });
   });
 
-  test('CCF-008: Level dropdown has options', () => {
+  test('CCF-008: Grades dropdown has options', async () => {
     render(<CreateClassPage />);
-    const options = screen.getByLabelText(/Level/i).querySelectorAll('option');
-    expect(options).toHaveLength(3); // Beginner, Intermediate, Advanced
-    expect(options[0].textContent).toBe('Beginner');
+    await waitFor(() => expect(screen.queryByText('Loading grades...')).not.toBeInTheDocument());
+
+    const select = screen.getByLabelText(/Grade/i);
+    const options = select.querySelectorAll('option');
+    expect(options).toHaveLength(4); // Select a grade + 3 mocks
+    expect(options[1].textContent).toContain('G1');
   });
 
-  test('CCF-009: Day dropdown has all days', () => {
+  test('CCF-009: Day dropdown has all days', async () => {
     render(<CreateClassPage />);
+    await waitFor(() => expect(screen.queryByText('Loading grades...')).not.toBeInTheDocument());
     const options = screen.getByLabelText(/Day/i).querySelectorAll('option');
     expect(options).toHaveLength(7);
   });
