@@ -124,7 +124,8 @@ jobs:
             fi
             sleep 1
           done
-      - run: npm run seed
+      - name: Seed test users
+        run: npm run seed:minimal
       - name: API E2E (Cucumber)
         run: cd api && npm run test:e2e
       - name: Build UI for E2E

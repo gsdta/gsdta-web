@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/testData.fixture';
 import { loginAsAdmin } from '../helpers/auth';
 
 /**
@@ -7,8 +7,8 @@ import { loginAsAdmin } from '../helpers/auth';
  * These tests verify the admin student management UI functionality
  * with Firebase Auth emulator authentication.
  *
- * NOTE: Some tests are skipped as they require UI implementation or
- * have complex state dependencies that need careful handling.
+ * Each test creates its own test data and cleans up after completion,
+ * ensuring full test isolation and no dependency on seed data.
  */
 
 test.describe('Admin Student Management', () => {
@@ -16,7 +16,18 @@ test.describe('Admin Student Management', () => {
     await loginAsAdmin(page);
   });
 
-  test('AE2E-003: Admin sees all students', async ({ page }) => {
+  test('AE2E-003: Admin sees all students', async ({ page, testData }) => {
+    // Create test-specific data
+    const grade = await testData.createGrade({ name: 'Test Grade AE2E-003' });
+    const student1 = await testData.createStudentWithStatus(
+      { firstName: 'TestAlpha', lastName: 'Student' },
+      'active'
+    );
+    const student2 = await testData.createStudentWithStatus(
+      { firstName: 'TestBeta', lastName: 'Student' },
+      'active'
+    );
+
     await page.goto('/admin/students');
 
     // Wait for the main heading (h1) to be visible
@@ -25,12 +36,31 @@ test.describe('Admin Student Management', () => {
     // Wait for data to load (table should have data)
     await page.waitForSelector('table', { timeout: 10000 });
 
-    // Check for seeded students
-    await expect(page.getByText('Arun Kumar')).toBeVisible();
-    await expect(page.getByText('Priya Sharma')).toBeVisible();
+    // Check for our test students
+    await expect(page.getByText(`${student1.firstName} ${student1.lastName}`)).toBeVisible();
+    await expect(page.getByText(`${student2.firstName} ${student2.lastName}`)).toBeVisible();
   });
 
-  test('AE2E-004: Filter pending students', async ({ page }) => {
+  test('AE2E-004: Filter pending students', async ({ page, testData }) => {
+    // Create test-specific data with different statuses
+    const grade = await testData.createGrade({ name: 'Test Grade AE2E-004' });
+
+    // Create an active student (should NOT appear in pending filter)
+    const activeStudent = await testData.createStudentWithStatus(
+      { firstName: 'ActiveTest', lastName: 'Student' },
+      'active'
+    );
+
+    // Create pending students (should appear in pending filter)
+    const pendingStudent1 = await testData.createStudent({
+      firstName: 'PendingTest',
+      lastName: 'StudentOne',
+    });
+    const pendingStudent2 = await testData.createStudent({
+      firstName: 'PendingTest',
+      lastName: 'StudentTwo',
+    });
+
     await page.goto('/admin/students');
 
     // Wait for stats card to load (the clickable filter card)
@@ -42,16 +72,29 @@ test.describe('Admin Student Management', () => {
     // Wait for table to update
     await page.waitForTimeout(500);
 
-    // Meera Krishnan and Lakshmi Iyer are pending in seed
-    await expect(page.getByText('Meera Krishnan').or(page.getByText('Lakshmi Iyer')).first()).toBeVisible();
+    // Pending students should be visible
+    const pendingName1 = `${pendingStudent1.firstName} ${pendingStudent1.lastName}`;
+    const pendingName2 = `${pendingStudent2.firstName} ${pendingStudent2.lastName}`;
+    await expect(
+      page.getByText(pendingName1).or(page.getByText(pendingName2)).first()
+    ).toBeVisible();
 
-    // Arun Kumar is active, should NOT be visible in pending filter
-    await expect(page.getByText('Arun Kumar')).not.toBeVisible();
+    // Active student should NOT be visible in pending filter
+    const activeName = `${activeStudent.firstName} ${activeStudent.lastName}`;
+    await expect(page.getByText(activeName)).not.toBeVisible();
   });
 
-  test('AE2E-007: Admit pending student', async ({ page }) => {
+  test('AE2E-007: Admit pending student', async ({ page, testData }) => {
     // Handle confirm dialog
     page.on('dialog', (dialog) => dialog.accept());
+
+    // Create a pending student specifically for this test
+    const grade = await testData.createGrade({ name: 'Test Grade AE2E-007' });
+    const pendingStudent = await testData.createStudent({
+      firstName: 'AdmitTest',
+      lastName: 'Student',
+    });
+    const studentName = `${pendingStudent.firstName} ${pendingStudent.lastName}`;
 
     await page.goto('/admin/students?status=pending');
 
@@ -59,30 +102,23 @@ test.describe('Admin Student Management', () => {
     await expect(page.locator('h1').filter({ hasText: 'Students' })).toBeVisible();
     await page.waitForSelector('table', { timeout: 10000 });
 
-    // Find a pending student (either Meera or Lakshmi from seed data)
-    const meeraRow = page.getByRole('row').filter({ hasText: 'Meera Krishnan' });
-    const lakshmiRow = page.getByRole('row').filter({ hasText: 'Lakshmi Iyer' });
+    // Find our pending student
+    const pendingRow = page.getByRole('row').filter({ hasText: studentName });
 
-    // Use whichever pending student is available
-    const pendingRow = (await meeraRow.count()) > 0 ? meeraRow : lakshmiRow;
-    const studentName = (await meeraRow.count()) > 0 ? 'Meera Krishnan' : 'Lakshmi Iyer';
+    // Verify student is present
+    await expect(pendingRow).toBeVisible();
 
-    if ((await pendingRow.count()) > 0) {
-      // Click Admit button
-      await pendingRow.getByRole('button', { name: 'Admit' }).click();
+    // Click Admit button
+    await pendingRow.getByRole('button', { name: 'Admit' }).click();
 
-      // Wait for admission to process
-      await page.waitForTimeout(1000);
+    // Wait for admission to process
+    await page.waitForTimeout(1000);
 
-      // Verify student is no longer in pending view (either not visible or status changed)
-      // Navigate to all students view to verify admitted status
-      await page.goto('/admin/students');
-      await page.waitForSelector('table', { timeout: 10000 });
+    // Navigate to all students view to verify admitted status
+    await page.goto('/admin/students');
+    await page.waitForSelector('table', { timeout: 10000 });
 
-      const rowAll = page.getByRole('row').filter({ hasText: studentName });
-      await expect(rowAll.getByText('Admitted')).toBeVisible();
-    } else {
-      console.log('No pending students found, skipping admit test');
-    }
+    const rowAll = page.getByRole('row').filter({ hasText: studentName });
+    await expect(rowAll.getByText('Admitted')).toBeVisible();
   });
 });

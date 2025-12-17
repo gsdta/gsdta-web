@@ -117,11 +117,11 @@ jobs:
           echo "❌ Emulators failed to start"
           exit 1
       
-      - name: Seed test data
+      - name: Seed test users
         run: |
-          echo "🌱 Seeding test data..."
-          npm run seed
-          echo "✅ Test data seeded"
+          echo "🌱 Seeding test users (minimal seed)..."
+          npm run seed:minimal
+          echo "✅ Test users seeded"
       
       - name: Build API and UI for E2E tests
         run: |

@@ -5,7 +5,9 @@
   "private": true,
   "scripts": {
     "seed": "node seed-emulator.js",
-    "seed:clear": "node seed-emulator.js --clear"
+    "seed:clear": "node seed-emulator.js --clear",
+    "seed:minimal": "node seed-test-users.js",
+    "seed:minimal:clear": "node seed-test-users.js --clear"
   },
   "dependencies": {
     "firebase-admin": "^13.5.0"

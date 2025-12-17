@@ -1,6 +1,7 @@
 import { Given } from '@cucumber/cucumber';
 import { adminDb } from '../../../src/lib/firebaseAdmin';
 import { Timestamp } from 'firebase-admin/firestore';
+import { testDataTracker } from '../support/testDataTracker';
 
 Given('there is a hero content with id {string}', { timeout: 120000 }, async function (id: string) {
   const db = adminDb();
@@ -33,6 +34,7 @@ Given('there is a hero content with id {string}', { timeout: 120000 }, async fun
       updatedAt: Timestamp.now(),
       createdBy: 'test-admin',
     });
+    testDataTracker.track('heroContent', id);
   } catch (error) {
     console.error('Failed to create hero content:', error);
     throw error;
@@ -69,6 +71,7 @@ Given('there is an active hero content', { timeout: 30000 }, async function () {
       updatedAt: now,
       createdBy: 'test-admin',
     });
+    testDataTracker.track('heroContent', 'active-test-content');
   } catch (error) {
     console.error('Failed to create active hero content:', error);
     throw error;
