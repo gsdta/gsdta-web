@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/testData.fixture';
 import { loginAsParent } from '../helpers/auth';
 
 /**
@@ -6,6 +6,8 @@ import { loginAsParent } from '../helpers/auth';
  *
  * These tests verify the parent student management UI functionality
  * with Firebase Auth emulator authentication.
+ *
+ * Each test creates its own test data and cleans up automatically.
  *
  * API-level student functionality is also covered by Cucumber tests in:
  * api/tests/e2e/features/parent-student-registration.feature
@@ -16,12 +18,19 @@ test.describe('Parent Student Management', () => {
     await loginAsParent(page);
   });
 
-  test('PE2E-002: Logged in parent sees students list', async ({ page }) => {
+  test('PE2E-002: Logged in parent sees students list', async ({ page, testData }) => {
+    // Create a student via API (as parent)
+    const student = await testData.createStudent({
+      firstName: 'TestChild',
+      lastName: 'PE2E002',
+      dateOfBirth: '2015-01-15',
+    });
+
     await page.goto('/parent/students');
     await expect(page.getByRole('heading', { name: 'My Students' })).toBeVisible();
-    
-    // Check for seeded student (Arun Kumar belongs to parent@test.com in seed)
-    await expect(page.getByText('Arun Kumar')).toBeVisible();
+
+    // Check for our test student
+    await expect(page.getByText(`${student.firstName} ${student.lastName}`)).toBeVisible();
   });
 
   test('PE2E-003: Register new student link works', async ({ page }) => {
@@ -38,6 +47,9 @@ test.describe('Parent Student Management', () => {
   });
 
   test('PE2E-004: Complete student registration flow', async ({ page }) => {
+    // Generate unique name to avoid conflicts with other tests
+    const uniqueLastName = `Playwright${Date.now()}`;
+
     await page.goto('/parent/students/register');
 
     // Wait for page to load
@@ -45,7 +57,7 @@ test.describe('Parent Student Management', () => {
 
     // Fill required fields
     await page.fill('input[name="firstName"]', 'TestChild');
-    await page.fill('input[name="lastName"]', 'Playwright');
+    await page.fill('input[name="lastName"]', uniqueLastName);
     await page.fill('input[name="dateOfBirth"]', '2015-06-15');
 
     // Optional fields
@@ -62,9 +74,12 @@ test.describe('Parent Student Management', () => {
     await expect(page.getByText(/Student registered successfully/i)).toBeVisible();
 
     // Should see new student in list
-    await expect(page.getByText('TestChild Playwright')).toBeVisible();
+    await expect(page.getByText(`TestChild ${uniqueLastName}`)).toBeVisible();
 
     // New student should have Pending status
     await expect(page.getByText('Pending').first()).toBeVisible();
+
+    // Note: This UI-created student will be orphaned since we can't easily track its ID.
+    // This is acceptable for test isolation - emulator reset in CI handles cleanup.
   });
 });
