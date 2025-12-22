@@ -20,7 +20,8 @@ test.describe('Admin Grades Management', () => {
     await expect(page.getByRole('heading', { name: 'Grades', exact: true })).toBeVisible();
 
     // Wait for data to load and verify our test grade is visible
-    await expect(page.getByText(grade.name)).toBeVisible({ timeout: 10000 });
+    // Use .first() because grade name appears in both name and displayName columns
+    await expect(page.getByText(grade.name).first()).toBeVisible({ timeout: 10000 });
   });
 
   test('GE2E-002: Admin can edit a grade display name', async ({ page, testData }) => {
@@ -31,7 +32,8 @@ test.describe('Admin Grades Management', () => {
 
     // Wait for the page and our grade to load
     await expect(page.getByRole('heading', { name: 'Grades', exact: true })).toBeVisible();
-    await expect(page.getByText(grade.name)).toBeVisible({ timeout: 10000 });
+    // Use .first() because grade name appears in both name and displayName columns
+    await expect(page.getByText(grade.name).first()).toBeVisible({ timeout: 10000 });
 
     // Locate the row containing our test grade by its ID
     const row = page.getByRole('row').filter({ hasText: grade.id }).first();
@@ -44,8 +46,8 @@ test.describe('Admin Grades Management', () => {
     await page.locator('input[type="text"]').fill(newName);
     await row.getByRole('button', { name: 'Save' }).click();
 
-    // Verify update
-    await expect(page.getByText(newName)).toBeVisible();
+    // Verify update - use .first() as new name will also appear in both columns
+    await expect(page.getByText(newName).first()).toBeVisible();
 
     // Note: No need to revert changes - test data cleanup will remove this grade
   });
