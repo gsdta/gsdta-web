@@ -81,23 +81,23 @@ test.describe('Admin Teacher Assignments', () => {
   });
 
   test('TA-E2E-005: Visual indicators show assignment status', async ({ page, testData }) => {
-    // Create a class with assigned teacher
+    // Create a class with assigned teacher - use unique names without shared substrings
     const grade = await testData.createGrade({ name: 'Test Grade TA-005' });
-    const assignedClass = await testData.createClass(grade.id, { name: 'Assigned Class TA-005' });
-    const unassignedClass = await testData.createClass(grade.id, { name: 'Unassigned Class TA-005' });
+    const assignedClass = await testData.createClass(grade.id, { name: 'WithTeacher Class 005' });
+    const unassignedClass = await testData.createClass(grade.id, { name: 'NoTeacher Class 005' });
     await testData.assignTeacherToClass(assignedClass.id, TEST_TEACHER.id, TEST_TEACHER.name, 'primary', TEST_TEACHER.email);
 
     await page.goto('/admin/teachers/assign');
 
-    // Wait for classes to load
-    await expect(page.getByText(assignedClass.name)).toBeVisible({ timeout: 10000 });
+    // Wait for classes to load - use exact match
+    await expect(page.getByRole('heading', { name: assignedClass.name, exact: true })).toBeVisible({ timeout: 10000 });
 
     // Check for checkmark on assigned class
-    const assignedClassRow = page.locator(`text=${assignedClass.name}`).locator('..');
+    const assignedClassRow = page.getByRole('heading', { name: assignedClass.name, exact: true }).locator('..');
     await expect(assignedClassRow.locator('[title="Primary teacher assigned"]')).toBeVisible();
 
     // Check for warning on unassigned class
-    const unassignedClassRow = page.locator(`text=${unassignedClass.name}`).locator('..');
+    const unassignedClassRow = page.getByRole('heading', { name: unassignedClass.name, exact: true }).locator('..');
     await expect(unassignedClassRow.locator('[title="No primary teacher"]')).toBeVisible();
   });
 
@@ -129,29 +129,29 @@ test.describe('Admin Teacher Assignments', () => {
   });
 
   test('TA-E2E-007: Can filter to show unassigned classes only', async ({ page, testData }) => {
-    // Create one assigned and one unassigned class
+    // Create one assigned and one unassigned class - use unique names without shared substrings
     const grade = await testData.createGrade({ name: 'Test Grade TA-007' });
-    const assignedClass = await testData.createClass(grade.id, { name: 'Assigned Class TA-007' });
-    const unassignedClass = await testData.createClass(grade.id, { name: 'Unassigned Class TA-007' });
+    const assignedClass = await testData.createClass(grade.id, { name: 'HasTeacher Class 007' });
+    const unassignedClass = await testData.createClass(grade.id, { name: 'NeedsTeacher Class 007' });
     await testData.assignTeacherToClass(assignedClass.id, TEST_TEACHER.id, TEST_TEACHER.name, 'primary', TEST_TEACHER.email);
 
     await page.goto('/admin/teachers/assign');
 
-    // Wait for classes to load
-    await expect(page.getByText(assignedClass.name)).toBeVisible({ timeout: 10000 });
+    // Wait for classes to load - use exact match
+    await expect(page.getByRole('heading', { name: assignedClass.name, exact: true })).toBeVisible({ timeout: 10000 });
 
     // Toggle unassigned filter
     await page.check('input[type="checkbox"]');
 
     // Assigned class shouldn't be visible
-    await expect(page.getByText(assignedClass.name)).not.toBeVisible();
+    await expect(page.getByRole('heading', { name: assignedClass.name, exact: true })).not.toBeVisible();
 
     // Unassigned class should still be visible
-    await expect(page.getByText(unassignedClass.name)).toBeVisible();
+    await expect(page.getByRole('heading', { name: unassignedClass.name, exact: true })).toBeVisible();
 
     // Uncheck to show all again
     await page.uncheck('input[type="checkbox"]');
-    await expect(page.getByText(assignedClass.name)).toBeVisible();
+    await expect(page.getByRole('heading', { name: assignedClass.name, exact: true })).toBeVisible();
   });
 
   test('TA-E2E-008: Primary teacher dropdown shows available teachers', async ({ page, testData }) => {
