@@ -46,8 +46,8 @@ function makeFakeDb(storage: Map<string, StoredDoc> = new Map()) {
       }),
       where: (field: string, op: string, value: any) => ({
         where: (field2: string, op2: string, value2: any) => ({
-          orderBy: (field3: string) => ({
-            orderBy: (field4: string) => ({
+          orderBy: (_field3: string) => ({
+            orderBy: (_field4: string) => ({
               get: async () => {
                 const docs: any[] = [];
                 for (const [key, data] of storage.entries()) {
@@ -102,16 +102,6 @@ function makeFakeDb(storage: Map<string, StoredDoc> = new Map()) {
     })
   };
 }
-
-// Mock FieldValue for tests
-const mockFieldValue = {
-  increment: (value: number) => ({ _type: 'increment', value })
-};
-
-// Mock Timestamp
-const mockTimestamp = {
-  now: () => ({ seconds: Date.now() / 1000 })
-};
 
 // Inject mocks into the module (we need to mock the imports)
 // Since we can't easily mock imports in node:test, we'll structure tests differently
