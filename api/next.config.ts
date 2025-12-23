@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
   generateBuildId: async () => {
     return 'api-build'
   },
+  // Ensure firebase-admin and its dependencies are included in standalone output
+  serverExternalPackages: ['firebase-admin'],
 };
 
 export default nextConfig;
