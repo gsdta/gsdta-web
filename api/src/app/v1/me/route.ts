@@ -141,7 +141,7 @@ export async function GET(req: NextRequest) {
     if (err instanceof AuthError) {
       return jsonError(err.status, err.code, err.message, origin);
     }
-    console.error(JSON.stringify({ requestId, path: '/api/v1/me', method: 'GET', error: 'internal' }));
+    console.error(JSON.stringify({ requestId, path: '/api/v1/me', method: 'GET', error: String(err), stack: (err as Error).stack }));
     return jsonError(500, 'internal/error', 'Internal server error', origin);
   }
 }
