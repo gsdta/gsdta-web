@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
-import {
 import { corsHeaders } from '@/lib/cors';
+import {
   getClassById,
   assignTeacherToClass,
   removeTeacherFromClass,
