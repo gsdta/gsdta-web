@@ -1,6 +1,6 @@
 # Implemented Features
 
-**Last Updated**: December 12, 2025
+**Last Updated**: December 22, 2025
 
 This document tracks all implemented features in the GSDTA web application. For complete role-based capability descriptions, see [ROLES.md](./ROLES.md).
 
@@ -228,14 +228,94 @@ This document tracks all implemented features in the GSDTA web application. For 
 
 ---
 
+### 9. Student-Class Enrollment
+
+**Status**: Complete (Phase 1 & 2)
+**Date**: December 2025
+
+#### Admin Class Roster View
+- ✅ GET `/api/v1/admin/classes/{id}/students` - Get class roster
+- ✅ View all students assigned to a class
+- ✅ Student details (name, grade, status, parent email)
+- ✅ Capacity tracking (enrolled vs capacity)
+- ✅ Links to student detail pages
+
+#### Admin Bulk Student Assignment
+- ✅ POST `/api/v1/admin/classes/{id}/students` - Bulk assign students
+- ✅ DELETE `/api/v1/admin/classes/{id}/students/{studentId}` - Remove student
+- ✅ Firestore batch writes for atomicity
+- ✅ Validates student status (must be admitted or active)
+- ✅ Validates class capacity
+- ✅ Changes student status on assign/remove
+- ✅ Updates denormalized enrolled count
+
+**Routes**:
+- `/admin/classes/[id]/roster` - View class roster
+
+**Files**:
+- `api/src/app/v1/admin/classes/[id]/students/route.ts`
+- `api/src/app/v1/admin/classes/[id]/students/[studentId]/route.ts`
+- `ui/src/app/admin/classes/[id]/roster/page.tsx`
+
+---
+
+### 10. Teacher Attendance Dashboard
+
+**Status**: Complete
+**Date**: December 22, 2025
+
+#### Backend API
+- ✅ GET `/api/v1/teacher/classes` - Get teacher's assigned classes
+- ✅ GET `/api/v1/teacher/classes/{id}/roster` - Get class roster (teacher must be assigned)
+- ✅ GET `/api/v1/teacher/classes/{id}/attendance?date=YYYY-MM-DD` - Get attendance records
+- ✅ POST `/api/v1/teacher/classes/{id}/attendance` - Save/update attendance records
+- ✅ Teacher assignment verification (only access assigned classes)
+- ✅ Zod schema validation for attendance data
+- ✅ Batch writes for attendance records
+
+#### Teacher Dashboard UI
+- ✅ Dashboard with class cards showing enrollment, schedule, role
+- ✅ Quick action buttons for attendance, classes, students
+- ✅ Classes list page with all assigned classes
+- ✅ Class detail page with student roster
+- ✅ Attendance marking interface with:
+  - Date selection (defaults to today)
+  - Status buttons (Present, Absent, Late, Excused)
+  - Notes field per student
+  - Mark All Present / Mark All Absent bulk actions
+  - CSV export
+  - Save button with success/error feedback
+  - Stats showing present/absent/unmarked counts
+
+**Routes**:
+- `/teacher` - Teacher dashboard
+- `/teacher/classes` - My classes list
+- `/teacher/classes/[id]` - Class detail with roster
+- `/teacher/classes/[id]/attendance` - Mark attendance
+
+**API Files**:
+- `api/src/app/v1/teacher/classes/route.ts`
+- `api/src/app/v1/teacher/classes/[id]/roster/route.ts`
+- `api/src/app/v1/teacher/classes/[id]/attendance/route.ts`
+
+**UI Files**:
+- `ui/src/app/teacher/page.tsx`
+- `ui/src/app/teacher/classes/page.tsx`
+- `ui/src/app/teacher/classes/[id]/page.tsx`
+- `ui/src/app/teacher/classes/[id]/attendance/page.tsx`
+- `ui/src/lib/teacher-api.ts`
+
+---
+
 ## 🚧 In Progress
 
 ### 1. Student Management
 
 **Status**: Partially complete
-**Next Steps**: Class enrollment integration
+**Next Steps**: Student Selector Modal for bulk assignment
 
 - ✅ Student CRUD operations
+- ⏳ Student Selector Modal (UI for bulk class assignment)
 - ⏳ Bulk import from CSV
 - ✅ Grade management (via grades collection)
 - ✅ Parent associations
@@ -246,15 +326,17 @@ This document tracks all implemented features in the GSDTA web application. For 
 
 ### High Priority
 
-1. **Student-Class Enrollment**
-   - Assign students to classes
-   - View class rosters
-   - Enrollment history
+1. **Student Selector Modal (Phase 2.1)**
+   - Modal component for selecting students to assign to class
+   - Filter by grade (auto-match class grade)
+   - Show only unassigned/admitted students
+   - Multi-select with checkboxes
 
-2. **Attendance Tracking**
-   - Daily attendance marking
-   - Reports and analytics
-   - Parent notifications
+2. **Bulk Teacher Assignment Page**
+   - `/admin/teachers/assign` page
+   - View all classes with teacher dropdowns
+   - Auto-save on selection
+   - Teacher workload summary
 
 ### Medium Priority
 
@@ -268,7 +350,7 @@ This document tracks all implemented features in the GSDTA web application. For 
    - Recurring events
    - RSVP system
 
-3. **Grade Management**
+3. **Grade Management (Academic)**
    - Assignment grading
    - Progress tracking
    - Report cards
@@ -294,10 +376,10 @@ This document tracks all implemented features in the GSDTA web application. For 
 
 ## 📊 Feature Statistics
 
-**Total Features**: 8 completed, 1 in progress
-**Completion Rate**: 89%
-**Last Feature**: Grades & Classes Management (Dec 12, 2025)
-**Next Feature**: Student-Class Enrollment
+**Total Features**: 10 completed, 1 in progress
+**Completion Rate**: 91%
+**Last Feature**: Teacher Attendance Dashboard (Dec 22, 2025)
+**Next Feature**: Student Selector Modal
 
 ---
 
@@ -331,5 +413,6 @@ All UI features are:
 
 - [ROLES.md](./ROLES.md) - Complete role-based capability matrix
 - [PROJECT-STATUS.md](./PROJECT-STATUS.md) - Overall project status
-- [TESTING-SUMMARY.md](../TESTING-SUMMARY.md) - Test coverage summary
-- [TECH-STACK.md](../TECH-STACK.md) - Technology choices
+- [GRADES-CLASSES-IMPLEMENTATION.md](./GRADES-CLASSES-IMPLEMENTATION.md) - Grades & classes details
+- [STUDENT-CLASS-ENROLLMENT-IMPLEMENTATION.md](./STUDENT-CLASS-ENROLLMENT-IMPLEMENTATION.md) - Enrollment details
+- [TEACHER-ATTENDANCE-DASHBOARD-IMPLEMENTATION.md](./TEACHER-ATTENDANCE-DASHBOARD-IMPLEMENTATION.md) - Attendance details
