@@ -4,9 +4,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
+import StudentSelectorModal from '@/components/StudentSelectorModal';
 import {
   adminGetClassRoster,
   adminRemoveStudentFromClass,
+  adminBulkAssignStudents,
   type RosterStudent,
 } from '@/lib/class-api';
 
@@ -29,6 +31,7 @@ export default function ClassRosterPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
+  const [showAssignModal, setShowAssignModal] = useState(false);
 
   const loadRoster = useCallback(async () => {
     try {
@@ -62,6 +65,11 @@ export default function ClassRosterPage() {
     } finally {
       setRemoving(null);
     }
+  }
+
+  async function handleAssignStudents(studentIds: string[]) {
+    await adminBulkAssignStudents(getIdToken, classId, studentIds);
+    await loadRoster();
   }
 
   if (loading) {
@@ -144,7 +152,7 @@ export default function ClassRosterPage() {
             </div>
 
             <button
-              onClick={() => alert('Assign students feature coming soon!')}
+              onClick={() => setShowAssignModal(true)}
               disabled={spotsAvailable === 0}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 spotsAvailable === 0
@@ -163,7 +171,7 @@ export default function ClassRosterPage() {
             <div className="p-8 text-center text-gray-500">
               <p className="text-lg">No students enrolled yet</p>
               <button
-                onClick={() => alert('Assign students feature coming soon!')}
+                onClick={() => setShowAssignModal(true)}
                 className="mt-4 text-blue-600 hover:text-blue-800 font-medium"
               >
                 Assign your first student →
@@ -248,6 +256,19 @@ export default function ClassRosterPage() {
           </Link>
         </div>
       </div>
+
+      {/* Student Selector Modal */}
+      {classInfo && (
+        <StudentSelectorModal
+          isOpen={showAssignModal}
+          onClose={() => setShowAssignModal(false)}
+          onAssign={handleAssignStudents}
+          gradeId={classInfo.gradeId}
+          gradeName={classInfo.gradeName}
+          spotsAvailable={spotsAvailable}
+          excludeStudentIds={students.map((s) => s.id)}
+        />
+      )}
     </div>
   );
 }

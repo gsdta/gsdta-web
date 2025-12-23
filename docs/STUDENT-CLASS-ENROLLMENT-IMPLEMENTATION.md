@@ -236,14 +236,16 @@ Student Status: pending → admitted → active → inactive/withdrawn
 
 ## Next Steps
 
-### Phase 2.1: Student Selector Modal (Next Priority)
-- [ ] Create `ui/src/components/StudentSelector.tsx` modal
-- [ ] Add "Assign Students" button functionality on roster page
-- [ ] Filter students by grade (auto-match class grade)
-- [ ] Show only unassigned/admitted students
-- [ ] Multi-select with checkboxes
-- [ ] Show selected count and spots remaining
-- [ ] Integrate with `adminBulkAssignStudents()` API
+### ✅ Phase 2.1: Student Selector Modal (COMPLETE - Dec 2025)
+- [x] Create `ui/src/components/StudentSelectorModal.tsx` modal
+- [x] Add "Assign Students" button functionality on roster page
+- [x] Filter students by grade (auto-match class grade)
+- [x] Show only unassigned/admitted students
+- [x] Multi-select with checkboxes
+- [x] Show selected count and spots remaining
+- [x] Integrate with `adminBulkAssignStudents()` API
+- [x] Add `gradeId` filter to admin students API
+- [x] Add `unassigned` filter to admin students API
 
 ### Phase 3: Parent - View Class Assignment
 - [ ] Extend `GET /api/v1/me/students` to include class details
@@ -252,7 +254,7 @@ Student Status: pending → admitted → active → inactive/withdrawn
 - [ ] Show "Not assigned yet" for students without class
 
 ### Phase 4: Admin - Unassigned Students View
-- [ ] Add `unassigned=true` filter to `GET /api/v1/admin/students`
+- [x] Add `unassigned=true` filter to `GET /api/v1/admin/students` ✅ (done in Phase 2.1)
 - [ ] Add "Unassigned" tab on admin students page
 - [ ] Show count of unassigned students
 - [ ] "Quick Assign" action button per student
@@ -328,10 +330,13 @@ Fields: classId (Ascending), status (Ascending), lastName (Ascending), firstName
 - [x] Capacity limits enforced
 - [x] Tests pass for all new functionality
 
-🚧 **Phase 2.1 In Progress**:
-- [ ] Admin can bulk assign students to class (UI)
-- [ ] Student selector modal functional
-- [ ] Grade matching enforced (UI)
+✅ **Phase 2.1 Complete**:
+- [x] Admin can bulk assign students to class (UI)
+- [x] Student selector modal functional
+- [x] Grade matching enforced (UI)
+- [x] Multi-select with capacity limit enforcement
+- [x] Search/filter students by name
+- [x] Select All / Deselect All controls
 
 ---
 
@@ -342,9 +347,10 @@ Fields: classId (Ascending), status (Ascending), lastName (Ascending), firstName
 3. **Status workflow matters**: Clear transitions between pending → admitted → active → inactive
 4. **Mobile-first**: Responsive table design required from the start
 5. **Incremental delivery**: Phase 1 (view) → Phase 2 (remove) → Phase 2.1 (assign) allows testing each piece
+6. **In-memory filtering**: Firestore doesn't support querying for null/missing fields, so `unassigned` filter done in memory
 
 ---
 
-**Last Updated**: December 13, 2025  
+**Last Updated**: December 23, 2025  
 **Implemented By**: GitHub Copilot CLI  
 **Reviewed By**: TBD
