@@ -332,6 +332,35 @@ firebase deploy --only firestore:rules,firestore:indexes
 
 ---
 
+## Dependency Management
+
+**CRITICAL: Always keep package.json and package-lock.json in sync**
+
+After adding/removing/updating any dependency:
+```bash
+# From project root (for workspace-wide changes)
+npm install
+
+# Or from specific directory
+cd ui && npm install
+cd api && npm install
+
+# Then commit BOTH files together
+git add package.json package-lock.json
+git add ui/package.json ui/package-lock.json
+git add api/package.json api/package-lock.json
+```
+
+### Rules
+- ❌ **Never** manually edit package-lock.json
+- ❌ **Never** commit package.json without the corresponding lock file update
+- ✅ **Always** run `npm install` after modifying package.json
+- ✅ **Always** commit both files together
+
+**Why this matters:** Docker builds use `npm ci` which requires lock files to match package.json exactly. Mismatches cause CI/CD build failures.
+
+---
+
 ## Environment Variables
 
 ### API (.env)

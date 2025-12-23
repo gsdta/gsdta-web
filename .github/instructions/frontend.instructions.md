@@ -1181,6 +1181,26 @@ When creating a new page:
 
 ---
 
+## Dependency Management
+
+**CRITICAL: Always keep package.json and package-lock.json in sync**
+
+After adding/removing/updating any dependency:
+```bash
+# From ui/ directory
+npm install
+
+# Then commit BOTH files
+git add package.json package-lock.json
+```
+
+❌ **Never** manually edit package-lock.json
+❌ **Never** commit package.json without the corresponding lock file update
+✅ **Always** run `npm install` after modifying package.json
+✅ **Always** commit both files together
+
+**Why:** Docker builds use `npm ci` which fails if lock file doesn't match package.json.
+
 ## Running Locally
 
 ```bash
