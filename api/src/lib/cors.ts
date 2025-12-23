@@ -17,7 +17,9 @@ export function allowedOrigin(origin: string | null): string | null {
   // Production logic
   const envAllowed = process.env.ALLOWED_ORIGINS?.split(',').map(s => s.trim()) || [];
   const prodAllowed = new Set<string>([
+    'https://gsdta.com',
     'https://www.gsdta.com',
+    'https://app.gsdta.com',
     ...envAllowed
   ]);
   
