@@ -104,7 +104,7 @@ export async function getStudentsByParentId(parentId: string): Promise<LinkedStu
  * Get all students with filters (for admin)
  */
 export async function getAllStudents(filters: StudentListFilters = {}): Promise<StudentListResponse> {
-  const { status = 'all', search, parentId, classId, limit = 50, offset = 0 } = filters;
+  const { status = 'all', search, parentId, classId, gradeId, unassigned, limit = 50, offset = 0 } = filters;
 
   let query = getDb().collection(STUDENTS_COLLECTION) as FirebaseFirestore.Query;
 
@@ -117,6 +117,9 @@ export async function getAllStudents(filters: StudentListFilters = {}): Promise<
   }
   if (classId) {
     query = query.where('classId', '==', classId);
+  }
+  if (gradeId) {
+    query = query.where('grade', '==', gradeId);
   }
 
   // Order by creation date (newest first)
@@ -139,6 +142,13 @@ export async function getAllStudents(filters: StudentListFilters = {}): Promise<
     } as Student;
   });
 
+  // Apply in-memory filters (Firestore limitations)
+  
+  // Filter unassigned students (no classId)
+  if (unassigned) {
+    students = students.filter((s) => !s.classId);
+  }
+
   // Apply search filter in memory (Firestore doesn't support full-text search)
   if (search) {
     const searchLower = search.toLowerCase();
@@ -152,7 +162,7 @@ export async function getAllStudents(filters: StudentListFilters = {}): Promise<
 
   return {
     students,
-    total,
+    total: unassigned || search ? students.length : total, // Recalculate if in-memory filtering applied
     limit,
     offset,
   };
