@@ -119,7 +119,7 @@ RUN mkdir -p ui/.next && chown nextjs:nodejs ui/.next
 COPY --from=ui-builder --chown=nextjs:nodejs /app/ui/.next/standalone ./ui/
 COPY --from=ui-builder --chown=nextjs:nodejs /app/ui/.next/static ./ui/.next/static
 
-# Copy API files
+# Copy API files (standalone output is at /app/api/.next/standalone/ in Docker - no api/ subfolder)
 RUN mkdir -p api/.next && chown nextjs:nodejs api/.next
 COPY --from=api-builder --chown=nextjs:nodejs /app/api/.next/standalone ./api/
 COPY --from=api-builder --chown=nextjs:nodejs /app/api/.next/static ./api/.next/static

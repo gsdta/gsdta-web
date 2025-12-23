@@ -174,8 +174,7 @@ jobs:
           context: .
           push: true
           tags: ${{ steps.meta.outputs.image_uri }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          no-cache: true
           build-args: |
             VERSION=${{ steps.meta.outputs.tag }}
             COMMIT=${{ github.sha }}
