@@ -91,9 +91,8 @@ COPY --from=deps /app/api/node_modules ./api/node_modules
 # Copy API source
 COPY api/ ./api/
 
-# Disable telemetry during build and force standalone output
+# Disable telemetry during build (no standalone - firebase-admin tracing issues)
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV NEXT_OUTPUT=standalone
 
 WORKDIR /app/api
 RUN npm run build
@@ -119,14 +118,11 @@ RUN mkdir -p ui/.next && chown nextjs:nodejs ui/.next
 COPY --from=ui-builder --chown=nextjs:nodejs /app/ui/.next/standalone ./ui/
 COPY --from=ui-builder --chown=nextjs:nodejs /app/ui/.next/static ./ui/.next/static
 
-# Copy API files (standalone output is at /app/api/.next/standalone/ in Docker - no api/ subfolder)
+# Copy API files (full build, not standalone - firebase-admin tracing issues)
 RUN mkdir -p api/.next && chown nextjs:nodejs api/.next
-COPY --from=api-builder --chown=nextjs:nodejs /app/api/.next/standalone ./api/
-COPY --from=api-builder --chown=nextjs:nodejs /app/api/.next/static ./api/.next/static
-
-# Copy ALL node_modules for API (firebase-admin and deps not properly traced by Next.js standalone)
-# This increases image size but ensures all dependencies are available
+COPY --from=api-builder --chown=nextjs:nodejs /app/api/.next ./api/.next
 COPY --from=api-builder --chown=nextjs:nodejs /app/api/node_modules ./api/node_modules
+COPY --from=api-builder --chown=nextjs:nodejs /app/api/package.json ./api/
 
 # Create supervisor configuration
 RUN mkdir -p /etc/supervisor/conf.d \
@@ -150,7 +146,7 @@ stderr_logfile_maxbytes=0
 environment=PORT="3000",HOSTNAME="0.0.0.0"
 
 [program:api]
-command=node server.js
+command=./node_modules/.bin/next start -p 8080
 directory=/app/api
 user=nextjs
 autostart=true
