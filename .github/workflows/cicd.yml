@@ -139,7 +139,7 @@ jobs:
           context: .
           push: true
           tags: ${{ steps.meta.outputs.image_uri }}
-          cache-from: type=gha
+          no-cache: true
           cache-to: type=gha,mode=max
           build-args: |
             VERSION=${{ steps.meta.outputs.tag }}
