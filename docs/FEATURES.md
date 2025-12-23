@@ -307,15 +307,54 @@ This document tracks all implemented features in the GSDTA web application. For 
 
 ---
 
+### 11. Student Selector Modal
+
+**Status**: Complete
+**Date**: December 23, 2025
+
+#### Backend Enhancements
+- ✅ Added `gradeId` filter to admin students API
+- ✅ Added `unassigned` filter to admin students API (students without classId)
+- ✅ Updated `getAllStudents()` in firestoreStudents.ts
+- ✅ Updated `GET /api/v1/admin/students` to support new filters
+
+#### UI Component
+- ✅ Created `StudentSelectorModal` component
+- ✅ Modal displays only admitted, unassigned students for the class grade
+- ✅ Multi-select with checkboxes
+- ✅ Search/filter students by name
+- ✅ Select All / Deselect All controls
+- ✅ Shows spots available and selected count
+- ✅ Prevents selecting more students than capacity allows
+- ✅ Integrates with bulk assign API
+
+#### Integration
+- ✅ "Assign Students" button on class roster page opens modal
+- ✅ Modal auto-filters to class grade
+- ✅ Excludes already enrolled students
+- ✅ Roster auto-refreshes after assignment
+
+**Files Created**:
+- `ui/src/components/StudentSelectorModal.tsx`
+
+**Files Modified**:
+- `api/src/types/student.ts` (added gradeId, unassigned filters)
+- `api/src/lib/firestoreStudents.ts` (getAllStudents enhanced)
+- `api/src/app/v1/admin/students/route.ts` (new query params)
+- `ui/src/lib/student-api.ts` (added gradeId, unassigned params)
+- `ui/src/app/admin/classes/[id]/roster/page.tsx` (integrated modal)
+
+---
+
 ## 🚧 In Progress
 
 ### 1. Student Management
 
 **Status**: Partially complete
-**Next Steps**: Student Selector Modal for bulk assignment
+**Next Steps**: Bulk import from CSV
 
 - ✅ Student CRUD operations
-- ⏳ Student Selector Modal (UI for bulk class assignment)
+- ✅ Student Selector Modal (UI for bulk class assignment)
 - ⏳ Bulk import from CSV
 - ✅ Grade management (via grades collection)
 - ✅ Parent associations
@@ -326,13 +365,7 @@ This document tracks all implemented features in the GSDTA web application. For 
 
 ### High Priority
 
-1. **Student Selector Modal (Phase 2.1)**
-   - Modal component for selecting students to assign to class
-   - Filter by grade (auto-match class grade)
-   - Show only unassigned/admitted students
-   - Multi-select with checkboxes
-
-2. **Bulk Teacher Assignment Page**
+1. **Bulk Teacher Assignment Page**
    - `/admin/teachers/assign` page
    - View all classes with teacher dropdowns
    - Auto-save on selection
@@ -376,10 +409,10 @@ This document tracks all implemented features in the GSDTA web application. For 
 
 ## 📊 Feature Statistics
 
-**Total Features**: 10 completed, 1 in progress
-**Completion Rate**: 91%
-**Last Feature**: Teacher Attendance Dashboard (Dec 22, 2025)
-**Next Feature**: Student Selector Modal
+**Total Features**: 11 completed, 1 in progress
+**Completion Rate**: 92%
+**Last Feature**: Student Selector Modal (Dec 23, 2025)
+**Next Feature**: Bulk Teacher Assignment Page
 
 ---
 

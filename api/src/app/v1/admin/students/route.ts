@@ -108,6 +108,8 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status') as StudentStatus | 'all' | null;
     const search = searchParams.get('search') || undefined;
+    const gradeId = searchParams.get('gradeId') || undefined;
+    const unassigned = searchParams.get('unassigned') === 'true';
     const limit = parseInt(searchParams.get('limit') || '50', 10);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
 
@@ -115,6 +117,8 @@ export async function GET(req: NextRequest) {
     const result = await getAllStudents({
       status: status || 'all',
       search,
+      gradeId,
+      unassigned,
       limit,
       offset,
     });
