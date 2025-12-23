@@ -23,6 +23,7 @@ type CollectionName =
   | 'classes'
   | 'grades'
   | 'heroContent'
+  | 'flashNews'
   | 'invites'
   | 'teacherInvites';
 
