@@ -121,7 +121,7 @@ COPY --from=ui-builder --chown=nextjs:nodejs /app/ui/.next/static ./ui/.next/sta
 
 # Copy API files
 RUN mkdir -p api/.next && chown nextjs:nodejs api/.next
-COPY --from=api-builder --chown=nextjs:nodejs /app/api/.next/standalone ./api/
+COPY --from=api-builder --chown=nextjs:nodejs /app/api/.next/standalone/api ./api/
 COPY --from=api-builder --chown=nextjs:nodejs /app/api/.next/static ./api/.next/static
 
 # Create supervisor configuration
