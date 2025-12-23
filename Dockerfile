@@ -124,6 +124,10 @@ RUN mkdir -p api/.next && chown nextjs:nodejs api/.next
 COPY --from=api-builder --chown=nextjs:nodejs /app/api/.next/standalone ./api/
 COPY --from=api-builder --chown=nextjs:nodejs /app/api/.next/static ./api/.next/static
 
+# Copy ALL node_modules for API (firebase-admin and deps not properly traced by Next.js standalone)
+# This increases image size but ensures all dependencies are available
+COPY --from=api-builder --chown=nextjs:nodejs /app/api/node_modules ./api/node_modules
+
 # Create supervisor configuration
 RUN mkdir -p /etc/supervisor/conf.d \
   && cat > /etc/supervisor/conf.d/supervisord.conf <<'EOF'
