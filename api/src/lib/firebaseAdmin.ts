@@ -52,7 +52,7 @@ export const adminDb = () => {
   const db = getFirestore(getAdminApp());
   try {
     db.settings({ ignoreUndefinedProperties: true });
-  } catch (e) {
+  } catch (_e) {
     // Ignore error if settings already locked
   }
   return db;

@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
 import { getStudentById, adminUpdateStudent } from '@/lib/firestoreStudents';
-import type { StudentStatus } from '@/types/student';
 import { randomUUID } from 'crypto';
 
 export const runtime = 'nodejs';

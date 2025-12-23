@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { NextRequest } from 'next/server';
-import { GET, POST } from '../route';
+import { GET, POST as _POST } from '../route';
 
 /**
  * Unit tests for GET/POST /api/v1/teacher/classes/[id]/attendance
@@ -218,7 +218,7 @@ test('Attendance update replaces existing records', () => {
   // Simulates the batch operation where existing records are deleted
   // and new ones are created for the same class/date
   
-  const existingRecords = [
+  const _existingRecords = [
     { studentId: 's1', status: 'present' },
   ];
   

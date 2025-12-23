@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, use } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
 import { adminGetStudent, adminAdmitStudent, adminAssignClass } from '@/lib/student-api';
@@ -14,7 +14,6 @@ export default function AdminStudentDetailsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { getIdToken } = useAuth();
 
