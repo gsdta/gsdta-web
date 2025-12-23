@@ -5,7 +5,10 @@ const nextConfig: NextConfig = {
   ...(process.env.NODE_ENV === 'production' && process.env.ALLOW_TEST_INVITES !== '1' ? { output: 'standalone' } : {}),
   basePath: '/api',
   // API-only server, no pages
-  experimental: {},
+  experimental: {
+    // Ensure firebase-admin is bundled in standalone output
+    serverComponentsExternalPackages: ['firebase-admin'],
+  },
   // Skip generating error pages in static export
   skipTrailingSlashRedirect: true,
   generateBuildId: async () => {
