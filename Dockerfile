@@ -123,6 +123,7 @@ RUN mkdir -p api/.next && chown nextjs:nodejs api/.next
 COPY --from=api-builder --chown=nextjs:nodejs /app/api/.next ./api/.next
 COPY --from=api-builder --chown=nextjs:nodejs /app/api/node_modules ./api/node_modules
 COPY --from=api-builder --chown=nextjs:nodejs /app/api/package.json ./api/
+COPY --from=api-builder --chown=nextjs:nodejs /app/api/next.config.ts ./api/
 
 # Create supervisor configuration
 RUN mkdir -p /etc/supervisor/conf.d \
@@ -146,7 +147,7 @@ stderr_logfile_maxbytes=0
 environment=PORT="3000",HOSTNAME="0.0.0.0"
 
 [program:api]
-command=./node_modules/.bin/next start -p 8080
+command=./node_modules/.bin/next start -p 8080 -H 0.0.0.0
 directory=/app/api
 user=nextjs
 autostart=true
