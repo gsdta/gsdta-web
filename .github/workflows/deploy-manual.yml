@@ -1,0 +1,89 @@
+# Manual Deployment
+# Triggered by: workflow_dispatch (manual trigger)
+
+name: Manual Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - qa
+          - production
+      
+      run_tests:
+        description: 'Run tests before deploy?'
+        required: true
+        default: true
+        type: boolean
+      
+      runner:
+        description: 'Runner to use'
+        required: true
+        default: 'ubuntu-latest'
+        type: choice
+        options:
+          - ubuntu-latest
+          - Power
+      
+      image_tag:
+        description: 'Image tag (leave empty for commit SHA)'
+        required: false
+        default: ''
+
+jobs:
+  # Step 1: Run tests (optional)
+  tests:
+    name: Run Tests
+    if: ${{ inputs.run_tests }}
+    uses: ./.github/workflows/_ci.yml
+    with:
+      runner: ${{ inputs.runner }}
+
+  # Step 2: Setup environment config
+  setup:
+    name: Setup
+    runs-on: ubuntu-latest
+    outputs:
+      service_name: ${{ steps.config.outputs.service_name }}
+      site_url: ${{ steps.config.outputs.site_url }}
+      firebase_project_id: ${{ steps.config.outputs.firebase_project_id }}
+      secrets_project_id: ${{ steps.config.outputs.secrets_project_id }}
+    steps:
+      - name: Set environment config
+        id: config
+        run: |
+          if [ "${{ inputs.environment }}" = "production" ]; then
+            echo "service_name=gsdta-web" >> $GITHUB_OUTPUT
+            echo "site_url=https://app.gsdta.com" >> $GITHUB_OUTPUT
+            echo "firebase_project_id=YOUR_PROJECT_ID" >> $GITHUB_OUTPUT
+            echo "secrets_project_id=YOUR_PROJECT_ID" >> $GITHUB_OUTPUT
+          else
+            echo "service_name=gsdta-web-qa" >> $GITHUB_OUTPUT
+            echo "site_url=https://app.qa.gsdta.com" >> $GITHUB_OUTPUT
+            echo "firebase_project_id=gsdta-qa" >> $GITHUB_OUTPUT
+            echo "secrets_project_id=gsdta-qa" >> $GITHUB_OUTPUT
+          fi
+
+  # Step 3: Build and deploy
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    needs: [tests, setup]
+    if: |
+      always() &&
+      (needs.tests.result == 'success' || needs.tests.result == 'skipped')
+    uses: ./.github/workflows/_build-deploy.yml
+    with:
+      environment: ${{ inputs.environment }}
+      service_name: ${{ needs.setup.outputs.service_name }}
+      site_url: ${{ needs.setup.outputs.site_url }}
+      gcp_project_id: YOUR_PROJECT_ID
+      secrets_project_id: ${{ needs.setup.outputs.secrets_project_id }}
+      firebase_project_id: ${{ needs.setup.outputs.firebase_project_id }}
+      runner: ${{ inputs.runner }}
+      image_tag: ${{ inputs.image_tag }}
+    secrets:
+      GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
