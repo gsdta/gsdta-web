@@ -120,6 +120,7 @@ COPY --from=ui-builder --chown=nextjs:nodejs /app/ui/.next/static ./ui/.next/sta
 
 # Copy API files (full build, not standalone - firebase-admin tracing issues)
 RUN mkdir -p api/.next && chown nextjs:nodejs api/.next
+COPY --from=api-builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=api-builder --chown=nextjs:nodejs /app/api/.next ./api/.next
 COPY --from=api-builder --chown=nextjs:nodejs /app/api/node_modules ./api/node_modules
 COPY --from=api-builder --chown=nextjs:nodejs /app/api/package.json ./api/
