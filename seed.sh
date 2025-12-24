@@ -32,7 +32,7 @@ if [ ! -d "scripts/node_modules/firebase-admin" ]; then
 fi
 
 # Set emulator environment variables
-export FIRESTORE_EMULATOR_HOST=localhost:8889
+export FIRESTORE_EMULATOR_HOST=localhost:8890
 export FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
 
 # Run seed script

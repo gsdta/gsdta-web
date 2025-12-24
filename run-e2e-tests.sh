@@ -123,7 +123,7 @@ print_success "Test data seeded"
 # tokens, not mock test tokens. USE_TEST_AUTH is only for Cucumber API tests with mock tokens.
 export NEXT_PUBLIC_AUTH_MODE=firebase
 export NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
-export NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST=localhost:8889
+export NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST=localhost:8890
 export NEXT_PUBLIC_FIREBASE_PROJECT_ID=demo-gsdta
 export NEXT_PUBLIC_FIREBASE_API_KEY=fake-api-key-for-emulator
 export NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=demo-gsdta.firebaseapp.com
@@ -151,7 +151,7 @@ echo ""
 cd ui
 
 # Set environment variables for emulators
-export FIRESTORE_EMULATOR_HOST=localhost:8889
+export FIRESTORE_EMULATOR_HOST=localhost:8890
 export FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
 
 # Run tests

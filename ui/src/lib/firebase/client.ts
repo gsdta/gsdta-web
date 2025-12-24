@@ -72,7 +72,7 @@ export function getFirebaseDb(): Firestore {
       const firestoreEmulatorHost = process.env.NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST;
       if (firestoreEmulatorHost) {
         const [host, portStr] = firestoreEmulatorHost.split(':');
-        const port = parseInt(portStr || '8889', 10);
+        const port = parseInt(portStr || '8890', 10);
         connectFirestoreEmulator(dbInstance, host!, port);
         firestoreEmulatorConnected = true;
         console.log(`[Firebase] Connected to Firestore emulator: ${host}:${port}`);

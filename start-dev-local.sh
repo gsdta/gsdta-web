@@ -124,7 +124,7 @@ case $choice in
             echo ""
             echo "Common issues:"
             echo "  - Java not properly installed"
-            echo "  - Ports already in use (4445, 8889, 9099)"
+            echo "  - Ports already in use (4445, 8890, 9099)"
             echo "  - Firebase project configuration issue"
             exit 1
         fi

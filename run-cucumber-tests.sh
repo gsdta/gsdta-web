@@ -133,7 +133,7 @@ print_step "Running Cucumber tests..."
 echo ""
 
 # Set environment variables for emulators
-export FIRESTORE_EMULATOR_HOST=localhost:8889
+export FIRESTORE_EMULATOR_HOST=localhost:8890
 export FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
 
 # Build Cucumber command with options
