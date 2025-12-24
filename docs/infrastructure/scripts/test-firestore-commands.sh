@@ -10,8 +10,8 @@ echo "=============================================="
 echo ""
 
 # Check if emulator is running
-if ! nc -z localhost 8889 2>/dev/null; then
-  echo "❌ Firestore emulator not running on localhost:8889"
+if ! nc -z localhost 8890 2>/dev/null; then
+  echo "❌ Firestore emulator not running on localhost:8890"
   echo "   Start emulator first: npm run emulators"
   exit 1
 fi
@@ -20,7 +20,7 @@ echo "✅ Firestore emulator detected"
 echo ""
 
 # Set environment for emulator
-export FIRESTORE_EMULATOR_HOST="localhost:8889"
+export FIRESTORE_EMULATOR_HOST="localhost:8890"
 export PROJECT_ID="demo-gsdta"
 
 echo "📝 Testing collection listing script..."

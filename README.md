@@ -45,7 +45,7 @@ Choose option 1 (local) or 2 (Docker), then visit:
 
 - **UI Dev Server**: Next.js on port 3000
 - **API Dev Server**: Express on port 8080  
-- **Firebase Emulators**: Auth (9099), Firestore (8889), UI (4445)
+- **Firebase Emulators**: Auth (9099), Firestore (8890), UI (4445)
 - **Test Data**: Automatically seeded (5 users, seed script available)
 
 ## 🧪 Testing
@@ -137,7 +137,7 @@ npm run test:ui && npm run test:api
 
 ### Useful Links
 - Emulator UI: http://localhost:4445
-- Firestore Emulator: http://localhost:8889
+- Firestore Emulator: http://localhost:8890
 - Auth Emulator: http://localhost:9099
 
 ## 🤝 Contributing

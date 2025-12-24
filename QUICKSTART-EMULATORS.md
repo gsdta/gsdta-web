@@ -35,7 +35,7 @@ Choose option 1 (local) or 2 (Docker), then visit:
 | UI | 3000 | http://localhost:3000 |
 | API | 8080 | http://localhost:8080 |
 | Emulator UI | 4445 | http://localhost:4445 |
-| Firestore | 8889 | N/A (internal) |
+| Firestore | 8890 | N/A (internal) |
 | Auth | 9099 | N/A (internal) |
 
 ## Common Commands
