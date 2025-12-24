@@ -1,8 +1,34 @@
 # Implemented Features
 
-**Last Updated**: December 12, 2025
+**Last Updated**: December 24, 2025
 
 This document tracks all implemented features in the GSDTA web application. For complete role-based capability descriptions, see [ROLES.md](./ROLES.md).
+
+---
+
+## ⚠️ CRITICAL: Known Build Issues
+
+> **CAUTION**: On December 24, 2025, we had to revert to commit `28e3348` due to `firebase-admin` bundling failures in Next.js standalone builds. Features added after this commit caused 500 errors in production.
+
+### What Happened
+- Adding new API routes after commit `28e3348` caused `firebase-admin` to fail bundling in Next.js standalone output
+- Production errors showed: `Cannot find package 'firebase-admin'`
+- The `/api/v1/me` and `/api/v1/flash-news` endpoints returned 500 errors
+
+### Features Reverted
+The following features were removed during the rollback:
+1. **Flash News** - Marquee/announcement system (never reached production)
+2. **Teacher Attendance Routes** - `teacher/classes/[id]/attendance/`
+3. **Admin Class Student Routes** - `admin/classes/[id]/students/[studentId]/`
+4. **Shared CORS Module** - `api/src/lib/cors.ts` (routes use inline CORS instead)
+
+### Guidelines for Future Development
+Before adding new API routes, consider:
+1. **Test standalone builds locally** before pushing: `cd api && npm run build`
+2. **Avoid shared modules** that import `firebase-admin` indirectly
+3. **Keep route files self-contained** with inline CORS handlers
+4. **Deploy and verify** each new route individually before adding more
+5. See [KNOWN-ISSUES.md](./KNOWN-ISSUES.md) for detailed troubleshooting
 
 ---
 
@@ -258,10 +284,11 @@ This document tracks all implemented features in the GSDTA web application. For 
 
 ### Medium Priority
 
-1. **News & Announcements**
+1. **News & Announcements** ⚠️ *REVERTED - See Known Issues above*
    - Flash news marquee
    - Rich text editor
    - Publish/schedule workflow
+   - *Note: Implementation caused firebase-admin bundling issues*
 
 2. **Calendar Management**
    - Event CRUD

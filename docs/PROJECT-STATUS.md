@@ -1,7 +1,34 @@
 # GSDTA Web - Project Status Report
 
-**Generated:** December 6, 2024  
+**Generated:** December 6, 2024
+**Last Updated:** December 24, 2025
 **Repository:** gsdta/gsdta-web
+
+---
+
+## ⚠️ CRITICAL: Production Rollback (Dec 24, 2025)
+
+> **The codebase was rolled back to commit `28e3348` due to firebase-admin bundling failures in production.**
+
+### Issue Summary
+Features added after commit `28e3348` caused the Next.js standalone build to fail bundling `firebase-admin`, resulting in 500 errors on all authenticated API endpoints.
+
+### Reverted Features
+- Flash News system
+- Teacher attendance routes
+- Admin class student management routes
+- Shared CORS module (`api/src/lib/cors.ts`)
+
+### Root Cause (Suspected)
+- New API routes or shared modules triggered webpack bundling changes
+- `firebase-admin` package was not properly included in standalone output
+- The exact trigger is not fully understood - exercise caution when adding new routes
+
+### Before Adding New Features
+1. Test standalone builds locally: `cd api && npm run build`
+2. Verify production deployment with single route additions
+3. Keep CORS logic inline in route files
+4. See `docs/KNOWN-ISSUES.md` for detailed guidance
 
 ---
 
