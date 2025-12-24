@@ -1,7 +1,23 @@
 # Grades and Classes Management Implementation Plan
 
 **Created**: December 12, 2025
-**Status**: In Progress
+**Updated**: December 24, 2025
+**Status**: Partially Complete - See Caution Below
+
+## ⚠️ CAUTION: firebase-admin Bundling Issues
+
+> **WARNING**: On December 24, 2025, we had to revert the codebase to commit `28e3348` due to production failures. Some API routes added after this commit caused `firebase-admin` to not bundle correctly in Next.js standalone output.
+
+**Before continuing this implementation:**
+1. Test each new API route with a standalone build: `cd api && npm run build`
+2. Deploy and verify each route individually before adding more
+3. Avoid creating shared modules that import `firebase-admin`
+4. Keep CORS handlers inline in each route file
+5. See `docs/KNOWN-ISSUES.md` for detailed troubleshooting
+
+The routes that currently exist from commit `28e3348` are working. Exercise caution when adding new routes like `teacher/classes/[id]/attendance/` or `admin/classes/[id]/students/[studentId]/`.
+
+---
 
 ## Summary
 Implement admin functionality for managing grades and classes with multiple teacher assignments.
