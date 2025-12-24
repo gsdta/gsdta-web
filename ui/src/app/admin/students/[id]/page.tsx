@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, use } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
 import { adminGetStudent, adminAdmitStudent, adminAssignClass } from '@/lib/student-api';
@@ -14,7 +14,6 @@ export default function AdminStudentDetailsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { getIdToken } = useAuth();
 
@@ -199,7 +198,7 @@ export default function AdminStudentDetailsPage({
               <dd className="text-sm text-gray-900">{student.schoolName || '-'}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-sm font-medium text-gray-500">Prior Tamil Level</dt>
+              <dt className="text-sm font-medium text-gray-500">Prior Tamil Experience</dt>
               <dd className="text-sm text-gray-900">{student.priorTamilLevel || '-'}</dd>
             </div>
             <div className="flex justify-between">
@@ -338,7 +337,7 @@ export default function AdminStudentDetailsPage({
                         <div className="text-sm">
                           <p className="font-medium text-gray-900">{selected.name}</p>
                           <p className="text-gray-600">
-                            {selected.level} - {selected.day} {selected.time}
+                            {selected.gradeName} - {selected.day} {selected.time}
                           </p>
                           <p className="text-gray-600">
                             {selected.enrolled}/{selected.capacity} students ({selected.available} spots available)

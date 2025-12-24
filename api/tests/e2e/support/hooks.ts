@@ -1,7 +1,8 @@
-import { BeforeAll, AfterAll } from '@cucumber/cucumber';
+import { BeforeAll, AfterAll, After } from '@cucumber/cucumber';
 import { __setGuardDepsForTests } from '../../../src/lib/guard';
 import type { VerifiedToken } from '../../../src/lib/auth';
 import type { UserProfile } from '../../../src/lib/firestoreUsers';
+import { testDataTracker } from './testDataTracker';
 
 // Test user profiles
 const testUsers: Record<string, { token: VerifiedToken; profile: UserProfile }> = {
@@ -123,4 +124,19 @@ BeforeAll(async function () {
 AfterAll(async function () {
   // Restore original functions
   __setGuardDepsForTests(null);
+});
+
+/**
+ * After each scenario: Clean up all test data created during the scenario
+ * This ensures test isolation - each scenario starts with a clean state.
+ */
+After(async function () {
+  if (testDataTracker.hasTrackedData()) {
+    try {
+      await testDataTracker.cleanup();
+    } catch (error) {
+      console.warn('Warning: Test data cleanup encountered errors:', error);
+    }
+    testDataTracker.reset();
+  }
 });

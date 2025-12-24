@@ -109,6 +109,8 @@ export interface StudentListFilters {
   search?: string;                  // Search by name
   parentId?: string;                // Filter by parent
   classId?: string;                 // Filter by class
+  gradeId?: string;                 // Filter by grade
+  unassigned?: boolean;             // Only students without classId
   limit?: number;
   offset?: number;
 }

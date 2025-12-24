@@ -176,7 +176,7 @@ export function EnrollmentForm({onSuccess}: EnrollmentFormProps) {
                 {selectedClass && (
                     <div className="mt-2 text-sm text-gray-600">
                         <p>
-                            <strong>Level:</strong> {selectedClass.level}
+                            <strong>Grade:</strong> {selectedClass.gradeName}
                         </p>
                         <p>
                             <strong>Teacher:</strong> {selectedClass.teacher}

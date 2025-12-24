@@ -72,7 +72,7 @@ export function StudentForm({initial, onSubmit, submitLabel = "Save"}: StudentFo
             </div>
             <div>
                 <label htmlFor="priorTamilLevel" className="block text-sm font-medium">
-                    Prior level
+                    Prior Tamil Experience
                 </label>
                 <select
                     id="priorTamilLevel"
@@ -80,9 +80,10 @@ export function StudentForm({initial, onSubmit, submitLabel = "Save"}: StudentFo
                     {...register("priorTamilLevel")}
                 >
                     <option value="">Select…</option>
-                    <option value="Beginner">Beginner</option>
-                    <option value="Intermediate">Intermediate</option>
-                    <option value="Advanced">Advanced</option>
+                    <option value="none">No prior experience</option>
+                    <option value="beginner">Beginner - Can read basic letters</option>
+                    <option value="intermediate">Intermediate - Can read and write simple sentences</option>
+                    <option value="advanced">Advanced - Can read and write fluently</option>
                 </select>
             </div>
             <div>

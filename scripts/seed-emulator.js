@@ -185,7 +185,6 @@ const SAMPLE_CLASSES = [
     name: 'PS-1 Section A - Saturday AM',
     gradeId: 'ps-1',
     gradeName: 'Pre-School 1',
-    level: 'Beginner', // Legacy field
     day: 'Saturday',
     time: '10:00 AM - 12:00 PM',
     capacity: 15,
@@ -208,7 +207,6 @@ const SAMPLE_CLASSES = [
     name: 'Grade 3 Section A - Saturday PM',
     gradeId: 'grade-3',
     gradeName: 'Grade 3',
-    level: 'Intermediate', // Legacy field
     day: 'Saturday',
     time: '2:00 PM - 4:00 PM',
     capacity: 20,
@@ -231,7 +229,6 @@ const SAMPLE_CLASSES = [
     name: 'Grade 8 Advanced - Sunday',
     gradeId: 'grade-8',
     gradeName: 'Grade 8',
-    level: 'Advanced', // Legacy field
     day: 'Sunday',
     time: '10:00 AM - 12:00 PM',
     capacity: 15,
@@ -244,7 +241,6 @@ const SAMPLE_CLASSES = [
     name: 'KG Section B - Sunday PM',
     gradeId: 'kg',
     gradeName: 'Kindergarten',
-    level: 'Beginner', // Legacy field
     day: 'Sunday',
     time: '2:00 PM - 4:00 PM',
     capacity: 18,

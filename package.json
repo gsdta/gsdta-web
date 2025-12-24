@@ -6,6 +6,8 @@
   "scripts": {
     "seed": "cd scripts && npm run seed",
     "seed:clear": "cd scripts && npm run seed:clear",
+    "seed:minimal": "cd scripts && npm run seed:minimal",
+    "seed:minimal:clear": "cd scripts && npm run seed:minimal:clear",
     "emulators": "firebase emulators:start --project demo-gsdta --import=./firebase-data --export-on-exit",
     "emulators:reset": "rm -rf firebase-data && npm run emulators",
     "dev:ui": "cd ui && npm run dev",

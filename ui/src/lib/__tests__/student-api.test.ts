@@ -110,7 +110,7 @@ describe('student-api', () => {
       );
     });
 
-    test('SA-006: passes filters', async () => {
+    test('SA-006: passes status filter', async () => {
       fetchSpy.mockResolvedValueOnce({
         ok: true,
         json: async () => ({ success: true, data: { students: [] } }),
@@ -122,6 +122,52 @@ describe('student-api', () => {
         expect.stringContaining('status=pending'),
         expect.any(Object)
       );
+    });
+
+    test('SA-010: passes gradeId filter', async () => {
+      fetchSpy.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, data: { students: [] } }),
+      });
+
+      await adminGetStudents(mockGetIdToken, { gradeId: 'grade-1' });
+
+      expect(fetchSpy).toHaveBeenCalledWith(
+        expect.stringContaining('gradeId=grade-1'),
+        expect.any(Object)
+      );
+    });
+
+    test('SA-011: passes unassigned filter', async () => {
+      fetchSpy.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, data: { students: [] } }),
+      });
+
+      await adminGetStudents(mockGetIdToken, { unassigned: true });
+
+      expect(fetchSpy).toHaveBeenCalledWith(
+        expect.stringContaining('unassigned=true'),
+        expect.any(Object)
+      );
+    });
+
+    test('SA-012: passes multiple filters combined', async () => {
+      fetchSpy.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, data: { students: [] } }),
+      });
+
+      await adminGetStudents(mockGetIdToken, { 
+        status: 'admitted', 
+        gradeId: 'grade-2',
+        unassigned: true 
+      });
+
+      const calledUrl = fetchSpy.mock.calls[0][0];
+      expect(calledUrl).toContain('status=admitted');
+      expect(calledUrl).toContain('gradeId=grade-2');
+      expect(calledUrl).toContain('unassigned=true');
     });
   });
 

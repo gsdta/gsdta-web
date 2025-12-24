@@ -36,8 +36,6 @@ export interface ClassOption {
   available: number;
   status: 'active' | 'inactive';
   teachers: ClassTeacher[];
-  // Legacy fields for backward compatibility
-  level?: string;
 }
 
 export interface Class extends Omit<ClassOption, 'available'> {
@@ -372,4 +370,111 @@ export function formatTeachersDisplay(teachers: ClassTeacher[]): string {
   }
 
   return 'No teachers assigned';
+}
+
+/**
+ * Student in a class roster
+ */
+export interface RosterStudent {
+  id: string;
+  firstName: string;
+  lastName: string;
+  name: string;
+  grade?: string;
+  status: string;
+  parentEmail?: string;
+}
+
+interface ClassRosterResponse {
+  class: {
+    id: string;
+    name: string;
+    gradeId: string;
+    gradeName?: string;
+    capacity: number;
+    enrolled: number;
+  };
+  students: RosterStudent[];
+}
+
+/**
+ * Get class roster (admin)
+ */
+export async function adminGetClassRoster(
+  getIdToken: TokenGetter,
+  classId: string
+): Promise<ClassRosterResponse> {
+  const token = await getIdToken();
+  if (!token) throw new Error('Not authenticated');
+
+  const res = await fetch(`/api/v1/admin/classes/${classId}/students`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  const json = (await res.json()) as ApiResponse<ClassRosterResponse>;
+
+  if (!res.ok) {
+    throw new Error(json.message || 'Failed to fetch class roster');
+  }
+
+  return json.data!;
+}
+
+/**
+ * Bulk assign students to a class (admin)
+ */
+export async function adminBulkAssignStudents(
+  getIdToken: TokenGetter,
+  classId: string,
+  studentIds: string[]
+): Promise<{ assignedCount: number; students: RosterStudent[] }> {
+  const token = await getIdToken();
+  if (!token) throw new Error('Not authenticated');
+
+  const res = await fetch(`/api/v1/admin/classes/${classId}/students`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ studentIds }),
+  });
+
+  const json = (await res.json()) as ApiResponse<{
+    assignedCount: number;
+    class: { id: string; name: string; enrolled: number };
+    students: RosterStudent[];
+  }>;
+
+  if (!res.ok) {
+    throw new Error(json.message || 'Failed to assign students');
+  }
+
+  return {
+    assignedCount: json.data!.assignedCount,
+    students: json.data!.students,
+  };
+}
+
+/**
+ * Remove a student from a class (admin)
+ */
+export async function adminRemoveStudentFromClass(
+  getIdToken: TokenGetter,
+  classId: string,
+  studentId: string
+): Promise<void> {
+  const token = await getIdToken();
+  if (!token) throw new Error('Not authenticated');
+
+  const res = await fetch(`/api/v1/admin/classes/${classId}/students/${studentId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  const json = (await res.json()) as ApiResponse<unknown>;
+
+  if (!res.ok) {
+    throw new Error(json.message || 'Failed to remove student from class');
+  }
 }

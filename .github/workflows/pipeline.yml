@@ -124,7 +124,8 @@ jobs:
             fi
             sleep 1
           done
-      - run: npm run seed
+      - name: Seed test users
+        run: npm run seed:minimal
       - name: API E2E (Cucumber)
         run: cd api && npm run test:e2e
       - name: Build UI for E2E
@@ -167,7 +168,7 @@ jobs:
           echo "project_id=$(gcloud secrets versions access latest --secret=FIREBASE_PROJECT_ID --project=${{ env.GCP_PROJECT_ID }})" >> $GITHUB_OUTPUT
           echo "app_id=$(gcloud secrets versions access latest --secret=FIREBASE_APP_ID --project=${{ env.GCP_PROJECT_ID }})" >> $GITHUB_OUTPUT
       - uses: docker/setup-buildx-action@v3
-      - uses: docker/build-push-action@v5
+      - uses: docker/build-push-action@v4
         with:
           context: .
           push: true

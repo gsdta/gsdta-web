@@ -4,41 +4,10 @@ import { requireAuth } from '@/lib/guard';
 import { getAllStudents, countStudentsByStatus } from '@/lib/firestoreStudents';
 import type { StudentStatus } from '@/types/student';
 import { randomUUID } from 'crypto';
+import { corsHeaders } from '@/lib/cors';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-function isDev() {
-  return process.env.NODE_ENV !== 'production';
-}
-
-function allowedOrigin(origin: string | null): string | null {
-  if (!origin) return null;
-  if (isDev()) {
-    if (origin.startsWith('http://localhost:') ||
-        origin.startsWith('http://127.0.0.1:') ||
-        origin.match(/^http:\/\/(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/)) {
-      return origin;
-    }
-    return null;
-  }
-  const prodAllowed = new Set<string>(['https://www.gsdta.com']);
-  return prodAllowed.has(origin) ? origin : null;
-}
-
-function corsHeaders(origin: string | null) {
-  const allow = allowedOrigin(origin);
-  const headers: Record<string, string> = {
-    'Vary': 'Origin, Access-Control-Request-Headers, Access-Control-Request-Method',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Authorization, Content-Type',
-  };
-  if (allow) {
-    headers['Access-Control-Allow-Origin'] = allow;
-    headers['Access-Control-Allow-Credentials'] = 'true';
-  }
-  return headers;
-}
 
 function jsonError(status: number, code: string, message: string, origin: string | null) {
   const res = NextResponse.json({ success: false, code, message }, { status });
@@ -108,6 +77,8 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status') as StudentStatus | 'all' | null;
     const search = searchParams.get('search') || undefined;
+    const gradeId = searchParams.get('gradeId') || undefined;
+    const unassigned = searchParams.get('unassigned') === 'true';
     const limit = parseInt(searchParams.get('limit') || '50', 10);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
 
@@ -115,6 +86,8 @@ export async function GET(req: NextRequest) {
     const result = await getAllStudents({
       status: status || 'all',
       search,
+      gradeId,
+      unassigned,
       limit,
       offset,
     });

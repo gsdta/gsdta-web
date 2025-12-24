@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
 import { createUserProfile, updateUserProfile, type ProfileUpdateData } from '@/lib/firestoreUsers';
+import { corsHeaders } from '@/lib/cors';
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
 
@@ -46,42 +47,6 @@ import { z } from 'zod';
  */
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-function isDev() {
-  return process.env.NODE_ENV !== 'production';
-}
-
-function allowedOrigin(origin: string | null): string | null {
-  if (!origin) return null;
-  if (isDev()) {
-    // In development, allow localhost and local network IPs (192.168.x.x, 10.x.x.x, etc.)
-    if (origin.startsWith('http://localhost:') ||
-        origin.startsWith('http://127.0.0.1:') ||
-        origin.match(/^http:\/\/(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/)) {
-      return origin;
-    }
-    return null;
-  }
-  // In production, we typically don't need cross-origin access from UI (same domain), but keep allow-list if needed.
-  const prodAllowed = new Set<string>([
-    'https://www.gsdta.com',
-  ]);
-  return prodAllowed.has(origin) ? origin : null;
-}
-
-function corsHeaders(origin: string | null) {
-  const allow = allowedOrigin(origin);
-  const headers: Record<string, string> = {
-    'Vary': 'Origin, Access-Control-Request-Headers, Access-Control-Request-Method',
-    'Access-Control-Allow-Methods': 'GET, PUT, OPTIONS',
-    'Access-Control-Allow-Headers': 'Authorization, Content-Type',
-  };
-  if (allow) {
-    headers['Access-Control-Allow-Origin'] = allow;
-    headers['Access-Control-Allow-Credentials'] = 'true';
-  }
-  return headers;
-}
 
 // Zod schemas for profile update validation
 const addressSchema = z.object({
@@ -176,7 +141,7 @@ export async function GET(req: NextRequest) {
     if (err instanceof AuthError) {
       return jsonError(err.status, err.code, err.message, origin);
     }
-    console.error(JSON.stringify({ requestId, path: '/api/v1/me', method: 'GET', error: 'internal' }));
+    console.error(JSON.stringify({ requestId, path: '/api/v1/me', method: 'GET', error: String(err), stack: (err as Error).stack }));
     return jsonError(500, 'internal/error', 'Internal server error', origin);
   }
 }

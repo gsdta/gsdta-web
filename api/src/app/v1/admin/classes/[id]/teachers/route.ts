@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
+import { corsHeaders } from '@/lib/cors';
 import {
   getClassById,
   assignTeacherToClass,
@@ -12,38 +13,6 @@ import {
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-function isDev() {
-  return process.env.NODE_ENV !== 'production';
-}
-
-function allowedOrigin(origin: string | null): string | null {
-  if (!origin) return null;
-  if (isDev()) {
-    if (origin.startsWith('http://localhost:') ||
-        origin.startsWith('http://127.0.0.1:') ||
-        origin.match(/^http:\/\/(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/)) {
-      return origin;
-    }
-    return null;
-  }
-  const prodAllowed = new Set<string>(['https://www.gsdta.com']);
-  return prodAllowed.has(origin) ? origin : null;
-}
-
-function corsHeaders(origin: string | null) {
-  const allow = allowedOrigin(origin);
-  const headers: Record<string, string> = {
-    'Vary': 'Origin, Access-Control-Request-Headers, Access-Control-Request-Method',
-    'Access-Control-Allow-Methods': 'GET, POST, DELETE, PATCH, OPTIONS',
-    'Access-Control-Allow-Headers': 'Authorization, Content-Type',
-  };
-  if (allow) {
-    headers['Access-Control-Allow-Origin'] = allow;
-    headers['Access-Control-Allow-Credentials'] = 'true';
-  }
-  return headers;
-}
 
 function jsonError(status: number, code: string, message: string, origin: string | null) {
   const res = NextResponse.json({ success: false, code, message }, { status });

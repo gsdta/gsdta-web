@@ -1,6 +1,7 @@
 import { Given } from '@cucumber/cucumber';
 import { adminDb } from '../../../src/lib/firebaseAdmin';
 import { Timestamp } from 'firebase-admin/firestore';
+import { testDataTracker } from '../support/testDataTracker';
 
 const STUDENTS_COLLECTION = 'students';
 const CLASSES_COLLECTION = 'classes';
@@ -19,6 +20,7 @@ Given('there is a student with id {string} with status {string}', async function
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
   });
+  testDataTracker.track('students', id);
 });
 
 Given('there is a student with id {string} belonging to parent {string}', async function (id: string, parentId: string) {
@@ -39,6 +41,7 @@ Given('there is a student with id {string} belonging to parent {string}', async 
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
   });
+  testDataTracker.track('students', id);
 });
 
 Given('the class {string} has {int} students enrolled', async function (classId: string, count: number) {
@@ -46,11 +49,13 @@ Given('the class {string} has {int} students enrolled', async function (classId:
   await db.collection(CLASSES_COLLECTION).doc(classId).set({
     id: classId,
     name: 'Test Class',
-    level: 'Beginner',
+    gradeId: 'test-grade-id',
+    gradeName: 'Beginner',
     status: 'active',
     enrolled: count,
     capacity: 20,
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
   }, { merge: true });
+  testDataTracker.track('classes', classId);
 });

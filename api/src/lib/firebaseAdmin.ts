@@ -38,6 +38,9 @@ export function getAdminApp(): App {
     } else {
       // Production: Use Application Default Credentials or explicit service account
       console.log(`[Firebase Admin] Connecting to production Firebase (project: ${DEFAULT_PROJECT_ID})`);
+      if (DEFAULT_PROJECT_ID === 'demo-gsdta') {
+         console.warn('[Firebase Admin] WARNING: Using default demo project ID in production mode. This may fail if not intended.');
+      }
       
       // If GOOGLE_APPLICATION_CREDENTIALS is set, Firebase Admin SDK will use it automatically
       // Otherwise, it will try Application Default Credentials (e.g., from GCP metadata server)
@@ -52,7 +55,7 @@ export const adminDb = () => {
   const db = getFirestore(getAdminApp());
   try {
     db.settings({ ignoreUndefinedProperties: true });
-  } catch (e) {
+  } catch (_e) {
     // Ignore error if settings already locked
   }
   return db;

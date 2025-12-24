@@ -4,6 +4,7 @@ import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
 import { getClassById, updateClass } from '@/lib/firestoreClasses';
 import { randomUUID } from 'crypto';
+import { corsHeaders } from '@/lib/cors';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -18,38 +19,6 @@ const updateClassSchema = z.object({
   status: z.enum(['active', 'inactive']).optional(),
   academicYear: z.string().max(20).optional(),
 });
-
-function isDev() {
-  return process.env.NODE_ENV !== 'production';
-}
-
-function allowedOrigin(origin: string | null): string | null {
-  if (!origin) return null;
-  if (isDev()) {
-    if (origin.startsWith('http://localhost:') ||
-        origin.startsWith('http://127.0.0.1:') ||
-        origin.match(/^http:\/\/(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/)) {
-      return origin;
-    }
-    return null;
-  }
-  const prodAllowed = new Set<string>(['https://www.gsdta.com']);
-  return prodAllowed.has(origin) ? origin : null;
-}
-
-function corsHeaders(origin: string | null) {
-  const allow = allowedOrigin(origin);
-  const headers: Record<string, string> = {
-    'Vary': 'Origin, Access-Control-Request-Headers, Access-Control-Request-Method',
-    'Access-Control-Allow-Methods': 'GET, PATCH, OPTIONS',
-    'Access-Control-Allow-Headers': 'Authorization, Content-Type',
-  };
-  if (allow) {
-    headers['Access-Control-Allow-Origin'] = allow;
-    headers['Access-Control-Allow-Credentials'] = 'true';
-  }
-  return headers;
-}
 
 function jsonError(status: number, code: string, message: string, origin: string | null) {
   const res = NextResponse.json({ success: false, code, message }, { status });
@@ -123,7 +92,7 @@ export async function GET(
           id: classData.id,
           name: classData.name,
           gradeId: classData.gradeId || '',
-          gradeName: classData.gradeName || classData.level || '',
+          gradeName: classData.gradeName || '',
           day: classData.day,
           time: classData.time,
           capacity: classData.capacity,
@@ -131,7 +100,6 @@ export async function GET(
           available: classData.capacity - classData.enrolled,
           teachers: formattedTeachers,
           // Legacy fields for backward compatibility
-          level: classData.level,
           teacherId: classData.teacherId,
           teacherName: classData.teacherName,
           status: classData.status,
@@ -246,7 +214,7 @@ export async function PATCH(
           id: classData.id,
           name: classData.name,
           gradeId: classData.gradeId || '',
-          gradeName: classData.gradeName || classData.level || '',
+          gradeName: classData.gradeName || '',
           day: classData.day,
           time: classData.time,
           capacity: classData.capacity,
@@ -254,7 +222,6 @@ export async function PATCH(
           available: classData.capacity - classData.enrolled,
           teachers: formattedTeachers,
           // Legacy fields for backward compatibility
-          level: classData.level,
           teacherId: classData.teacherId,
           teacherName: classData.teacherName,
           status: classData.status,

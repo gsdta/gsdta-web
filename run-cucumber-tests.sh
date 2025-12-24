@@ -112,9 +112,9 @@ while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
 done
 echo ""
 
-# Step 3: Seed test data
-print_step "Seeding test data..."
-npm run seed
+# Step 3: Seed minimal test data for API tests
+print_step "Seeding minimal test data for API tests..."
+node scripts/seed-api-tests.js
 print_success "Test data seeded"
 
 # Step 4: Check if dependencies are installed
