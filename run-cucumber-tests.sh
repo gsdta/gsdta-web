@@ -83,10 +83,20 @@ if ! docker info > /dev/null 2>&1; then
     exit 1
 fi
 
-# Step 1: Stop any existing containers
+# Step 1: Stop any existing containers and kill processes on emulator ports
 print_step "Stopping existing containers (if any)..."
 docker-compose -f docker-compose.local.yml down 2>/dev/null || true
-print_success "Existing containers stopped"
+
+# Kill any processes blocking Firebase emulator ports
+print_step "Checking for processes blocking emulator ports..."
+for port in 4445 8889 9099 4400; do
+    pid=$(lsof -ti :$port 2>/dev/null || true)
+    if [ -n "$pid" ]; then
+        print_step "Killing process $pid on port $port..."
+        kill -9 $pid 2>/dev/null || true
+    fi
+done
+print_success "Existing containers stopped and ports cleared"
 
 # Step 2: Start Firebase emulators
 print_step "Starting Firebase emulators..."
