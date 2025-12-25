@@ -51,23 +51,29 @@ async function fetchMeLegacy(): Promise<User | null> {
                 const userVal = wrapper.user;
                 if (userVal && typeof userVal === "object") {
                     const u = userVal as Record<string, unknown>;
-                    const roleRaw = (u.role as string) || (Array.isArray(u.roles) ? (u.roles[0] as string) : "parent");
+                    const rolesRaw = Array.isArray(u.roles) ? (u.roles as string[]) : [];
+                    const roles = toRoleArray(rolesRaw);
+                    const role = pickRole(rolesRaw);
                     return {
                         id: typeof u.id === "string" ? u.id : "",
                         name: typeof u.name === "string" ? u.name : "",
                         email: typeof u.email === "string" ? u.email : "",
-                        role: (roleRaw as Role) || "parent",
+                        role,
+                        roles,
                     };
                 }
             }
             // Or flat principal
             const flat = data as Record<string, unknown>;
-            const roleRaw = (flat.role as string) || (Array.isArray(flat.roles) ? (flat.roles[0] as string) : "parent");
+            const rolesRaw = Array.isArray(flat.roles) ? (flat.roles as string[]) : [];
+            const roles = toRoleArray(rolesRaw);
+            const role = pickRole(rolesRaw);
             return {
                 id: typeof flat.id === "string" ? flat.id : "",
                 name: typeof flat.name === "string" ? flat.name : "",
                 email: typeof flat.email === "string" ? flat.email : "",
-                role: (roleRaw as Role) || "parent",
+                role,
+                roles,
             };
         }
         return null;
@@ -200,10 +206,11 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
                              setUser(null);
                              try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
                          } else {
+                            const roles = toRoleArray(data.roles);
                             const role = pickRole(data.roles);
                             const emailVerified = typeof data.emailVerified === 'boolean' ? data.emailVerified : fbUser.emailVerified;
                             const authProvider = getAuthProvider(fbUser);
-                            const mapped: User = { id: data.uid, email: data.email, name: data.name || data.email, role, emailVerified, authProvider };
+                            const mapped: User = { id: data.uid, email: data.email, name: data.name || data.email, role, roles, emailVerified, authProvider };
                             setUser(mapped);
                             try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(mapped)); } catch {}
                          }
@@ -268,7 +275,7 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
         const spec = buildDebugUserSpec(role);
         setDebugUser(spec);
         const me = await fetchMeLegacy();
-        const fallback: User = me || {id: `u-${role}`, name: role, email: `${role}@example.com`, role};
+        const fallback: User = me || {id: `u-${role}`, name: role, email: `${role}@example.com`, role, roles: [role]};
         setUser(fallback);
         try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(fallback)); } catch {}
     }, []);
@@ -295,7 +302,19 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
     const setRole = useCallback(async (role: Role) => {
         hasManualAuth.current = true;
         if (AUTH_MODE === "firebase") {
-            throw new Error("Changing role is not supported in firebase auth mode");
+            // In firebase mode, just update local state (role is client-side only)
+            setUser((prev) => {
+                if (!prev) return prev;
+                // Verify the user has this role
+                if (!prev.roles.includes(role)) {
+                    console.warn(`User does not have role: ${role}`);
+                    return prev;
+                }
+                const next = { ...prev, role };
+                try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch {}
+                return next;
+            });
+            return;
         }
         if (USE_MSW) {
             await waitForMsw();
@@ -318,7 +337,7 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
         setDebugUser(spec);
         const me = await fetchMeLegacy();
         setUser(() => {
-            const next = me || {id: `u-${role}`, name: role, email: `${role}@example.com`, role};
+            const next = me || {id: `u-${role}`, name: role, email: `${role}@example.com`, role, roles: [role]};
             try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch {}
             return next;
         });
@@ -383,6 +402,16 @@ function pickRole(roles: string[]): Role {
     if (rset.has("admin")) return "admin";
     if (rset.has("teacher")) return "teacher";
     return "parent";
+}
+
+function toRoleArray(roles: string[]): Role[] {
+    const validRoles: Role[] = [];
+    for (const r of roles) {
+        if (r === "admin" || r === "teacher" || r === "parent") {
+            validRoles.push(r);
+        }
+    }
+    return validRoles.length > 0 ? validRoles : ["parent"];
 }
 
 function getAuthProvider(fbUser: FirebaseUser): AuthProviderType {
