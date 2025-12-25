@@ -23,6 +23,10 @@ const db = admin.firestore();
 const auth = admin.auth();
 
 const DRY_RUN = process.argv.includes('--dry-run');
+const KEEP_ADMIN = !process.argv.includes('--include-admin');
+
+// Super admin to preserve
+const SUPER_ADMIN_EMAIL = 'gunasekaran.pasupathy@gmail.com';
 
 // Collections to clear
 const COLLECTIONS = [
@@ -46,12 +50,25 @@ async function deleteCollection(collectionName) {
 
   const batchSize = 500;
   let deleted = 0;
+  let skipped = 0;
+
+  // Filter docs - preserve super admin in users collection
+  let docsToDelete = snapshot.docs;
+  if (collectionName === 'users' && KEEP_ADMIN) {
+    docsToDelete = snapshot.docs.filter(doc => {
+      const data = doc.data();
+      if (data.email === SUPER_ADMIN_EMAIL) {
+        skipped++;
+        return false;
+      }
+      return true;
+    });
+  }
 
   // Delete in batches
-  const docs = snapshot.docs;
-  for (let i = 0; i < docs.length; i += batchSize) {
+  for (let i = 0; i < docsToDelete.length; i += batchSize) {
     const batch = db.batch();
-    const chunk = docs.slice(i, i + batchSize);
+    const chunk = docsToDelete.slice(i, i + batchSize);
 
     chunk.forEach(doc => {
       batch.delete(doc.ref);
@@ -63,7 +80,8 @@ async function deleteCollection(collectionName) {
     deleted += chunk.length;
   }
 
-  console.log(`  ${collectionName}: ${deleted} documents deleted`);
+  const msg = skipped > 0 ? ` (${skipped} preserved)` : '';
+  console.log(`  ${collectionName}: ${deleted} documents deleted${msg}`);
   return deleted;
 }
 
@@ -71,6 +89,7 @@ async function deleteAuthUsers() {
   console.log('\nDeleting Firebase Auth users...');
 
   let deleted = 0;
+  let skipped = 0;
   let nextPageToken;
 
   do {
@@ -80,19 +99,33 @@ async function deleteAuthUsers() {
       break;
     }
 
-    const uids = listResult.users.map(user => user.uid);
+    // Filter out super admin if KEEP_ADMIN is true
+    const usersToDelete = KEEP_ADMIN
+      ? listResult.users.filter(user => user.email !== SUPER_ADMIN_EMAIL)
+      : listResult.users;
 
-    if (!DRY_RUN) {
-      await auth.deleteUsers(uids);
+    const usersSkipped = listResult.users.length - usersToDelete.length;
+    skipped += usersSkipped;
+
+    if (usersToDelete.length > 0) {
+      const uids = usersToDelete.map(user => user.uid);
+
+      if (!DRY_RUN) {
+        await auth.deleteUsers(uids);
+      }
+
+      deleted += uids.length;
     }
 
-    deleted += uids.length;
-    console.log(`  Deleted ${deleted} users...`);
+    console.log(`  Deleted ${deleted} users${skipped > 0 ? ` (${skipped} preserved)` : ''}...`);
 
     nextPageToken = listResult.pageToken;
   } while (nextPageToken);
 
   console.log(`  Total auth users deleted: ${deleted}`);
+  if (skipped > 0) {
+    console.log(`  Super admin preserved: ${SUPER_ADMIN_EMAIL}`);
+  }
   return deleted;
 }
 
@@ -109,6 +142,11 @@ async function main() {
 
   if (DRY_RUN) {
     console.log('\n*** DRY RUN MODE - No data will be deleted ***\n');
+  }
+
+  if (KEEP_ADMIN) {
+    console.log(`Note: Super admin (${SUPER_ADMIN_EMAIL}) will be preserved.`);
+    console.log('      Use --include-admin to delete all users.\n');
   }
 
   // Delete Firestore collections
