@@ -380,6 +380,152 @@ async function importStudents(workbook) {
 }
 
 /**
+ * Import teachers from Teacher sheet - creates user accounts and teacher documents
+ */
+async function importTeachers(workbook) {
+  console.log('\n=== Importing Teachers ===');
+
+  const sheet = workbook.Sheets['Teacher'];
+  if (!sheet) {
+    console.log('  Teacher sheet not found!');
+    return { imported: 0, skipped: 0, errors: 0 };
+  }
+
+  const data = XLSX.utils.sheet_to_json(sheet);
+  console.log(`  Found ${data.length} class records with teacher info`);
+
+  let imported = 0;
+  let skipped = 0;
+  let errors = 0;
+  const seenTeachers = new Map(); // email -> teacher info
+
+  // Collect unique teachers from all classes
+  for (const row of data) {
+    const mainTeacher = row['Main Teacher'];
+    const mainEmail = row['Email address']?.trim()?.toLowerCase();
+    const gradeExcel = row['School Grade'];
+    const section = row['Section'] || 'A';
+    const gradeId = GRADE_MAPPING[gradeExcel] || GRADE_MAPPING[gradeExcel?.trim()];
+
+    if (mainTeacher && mainEmail && !seenTeachers.has(mainEmail)) {
+      const { firstName, lastName } = parseFullName(mainTeacher);
+      seenTeachers.set(mainEmail, {
+        firstName,
+        lastName,
+        email: mainEmail,
+        displayName: mainTeacher.trim(),
+        classAssignments: [],
+      });
+    }
+
+    // Add class assignment
+    if (mainEmail && gradeId) {
+      const teacher = seenTeachers.get(mainEmail);
+      if (teacher) {
+        teacher.classAssignments.push({
+          gradeId,
+          section,
+          role: 'primary',
+        });
+      }
+    }
+
+    // Handle assistant teachers (they may not have emails in test data)
+    const assistantTeacher = row['Asst. Teacher'];
+    if (assistantTeacher) {
+      const { teachers: assistants } = parseTeacherInfo(assistantTeacher);
+      for (const asst of assistants) {
+        // Generate email for assistant if not provided
+        const asstEmail = `${asst.firstName.toLowerCase()}.${asst.lastName.toLowerCase()}@gsdta-test.org`;
+        if (!seenTeachers.has(asstEmail)) {
+          seenTeachers.set(asstEmail, {
+            firstName: asst.firstName,
+            lastName: asst.lastName,
+            email: asstEmail,
+            displayName: `${asst.firstName} ${asst.lastName}`,
+            classAssignments: [],
+          });
+        }
+        const teacher = seenTeachers.get(asstEmail);
+        if (teacher && gradeId) {
+          teacher.classAssignments.push({
+            gradeId,
+            section,
+            role: 'assistant',
+          });
+        }
+      }
+    }
+  }
+
+  console.log(`  Found ${seenTeachers.size} unique teachers`);
+
+  // Create teacher accounts and documents
+  for (const [email, info] of seenTeachers) {
+    try {
+      if (DRY_RUN) {
+        console.log(`  [DRY-RUN] Would create teacher: ${info.displayName} (${email})`);
+        imported++;
+        continue;
+      }
+
+      // Check if user already exists
+      let uid;
+      try {
+        const existingUser = await auth.getUserByEmail(email);
+        uid = existingUser.uid;
+        console.log(`  Teacher account exists: ${email}`);
+      } catch (e) {
+        if (e.code === 'auth/user-not-found') {
+          // Create new user
+          const userRecord = await auth.createUser({
+            email,
+            password: DEFAULT_PASSWORD,
+            displayName: info.displayName,
+            emailVerified: false,
+          });
+          uid = userRecord.uid;
+        } else {
+          throw e;
+        }
+      }
+
+      // Create/update user document with teacher role
+      await db.collection('users').doc(uid).set({
+        email,
+        displayName: info.displayName,
+        roles: ['teacher'],
+        status: 'active',
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      }, { merge: true });
+
+      // Create teacher document
+      await db.collection('teachers').doc(uid).set({
+        userId: uid,
+        firstName: info.firstName,
+        lastName: info.lastName,
+        email,
+        phone: null,
+        status: 'active',
+        classAssignments: info.classAssignments,
+        academicYear: ACADEMIC_YEAR,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      }, { merge: true });
+
+      console.log(`  Created teacher: ${info.displayName} (${email}) - ${info.classAssignments.length} classes`);
+      imported++;
+    } catch (err) {
+      console.error(`  Error creating teacher ${email}: ${err.message}`);
+      errors++;
+    }
+  }
+
+  return { imported, skipped, errors };
+}
+
+/**
  * Import textbooks from Books sheet
  */
 async function importTextbooks(workbook) {
@@ -841,6 +987,10 @@ async function main() {
 
   if (IMPORT_STUDENTS) {
     results.students = await importStudents(workbook);
+  }
+
+  if (IMPORT_TEACHERS) {
+    results.teachers = await importTeachers(workbook);
   }
 
   if (IMPORT_TEXTBOOKS) {
