@@ -177,7 +177,7 @@ export default function TeachersListPage() {
                   Showing {offset + 1} - {Math.min(offset + limit, total)} of {total} teacher{total !== 1 ? 's' : ''}
                 </div>
 
-                <div className="bg-white shadow rounded-lg overflow-hidden">
+                <div className="bg-white shadow rounded-lg overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
@@ -203,7 +203,7 @@ export default function TeachersListPage() {
                         <tr key={teacher.uid} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">
-                              {teacher.name || 'N/A'}
+                              {teacher.name || teacher.email.split('@')[0] || 'Unknown'}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
