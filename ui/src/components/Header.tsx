@@ -8,20 +8,17 @@ import {useState} from "react";
 
 const roleNav: Record<Role, { href: string; labelKey: string }[]> = {
     admin: [
+        {href: "/", labelKey: "nav.home"},
         {href: "/dashboard", labelKey: "nav.dashboard"},
-        {href: "/students", labelKey: "nav.students"},
-        {href: "/classes", labelKey: "nav.classes"},
-        {href: "/enrollment/review", labelKey: "nav.enrollment"},
     ],
     teacher: [
+        {href: "/", labelKey: "nav.home"},
         {href: "/dashboard", labelKey: "nav.dashboard"},
         {href: "/classes", labelKey: "nav.classes"},
     ],
     parent: [
+        {href: "/", labelKey: "nav.home"},
         {href: "/dashboard", labelKey: "nav.dashboard"},
-        {href: "/students", labelKey: "nav.students"},
-        {href: "/enrollment", labelKey: "nav.enrollment"},
-        {href: "/classes", labelKey: "nav.classes"},
     ],
 };
 
@@ -44,7 +41,7 @@ export function Header() {
                 <Link href="/" className="text-gray-900 max-w-[60vw] lg:max-w-none truncate" onClick={close} title={t("brand.full")} aria-label={t("brand.full")} suppressHydrationWarning>
                     {/* Brand title + compact tagline (tagline hidden on small screens to avoid extra height) */}
                     <span className="block whitespace-nowrap leading-tight" suppressHydrationWarning>
-                        <span className="inline md:hidden font-semibold" suppressHydrationWarning>{t("brand.short")}</span>
+                        <span className="font-semibold" suppressHydrationWarning>{t("brand.short")}</span>
                     </span>
                     <span className="hidden md:block text-[10px] leading-tight text-gray-600 -mt-0.5">
                         {t("brand.tagline")}
@@ -53,7 +50,6 @@ export function Header() {
 
                 {/* Desktop nav */}
                 <nav className="hidden sm:flex items-center gap-4 text-sm">
-                    {/* Removed explicit Home link (brand already links home) */}
                     {user ? (
                         <>
                             {roleNav[user.role].map((item) => (
@@ -79,12 +75,18 @@ export function Header() {
                                 <option value="teacher">ஆசிரியர்</option>
                                 <option value="admin">நிர்வாகி</option>
                             </select>
+                            {authMode === "firebase" && user.authProvider === "password" && (
+                                <Link href="/account/change-password" className="hover:underline text-gray-900">
+                                    {t("nav.changePassword")}
+                                </Link>
+                            )}
                             <Link href="/logout" className="hover:underline text-gray-900">
                                 {t("nav.logout")}
                             </Link>
                         </>
                     ) : (
                         <>
+                            <Link href="/" className="hover:underline text-gray-900">{t("nav.home")}</Link>
                             <Link href="/about/" className="hover:underline text-gray-900">{t("nav.about")}</Link>
                             <Link href="/team/" className="hover:underline text-gray-900">{t("nav.team")}</Link>
                             <Link href="/documents/" className="hover:underline text-gray-900">{t("nav.documents")}</Link>
@@ -129,7 +131,6 @@ export function Header() {
                     className="sm:hidden border-t border-gray-200 bg-white/90 supports-[backdrop-filter]:bg-white/70 backdrop-blur"
                 >
                     <div className="mx-auto max-w-6xl px-4 py-3 flex flex-col gap-3 text-sm">
-                        {/* Removed explicit Home link */}
                         {user ? (
                             <>
                                 {roleNav[user.role].map((item) => (
@@ -154,12 +155,18 @@ export function Header() {
                                     <option value="teacher">ஆசிரியர்</option>
                                     <option value="admin">நிர்வாகி</option>
                                 </select>
+                                {authMode === "firebase" && user.authProvider === "password" && (
+                                    <Link href="/account/change-password" className="hover:underline text-gray-900" onClick={close}>
+                                        {t("nav.changePassword")}
+                                    </Link>
+                                )}
                                 <Link href="/logout" className="hover:underline text-gray-900" onClick={close}>
                                     {t("nav.logout")}
                                 </Link>
                             </>
                         ) : (
                             <>
+                                <Link href="/" className="hover:underline text-gray-900" onClick={close}>{t("nav.home")}</Link>
                                 <Link href="/about/" className="hover:underline text-gray-900" onClick={close}>{t("nav.about")}</Link>
                                 <Link href="/team/" className="hover:underline text-gray-900" onClick={close}>{t("nav.team")}</Link>
                                 <Link href="/documents/" className="hover:underline text-gray-900" onClick={close}>{t("nav.documents")}</Link>
