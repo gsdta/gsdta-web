@@ -101,6 +101,18 @@ const GRADE_MAPPING = {
   'Grade-8': 'grade-8',
   'PS-1': 'ps-1',
   'PS-2': 'ps-2',
+  // Production Excel sheet names (roster sheets)
+  'Mazhalai- 1': 'ps-1',
+  'Mazhalai- 2': 'ps-2',
+  'Basic- 1': 'kg',
+  'Basic- 2': 'grade-1',
+  'Grade 2': 'grade-2',
+  'Grade 3': 'grade-3',
+  'Unit-3&4': 'grade-4',
+  'Unit- 6&7': 'grade-5',
+  'Unit- 9&10': 'grade-6',
+  'Unit- 12&13': 'grade-7',
+  'Unit- 15&16': 'grade-8',
 };
 
 // Grade display names
@@ -130,6 +142,19 @@ function parseDateToISO(dateValue) {
   }
 
   const str = String(dateValue).trim();
+
+  // Excel serial number (days since 1900-01-01, but Excel incorrectly thinks 1900 was a leap year)
+  // Numbers between 1 and 60000+ are likely Excel serial dates
+  if (/^\d{5}$/.test(str)) {
+    const serialNum = parseInt(str, 10);
+    if (serialNum > 0 && serialNum < 100000) {
+      // Excel epoch is January 1, 1900, but it has a bug where it thinks 1900 was a leap year
+      // So we subtract 1 for dates after Feb 28, 1900 (serial 59)
+      const excelEpoch = new Date(1899, 11, 30); // Dec 30, 1899 (to account for Excel's leap year bug)
+      const date = new Date(excelEpoch.getTime() + serialNum * 24 * 60 * 60 * 1000);
+      return date.toISOString().split('T')[0];
+    }
+  }
 
   // ISO format: 2017-04-05 or 2017-04-05 00:00:00
   if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
@@ -898,11 +923,29 @@ async function importClasses(workbook) {
 
     // Determine grade from sheet name (e.g., "Grade-3" -> "grade-3", "Mazhalai-1" -> "ps-1")
     let gradeId = null;
-    for (const [key, id] of Object.entries(GRADE_MAPPING)) {
-      if (sheetName.toLowerCase().includes(key.toLowerCase().replace(/\s+/g, '-')) ||
-          sheetName.toLowerCase().includes(key.toLowerCase().replace(/\s+/g, ''))) {
-        gradeId = id;
-        break;
+
+    // First try exact match
+    if (GRADE_MAPPING[sheetName]) {
+      gradeId = GRADE_MAPPING[sheetName];
+    } else {
+      // Try case-insensitive match
+      for (const [key, id] of Object.entries(GRADE_MAPPING)) {
+        if (key.toLowerCase() === sheetName.toLowerCase()) {
+          gradeId = id;
+          break;
+        }
+      }
+    }
+
+    // If still no match, try partial matching
+    if (!gradeId) {
+      for (const [key, id] of Object.entries(GRADE_MAPPING)) {
+        const keyNormalized = key.toLowerCase().replace(/[\s-]+/g, '');
+        const sheetNormalized = sheetName.toLowerCase().replace(/[\s-]+/g, '');
+        if (sheetNormalized.includes(keyNormalized) || keyNormalized.includes(sheetNormalized)) {
+          gradeId = id;
+          break;
+        }
       }
     }
 
@@ -913,10 +956,53 @@ async function importClasses(workbook) {
 
     console.log(`    Processing roster: ${sheetName} (${rosterData.length} students)`);
 
+    // Check if a class exists for this grade, if not create one
+    let classKey = `${gradeId}-a`;
+    let classId = classIdMap.get(classKey);
+
+    if (!classId && !DRY_RUN) {
+      // Create a class for this grade
+      const gradeName = GRADE_NAMES[gradeId] || gradeId;
+      const className = `${gradeName} Section A`;
+
+      const classData = {
+        name: className,
+        gradeId,
+        gradeName,
+        section: 'A',
+        room: null,
+        day: 'Saturday',
+        time: '10:00 AM - 12:00 PM',
+        capacity: 30,
+        enrolled: 0,
+        teachers: [],
+        status: 'active',
+        academicYear: ACADEMIC_YEAR,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      };
+
+      const docRef = await db.collection('classes').add(classData);
+      classId = docRef.id;
+      classIdMap.set(classKey, classId);
+      classNameMap.set(classId, className);
+      console.log(`      Created missing class: ${className} (${docRef.id})`);
+      imported++;
+    }
+
     for (const row of rosterData) {
       try {
-        const studentName = row['Student Name'];
-        if (!studentName) continue;
+        // Get student name from first column (column name varies by sheet)
+        const firstColKey = Object.keys(row)[0];
+        const studentName = row[firstColKey] || row['Student Name'];
+
+        // Skip header rows and non-student entries
+        if (!studentName ||
+            studentName.includes('Teacher') ||
+            studentName.includes('Student Name') ||
+            studentName.includes('Section')) {
+          continue;
+        }
 
         // Find student by name in Firestore
         const { firstName, lastName } = parseFullName(studentName);
