@@ -45,6 +45,18 @@ const adminNav: NavSection[] = [
     ],
   },
   {
+    label: 'Resources',
+    items: [
+      { label: 'Textbooks', href: '/admin/textbooks', icon: '📖' },
+    ],
+  },
+  {
+    label: 'Volunteers',
+    items: [
+      { label: 'All Volunteers', href: '/admin/volunteers', icon: '🤝' },
+    ],
+  },
+  {
     label: 'Content',
     items: [{ label: 'Hero Content', href: '/admin/content/hero', icon: '🖼️' }],
   },
