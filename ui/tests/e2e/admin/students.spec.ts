@@ -180,4 +180,124 @@ test.describe('Admin Student Management', () => {
     await backLink.click();
     await expect(page).toHaveURL(/.*\/admin\/students/);
   });
+
+  // ============================================
+  // Student Edit E2E Tests
+  // ============================================
+
+  test('AE2E-026: Edit link visible in students table', async ({ page }) => {
+    await page.goto('/admin/students');
+    await page.waitForSelector('table', { timeout: 10000 });
+
+    // Check Edit column header exists (th element with text Edit)
+    await expect(page.locator('thead th').filter({ hasText: 'Edit' })).toBeVisible();
+
+    // Check Edit link in first student row
+    const firstRow = page.getByRole('row').filter({ hasText: 'Arun Kumar' });
+    await expect(firstRow.getByRole('link', { name: 'Edit' })).toBeVisible();
+  });
+
+  test('AE2E-027: Edit link from table navigates to edit page', async ({ page }) => {
+    await page.goto('/admin/students');
+    await page.waitForSelector('table', { timeout: 10000 });
+
+    // Click Edit link for Arun Kumar
+    const arunRow = page.getByRole('row').filter({ hasText: 'Arun Kumar' });
+    await arunRow.getByRole('link', { name: 'Edit' }).click();
+
+    // Verify navigation to edit page
+    await expect(page).toHaveURL(/.*\/admin\/students\/[a-zA-Z0-9-]+\/edit/);
+    await expect(page.getByRole('heading', { name: 'Edit Student' })).toBeVisible();
+  });
+
+  test('AE2E-028: Edit page displays student information', async ({ page }) => {
+    await page.goto('/admin/students');
+    await page.waitForSelector('table', { timeout: 10000 });
+
+    // Click Edit link for Arun Kumar
+    const arunRow = page.getByRole('row').filter({ hasText: 'Arun Kumar' });
+    await arunRow.getByRole('link', { name: 'Edit' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Edit Student' })).toBeVisible();
+
+    // Verify student name is shown in header
+    await expect(page.getByText(/Editing: Arun Kumar/i)).toBeVisible();
+  });
+
+  test('AE2E-029: Edit page has form sections', async ({ page }) => {
+    await page.goto('/admin/students');
+    await page.waitForSelector('table', { timeout: 10000 });
+
+    const arunRow = page.getByRole('row').filter({ hasText: 'Arun Kumar' });
+    await arunRow.getByRole('link', { name: 'Edit' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Edit Student' })).toBeVisible();
+
+    // Check form sections
+    await expect(page.getByText('Basic Information')).toBeVisible();
+    await expect(page.getByText('School Information')).toBeVisible();
+    await expect(page.getByText('Medical & Consent')).toBeVisible();
+    await expect(page.getByText('Status & Admin Notes')).toBeVisible();
+  });
+
+  test('AE2E-030: Edit page has Cancel and Save buttons', async ({ page }) => {
+    await page.goto('/admin/students');
+    await page.waitForSelector('table', { timeout: 10000 });
+
+    const arunRow = page.getByRole('row').filter({ hasText: 'Arun Kumar' });
+    await arunRow.getByRole('link', { name: 'Edit' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Edit Student' })).toBeVisible();
+
+    // Check buttons
+    await expect(page.getByRole('link', { name: 'Cancel' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Save Changes' })).toBeVisible();
+  });
+
+  test('AE2E-031: Cancel button navigates back to details', async ({ page }) => {
+    await page.goto('/admin/students');
+    await page.waitForSelector('table', { timeout: 10000 });
+
+    const arunRow = page.getByRole('row').filter({ hasText: 'Arun Kumar' });
+    await arunRow.getByRole('link', { name: 'Edit' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Edit Student' })).toBeVisible();
+
+    // Click Cancel
+    await page.getByRole('link', { name: 'Cancel' }).click();
+
+    // Should navigate to student detail page (URL may have trailing slash)
+    await expect(page).toHaveURL(/.*\/admin\/students\/[a-zA-Z0-9-]+\/?$/);
+    await expect(page.getByRole('heading', { name: /Arun Kumar/i })).toBeVisible();
+  });
+
+  test('AE2E-032: Edit button visible on student detail page', async ({ page }) => {
+    await page.goto('/admin/students');
+    await page.waitForSelector('table', { timeout: 10000 });
+
+    const arunRow = page.getByRole('row').filter({ hasText: 'Arun Kumar' });
+    await arunRow.getByRole('link', { name: 'View' }).click();
+
+    await expect(page.getByRole('heading', { name: /Arun Kumar/i })).toBeVisible();
+
+    // Check Edit button is visible in header actions
+    await expect(page.getByRole('link', { name: 'Edit' })).toBeVisible();
+  });
+
+  test('AE2E-033: Edit button from detail page navigates to edit page', async ({ page }) => {
+    await page.goto('/admin/students');
+    await page.waitForSelector('table', { timeout: 10000 });
+
+    const arunRow = page.getByRole('row').filter({ hasText: 'Arun Kumar' });
+    await arunRow.getByRole('link', { name: 'View' }).click();
+
+    await expect(page.getByRole('heading', { name: /Arun Kumar/i })).toBeVisible();
+
+    // Click Edit button
+    await page.getByRole('link', { name: 'Edit' }).click();
+
+    // Should navigate to edit page
+    await expect(page).toHaveURL(/.*\/admin\/students\/[a-zA-Z0-9-]+\/edit/);
+    await expect(page.getByRole('heading', { name: 'Edit Student' })).toBeVisible();
+  });
 });

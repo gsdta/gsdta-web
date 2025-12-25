@@ -1,0 +1,84 @@
+# Reusable workflow for deploying a pre-built Docker image
+# Called by workflows that build separately (in parallel with tests)
+
+name: Deploy
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Target environment (qa or production)'
+        type: string
+        required: true
+      service_name:
+        description: 'Cloud Run service name'
+        type: string
+        required: true
+      site_url:
+        description: 'Site URL for the environment'
+        type: string
+        required: true
+      firebase_project_id:
+        description: 'Firebase Project ID'
+        type: string
+        required: true
+      image_uri:
+        description: 'Full URI of the Docker image to deploy'
+        type: string
+        required: true
+      runner:
+        description: 'Runner to use'
+        type: string
+        default: 'ubuntu-latest'
+    secrets:
+      GCP_SA_KEY:
+        required: true
+
+env:
+  GAR_LOCATION: us-central1
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    runs-on: ${{ inputs.runner }}
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy to Cloud Run
+        run: |
+          echo "🚀 Deploying to ${{ inputs.environment }}"
+          echo "   Service: ${{ inputs.service_name }}"
+          echo "   Image: ${{ inputs.image_uri }}"
+          echo "   URL: ${{ inputs.site_url }}"
+
+          # Clear any existing secret bindings that conflict with env vars
+          gcloud run services update ${{ inputs.service_name }} \
+            --region ${{ env.GAR_LOCATION }} \
+            --remove-secrets "FIREBASE_PROJECT_ID" \
+            --quiet 2>/dev/null || true
+
+          gcloud run deploy ${{ inputs.service_name }} \
+            --image ${{ inputs.image_uri }} \
+            --region ${{ env.GAR_LOCATION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --port 3000 \
+            --set-env-vars "NEXT_TELEMETRY_DISABLED=1,NODE_ENV=production,NEXT_PUBLIC_API_BASE_URL=/api,GOOGLE_CLOUD_PROJECT=${{ inputs.firebase_project_id }},FIREBASE_PROJECT_ID=${{ inputs.firebase_project_id }},NEXT_PUBLIC_AUTH_MODE=firebase,NEXT_PUBLIC_USE_MSW=false,NEXT_PUBLIC_SITE_URL=${{ inputs.site_url }}"
+
+      - name: Health check
+        run: |
+          URL="${{ inputs.site_url }}"
+          echo "⏳ Waiting for deployment..."
+          sleep 15
+
+          echo "🔍 Health check: $URL/api/v1/health"
+          curl -f $URL/api/v1/health
+
+          echo ""
+          echo "✅ Deployed successfully!"
+          echo "🌐 URL: $URL"

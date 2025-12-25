@@ -176,4 +176,30 @@ describe('AdminStudentsPage', () => {
       expect(screen.getByText('No students found')).toBeInTheDocument();
     });
   });
+
+  test('ASL-012: Edit column header is visible', async () => {
+    (adminGetStudents as jest.Mock).mockResolvedValue({ students: mockStudents, counts: mockCounts });
+    render(<AdminStudentsPage />);
+    await waitFor(() => {
+      expect(screen.getByRole('columnheader', { name: /edit/i })).toBeInTheDocument();
+    });
+  });
+
+  test('ASL-013: Edit link visible for each student', async () => {
+    (adminGetStudents as jest.Mock).mockResolvedValue({ students: mockStudents, counts: mockCounts });
+    render(<AdminStudentsPage />);
+    await waitFor(() => {
+      const editLinks = screen.getAllByRole('link', { name: 'Edit' });
+      expect(editLinks.length).toBe(mockStudents.length);
+    });
+  });
+
+  test('ASL-014: Edit link navigates to student edit page', async () => {
+    (adminGetStudents as jest.Mock).mockResolvedValue({ students: [mockStudents[0]], counts: mockCounts });
+    render(<AdminStudentsPage />);
+    await waitFor(() => {
+      const editLink = screen.getByRole('link', { name: 'Edit' });
+      expect(editLink).toHaveAttribute('href', '/admin/students/student-1/edit');
+    });
+  });
 });

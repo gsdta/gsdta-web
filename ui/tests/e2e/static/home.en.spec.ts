@@ -25,7 +25,8 @@ test.describe("Homepage (English)", () => {
 
     const nav = page.locator("header nav").first();
 
-    const links: { name: string; expectTitle: string | RegExp | null; path: string }[] = [
+    const links: { name: string; expectTitle: string | RegExp | null; path: string; skipTitleCheck?: boolean }[] = [
+      { name: "Home", expectTitle: null, path: "/", skipTitleCheck: true },
       { name: "About us", expectTitle: /About us/i, path: "/about/" },
       { name: "Team", expectTitle: "Team", path: "/team/" },
       { name: "Documents", expectTitle: "Documents", path: "/documents/" },
@@ -49,14 +50,15 @@ test.describe("Homepage (English)", () => {
         }),
         link.click(),
       ]);
-      const title = page.getByTestId("page-title");
-      await expect(title).toBeVisible();
-      await expect(title).toHaveText(l.expectTitle as string | RegExp);
+      if (!l.skipTitleCheck) {
+        const title = page.getByTestId("page-title");
+        await expect(title).toBeVisible();
+        await expect(title).toHaveText(l.expectTitle as string | RegExp);
+      }
       await page.goto("/");
     }
 
     // Ensure removed items are not present in the main nav
-    await expect(nav.getByRole("link", { name: "Home", exact: true })).toHaveCount(0);
     await expect(nav.getByRole("link", { name: "Contact Us", exact: true })).toHaveCount(0);
   });
 });

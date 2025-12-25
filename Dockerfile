@@ -123,6 +123,8 @@ COPY --from=ui-builder --chown=nextjs:nodejs /app/ui/.next/static ./ui/.next/sta
 RUN mkdir -p api/.next && chown nextjs:nodejs api/.next
 COPY --from=api-builder --chown=nextjs:nodejs /app/api/.next/standalone ./api/
 COPY --from=api-builder --chown=nextjs:nodejs /app/api/.next/static ./api/.next/static
+# Copy full api node_modules to ensure all transitive deps (like is-stream) are available
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./api/node_modules
 
 # Create supervisor configuration
 RUN mkdir -p /etc/supervisor/conf.d \

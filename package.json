@@ -17,12 +17,17 @@
     "typecheck:ui": "cd ui && npm run typecheck",
     "typecheck:api": "cd api && npm run typecheck",
     "test:ui": "cd ui && npm test",
-    "test:api": "cd api && npm test"
+    "test:api": "cd api && npm test",
+    "uat": "cd uat && npm test",
+    "uat:smoke": "cd uat && npm run test:smoke",
+    "uat:ci": "cd uat && npm run test:ci",
+    "uat:shakeout": "cd uat && npm run test:shakeout"
   },
   "workspaces": [
     "ui",
     "api",
-    "scripts"
+    "scripts",
+    "uat"
   ],
   "devDependencies": {}
 }
