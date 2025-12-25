@@ -168,12 +168,19 @@ export async function GET(req: NextRequest) {
     // Filter by search term (client-side filtering for name/email)
     let teachers = snapshot.docs.map(doc => {
       const data = doc.data();
+      // Compute name from firstName/lastName if name is not set
+      const firstName = data.firstName || '';
+      const lastName = data.lastName || '';
+      const computedName = data.name || (firstName || lastName ? `${firstName} ${lastName}`.trim() : '');
       return {
         uid: doc.id,
         email: data.email || '',
-        name: data.name || '',
+        name: computedName,
+        firstName,
+        lastName,
         roles: data.roles || [],
         status: data.status || 'active',
+        phone: data.phone || '',
         createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
         updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null,
       };

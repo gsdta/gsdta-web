@@ -74,3 +74,57 @@ Feature: Admin Teachers Management API
     And the JSON path "success" should equal true
     And the JSON path "data.limit" should equal 25
     And the JSON path "data.offset" should equal 0
+
+  # Individual Teacher Endpoint Tests
+
+  Scenario: Get individual teacher requires authentication
+    When I send a GET request to "/api/v1/admin/teachers/some-uid"
+    Then the response status should be 401
+    And the JSON path "code" should equal "auth/missing-token"
+
+  Scenario: Update teacher requires authentication
+    When I send a PATCH request to "/api/v1/admin/teachers/some-uid" with JSON body:
+      """
+      {"status": "inactive"}
+      """
+    Then the response status should be 401
+    And the JSON path "code" should equal "auth/missing-token"
+
+  Scenario: Non-admin cannot get individual teacher
+    Given I am authenticated as a parent
+    When I send a GET request to "/api/v1/admin/teachers/some-uid"
+    Then the response status should be 403
+    And the JSON path "code" should equal "auth/forbidden"
+
+  Scenario: Non-admin cannot update teacher
+    Given I am authenticated as a parent
+    When I send a PATCH request to "/api/v1/admin/teachers/some-uid" with JSON body:
+      """
+      {"status": "inactive"}
+      """
+    Then the response status should be 403
+    And the JSON path "code" should equal "auth/forbidden"
+
+  Scenario: Get non-existent teacher returns 404
+    Given I am authenticated as an admin
+    When I send a GET request to "/api/v1/admin/teachers/non-existent-teacher-uid"
+    Then the response status should be 404
+    And the JSON path "code" should equal "teacher/not-found"
+
+  Scenario: Update non-existent teacher returns 404
+    Given I am authenticated as an admin
+    When I send a PATCH request to "/api/v1/admin/teachers/non-existent-teacher-uid" with JSON body:
+      """
+      {"status": "inactive"}
+      """
+    Then the response status should be 404
+    And the JSON path "code" should equal "teacher/not-found"
+
+  Scenario: Update with invalid JSON is rejected
+    Given I am authenticated as an admin
+    When I send a PATCH request to "/api/v1/admin/teachers/test-teacher-uid" with JSON body:
+      """
+      not valid json
+      """
+    Then the response status should be 400
+    And the JSON path "code" should equal "validation/invalid-json"
