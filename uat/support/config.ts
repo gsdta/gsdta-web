@@ -64,3 +64,18 @@ export function validateConfig(config: Config): void {
     );
   }
 }
+
+/**
+ * Validate credentials for a specific role before attempting login
+ */
+export function validateRoleCredentials(config: Config, role: 'admin' | 'teacher' | 'parent'): void {
+  const emailKey = `${role}Email` as keyof Config;
+  const passwordKey = `${role}Password` as keyof Config;
+
+  if (!config[emailKey] || !config[passwordKey]) {
+    throw new Error(
+      `Missing ${role} credentials: UAT_${role.toUpperCase()}_EMAIL or UAT_${role.toUpperCase()}_PASSWORD is not set.\n` +
+        'Please check your environment configuration or CI secrets.'
+    );
+  }
+}

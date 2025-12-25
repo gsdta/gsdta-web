@@ -10,42 +10,54 @@ import { CustomWorld } from '../support/world';
 When(
   'I navigate to the admin students page',
   async function (this: CustomWorld) {
+    console.log('[NAV] Navigating to /admin/students...');
     await this.page.goto('/admin/students', { waitUntil: 'domcontentloaded' });
+    console.log(`[NAV] Arrived at: ${this.page.url()}`);
   }
 );
 
 When(
   'I navigate to the admin teachers page',
   async function (this: CustomWorld) {
+    console.log('[NAV] Navigating to /admin/teachers...');
     await this.page.goto('/admin/teachers', { waitUntil: 'domcontentloaded' });
+    console.log(`[NAV] Arrived at: ${this.page.url()}`);
   }
 );
 
 When(
   'I navigate to the admin classes page',
   async function (this: CustomWorld) {
+    console.log('[NAV] Navigating to /admin/classes...');
     await this.page.goto('/admin/classes', { waitUntil: 'domcontentloaded' });
+    console.log(`[NAV] Arrived at: ${this.page.url()}`);
   }
 );
 
 When(
   'I navigate to the admin grades page',
   async function (this: CustomWorld) {
+    console.log('[NAV] Navigating to /admin/grades...');
     await this.page.goto('/admin/grades', { waitUntil: 'domcontentloaded' });
+    console.log(`[NAV] Arrived at: ${this.page.url()}`);
   }
 );
 
 When(
   'I navigate to the admin textbooks page',
   async function (this: CustomWorld) {
+    console.log('[NAV] Navigating to /admin/textbooks...');
     await this.page.goto('/admin/textbooks', { waitUntil: 'domcontentloaded' });
+    console.log(`[NAV] Arrived at: ${this.page.url()}`);
   }
 );
 
 When(
   'I navigate to the admin volunteers page',
   async function (this: CustomWorld) {
+    console.log('[NAV] Navigating to /admin/volunteers...');
     await this.page.goto('/admin/volunteers', { waitUntil: 'domcontentloaded' });
+    console.log(`[NAV] Arrived at: ${this.page.url()}`);
   }
 );
 
@@ -53,14 +65,18 @@ When(
 When(
   'I navigate to the teacher dashboard',
   async function (this: CustomWorld) {
+    console.log('[NAV] Navigating to /teacher...');
     await this.page.goto('/teacher', { waitUntil: 'domcontentloaded' });
+    console.log(`[NAV] Arrived at: ${this.page.url()}`);
   }
 );
 
 When(
   'I navigate to the teacher classes page',
   async function (this: CustomWorld) {
+    console.log('[NAV] Navigating to /teacher/classes...');
     await this.page.goto('/teacher/classes', { waitUntil: 'domcontentloaded' });
+    console.log(`[NAV] Arrived at: ${this.page.url()}`);
   }
 );
 
@@ -68,39 +84,53 @@ When(
 When(
   'I navigate to the parent dashboard',
   async function (this: CustomWorld) {
+    console.log('[NAV] Navigating to /parent...');
     await this.page.goto('/parent', { waitUntil: 'domcontentloaded' });
+    console.log(`[NAV] Arrived at: ${this.page.url()}`);
   }
 );
 
 When(
   'I navigate to the parent students page',
   async function (this: CustomWorld) {
+    console.log('[NAV] Navigating to /parent/students...');
     await this.page.goto('/parent/students', { waitUntil: 'domcontentloaded' });
+    console.log(`[NAV] Arrived at: ${this.page.url()}`);
   }
 );
 
 When(
   'I navigate to the parent profile page',
   async function (this: CustomWorld) {
+    console.log('[NAV] Navigating to /parent/profile...');
     await this.page.goto('/parent/profile', { waitUntil: 'domcontentloaded' });
+    console.log(`[NAV] Arrived at: ${this.page.url()}`);
   }
 );
 
 // Public page navigation
 When('I navigate to the calendar page', async function (this: CustomWorld) {
+  console.log('[NAV] Navigating to /calendar...');
   await this.page.goto('/calendar', { waitUntil: 'domcontentloaded' });
+  console.log(`[NAV] Arrived at: ${this.page.url()}`);
 });
 
 When('I navigate to the documents page', async function (this: CustomWorld) {
+  console.log('[NAV] Navigating to /documents...');
   await this.page.goto('/documents', { waitUntil: 'domcontentloaded' });
+  console.log(`[NAV] Arrived at: ${this.page.url()}`);
 });
 
 When('I navigate to the team page', async function (this: CustomWorld) {
+  console.log('[NAV] Navigating to /team...');
   await this.page.goto('/team', { waitUntil: 'domcontentloaded' });
+  console.log(`[NAV] Arrived at: ${this.page.url()}`);
 });
 
 When('I navigate to the donate page', async function (this: CustomWorld) {
+  console.log('[NAV] Navigating to /donate...');
   await this.page.goto('/donate', { waitUntil: 'domcontentloaded' });
+  console.log(`[NAV] Arrived at: ${this.page.url()}`);
 });
 
 // Table verification steps
@@ -173,8 +203,20 @@ Then('I should see my classes section', async function (this: CustomWorld) {
 Then(
   'I should see the {string} link in the navigation',
   async function (this: CustomWorld, linkText: string) {
+    console.log(`[NAV] Checking for "${linkText}" link in navigation...`);
+    console.log(`[NAV] Current URL: ${this.page.url()}`);
+
+    // Wait for page to fully hydrate before checking navigation
+    console.log('[NAV] Waiting for networkidle...');
+    await this.page.waitForLoadState('networkidle');
+    console.log('[NAV] networkidle reached');
+
     const navLink = this.page.locator(`nav a:has-text("${linkText}")`);
-    await expect(navLink.first()).toBeVisible();
+    const count = await navLink.count();
+    console.log(`[NAV] Found ${count} matching nav links for "${linkText}"`);
+
+    await expect(navLink.first()).toBeVisible({ timeout: 15000 });
+    console.log(`[NAV] "${linkText}" link is visible`);
   }
 );
 
