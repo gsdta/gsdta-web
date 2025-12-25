@@ -31,21 +31,28 @@ function logCredential(label: string, value: string | undefined): void {
 export class AuthHelper {
   private page: Page;
   private config: Config;
-  private firebaseApp: FirebaseApp;
-  private auth: Auth;
+  private firebaseApp: FirebaseApp | null = null;
+  private auth: Auth | null = null;
 
   constructor(page: Page, config: Config) {
     this.page = page;
     this.config = config;
+    // Firebase is initialized lazily when auth is actually needed
+  }
 
-    // Initialize Firebase with QA credentials
-    this.firebaseApp = initializeApp({
-      apiKey: config.firebaseApiKey,
-      authDomain: config.firebaseAuthDomain,
-      projectId: config.firebaseProjectId,
-    });
-
-    this.auth = getAuth(this.firebaseApp);
+  /**
+   * Lazily initialize Firebase when needed
+   * This allows shakeout tests (public pages only) to run without Firebase credentials
+   */
+  private ensureFirebaseInitialized(): void {
+    if (!this.firebaseApp) {
+      this.firebaseApp = initializeApp({
+        apiKey: this.config.firebaseApiKey,
+        authDomain: this.config.firebaseAuthDomain,
+        projectId: this.config.firebaseProjectId,
+      });
+      this.auth = getAuth(this.firebaseApp);
+    }
   }
 
   /**
@@ -178,8 +185,9 @@ export class AuthHelper {
    * to be logged in but don't need to test the login flow
    */
   async loginViaSDK(email: string, password: string): Promise<UserCredential> {
+    this.ensureFirebaseInitialized();
     const credential = await signInWithEmailAndPassword(
-      this.auth,
+      this.auth!,
       email,
       password
     );
@@ -251,10 +259,12 @@ export class AuthHelper {
     console.log('[AUTH] logout() called');
     console.log(`[AUTH] Current URL before logout: ${this.page.url()}`);
 
-    // Sign out from Firebase SDK
-    console.log('[AUTH] Signing out from Firebase SDK...');
-    await signOut(this.auth);
-    console.log('[AUTH] Firebase SDK signOut complete');
+    // Sign out from Firebase SDK (only if initialized)
+    if (this.auth) {
+      console.log('[AUTH] Signing out from Firebase SDK...');
+      await signOut(this.auth);
+      console.log('[AUTH] Firebase SDK signOut complete');
+    }
 
     // Navigate to logout page
     console.log('[AUTH] Navigating to /logout...');
