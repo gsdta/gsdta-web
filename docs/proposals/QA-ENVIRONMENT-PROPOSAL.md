@@ -301,6 +301,11 @@ for SECRET in FIREBASE_API_KEY FIREBASE_AUTH_DOMAIN FIREBASE_PROJECT_ID FIREBASE
     --project=$QA_PROJECT_ID
 done
 
+# Grant Cloud Run service account Firebase Admin access (for token verification + Firestore)
+gcloud projects add-iam-policy-binding $QA_PROJECT_ID \
+  --member="serviceAccount:YOUR_PROJECT_NUMBER-compute@developer.gserviceaccount.com" \
+  --role="roles/firebase.admin"
+
 # Verify secrets were created
 gcloud secrets list --project=$QA_PROJECT_ID
 ```
@@ -310,6 +315,7 @@ gcloud secrets list --project=$QA_PROJECT_ID
 - ✅ Single CI service account (simpler GitHub setup)
 - ✅ Clear audit trail per project
 - ✅ Easier to manage environment-specific rotations
+- ✅ Cloud Run can verify Firebase tokens and access Firestore in QA project
 
 #### 3.3 Configure Firebase Auth for QA
 
