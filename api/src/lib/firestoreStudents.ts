@@ -1,5 +1,5 @@
 import { adminDb } from './firebaseAdmin';
-import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
 import type {
   Student,
   CreateStudentDto,

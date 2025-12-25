@@ -9,8 +9,6 @@ import type {
   ClassListFilters,
   ClassListResponse,
   ClassOption,
-  ClassStatus,
-  AssignTeacherDto,
 } from '@/types/class';
 import { getGradeById } from './firestoreGrades';
 
