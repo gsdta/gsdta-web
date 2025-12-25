@@ -10,12 +10,14 @@ import {
 import { Config, validateRoleCredentials } from './config';
 
 /**
- * Mask sensitive data for logging (show first 3 chars + length)
+ * Log credentials for debugging (test users only)
  */
-function maskSensitive(value: string | undefined): string {
-  if (!value) return '<empty>';
-  if (value.length <= 3) return '***';
-  return `${value.substring(0, 3)}...[${value.length} chars]`;
+function logCredential(label: string, value: string | undefined): void {
+  if (!value) {
+    console.log(`[AUTH] ${label}: <EMPTY/UNDEFINED>`);
+  } else {
+    console.log(`[AUTH] ${label}: "${value}"`);
+  }
 }
 
 /**
@@ -67,13 +69,40 @@ export class AuthHelper {
     });
     console.log('[AUTH] Email input found');
 
-    // Clear and fill in credentials
+    // Wait for form to be fully interactive (React hydration)
+    await this.page.waitForTimeout(500);
+    console.log('[AUTH] Form stabilization wait complete');
+
+    // Clear and fill in credentials with explicit waits for stability
     console.log('[AUTH] Filling in credentials...');
-    await this.page.locator('input[type="email"]').clear();
-    await this.page.locator('input[type="email"]').fill(email);
-    await this.page.locator('input[type="password"]').clear();
-    await this.page.locator('input[type="password"]').fill(password);
+    console.log(`[AUTH] Email to enter: "${email}"`);
+    console.log(`[AUTH] Password to enter: "${password}"`);
+
+    // Fill email with explicit focus and verification
+    const emailInput = this.page.locator('input[type="email"]');
+    await emailInput.click();
+    await emailInput.fill('');  // Clear first
+    await emailInput.fill(email);
+    const emailValue = await emailInput.inputValue();
+    console.log(`[AUTH] Email input value after fill: "${emailValue}"`);
+
+    // Fill password with explicit focus
+    const passwordInput = this.page.locator('input[type="password"]');
+    await passwordInput.click();
+    await passwordInput.fill('');  // Clear first
+    await passwordInput.fill(password);
+    const passwordValue = await passwordInput.inputValue();
+    console.log(`[AUTH] Password input value after fill: "${passwordValue}"`);
     console.log('[AUTH] Credentials filled');
+
+    // Verify email wasn't cleared (sometimes happens with React forms)
+    const finalEmailValue = await emailInput.inputValue();
+    if (!finalEmailValue) {
+      console.log('[AUTH] WARNING: Email field was cleared, refilling...');
+      await emailInput.fill(email);
+      const refillValue = await emailInput.inputValue();
+      console.log(`[AUTH] Email after refill: "${refillValue}"`);
+    }
 
     // Click sign in button and wait for navigation
     console.log('[AUTH] Clicking submit button...');
@@ -187,8 +216,8 @@ export class AuthHelper {
    */
   async loginAsAdmin(): Promise<void> {
     console.log('[AUTH] loginAsAdmin() called');
-    console.log(`[AUTH] Admin email: ${maskSensitive(this.config.adminEmail)}`);
-    console.log(`[AUTH] Admin password: ${maskSensitive(this.config.adminPassword)}`);
+    logCredential('Admin email', this.config.adminEmail);
+    logCredential('Admin password', this.config.adminPassword);
     validateRoleCredentials(this.config, 'admin');
     await this.loginViaUI(this.config.adminEmail, this.config.adminPassword);
   }
@@ -198,8 +227,8 @@ export class AuthHelper {
    */
   async loginAsTeacher(): Promise<void> {
     console.log('[AUTH] loginAsTeacher() called');
-    console.log(`[AUTH] Teacher email: ${maskSensitive(this.config.teacherEmail)}`);
-    console.log(`[AUTH] Teacher password: ${maskSensitive(this.config.teacherPassword)}`);
+    logCredential('Teacher email', this.config.teacherEmail);
+    logCredential('Teacher password', this.config.teacherPassword);
     validateRoleCredentials(this.config, 'teacher');
     await this.loginViaUI(this.config.teacherEmail, this.config.teacherPassword);
   }
@@ -209,8 +238,8 @@ export class AuthHelper {
    */
   async loginAsParent(): Promise<void> {
     console.log('[AUTH] loginAsParent() called');
-    console.log(`[AUTH] Parent email: ${maskSensitive(this.config.parentEmail)}`);
-    console.log(`[AUTH] Parent password: ${maskSensitive(this.config.parentPassword)}`);
+    logCredential('Parent email', this.config.parentEmail);
+    logCredential('Parent password', this.config.parentPassword);
     validateRoleCredentials(this.config, 'parent');
     await this.loginViaUI(this.config.parentEmail, this.config.parentPassword);
   }
