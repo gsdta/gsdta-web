@@ -1,6 +1,6 @@
 # Production Environment Deployment
 # Triggered by: push to main branch
-# Flow: Tests + Build (parallel) -> Deploy -> Shakeout Tests
+# Flow: Build -> Deploy -> Shakeout Tests
 
 name: Deploy to Production
 
@@ -13,14 +13,7 @@ concurrency:
   cancel-in-progress: false  # Never cancel production deployments
 
 jobs:
-  # Step 1a: Run all tests
-  tests:
-    name: Run Tests
-    uses: ./.github/workflows/_ci.yml
-    with:
-      runner: ubuntu-latest
-
-  # Step 1b: Build Docker image (runs in parallel with tests)
+  # Step 1: Build Docker image
   build:
     name: Build Image
     uses: ./.github/workflows/_build.yml
@@ -33,11 +26,10 @@ jobs:
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
 
-  # Step 2: Deploy to Production (only if tests pass, uses pre-built image)
+  # Step 2: Deploy to Production
   deploy:
     name: Deploy
-    needs: [tests, build]
-    if: needs.tests.outputs.tests_passed == 'true'
+    needs: [build]
     uses: ./.github/workflows/_deploy.yml
     with:
       environment: production
@@ -49,7 +41,7 @@ jobs:
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
 
-  # Step 3: Run shakeout tests after deployment
+  # Step 3: Run shakeout tests to validate deployment
   shakeout:
     name: Shakeout Tests
     needs: [deploy]

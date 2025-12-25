@@ -216,6 +216,10 @@ export const messages: Record<Lang, Record<string, string>> = {
         "enrollment.subtitle": "Apply for classes and track your enrollment applications.",
         "enrollment.apply": "Apply for a Class",
 
+        // User dropdown
+        "nav.profile": "Profile",
+        "nav.switchRole": "Switch Role",
+
         // Password change
         "nav.changePassword": "Change Password",
         "password.change.title": "Change Password",
@@ -230,6 +234,61 @@ export const messages: Record<Lang, Record<string, string>> = {
         "password.change.error.wrong": "Current password is incorrect",
         "password.change.error.generic": "Failed to update password. Please try again.",
         "password.change.googleUser": "You signed in with Google. Please manage your password through your Google account.",
+
+        // Profile page
+        "profile.title": "My Profile",
+        "profile.edit": "Edit Profile",
+        "profile.accountInfo": "Account Information",
+        "profile.email": "Email",
+        "profile.emailVerified": "Email Verified",
+        "profile.verified": "Verified",
+        "profile.notVerified": "Not Verified",
+        "profile.currentRole": "Current Role",
+        "profile.allRoles": "All Roles",
+        "profile.security": "Security",
+        "profile.resetPassword": "Reset Password",
+        "profile.resetPasswordDescription": "Send a password reset email to your email address.",
+        "profile.resetEmailSent": "Password reset email sent!",
+        "profile.resetEmailSentTo": "Reset email sent to",
+        "profile.resetEmailFailed": "Failed to send reset email. Please try again.",
+        "profile.emailSent": "Email Sent",
+        "profile.personalInfo": "Personal Information",
+        "profile.displayName": "Display Name",
+        "profile.phone": "Phone",
+        "profile.firstName": "First Name",
+        "profile.lastName": "Last Name",
+        "profile.address": "Address",
+        "profile.street": "Street",
+        "profile.city": "City",
+        "profile.state": "State",
+        "profile.zip": "ZIP Code",
+        "profile.preferences": "Preferences",
+        "profile.preferredLanguage": "Preferred Language",
+        "profile.notificationPrefs": "Notification Preferences",
+        "profile.emailNotifications": "Email notifications",
+        "profile.smsNotifications": "SMS notifications",
+        "profile.updateSuccess": "Profile updated successfully",
+
+        // Role selection page
+        "selectRole.title": "Select Your Role",
+        "selectRole.description": "You have access to multiple roles. Please select which role you would like to use.",
+        "selectRole.currentRole": "Current",
+
+        // Role names and descriptions
+        "roles.admin": "Administrator",
+        "roles.adminDescription": "Manage users, classes, and system settings.",
+        "roles.teacher": "Teacher",
+        "roles.teacherDescription": "Manage your classes and students.",
+        "roles.parent": "Parent",
+        "roles.parentDescription": "View and manage your children's enrollment.",
+
+        // Common
+        "common.cancel": "Cancel",
+        "common.save": "Save Changes",
+        "common.saving": "Saving...",
+        "common.sending": "Sending...",
+        "common.enabled": "Enabled",
+        "common.disabled": "Disabled",
     },
     ta: {
         // Nav
@@ -446,6 +505,10 @@ export const messages: Record<Lang, Record<string, string>> = {
         "enrollment.subtitle": "வகுப்புகளுக்கு விண்ணப்பித்து உங்கள் சேர்க்கை நிலையைப் பாருங்கள்.",
         "enrollment.apply": "ஒரு வகுப்பிற்கு விண்ணப்பிக்க",
 
+        // User dropdown
+        "nav.profile": "சுயவிவரம்",
+        "nav.switchRole": "பங்கை மாற்று",
+
         // Password change
         "nav.changePassword": "கடவுச்சொல்லை மாற்று",
         "password.change.title": "கடவுச்சொல்லை மாற்று",
@@ -460,5 +523,60 @@ export const messages: Record<Lang, Record<string, string>> = {
         "password.change.error.wrong": "தற்போதைய கடவுச்சொல் தவறானது",
         "password.change.error.generic": "கடவுச்சொல்லைப் புதுப்பிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.",
         "password.change.googleUser": "நீங்கள் Google மூலம் உள்நுழைந்துள்ளீர்கள். உங்கள் Google கணக்கில் கடவுச்சொல்லை நிர்வகிக்கவும்.",
+
+        // Profile page
+        "profile.title": "எனது சுயவிவரம்",
+        "profile.edit": "சுயவிவரத்தை திருத்து",
+        "profile.accountInfo": "கணக்கு தகவல்",
+        "profile.email": "மின்னஞ்சல்",
+        "profile.emailVerified": "மின்னஞ்சல் சரிபார்க்கப்பட்டது",
+        "profile.verified": "சரிபார்க்கப்பட்டது",
+        "profile.notVerified": "சரிபார்க்கப்படவில்லை",
+        "profile.currentRole": "தற்போதைய பங்கு",
+        "profile.allRoles": "அனைத்து பங்குகள்",
+        "profile.security": "பாதுகாப்பு",
+        "profile.resetPassword": "கடவுச்சொல்லை மீட்டமை",
+        "profile.resetPasswordDescription": "உங்கள் மின்னஞ்சல் முகவரிக்கு கடவுச்சொல் மீட்டமை மின்னஞ்சல் அனுப்பவும்.",
+        "profile.resetEmailSent": "கடவுச்சொல் மீட்டமை மின்னஞ்சல் அனுப்பப்பட்டது!",
+        "profile.resetEmailSentTo": "மீட்டமை மின்னஞ்சல் அனுப்பப்பட்டது",
+        "profile.resetEmailFailed": "மீட்டமை மின்னஞ்சலை அனுப்ப முடியவில்லை. மீண்டும் முயற்சிக்கவும்.",
+        "profile.emailSent": "மின்னஞ்சல் அனுப்பப்பட்டது",
+        "profile.personalInfo": "தனிப்பட்ட தகவல்",
+        "profile.displayName": "காட்சி பெயர்",
+        "profile.phone": "தொலைபேசி",
+        "profile.firstName": "முதல் பெயர்",
+        "profile.lastName": "குடும்ப பெயர்",
+        "profile.address": "முகவரி",
+        "profile.street": "தெரு",
+        "profile.city": "நகரம்",
+        "profile.state": "மாநிலம்",
+        "profile.zip": "அஞ்சல் குறியீடு",
+        "profile.preferences": "விருப்பங்கள்",
+        "profile.preferredLanguage": "விருப்பமான மொழி",
+        "profile.notificationPrefs": "அறிவிப்பு விருப்பங்கள்",
+        "profile.emailNotifications": "மின்னஞ்சல் அறிவிப்புகள்",
+        "profile.smsNotifications": "SMS அறிவிப்புகள்",
+        "profile.updateSuccess": "சுயவிவரம் வெற்றிகரமாகப் புதுப்பிக்கப்பட்டது",
+
+        // Role selection page
+        "selectRole.title": "உங்கள் பங்கைத் தேர்ந்தெடுக்கவும்",
+        "selectRole.description": "உங்களுக்கு பல பங்குகள் உள்ளன. நீங்கள் பயன்படுத்த விரும்பும் பங்கைத் தேர்ந்தெடுக்கவும்.",
+        "selectRole.currentRole": "தற்போதைய",
+
+        // Role names and descriptions
+        "roles.admin": "நிர்வாகி",
+        "roles.adminDescription": "பயனர்கள், வகுப்புகள் மற்றும் அமைப்பு அமைப்புகளை நிர்வகிக்கவும்.",
+        "roles.teacher": "ஆசிரியர்",
+        "roles.teacherDescription": "உங்கள் வகுப்புகள் மற்றும் மாணவர்களை நிர்வகிக்கவும்.",
+        "roles.parent": "பெற்றோர்",
+        "roles.parentDescription": "உங்கள் குழந்தைகளின் சேர்க்கையை பார்க்கவும் நிர்வகிக்கவும்.",
+
+        // Common
+        "common.cancel": "ரத்துசெய்",
+        "common.save": "மாற்றங்களைச் சேமி",
+        "common.saving": "சேமிக்கிறது...",
+        "common.sending": "அனுப்புகிறது...",
+        "common.enabled": "இயக்கப்பட்டது",
+        "common.disabled": "முடக்கப்பட்டது",
     },
 };
