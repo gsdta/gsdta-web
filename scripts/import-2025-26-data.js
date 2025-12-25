@@ -54,6 +54,12 @@ const DEFAULT_PASSWORD = 'Gsdta2025!';
 // Academic year
 const ACADEMIC_YEAR = '2025-2026';
 
+// Super admin configuration
+const SUPER_ADMIN = {
+  email: 'gunasekaran.pasupathy@gmail.com',
+  displayName: 'Gunasekaran Pasupathy',
+};
+
 // Parse command line arguments
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes('--dry-run');
@@ -1005,6 +1011,74 @@ async function importClasses(workbook) {
 }
 
 /**
+ * Create or update super admin account
+ */
+async function ensureSuperAdmin() {
+  console.log('\n=== Ensuring Super Admin ===');
+
+  let uid;
+
+  // Check if user already exists in Auth
+  try {
+    const existingUser = await auth.getUserByEmail(SUPER_ADMIN.email);
+    uid = existingUser.uid;
+    console.log(`  Auth user exists: ${uid}`);
+  } catch (e) {
+    if (e.code === 'auth/user-not-found') {
+      if (DRY_RUN) {
+        console.log(`  [DRY-RUN] Would create auth user: ${SUPER_ADMIN.email}`);
+        return;
+      }
+      // Create new user
+      const userRecord = await auth.createUser({
+        email: SUPER_ADMIN.email,
+        password: DEFAULT_PASSWORD,
+        displayName: SUPER_ADMIN.displayName,
+        emailVerified: true,
+      });
+      uid = userRecord.uid;
+      console.log(`  Created auth user: ${uid}`);
+    } else {
+      throw e;
+    }
+  }
+
+  if (DRY_RUN) {
+    console.log(`  [DRY-RUN] Would ensure admin role for: ${SUPER_ADMIN.email}`);
+    return;
+  }
+
+  // Create/update user document with admin role
+  const userDoc = await db.collection('users').doc(uid).get();
+
+  if (userDoc.exists) {
+    const existingData = userDoc.data();
+    const roles = existingData.roles || [];
+
+    if (!roles.includes('admin')) {
+      roles.push('admin');
+      await db.collection('users').doc(uid).update({
+        roles,
+        updatedAt: Timestamp.now(),
+      });
+      console.log('  Added admin role to existing user');
+    } else {
+      console.log('  User already has admin role');
+    }
+  } else {
+    await db.collection('users').doc(uid).set({
+      email: SUPER_ADMIN.email,
+      displayName: SUPER_ADMIN.displayName,
+      roles: ['admin'],
+      status: 'active',
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    });
+    console.log('  Created user document with admin role');
+  }
+}
+
+/**
  * Main import function
  */
 async function main() {
@@ -1029,6 +1103,9 @@ async function main() {
     classes: IMPORT_CLASSES,
     volunteers: IMPORT_VOLUNTEERS,
   })}`);
+
+  // Always ensure super admin exists
+  await ensureSuperAdmin();
 
   const workbook = readExcelFile();
   const results = {};
