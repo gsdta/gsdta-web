@@ -105,18 +105,32 @@ jobs:
         if: steps.smoke.outputs.smoke_passed == 'true'
         run: |
           cd uat
-          npm run test:ci -- --tags "${{ inputs.tags }}" || echo "full_failed=true" >> $GITHUB_OUTPUT
+          set +e
+          npm run test:ci -- --tags "${{ inputs.tags }}"
+          EXIT_CODE=$?
+          set -e
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "full_passed=false" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "full_passed=true" >> $GITHUB_OUTPUT
+          fi
 
       - name: Set result
         id: result
         if: always()
         run: |
-          if [ "${{ steps.smoke.outputs.smoke_passed }}" = "true" ] && [ "${{ steps.full.outputs.full_failed }}" != "true" ]; then
+          SMOKE="${{ steps.smoke.outputs.smoke_passed }}"
+          FULL="${{ steps.full.outputs.full_passed }}"
+          echo "Smoke passed: $SMOKE"
+          echo "Full passed: $FULL"
+
+          if [ "$SMOKE" = "true" ] && [ "$FULL" = "true" ]; then
             echo "passed=true" >> $GITHUB_OUTPUT
             echo "✅ UAT tests passed"
           else
             echo "passed=false" >> $GITHUB_OUTPUT
-            echo "❌ UAT tests failed"
+            echo "❌ UAT tests failed (smoke=$SMOKE, full=$FULL)"
           fi
 
       - name: Upload UAT reports

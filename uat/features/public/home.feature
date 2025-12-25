@@ -12,5 +12,5 @@ Feature: Home Page
 
   Scenario: Home page has navigation
     Given I am on the home page
-    Then I should see the "About" link in the navigation
+    Then I should see the "About us" link in the navigation
     And I should see the "Calendar" link in the navigation
