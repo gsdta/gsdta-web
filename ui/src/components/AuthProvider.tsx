@@ -328,9 +328,9 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
         if (AUTH_MODE !== "firebase") throw new Error("Google sign-in only in firebase mode");
         await lazyLoadFirebase();
         const { getFirebaseAuth, googleProvider } = await import("@/lib/firebase/client");
-        const { signInWithPopup } = await import("firebase/auth");
-        await signInWithPopup(getFirebaseAuth(), googleProvider);
-        // onAuthStateChanged will set the user
+        const { signInWithRedirect } = await import("firebase/auth");
+        await signInWithRedirect(getFirebaseAuth(), googleProvider);
+        // onAuthStateChanged will set the user after redirect back
     }, []);
 
     const loginWithEmailPassword = useCallback(async (email: string, password: string) => {
