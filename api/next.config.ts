@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
   basePath: '/api',
   // API-only server, no pages
   experimental: {},
+  // Ensure firebase-admin and its dependencies are properly included in standalone build
+  serverExternalPackages: ['firebase-admin'],
   // Skip generating error pages in static export
   skipTrailingSlashRedirect: true,
   generateBuildId: async () => {
