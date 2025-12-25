@@ -111,3 +111,61 @@ test("renders switch role option for multi-role user", () => {
   expect(hasLinkTo("/profile")).toBe(true);
   expect(hasLinkTo("/logout")).toBe(true);
 });
+
+test("renders dashboard link for authenticated parent user", () => {
+  useAuth.mockReturnValue({
+    user: { id: "u1", name: "Parent User", email: "parent@example.com", role: "parent", roles: ["parent"] },
+    loading: false,
+    login: jest.fn(),
+    logout: jest.fn(),
+    setRole: jest.fn(),
+  });
+  render(<Header />);
+
+  // Dashboard link should be visible and point to parent dashboard
+  expect(hasLinkTo("/parent/dashboard")).toBe(true);
+});
+
+test("renders dashboard link for authenticated admin user", () => {
+  useAuth.mockReturnValue({
+    user: { id: "u1", name: "Admin User", email: "admin@example.com", role: "admin", roles: ["admin"] },
+    loading: false,
+    login: jest.fn(),
+    logout: jest.fn(),
+    setRole: jest.fn(),
+  });
+  render(<Header />);
+
+  // Dashboard link should be visible and point to admin dashboard
+  expect(hasLinkTo("/admin")).toBe(true);
+});
+
+test("renders dashboard link for authenticated teacher user", () => {
+  useAuth.mockReturnValue({
+    user: { id: "u1", name: "Teacher User", email: "teacher@example.com", role: "teacher", roles: ["teacher"] },
+    loading: false,
+    login: jest.fn(),
+    logout: jest.fn(),
+    setRole: jest.fn(),
+  });
+  render(<Header />);
+
+  // Dashboard link should be visible and point to teacher dashboard
+  expect(hasLinkTo("/teacher/dashboard")).toBe(true);
+});
+
+test("does not render dashboard link for anonymous users", () => {
+  useAuth.mockReturnValue({
+    user: null,
+    loading: false,
+    login: jest.fn(),
+    logout: jest.fn(),
+    setRole: jest.fn(),
+  });
+  render(<Header />);
+
+  // Dashboard links should not be present
+  expect(hasLinkTo("/admin")).toBe(false);
+  expect(hasLinkTo("/teacher/dashboard")).toBe(false);
+  expect(hasLinkTo("/parent/dashboard")).toBe(false);
+});
