@@ -125,6 +125,13 @@ jobs:
           echo "   Image: ${{ needs.build.outputs.image_uri }}"
           echo "   URL: ${{ inputs.site_url }}"
           
+          # Clear any existing secret bindings that conflict with env vars
+          # This handles the transition from secrets to env vars
+          gcloud run services update ${{ inputs.service_name }} \
+            --region ${{ env.GAR_LOCATION }} \
+            --remove-secrets "FIREBASE_PROJECT_ID" \
+            --quiet 2>/dev/null || true
+          
           # Note: Firebase secrets are baked into the Docker image at build time
           # We only need FIREBASE_PROJECT_ID as runtime env var for the API server
           gcloud run deploy ${{ inputs.service_name }} \
