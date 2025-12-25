@@ -1,0 +1,16 @@
+# Reports
+reports/
+
+# Environment files
+.env
+.env.local
+
+# Node modules (if running standalone)
+node_modules/
+
+# TypeScript output
+dist/
+
+# Playwright artifacts
+test-results/
+playwright-report/
