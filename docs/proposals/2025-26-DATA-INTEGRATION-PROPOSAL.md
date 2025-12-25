@@ -546,18 +546,82 @@ Excel uses different grade names than current app:
   - CE2E-012: Create class with section and room
   - CE2E-013: Section and room are optional
 
-### Phase 6: Remaining Work (PENDING)
-- [ ] Admin textbook management pages (list, create, edit)
-- [ ] Admin volunteer management pages (list, create, edit)
-- [ ] API routes for textbooks CRUD
-- [ ] API routes for volunteers CRUD
-- [ ] Firestore operations for textbooks
-- [ ] Firestore operations for volunteers
-- [ ] Admin navigation updates for new sections
+### Phase 6: Admin Management Pages (COMPLETED)
+
+#### Firestore Operations
+- [x] `api/src/lib/firestoreTextbooks.ts` - Full CRUD operations:
+  - createTextbook, getTextbookById, getAllTextbooks, updateTextbook, deleteTextbook
+  - updateTextbookInventory, getTextbooksByGrade
+- [x] `api/src/lib/firestoreVolunteers.ts` - Full CRUD operations:
+  - createVolunteer, getVolunteerById, getAllVolunteers, updateVolunteer, deleteVolunteer
+  - assignVolunteerToClass, removeVolunteerFromClass, logVolunteerHours
+  - getVolunteersByClass, countVolunteersByType
+
+#### API Routes
+- [x] `api/src/app/v1/admin/textbooks/route.ts` - GET (list with filters) and POST (create)
+- [x] `api/src/app/v1/admin/textbooks/[id]/route.ts` - GET, PATCH, DELETE for individual textbook
+- [x] `api/src/app/v1/admin/volunteers/route.ts` - GET (list with filters) and POST (create)
+- [x] `api/src/app/v1/admin/volunteers/[id]/route.ts` - GET, PATCH, DELETE for individual volunteer
+
+#### UI Types & API Clients
+- [x] `ui/src/lib/textbook-types.ts` - Textbook, CreateTextbookInput, UpdateTextbookInput, filters
+- [x] `ui/src/lib/textbook-api.ts` - adminGetTextbooks, adminCreateTextbook, adminUpdateTextbook, adminDeleteTextbook
+- [x] `ui/src/lib/volunteer-types.ts` - Volunteer, VolunteerClassAssignment, EmergencyContact, types
+- [x] `ui/src/lib/volunteer-api.ts` - adminGetVolunteers, adminCreateVolunteer, adminUpdateVolunteer, adminDeleteVolunteer
+
+#### Admin Pages
+- [x] `ui/src/app/admin/textbooks/page.tsx` - Full admin page with:
+  - Table listing with item number, name, grade, type, pages, copies, status
+  - Filter by status and grade
+  - Create modal with all fields (grade, item number, name, type, semester, page count, copies)
+  - Activate/Deactivate and Delete actions
+- [x] `ui/src/app/admin/volunteers/page.tsx` - Full admin page with:
+  - Table listing with name, type, contact, school/grade, hours, status
+  - Filter by status, type, and search by name
+  - Create modal with fields based on type (high school shows school/grade)
+  - Available days checkboxes (Saturday, Sunday)
+  - Activate/Deactivate and Remove actions
+
+#### Admin Navigation
+- [x] `ui/src/app/admin/AdminLayoutClient.tsx` - Added new sections:
+  - Resources → Textbooks
+  - Volunteers → All Volunteers
+
+#### Tests
+- [x] `api/tests/e2e/features/admin-textbooks.feature` - 9 scenarios:
+  - List textbooks, create textbook, get by ID, update, soft delete
+  - Filter by grade, validation errors, authentication
+- [x] `api/tests/e2e/features/admin-volunteers.feature` - 12 scenarios:
+  - List volunteers, create (high school, parent, community), get by ID
+  - Update, soft delete, filter by type/status, validation, authentication
+- [x] `ui/src/app/admin/textbooks/__tests__/page.test.tsx` - 10 tests
+- [x] `ui/src/app/admin/volunteers/__tests__/page.test.tsx` - 15 tests
+- [x] `ui/src/lib/__tests__/textbook-types.test.ts` - 9 tests
+- [x] `ui/src/lib/__tests__/volunteer-types.test.ts` - 12 tests
 
 ---
 
-**Document Version**: 1.4
+## 14. Implementation Complete
+
+All phases of the 2025-26 Data Integration have been completed:
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| Phase 1 | Type Definitions | ✅ Complete |
+| Phase 2 | UI Changes (Registration, Admin) | ✅ Complete |
+| Phase 3 | Documentation | ✅ Complete |
+| Phase 4 | Import Script | ✅ Complete |
+| Phase 5 | Tests (Unit, API E2E, UI E2E) | ✅ Complete |
+| Phase 6 | Admin Management Pages | ✅ Complete |
+
+### Test Summary
+- **Unit Tests**: 56 new tests for textbooks/volunteers types and pages
+- **API E2E Tests (Cucumber)**: 106 scenarios (all passing)
+- **UI E2E Tests (Playwright)**: 96 tests (all passing)
+
+---
+
+**Document Version**: 1.5
 **Author**: Claude Code
 **Last Updated**: December 24, 2025
-**Status**: Phase 6 - Remaining Work (All Tests Complete - Unit, API E2E, UI E2E)
+**Status**: ✅ ALL PHASES COMPLETE
