@@ -1,0 +1,37 @@
+# Production Environment Deployment
+# Triggered by: push to main branch
+
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false  # Never cancel production deployments
+
+jobs:
+  # Step 1: Run all tests
+  tests:
+    name: Run Tests
+    uses: ./.github/workflows/_ci.yml
+    with:
+      runner: ubuntu-latest
+
+  # Step 2: Build and deploy to Production (only if tests pass)
+  deploy:
+    name: Deploy
+    needs: [tests]
+    if: needs.tests.outputs.tests_passed == 'true'
+    uses: ./.github/workflows/_build-deploy.yml
+    with:
+      environment: production
+      service_name: gsdta-web
+      site_url: https://app.gsdta.com
+      gcp_project_id: playground-personal-474821
+      secrets_project_id: playground-personal-474821
+      firebase_project_id: playground-personal-474821
+      runner: ubuntu-latest
+    secrets:
+      GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
