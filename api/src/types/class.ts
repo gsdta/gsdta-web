@@ -39,6 +39,10 @@ export interface Class {
   gradeId: string;                  // Reference to grades collection (e.g., "ps-1", "grade-5")
   gradeName?: string;               // Denormalized grade name for display
 
+  // Section and Room
+  section?: string;                 // e.g., "A", "B", "C", "D"
+  room?: string;                    // e.g., "B01", "B02", "B03"
+
   day: string;                      // e.g., "Saturday"
   time: string;                     // e.g., "10:00 AM - 12:00 PM"
   capacity: number;                 // Max students
@@ -70,6 +74,8 @@ export interface Class {
 export interface CreateClassDto {
   name: string;
   gradeId: string;                  // Reference to grades collection
+  section?: string;                 // e.g., "A", "B", "C"
+  room?: string;                    // e.g., "B01", "B02"
   day: string;
   time: string;
   capacity: number;
@@ -83,6 +89,8 @@ export interface CreateClassDto {
 export interface UpdateClassDto {
   name?: string;
   gradeId?: string;
+  section?: string;
+  room?: string;
   day?: string;
   time?: string;
   capacity?: number;
@@ -119,6 +127,9 @@ export interface ClassListFilters {
   status?: ClassStatus | 'all';
   gradeId?: string;                 // Filter by grade
   teacherId?: string;               // Filter by assigned teacher
+  section?: string;                 // Filter by section
+  room?: string;                    // Filter by room
+  academicYear?: string;            // Filter by academic year
   limit?: number;
   offset?: number;
 }
@@ -139,6 +150,8 @@ export interface ClassOption {
   name: string;
   gradeId: string;
   gradeName?: string;
+  section?: string;
+  room?: string;
   day: string;
   time: string;
   capacity: number;

@@ -1,8 +1,8 @@
 # Firestore Collection Structures
 
-**Project**: GSDTA Web Application  
-**Purpose**: Comprehensive data model for all collections  
-**Last Updated**: December 12, 2025
+**Project**: GSDTA Web Application
+**Purpose**: Comprehensive data model for all collections
+**Last Updated**: December 24, 2025
 
 > **🚀 GCP Setup Guide**: See [FIRESTORE-SETUP.md](./FIRESTORE-SETUP.md) for step-by-step deployment instructions
 
@@ -77,6 +77,33 @@ None - all current features have required collections implemented.
 ### 📋 Collections for Upcoming Features
 
 - `studentClassEnrollments` - For enrollment tracking (Phase 2)
+
+### 🆕 New Collections (December 24, 2025)
+
+7. **textbooks** - Textbook inventory management (IMPLEMENTED - Dec 2025)
+   - Track textbooks and homework materials by grade
+   - Item numbers, page counts, copies available
+   - Cost tracking for inventory management
+   - See `/api/src/types/textbook.ts`
+
+8. **volunteers** - Volunteer helper tracking (IMPLEMENTED - Dec 2025)
+   - High school volunteers (HV) tracking
+   - Parent and community volunteers
+   - Class assignments and hours logging
+   - See `/api/src/types/volunteer.ts`
+
+### 📝 Model Enhancements (December 24, 2025)
+
+**Student model enhanced with:**
+- `gender` - Boy/Girl/Other
+- `schoolDistrict` - Public school district
+- `enrollingGrade` - Target Tamil school grade
+- `address` - Home address (street, city, zipCode)
+- `contacts` - Both parents' info (mother/father with name, email, phone, employer)
+
+**Class model enhanced with:**
+- `section` - Class section identifier (A, B, C, D)
+- `room` - Room assignment (B01, B02, etc.)
 
 ---
 

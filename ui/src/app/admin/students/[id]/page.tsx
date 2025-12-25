@@ -143,11 +143,18 @@ export default function AdminStudentDetailsPage({
               <h1 className="text-2xl font-bold text-gray-900">
                 {student.firstName} {student.lastName}
               </h1>
-              <span
-                className={`inline-block mt-1 px-3 py-1 text-sm font-medium rounded-full ${status.bgColor} ${status.color}`}
-              >
-                {status.label}
-              </span>
+              <div className="flex items-center gap-2 mt-1">
+                <span
+                  className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${status.bgColor} ${status.color}`}
+                >
+                  {status.label}
+                </span>
+                {student.gender && (
+                  <span className="text-sm text-gray-500">
+                    {student.gender}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -191,12 +198,20 @@ export default function AdminStudentDetailsPage({
               <dd className="text-sm text-gray-900">{formatDate(student.dateOfBirth)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-sm font-medium text-gray-500">Grade</dt>
+              <dt className="text-sm font-medium text-gray-500">Gender</dt>
+              <dd className="text-sm text-gray-900">{student.gender || '-'}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-sm font-medium text-gray-500">Public School Grade</dt>
               <dd className="text-sm text-gray-900">{student.grade || '-'}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-sm font-medium text-gray-500">School</dt>
               <dd className="text-sm text-gray-900">{student.schoolName || '-'}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-sm font-medium text-gray-500">School District</dt>
+              <dd className="text-sm text-gray-900">{student.schoolDistrict || '-'}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-sm font-medium text-gray-500">Prior Tamil Level</dt>
@@ -232,6 +247,14 @@ export default function AdminStudentDetailsPage({
               </dd>
             </div>
             <div className="flex justify-between">
+              <dt className="text-sm font-medium text-gray-500">Enrolling Grade</dt>
+              <dd className="text-sm text-gray-900">
+                {student.enrollingGrade || (
+                  <span className="text-gray-400">Not set</span>
+                )}
+              </dd>
+            </div>
+            <div className="flex justify-between">
               <dt className="text-sm font-medium text-gray-500">Registered</dt>
               <dd className="text-sm text-gray-900">{formatDateTime(student.createdAt)}</dd>
             </div>
@@ -248,32 +271,22 @@ export default function AdminStudentDetailsPage({
           </dl>
         </div>
 
-        {/* Parent Info */}
+        {/* Home Address */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Parent Contact</h2>
-          <dl className="space-y-3">
-            <div className="flex justify-between">
-              <dt className="text-sm font-medium text-gray-500">Email</dt>
-              <dd className="text-sm text-gray-900">
-                {student.parentEmail ? (
-                  <a
-                    href={`mailto:${student.parentEmail}`}
-                    className="text-blue-600 hover:underline"
-                  >
-                    {student.parentEmail}
-                  </a>
-                ) : (
-                  '-'
-                )}
-              </dd>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Home Address</h2>
+          {student.address && (student.address.street || student.address.city || student.address.zipCode) ? (
+            <div className="text-sm text-gray-900">
+              {student.address.street && <p>{student.address.street}</p>}
+              {(student.address.city || student.address.zipCode) && (
+                <p>
+                  {student.address.city}{student.address.city && student.address.zipCode && ', '}
+                  {student.address.zipCode}
+                </p>
+              )}
             </div>
-            <div className="flex justify-between">
-              <dt className="text-sm font-medium text-gray-500">Parent ID</dt>
-              <dd className="text-sm text-gray-500 font-mono text-xs">
-                {student.parentId || '-'}
-              </dd>
-            </div>
-          </dl>
+          ) : (
+            <p className="text-sm text-gray-400">No address provided</p>
+          )}
         </div>
 
         {/* Medical Notes */}
@@ -285,6 +298,110 @@ export default function AdminStudentDetailsPage({
             <p className="text-sm text-gray-400">No medical notes provided</p>
           )}
         </div>
+
+        {/* Mother's Contact */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Mother&apos;s Contact</h2>
+          {student.contacts?.mother && (student.contacts.mother.name || student.contacts.mother.email || student.contacts.mother.phone) ? (
+            <dl className="space-y-3">
+              <div className="flex justify-between">
+                <dt className="text-sm font-medium text-gray-500">Name</dt>
+                <dd className="text-sm text-gray-900">{student.contacts.mother.name || '-'}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-sm font-medium text-gray-500">Email</dt>
+                <dd className="text-sm text-gray-900">
+                  {student.contacts.mother.email ? (
+                    <a href={`mailto:${student.contacts.mother.email}`} className="text-blue-600 hover:underline">
+                      {student.contacts.mother.email}
+                    </a>
+                  ) : '-'}
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-sm font-medium text-gray-500">Phone</dt>
+                <dd className="text-sm text-gray-900">
+                  {student.contacts.mother.phone ? (
+                    <a href={`tel:${student.contacts.mother.phone}`} className="text-blue-600 hover:underline">
+                      {student.contacts.mother.phone}
+                    </a>
+                  ) : '-'}
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-sm font-medium text-gray-500">Employer</dt>
+                <dd className="text-sm text-gray-900">{student.contacts.mother.employer || '-'}</dd>
+              </div>
+            </dl>
+          ) : (
+            <p className="text-sm text-gray-400">No contact information provided</p>
+          )}
+        </div>
+
+        {/* Father's Contact */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Father&apos;s Contact</h2>
+          {student.contacts?.father && (student.contacts.father.name || student.contacts.father.email || student.contacts.father.phone) ? (
+            <dl className="space-y-3">
+              <div className="flex justify-between">
+                <dt className="text-sm font-medium text-gray-500">Name</dt>
+                <dd className="text-sm text-gray-900">{student.contacts.father.name || '-'}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-sm font-medium text-gray-500">Email</dt>
+                <dd className="text-sm text-gray-900">
+                  {student.contacts.father.email ? (
+                    <a href={`mailto:${student.contacts.father.email}`} className="text-blue-600 hover:underline">
+                      {student.contacts.father.email}
+                    </a>
+                  ) : '-'}
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-sm font-medium text-gray-500">Phone</dt>
+                <dd className="text-sm text-gray-900">
+                  {student.contacts.father.phone ? (
+                    <a href={`tel:${student.contacts.father.phone}`} className="text-blue-600 hover:underline">
+                      {student.contacts.father.phone}
+                    </a>
+                  ) : '-'}
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-sm font-medium text-gray-500">Employer</dt>
+                <dd className="text-sm text-gray-900">{student.contacts.father.employer || '-'}</dd>
+              </div>
+            </dl>
+          ) : (
+            <p className="text-sm text-gray-400">No contact information provided</p>
+          )}
+        </div>
+
+        {/* Legacy Parent Info (for backwards compatibility) */}
+        {student.parentEmail && !student.contacts && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Parent Contact</h2>
+            <dl className="space-y-3">
+              <div className="flex justify-between">
+                <dt className="text-sm font-medium text-gray-500">Email</dt>
+                <dd className="text-sm text-gray-900">
+                  <a
+                    href={`mailto:${student.parentEmail}`}
+                    className="text-blue-600 hover:underline"
+                  >
+                    {student.parentEmail}
+                  </a>
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-sm font-medium text-gray-500">Parent ID</dt>
+                <dd className="text-sm text-gray-500 font-mono text-xs">
+                  {student.parentId || '-'}
+                </dd>
+              </div>
+            </dl>
+          </div>
+        )}
       </div>
 
       {/* Assign Class Modal */}
@@ -338,11 +455,14 @@ export default function AdminStudentDetailsPage({
                         <div className="text-sm">
                           <p className="font-medium text-gray-900">{selected.name}</p>
                           <p className="text-gray-600">
-                            {selected.level} - {selected.day} {selected.time}
+                            {selected.gradeName || 'Grade not set'} - {selected.day} {selected.time}
                           </p>
                           <p className="text-gray-600">
                             {selected.enrolled}/{selected.capacity} students ({selected.available} spots available)
                           </p>
+                          {selected.room && (
+                            <p className="text-gray-600">Room: {selected.room}</p>
+                          )}
                         </div>
                       );
                     })()}
