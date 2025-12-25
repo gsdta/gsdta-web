@@ -19,13 +19,16 @@
  * --all         Import everything (default if no options specified)
  */
 
-// Set emulator hosts if not in production
-if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || process.env.GCLOUD_PROJECT || 'demo-gsdta';
+
+// Only use emulator if project is demo-* OR emulator hosts are explicitly set
+const IS_DEMO_PROJECT = PROJECT_ID.startsWith('demo-');
+const USE_EMULATOR = IS_DEMO_PROJECT || process.env.FIRESTORE_EMULATOR_HOST;
+
+if (USE_EMULATOR) {
   process.env.FIRESTORE_EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST || 'localhost:8889';
   process.env.FIREBASE_AUTH_EMULATOR_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST || 'localhost:9099';
 }
-
-const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || process.env.GCLOUD_PROJECT || 'demo-gsdta';
 
 const admin = require('firebase-admin');
 const XLSX = require('xlsx');
@@ -569,6 +572,10 @@ async function main() {
   }
 
   console.log(`Project ID: ${PROJECT_ID}`);
+  console.log(`Target: ${USE_EMULATOR ? 'EMULATOR (localhost)' : 'PRODUCTION FIRESTORE'}`);
+  if (!USE_EMULATOR) {
+    console.log('\n⚠️  WARNING: Writing to PRODUCTION Firestore! ⚠️\n');
+  }
   console.log(`Academic Year: ${ACADEMIC_YEAR}`);
   console.log(`Import options: ${JSON.stringify({
     students: IMPORT_STUDENTS,
