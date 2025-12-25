@@ -158,8 +158,7 @@ export async function deleteTextbook(id: string): Promise<boolean> {
  */
 export async function updateTextbookInventory(
   id: string,
-  copies: number,
-  reason?: string
+  copies: number
 ): Promise<Textbook | null> {
   const doc = await getDb().collection(TEXTBOOKS_COLLECTION).doc(id).get();
 
