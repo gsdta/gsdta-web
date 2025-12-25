@@ -1,8 +1,16 @@
 'use client';
 
 import Link from 'next/link';
+import { useAuth } from '@/components/AuthProvider';
+import { useI18n } from '@/i18n/LanguageProvider';
+
+const AUTH_MODE = process.env.NEXT_PUBLIC_AUTH_MODE === "firebase" ? "firebase" : "mock" as const;
 
 export default function ParentSettingsPage() {
+  const { user } = useAuth();
+  const { t } = useI18n();
+  const isPasswordUser = AUTH_MODE === "firebase" && user?.authProvider === "password";
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
@@ -78,23 +86,44 @@ export default function ParentSettingsPage() {
           </div>
         </Link>
 
-        {/* Security (Coming Soon) */}
-        <div className="bg-white rounded-lg shadow opacity-60">
-          <div className="p-6 flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="p-3 bg-gray-100 rounded-full">
-                <span className="text-2xl">🔒</span>
+        {/* Security */}
+        {isPasswordUser ? (
+          <Link
+            href="/account/change-password"
+            className="block bg-white rounded-lg shadow hover:shadow-md transition-shadow"
+          >
+            <div className="p-6 flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="p-3 bg-red-100 rounded-full">
+                  <span className="text-2xl">🔒</span>
+                </div>
+                <div className="ml-4">
+                  <h3 className="font-semibold text-gray-900">{t("password.change.title")}</h3>
+                  <p className="text-sm text-gray-500">
+                    {t("password.change.subtitle")}
+                  </p>
+                </div>
               </div>
-              <div className="ml-4">
-                <h3 className="font-semibold text-gray-900">Security</h3>
-                <p className="text-sm text-gray-500">
-                  Password and account security settings
-                </p>
+              <span className="text-gray-400">→</span>
+            </div>
+          </Link>
+        ) : user?.authProvider === "google" ? (
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-6 flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="p-3 bg-gray-100 rounded-full">
+                  <span className="text-2xl">🔒</span>
+                </div>
+                <div className="ml-4">
+                  <h3 className="font-semibold text-gray-900">Security</h3>
+                  <p className="text-sm text-gray-500">
+                    {t("password.change.googleUser")}
+                  </p>
+                </div>
               </div>
             </div>
-            <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">Coming Soon</span>
           </div>
-        </div>
+        ) : null}
       </div>
 
       {/* Help Section */}
