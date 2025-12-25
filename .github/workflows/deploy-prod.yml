@@ -35,3 +35,13 @@ jobs:
       runner: ubuntu-latest
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+
+  # Step 3: Run shakeout tests after deployment
+  shakeout:
+    name: Shakeout Tests
+    needs: [deploy]
+    if: needs.deploy.result == 'success'
+    uses: ./.github/workflows/_shakeout.yml
+    with:
+      base_url: https://app.gsdta.com
+      runner: ubuntu-latest
