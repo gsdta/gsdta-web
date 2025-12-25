@@ -97,6 +97,8 @@ jobs:
         run: cd api && npm run test:e2e
       - name: Build UI for E2E
         run: cd ui && npm run build
+      - name: Re-seed for UI E2E
+        run: npm run seed:clear && npm run seed
       - name: UI E2E (Playwright)
         run: cd ui && npm run e2e:ci
       - uses: actions/upload-artifact@v4
