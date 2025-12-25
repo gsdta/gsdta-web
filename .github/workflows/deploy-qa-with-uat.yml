@@ -1,6 +1,6 @@
 # QA Environment Deployment with UAT
 # Triggered by: push to develop branch
-# Flow: Tests -> Deploy to QA -> UAT Tests -> Auto-merge to main
+# Flow: Tests + Build (parallel) -> Deploy to QA -> UAT Tests -> Auto-merge to main
 
 name: Deploy to QA with UAT
 
@@ -17,26 +17,38 @@ env:
   UAT_BASE_URL: https://app.qa.gsdta.com
 
 jobs:
-  # Step 1: Run unit and E2E tests (emulator-based)
+  # Step 1a: Run unit and E2E tests (emulator-based)
   tests:
     name: Run Tests
     uses: ./.github/workflows/_ci.yml
     with:
       runner: ubuntu-latest
 
-  # Step 2: Build and deploy to QA (only if tests pass)
+  # Step 1b: Build Docker image (runs in parallel with tests)
+  build:
+    name: Build Image
+    uses: ./.github/workflows/_build.yml
+    with:
+      environment: qa
+      gcp_project_id: YOUR_PROJECT_ID
+      secrets_project_id: gsdta-qa
+      site_url: https://app.qa.gsdta.com
+      runner: ubuntu-latest
+    secrets:
+      GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+
+  # Step 2: Deploy to QA (only if tests pass, uses pre-built image)
   deploy:
     name: Deploy to QA
-    needs: [tests]
+    needs: [tests, build]
     if: needs.tests.outputs.tests_passed == 'true'
-    uses: ./.github/workflows/_build-deploy.yml
+    uses: ./.github/workflows/_deploy.yml
     with:
       environment: qa
       service_name: gsdta-web-qa
       site_url: https://app.qa.gsdta.com
-      gcp_project_id: YOUR_PROJECT_ID
-      secrets_project_id: gsdta-qa
       firebase_project_id: gsdta-qa
+      image_uri: ${{ needs.build.outputs.image_uri }}
       runner: ubuntu-latest
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
@@ -149,7 +161,7 @@ jobs:
   # Step 5: Notify on failure
   notify-failure:
     name: Notify on Failure
-    needs: [tests, deploy, uat-tests]
+    needs: [tests, build, deploy, uat-tests]
     if: failure()
     runs-on: ubuntu-latest
     steps:
@@ -157,6 +169,7 @@ jobs:
         run: |
           echo "❌ Pipeline failed!"
           echo "Tests passed: ${{ needs.tests.outputs.tests_passed }}"
+          echo "Build succeeded: ${{ needs.build.result }}"
           echo "Deploy succeeded: ${{ needs.deploy.result }}"
           echo "UAT passed: ${{ needs.uat-tests.outputs.passed }}"
           echo ""

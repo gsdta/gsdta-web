@@ -1,5 +1,6 @@
 # Production Environment Deployment
 # Triggered by: push to main branch
+# Flow: Tests + Build (parallel) -> Deploy -> Shakeout Tests
 
 name: Deploy to Production
 
@@ -12,26 +13,38 @@ concurrency:
   cancel-in-progress: false  # Never cancel production deployments
 
 jobs:
-  # Step 1: Run all tests
+  # Step 1a: Run all tests
   tests:
     name: Run Tests
     uses: ./.github/workflows/_ci.yml
     with:
       runner: ubuntu-latest
 
-  # Step 2: Build and deploy to Production (only if tests pass)
+  # Step 1b: Build Docker image (runs in parallel with tests)
+  build:
+    name: Build Image
+    uses: ./.github/workflows/_build.yml
+    with:
+      environment: production
+      gcp_project_id: YOUR_PROJECT_ID
+      secrets_project_id: YOUR_PROJECT_ID
+      site_url: https://app.gsdta.com
+      runner: ubuntu-latest
+    secrets:
+      GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+
+  # Step 2: Deploy to Production (only if tests pass, uses pre-built image)
   deploy:
     name: Deploy
-    needs: [tests]
+    needs: [tests, build]
     if: needs.tests.outputs.tests_passed == 'true'
-    uses: ./.github/workflows/_build-deploy.yml
+    uses: ./.github/workflows/_deploy.yml
     with:
       environment: production
       service_name: gsdta-web
       site_url: https://app.gsdta.com
-      gcp_project_id: YOUR_PROJECT_ID
-      secrets_project_id: YOUR_PROJECT_ID
       firebase_project_id: YOUR_PROJECT_ID
+      image_uri: ${{ needs.build.outputs.image_uri }}
       runner: ubuntu-latest
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
