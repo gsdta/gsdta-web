@@ -1,6 +1,6 @@
 # QA Environment Deployment with UAT
 # Triggered by: push to develop branch
-# Flow: Tests + Build (parallel) -> Deploy to QA -> UAT Tests -> Auto-merge to main
+# Flow: Tests + Build (parallel) -> Deploy to QA -> UAT Tests -> Merge to main
 
 name: Deploy to QA with UAT
 
@@ -71,9 +71,9 @@ jobs:
       UAT_PARENT_PASSWORD: ${{ secrets.UAT_PARENT_PASSWORD }}
       QA_FIREBASE_API_KEY: ${{ secrets.QA_FIREBASE_API_KEY }}
 
-  # Step 4: Create PR and auto-merge to main
-  auto-merge:
-    name: Auto-merge to Main
+  # Step 4: Create PR and merge to main
+  merge-to-main:
+    name: Merge to Main
     needs: [uat-tests]
     if: needs.uat-tests.outputs.passed == 'true'
     runs-on: ubuntu-latest
@@ -148,14 +148,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
 
-      - name: Auto-merge PR
+      - name: Merge PR
         run: |
           PR_NUMBER="${{ steps.create-pr.outputs.pr_number || steps.get-pr.outputs.pr_number }}"
 
-          echo "Enabling auto-merge for PR #$PR_NUMBER..."
-          gh pr merge $PR_NUMBER --auto --squash --delete-branch=false
+          echo "Merging PR #$PR_NUMBER..."
+          gh pr merge $PR_NUMBER --squash --delete-branch=false
 
-          echo "✅ Auto-merge enabled for PR #$PR_NUMBER"
+          echo "✅ PR #$PR_NUMBER merged to main"
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
 
