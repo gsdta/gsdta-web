@@ -55,8 +55,9 @@ test.describe('Admin Volunteers Management', () => {
     const typeLabel = page.getByText('Type:', { exact: true });
     await expect(typeLabel).toBeVisible();
 
-    // Verify a second select is visible (type filter)
-    await expect(page.locator('select').nth(1)).toBeVisible();
+    // Verify the type filter select is visible (contains "All Types" option)
+    const typeSelect = page.locator('select').filter({ hasText: 'All Types' });
+    await expect(typeSelect).toBeVisible();
   });
 
   test('VE2E-006: Search input is visible', async ({ page }) => {

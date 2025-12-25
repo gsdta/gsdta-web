@@ -1,4 +1,4 @@
-import {render, screen} from "@testing-library/react";
+import {render, screen, fireEvent} from "@testing-library/react";
 import {Header} from "@/components/Header";
 import "@testing-library/jest-dom";
 
@@ -18,14 +18,19 @@ function hasLinkTo(href: string): boolean {
     return s;
   };
   const expected = normalize(href);
-  return screen
-    .getAllByRole("link")
-    .some((el) => normalize((el as HTMLAnchorElement).getAttribute("href")) === expected);
+  // Look for both links and menuitems (dropdown items have role="menuitem")
+  const links = screen.queryAllByRole("link");
+  const menuItems = screen.queryAllByRole("menuitem");
+  const allElements = [...links, ...menuItems];
+  return allElements.some((el) => normalize((el as HTMLAnchorElement).getAttribute("href")) === expected);
 }
 
-test("renders header links for parent role", () => {
+// Static links that should be visible to all users
+const staticLinks = ["/", "/about/", "/team/", "/documents/", "/calendar/", "/textbooks/", "/donate/"];
+
+test("renders static nav links for authenticated users", () => {
   useAuth.mockReturnValue({
-    user: { id: "u1", name: "Priya", email: "priya@example.com", role: "parent" },
+    user: { id: "u1", name: "Priya", email: "priya@example.com", role: "parent", roles: ["parent"] },
     loading: false,
     login: jest.fn(),
     logout: jest.fn(),
@@ -33,13 +38,17 @@ test("renders header links for parent role", () => {
   });
   render(<Header />);
   expect(screen.getByText("GSDTA")).toBeInTheDocument();
-  // Parent role simplified to Home + Dashboard (sidebar handles Students, Enrollment, etc.)
-  expect(hasLinkTo("/")).toBe(true);
-  expect(hasLinkTo("/dashboard")).toBe(true);
-  expect(hasLinkTo("/logout")).toBe(true);
+
+  // All static links should be visible for authenticated users
+  for (const link of staticLinks) {
+    expect(hasLinkTo(link)).toBe(true);
+  }
+
+  // User dropdown should show user's name
+  expect(screen.getByText("Priya")).toBeInTheDocument();
 });
 
-test("renders public nav for anonymous users (sign-in link varies by auth mode)", () => {
+test("renders static nav links for anonymous users", () => {
   useAuth.mockReturnValue({
     user: null,
     loading: false,
@@ -48,13 +57,57 @@ test("renders public nav for anonymous users (sign-in link varies by auth mode)"
     setRole: jest.fn(),
   });
   render(<Header />);
-  // Check presence of required public links by href (labels may be localized)
-  expect(hasLinkTo("/")).toBe(true);
-  expect(hasLinkTo("/about/")).toBe(true);
-  expect(hasLinkTo("/team/")).toBe(true);
-  expect(hasLinkTo("/documents/")).toBe(true);
-  expect(hasLinkTo("/calendar/")).toBe(true);
-  expect(hasLinkTo("/textbooks/")).toBe(true);
-  expect(hasLinkTo("/donate/")).toBe(true);
-  // Sign-in visibility depends on auth mode; no assertion here anymore.
+
+  // All static links should be visible for anonymous users
+  for (const link of staticLinks) {
+    expect(hasLinkTo(link)).toBe(true);
+  }
+
+  // Sign-in visibility depends on auth mode; no assertion here
+});
+
+test("renders user dropdown with profile and logout for single-role user", () => {
+  useAuth.mockReturnValue({
+    user: { id: "u1", name: "Teacher Test", email: "teacher@example.com", role: "teacher", roles: ["teacher"] },
+    loading: false,
+    login: jest.fn(),
+    logout: jest.fn(),
+    setRole: jest.fn(),
+  });
+  render(<Header />);
+
+  // User's name should be visible (dropdown trigger)
+  expect(screen.getByText("Teacher Test")).toBeInTheDocument();
+
+  // Click to open the dropdown
+  fireEvent.click(screen.getByText("Teacher Test"));
+
+  // Profile and logout links should be in the dropdown
+  expect(hasLinkTo("/profile")).toBe(true);
+  expect(hasLinkTo("/logout")).toBe(true);
+
+  // Switch role should NOT be visible for single-role user
+  expect(hasLinkTo("/select-role")).toBe(false);
+});
+
+test("renders switch role option for multi-role user", () => {
+  useAuth.mockReturnValue({
+    user: { id: "u1", name: "Multi Role User", email: "multi@example.com", role: "admin", roles: ["admin", "teacher"] },
+    loading: false,
+    login: jest.fn(),
+    logout: jest.fn(),
+    setRole: jest.fn(),
+  });
+  render(<Header />);
+
+  // User's name should be visible
+  expect(screen.getByText("Multi Role User")).toBeInTheDocument();
+
+  // Click to open the dropdown
+  fireEvent.click(screen.getByText("Multi Role User"));
+
+  // Switch role should be visible for multi-role user
+  expect(hasLinkTo("/select-role")).toBe(true);
+  expect(hasLinkTo("/profile")).toBe(true);
+  expect(hasLinkTo("/logout")).toBe(true);
 });
