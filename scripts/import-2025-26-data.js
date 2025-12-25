@@ -764,6 +764,7 @@ async function importClasses(workbook) {
   let skipped = 0;
   let errors = 0;
   const classIdMap = new Map(); // Maps "grade-section" to classId
+  const classNameMap = new Map(); // Maps classId to className
 
   // Step 1: Create classes from Teacher sheet
   for (const row of teacherData) {
@@ -832,10 +833,13 @@ async function importClasses(workbook) {
 
       if (DRY_RUN) {
         console.log(`  [DRY-RUN] Would create class: ${className}`);
-        classIdMap.set(classKey, `dry-run-${classKey}`);
+        const dryRunId = `dry-run-${classKey}`;
+        classIdMap.set(classKey, dryRunId);
+        classNameMap.set(dryRunId, className);
       } else {
         const docRef = await db.collection('classes').add(classData);
         classIdMap.set(classKey, docRef.id);
+        classNameMap.set(docRef.id, className);
         console.log(`  Created class: ${className} (${docRef.id})`);
       }
 
@@ -850,6 +854,7 @@ async function importClasses(workbook) {
   console.log('\n  Assigning students to classes from rosters...');
 
   let studentsAssigned = 0;
+  const classEnrollmentCounts = new Map(); // Track enrollment counts per class
   const rosterSheets = workbook.SheetNames.filter(name =>
     !['Registration', 'Teacher', 'Books'].includes(name)
   );
@@ -920,12 +925,15 @@ async function importClasses(workbook) {
                           Array.from(classIdMap.entries()).find(([k]) => k.startsWith(gradeId))?.[1];
 
           if (classId) {
+            const className = classNameMap.get(classId);
             await matchedDoc.ref.update({
               classId,
+              className,
               enrollingGrade: gradeId,
               status: 'active', // Assigned to class = active
               updatedAt: Timestamp.now(),
             });
+            classEnrollmentCounts.set(classId, (classEnrollmentCounts.get(classId) || 0) + 1);
             studentsAssigned++;
           }
         } else {
@@ -935,18 +943,33 @@ async function importClasses(workbook) {
                           Array.from(classIdMap.entries()).find(([k]) => k.startsWith(gradeId))?.[1];
 
           if (classId) {
+            const className = classNameMap.get(classId);
             await studentDoc.ref.update({
               classId,
+              className,
               enrollingGrade: gradeId,
               status: 'active', // Assigned to class = active
               updatedAt: Timestamp.now(),
             });
+            classEnrollmentCounts.set(classId, (classEnrollmentCounts.get(classId) || 0) + 1);
             studentsAssigned++;
           }
         }
       } catch (err) {
         console.error(`      Error assigning student: ${err.message}`);
       }
+    }
+  }
+
+  // Step 3: Update class enrollment counts
+  console.log('\n  Updating class enrollment counts...');
+  if (!DRY_RUN) {
+    for (const [classId, count] of classEnrollmentCounts) {
+      await db.collection('classes').doc(classId).update({
+        enrolled: count,
+        updatedAt: Timestamp.now(),
+      });
+      console.log(`    Updated ${classNameMap.get(classId)}: ${count} students`);
     }
   }
 
