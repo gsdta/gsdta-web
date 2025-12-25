@@ -20,7 +20,8 @@
     "test:api": "cd api && npm test",
     "uat": "cd uat && npm test",
     "uat:smoke": "cd uat && npm run test:smoke",
-    "uat:ci": "cd uat && npm run test:ci"
+    "uat:ci": "cd uat && npm run test:ci",
+    "uat:shakeout": "cd uat && npm run test:shakeout"
   },
   "workspaces": [
     "ui",

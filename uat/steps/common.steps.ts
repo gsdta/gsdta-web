@@ -66,6 +66,14 @@ When(
   }
 );
 
+Given(
+  'I navigate to {string}',
+  async function (this: CustomWorld, path: string) {
+    await this.page.goto(path, { waitUntil: 'domcontentloaded' });
+    await this.page.waitForLoadState('load');
+  }
+);
+
 // Content Verification Steps
 Then('I should see the GSDTA logo', async function (this: CustomWorld) {
   // Look for logo by various selectors
