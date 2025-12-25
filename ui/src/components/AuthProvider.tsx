@@ -8,7 +8,7 @@ import React, {
     useRef,
     useState,
 } from "react";
-import type {Role, User} from "@/lib/auth-types";
+import type {Role, User, AuthProvider as AuthProviderType} from "@/lib/auth-types";
 import type { User as FirebaseUser } from "firebase/auth";
 import {setDebugUser, EFFECTIVE_BASE_URL, setAuthTokenProvider, apiFetch} from "@/lib/api-client";
 
@@ -202,7 +202,8 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
                          } else {
                             const role = pickRole(data.roles);
                             const emailVerified = typeof data.emailVerified === 'boolean' ? data.emailVerified : fbUser.emailVerified;
-                            const mapped: User = { id: data.uid, email: data.email, name: data.name || data.email, role, emailVerified };
+                            const authProvider = getAuthProvider(fbUser);
+                            const mapped: User = { id: data.uid, email: data.email, name: data.name || data.email, role, emailVerified, authProvider };
                             setUser(mapped);
                             try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(mapped)); } catch {}
                          }
@@ -382,4 +383,11 @@ function pickRole(roles: string[]): Role {
     if (rset.has("admin")) return "admin";
     if (rset.has("teacher")) return "teacher";
     return "parent";
+}
+
+function getAuthProvider(fbUser: FirebaseUser): AuthProviderType {
+    const providerIds = fbUser.providerData.map(p => p.providerId);
+    if (providerIds.includes("google.com")) return "google";
+    if (providerIds.includes("password")) return "password";
+    return null;
 }
