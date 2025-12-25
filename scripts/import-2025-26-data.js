@@ -1,7 +1,7 @@
 /**
  * Import 2025-26 School Year Data from Excel
  *
- * Usage: node scripts/import-2025-26-data.js [--dry-run] [--students] [--teachers] [--textbooks] [--classes]
+ * Usage: node scripts/import-2025-26-data.js [--dry-run] [--test] [--students] [--teachers] [--textbooks] [--classes]
  *
  * Prerequisites:
  * - Firebase emulators must be running (for local testing)
@@ -10,6 +10,7 @@
  *
  * Options:
  * --dry-run     Preview what would be imported without writing to database
+ * --test        Use test data file (GSDTA-Test-Data-2025-26.xlsx) instead of prod
  * --students    Import only students
  * --teachers    Import only teacher assignments
  * --textbooks   Import only textbooks
@@ -36,8 +37,13 @@ const auth = admin.auth();
 const db = admin.firestore();
 const { Timestamp, FieldValue } = admin.firestore;
 
+// Check for --test flag first (before other arg parsing)
+const USE_TEST_DATA = process.argv.includes('--test');
+
 // Excel file path
-const EXCEL_PATH = path.join(__dirname, '../docs/GSDTA Student and Teacher 2025-26.xlsx');
+const EXCEL_PATH = USE_TEST_DATA
+  ? path.join(__dirname, '../docs/GSDTA-Test-Data-2025-26.xlsx')
+  : path.join(__dirname, '../docs/GSDTA Student and Teacher 2025-26.xlsx');
 
 // Default password for pre-created parent accounts
 const DEFAULT_PASSWORD = 'Gsdta2025!';
@@ -48,7 +54,10 @@ const ACADEMIC_YEAR = '2025-2026';
 // Parse command line arguments
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes('--dry-run');
-const IMPORT_ALL = args.includes('--all') || args.filter(a => a.startsWith('--')).length === 0 || (args.length === 1 && DRY_RUN);
+
+// Determine what to import (exclude --dry-run and --test from the filter count)
+const importFlags = args.filter(a => a.startsWith('--') && a !== '--dry-run' && a !== '--test');
+const IMPORT_ALL = args.includes('--all') || importFlags.length === 0;
 const IMPORT_STUDENTS = IMPORT_ALL || args.includes('--students');
 const IMPORT_TEACHERS = IMPORT_ALL || args.includes('--teachers');
 const IMPORT_TEXTBOOKS = IMPORT_ALL || args.includes('--textbooks');
