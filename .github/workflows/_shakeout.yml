@@ -35,7 +35,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: uat/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Wait for site to be ready
         run: |
