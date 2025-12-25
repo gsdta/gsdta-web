@@ -560,6 +560,215 @@ async function importVolunteers(workbook) {
 }
 
 /**
+ * Import classes from Teacher sheet and assign students from roster sheets
+ */
+async function importClasses(workbook) {
+  console.log('\n=== Importing Classes ===');
+
+  const teacherSheet = workbook.Sheets['Teacher'];
+  if (!teacherSheet) {
+    console.log('  Teacher sheet not found!');
+    return { imported: 0, skipped: 0, errors: 0 };
+  }
+
+  const teacherData = XLSX.utils.sheet_to_json(teacherSheet);
+  console.log(`  Found ${teacherData.length} class records in Teacher sheet`);
+
+  let imported = 0;
+  let skipped = 0;
+  let errors = 0;
+  const classIdMap = new Map(); // Maps "grade-section" to classId
+
+  // Step 1: Create classes from Teacher sheet
+  for (const row of teacherData) {
+    try {
+      const gradeExcel = row['School Grade'];
+      const section = row['Section'] || 'A';
+      const room = row['Room'] || null;
+      const mainTeacher = row['Main Teacher'];
+      const mainTeacherEmail = row['Email address'];
+      const assistantTeacher = row['Asst. Teacher'];
+
+      if (!gradeExcel) {
+        skipped++;
+        continue;
+      }
+
+      const gradeId = GRADE_MAPPING[gradeExcel] || GRADE_MAPPING[gradeExcel.trim()];
+      if (!gradeId) {
+        console.log(`  Warning: Unknown grade "${gradeExcel}", skipping`);
+        skipped++;
+        continue;
+      }
+
+      const gradeName = GRADE_NAMES[gradeId] || gradeExcel;
+      const className = `${gradeName} Section ${section}`;
+      const classKey = `${gradeId}-${section}`.toLowerCase();
+
+      // Parse teachers
+      const teachers = [];
+      if (mainTeacher) {
+        const { firstName, lastName } = parseFullName(mainTeacher);
+        teachers.push({
+          name: mainTeacher.trim(),
+          email: mainTeacherEmail?.trim()?.toLowerCase() || null,
+          role: 'primary',
+          assignedAt: Timestamp.now(),
+        });
+      }
+      if (assistantTeacher) {
+        const { teachers: assistants } = parseTeacherInfo(assistantTeacher);
+        for (const asst of assistants) {
+          teachers.push({
+            name: `${asst.firstName} ${asst.lastName}`,
+            role: 'assistant',
+            assignedAt: Timestamp.now(),
+          });
+        }
+      }
+
+      const classData = {
+        name: className,
+        gradeId,
+        gradeName,
+        section,
+        room,
+        day: 'Saturday', // Default
+        time: '10:00 AM - 12:00 PM', // Default
+        capacity: 25,
+        enrolled: 0,
+        teachers,
+        status: 'active',
+        academicYear: ACADEMIC_YEAR,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      };
+
+      if (DRY_RUN) {
+        console.log(`  [DRY-RUN] Would create class: ${className}`);
+        classIdMap.set(classKey, `dry-run-${classKey}`);
+      } else {
+        const docRef = await db.collection('classes').add(classData);
+        classIdMap.set(classKey, docRef.id);
+        console.log(`  Created class: ${className} (${docRef.id})`);
+      }
+
+      imported++;
+    } catch (err) {
+      console.error(`  Error creating class: ${err.message}`);
+      errors++;
+    }
+  }
+
+  // Step 2: Assign students to classes from roster sheets
+  console.log('\n  Assigning students to classes from rosters...');
+
+  let studentsAssigned = 0;
+  const rosterSheets = workbook.SheetNames.filter(name =>
+    !['Registration', 'Teacher', 'Books'].includes(name)
+  );
+
+  for (const sheetName of rosterSheets) {
+    const sheet = workbook.Sheets[sheetName];
+    const rosterData = XLSX.utils.sheet_to_json(sheet);
+
+    if (rosterData.length === 0) continue;
+
+    // Determine grade from sheet name (e.g., "Grade-3" -> "grade-3", "Mazhalai-1" -> "ps-1")
+    let gradeId = null;
+    for (const [key, id] of Object.entries(GRADE_MAPPING)) {
+      if (sheetName.toLowerCase().includes(key.toLowerCase().replace(/\s+/g, '-')) ||
+          sheetName.toLowerCase().includes(key.toLowerCase().replace(/\s+/g, ''))) {
+        gradeId = id;
+        break;
+      }
+    }
+
+    if (!gradeId) {
+      console.log(`    Skipping roster sheet "${sheetName}" - cannot determine grade`);
+      continue;
+    }
+
+    console.log(`    Processing roster: ${sheetName} (${rosterData.length} students)`);
+
+    for (const row of rosterData) {
+      try {
+        const studentName = row['Student Name'];
+        if (!studentName) continue;
+
+        // Find student by name in Firestore
+        const { firstName, lastName } = parseFullName(studentName);
+
+        if (DRY_RUN) {
+          console.log(`      [DRY-RUN] Would assign ${studentName} to ${gradeId}`);
+          studentsAssigned++;
+          continue;
+        }
+
+        // Query for student
+        const studentsQuery = await db.collection('students')
+          .where('firstName', '==', firstName)
+          .where('lastName', '==', lastName)
+          .limit(1)
+          .get();
+
+        if (studentsQuery.empty) {
+          // Try partial match
+          const allStudents = await db.collection('students')
+            .where('firstName', '==', firstName)
+            .limit(5)
+            .get();
+
+          const matchedDoc = allStudents.docs.find(doc =>
+            doc.data().lastName?.toLowerCase() === lastName?.toLowerCase()
+          );
+
+          if (!matchedDoc) {
+            console.log(`      Warning: Student not found: ${studentName}`);
+            continue;
+          }
+
+          // Find the class for this grade (use first section if multiple)
+          const classId = classIdMap.get(`${gradeId}-a`) ||
+                          classIdMap.get(`${gradeId}-A`) ||
+                          Array.from(classIdMap.entries()).find(([k]) => k.startsWith(gradeId))?.[1];
+
+          if (classId) {
+            await matchedDoc.ref.update({
+              classId,
+              enrollingGrade: gradeId,
+              updatedAt: Timestamp.now(),
+            });
+            studentsAssigned++;
+          }
+        } else {
+          const studentDoc = studentsQuery.docs[0];
+          const classId = classIdMap.get(`${gradeId}-a`) ||
+                          classIdMap.get(`${gradeId}-A`) ||
+                          Array.from(classIdMap.entries()).find(([k]) => k.startsWith(gradeId))?.[1];
+
+          if (classId) {
+            await studentDoc.ref.update({
+              classId,
+              enrollingGrade: gradeId,
+              updatedAt: Timestamp.now(),
+            });
+            studentsAssigned++;
+          }
+        }
+      } catch (err) {
+        console.error(`      Error assigning student: ${err.message}`);
+      }
+    }
+  }
+
+  console.log(`\n  Classes created: ${imported}`);
+  console.log(`  Students assigned to classes: ${studentsAssigned}`);
+
+  return { imported, skipped, errors, studentsAssigned };
+}
+
+/**
  * Main import function
  */
 async function main() {
@@ -598,6 +807,10 @@ async function main() {
 
   if (IMPORT_VOLUNTEERS) {
     results.volunteers = await importVolunteers(workbook);
+  }
+
+  if (IMPORT_CLASSES) {
+    results.classes = await importClasses(workbook);
   }
 
   // Summary
