@@ -188,3 +188,97 @@ Then(
     await expect(breadcrumb).toContainText(breadcrumbText);
   }
 );
+
+// Column header verification
+Then(
+  'I should see the {string} column header',
+  async function (this: CustomWorld, columnName: string) {
+    const header = this.page.getByRole('columnheader', { name: columnName });
+    await expect(header).toBeVisible({ timeout: 15000 });
+  }
+);
+
+// Table link click steps
+When(
+  'I click the first Edit link in the table',
+  async function (this: CustomWorld) {
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForTimeout(2000);
+    const editLink = this.page.getByRole('link', { name: 'Edit' }).first();
+    await expect(editLink).toBeVisible({ timeout: 15000 });
+    await editLink.click();
+    await this.page.waitForLoadState('domcontentloaded');
+  }
+);
+
+When(
+  'I click the first View link in the table',
+  async function (this: CustomWorld) {
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForTimeout(2000);
+    const viewLink = this.page.getByRole('link', { name: 'View' }).first();
+    await expect(viewLink).toBeVisible({ timeout: 15000 });
+    await viewLink.click();
+    await this.page.waitForLoadState('domcontentloaded');
+  }
+);
+
+// Heading verification
+Then(
+  'I should see the {string} heading',
+  async function (this: CustomWorld, headingText: string) {
+    const heading = this.page.getByRole('heading', { name: headingText });
+    await expect(heading).toBeVisible({ timeout: 15000 });
+  }
+);
+
+// Section verification
+Then(
+  'I should see {string} section',
+  async function (this: CustomWorld, sectionText: string) {
+    const section = this.page.getByText(sectionText);
+    await expect(section.first()).toBeVisible({ timeout: 15000 });
+  }
+);
+
+// Button visibility
+Then(
+  'I should see a {string} button',
+  async function (this: CustomWorld, buttonText: string) {
+    // Check for both button and link styled as button
+    const button = this.page.getByRole('button', { name: buttonText });
+    const link = this.page.getByRole('link', { name: buttonText });
+    const either = button.or(link);
+    await expect(either.first()).toBeVisible({ timeout: 15000 });
+  }
+);
+
+Then(
+  'I should see an {string} button',
+  async function (this: CustomWorld, buttonText: string) {
+    const button = this.page.getByRole('button', { name: buttonText });
+    const link = this.page.getByRole('link', { name: buttonText });
+    const either = button.or(link);
+    await expect(either.first()).toBeVisible({ timeout: 15000 });
+  }
+);
+
+// Click button (button or link)
+When(
+  'I click the {string} button',
+  async function (this: CustomWorld, buttonText: string) {
+    const button = this.page.getByRole('button', { name: buttonText });
+    const link = this.page.getByRole('link', { name: buttonText });
+    const either = button.or(link);
+    await either.first().click();
+    await this.page.waitForLoadState('domcontentloaded');
+  }
+);
+
+// URL not contain
+Then(
+  'the URL should not contain {string}',
+  async function (this: CustomWorld, urlPart: string) {
+    expect(this.page.url()).not.toContain(urlPart);
+  }
+);
