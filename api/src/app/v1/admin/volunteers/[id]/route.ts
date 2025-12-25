@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
-import { getVolunteerById, updateVolunteer, deleteVolunteer, logVolunteerHours } from '@/lib/firestoreVolunteers';
+import { getVolunteerById, updateVolunteer, deleteVolunteer } from '@/lib/firestoreVolunteers';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
