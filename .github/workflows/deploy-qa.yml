@@ -35,26 +35,3 @@ jobs:
       runner: ubuntu-latest
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-
-  # Step 3: Seed QA database with initial data (if empty)
-  seed:
-    name: Seed QA Data
-    needs: [deploy]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-      
-      - uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-      
-      - name: Install dependencies
-        run: cd scripts && npm ci
-      
-      - name: Seed QA database
-        run: node scripts/seed-qa.js --skip-if-exists
