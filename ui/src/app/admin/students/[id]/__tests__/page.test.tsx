@@ -391,4 +391,35 @@ describe('AdminStudentDetailsPage', () => {
       });
     });
   });
+
+  describe('Edit Button', () => {
+    test('ASD-019: Edit button visible on student detail page', async () => {
+      (adminGetStudent as jest.Mock).mockResolvedValue(mockStudent);
+      render(
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <AdminStudentDetailsPage params={mockParams} />
+        </React.Suspense>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('link', { name: 'Edit' })).toBeInTheDocument();
+      });
+    });
+
+    test('ASD-020: Edit button links to correct edit page', async () => {
+      (adminGetStudent as jest.Mock).mockResolvedValue(mockStudent);
+      render(
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <AdminStudentDetailsPage params={mockParams} />
+        </React.Suspense>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('link', { name: 'Edit' })).toHaveAttribute(
+          'href',
+          '/admin/students/student-1/edit'
+        );
+      });
+    });
+  });
 });
