@@ -177,3 +177,183 @@ Feature: Parent Student Registration
     When I send a GET request to "/api/v1/me/students"
     Then the response status should be 401
 
+  # ============================================
+  # 2025-26 New Fields Tests
+  # ============================================
+
+  @auth @happy-path @2025-26
+  Scenario: PSR-030 Parent registers student with all new fields
+    Given I am authenticated as a parent
+    When I send a POST request to "/api/v1/me/students" with JSON body:
+      """
+      {
+        "firstName": "Arun",
+        "lastName": "Kumar",
+        "dateOfBirth": "2016-03-20",
+        "gender": "Boy",
+        "schoolName": "Poway Elementary",
+        "schoolDistrict": "Poway Unified School District",
+        "grade": "3rd Grade",
+        "priorTamilLevel": "beginner",
+        "enrollingGrade": "grade-3",
+        "address": {
+          "street": "12345 Main Street",
+          "city": "San Diego",
+          "zipCode": "92128"
+        },
+        "contacts": {
+          "mother": {
+            "name": "Priya Kumar",
+            "email": "priya@example.com",
+            "phone": "8585551234",
+            "employer": "Tech Corp"
+          },
+          "father": {
+            "name": "Raj Kumar",
+            "email": "raj@example.com",
+            "phone": "8585555678",
+            "employer": "Finance Inc"
+          }
+        },
+        "medicalNotes": "Peanut allergy",
+        "photoConsent": true
+      }
+      """
+    Then the response status should be 201
+    And the JSON path "data.student.gender" should equal "Boy"
+    And the JSON path "data.student.schoolDistrict" should equal "Poway Unified School District"
+    And the JSON path "data.student.address.city" should equal "San Diego"
+    And the JSON path "data.student.contacts.mother.name" should equal "Priya Kumar"
+    And the JSON path "data.student.contacts.father.name" should equal "Raj Kumar"
+    And the JSON path "data.student.medicalNotes" should equal "Peanut allergy"
+
+  @auth @happy-path @2025-26
+  Scenario: PSR-031 Gender field accepts valid values
+    Given I am authenticated as a parent
+    When I send a POST request to "/api/v1/me/students" with JSON body:
+      """
+      {
+        "firstName": "Test",
+        "lastName": "Girl",
+        "dateOfBirth": "2015-05-15",
+        "gender": "Girl"
+      }
+      """
+    Then the response status should be 201
+    And the JSON path "data.student.gender" should equal "Girl"
+
+  @auth @validation @2025-26
+  Scenario: PSR-032 Gender field rejects invalid values
+    Given I am authenticated as a parent
+    When I send a POST request to "/api/v1/me/students" with JSON body:
+      """
+      {
+        "firstName": "Test",
+        "lastName": "Invalid",
+        "dateOfBirth": "2015-05-15",
+        "gender": "InvalidGender"
+      }
+      """
+    Then the response status should be 400
+    And the JSON path "message" should contain "gender"
+
+  @auth @happy-path @2025-26
+  Scenario: PSR-033 Address fields are optional
+    Given I am authenticated as a parent
+    When I send a POST request to "/api/v1/me/students" with JSON body:
+      """
+      {
+        "firstName": "No",
+        "lastName": "Address",
+        "dateOfBirth": "2015-05-15"
+      }
+      """
+    Then the response status should be 201
+
+  @auth @happy-path @2025-26
+  Scenario: PSR-034 Partial address is accepted
+    Given I am authenticated as a parent
+    When I send a POST request to "/api/v1/me/students" with JSON body:
+      """
+      {
+        "firstName": "Partial",
+        "lastName": "Address",
+        "dateOfBirth": "2015-05-15",
+        "address": {
+          "city": "San Diego"
+        }
+      }
+      """
+    Then the response status should be 201
+    And the JSON path "data.student.address.city" should equal "San Diego"
+
+  @auth @happy-path @2025-26
+  Scenario: PSR-035 Mother only contact is accepted
+    Given I am authenticated as a parent
+    When I send a POST request to "/api/v1/me/students" with JSON body:
+      """
+      {
+        "firstName": "Mother",
+        "lastName": "Only",
+        "dateOfBirth": "2015-05-15",
+        "contacts": {
+          "mother": {
+            "name": "Single Mom",
+            "email": "mom@example.com",
+            "phone": "8585551234"
+          }
+        }
+      }
+      """
+    Then the response status should be 201
+    And the JSON path "data.student.contacts.mother.name" should equal "Single Mom"
+
+  @auth @validation @2025-26
+  Scenario: PSR-036 Invalid email in contacts is rejected
+    Given I am authenticated as a parent
+    When I send a POST request to "/api/v1/me/students" with JSON body:
+      """
+      {
+        "firstName": "Invalid",
+        "lastName": "Email",
+        "dateOfBirth": "2015-05-15",
+        "contacts": {
+          "mother": {
+            "name": "Test Mom",
+            "email": "not-an-email"
+          }
+        }
+      }
+      """
+    Then the response status should be 400
+
+  @auth @happy-path @2025-26
+  Scenario: PSR-037 School district from common list is accepted
+    Given I am authenticated as a parent
+    When I send a POST request to "/api/v1/me/students" with JSON body:
+      """
+      {
+        "firstName": "District",
+        "lastName": "Test",
+        "dateOfBirth": "2015-05-15",
+        "schoolDistrict": "San Diego Unified School District"
+      }
+      """
+    Then the response status should be 201
+    And the JSON path "data.student.schoolDistrict" should equal "San Diego Unified School District"
+
+  @auth @happy-path @2025-26
+  Scenario: PSR-038 Medical notes are stored correctly
+    Given I am authenticated as a parent
+    When I send a POST request to "/api/v1/me/students" with JSON body:
+      """
+      {
+        "firstName": "Medical",
+        "lastName": "Notes",
+        "dateOfBirth": "2015-05-15",
+        "medicalNotes": "Allergic to nuts and shellfish. Has asthma."
+      }
+      """
+    Then the response status should be 201
+    And the JSON path "data.student.medicalNotes" should equal "Allergic to nuts and shellfish. Has asthma."
+

@@ -9,6 +9,8 @@ import {
   createStudentSchema,
   newStudentDefaults,
   tamilLevelOptions,
+  genderOptions,
+  COMMON_SCHOOL_DISTRICTS,
   type CreateStudentInput,
 } from '@/lib/student-types';
 import { z } from 'zod';
@@ -34,6 +36,38 @@ export default function RegisterStudentPage() {
     }
   };
 
+  // Handle nested object changes (address, contacts)
+  const handleNestedChange = (
+    section: 'address' | 'contacts',
+    field: string,
+    value: string,
+    parent?: 'mother' | 'father'
+  ) => {
+    setFormData((prev) => {
+      if (section === 'address') {
+        return {
+          ...prev,
+          address: {
+            ...prev.address,
+            [field]: value,
+          },
+        };
+      } else if (section === 'contacts' && parent) {
+        return {
+          ...prev,
+          contacts: {
+            ...prev.contacts,
+            [parent]: {
+              ...prev.contacts?.[parent],
+              [field]: value,
+            },
+          },
+        };
+      }
+      return prev;
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
@@ -47,7 +81,7 @@ export default function RegisterStudentPage() {
         const fieldErrors: Record<string, string> = {};
         err.errors.forEach((error) => {
           if (error.path.length > 0) {
-            fieldErrors[error.path[0] as string] = error.message;
+            fieldErrors[error.path.join('.')] = error.message;
           }
         });
         setErrors(fieldErrors);
@@ -68,7 +102,7 @@ export default function RegisterStudentPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-3xl mx-auto">
       {/* Header */}
       <div className="mb-6">
         <Link
@@ -82,12 +116,12 @@ export default function RegisterStudentPage() {
         </Link>
         <h1 className="text-2xl font-bold text-gray-900 mt-2">Register New Student</h1>
         <p className="mt-1 text-gray-600">
-          Fill out the form below to register your child. They will be reviewed by an administrator.
+          Fill out the form below to register your child for GSDTA Tamil School.
         </p>
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {/* Submit Error */}
         {submitError && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
@@ -95,156 +129,384 @@ export default function RegisterStudentPage() {
           </div>
         )}
 
-        {/* Name Fields */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-              First Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="firstName"
-              name="firstName"
-              value={formData.firstName}
-              onChange={handleInputChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.firstName ? 'border-red-500' : 'border-gray-300'
-              }`}
-              placeholder="Enter first name"
-            />
-            {errors.firstName && (
-              <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>
-            )}
+        {/* Section 1: Student Information */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Student Information</h2>
+
+          {/* Name Fields */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                First Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="firstName"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleInputChange}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.firstName ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="Enter first name"
+              />
+              {errors.firstName && (
+                <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                Last Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="lastName"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleInputChange}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.lastName ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="Enter last name"
+              />
+              {errors.lastName && (
+                <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>
+              )}
+            </div>
           </div>
 
-          <div>
-            <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-              Last Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="lastName"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleInputChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.lastName ? 'border-red-500' : 'border-gray-300'
-              }`}
-              placeholder="Enter last name"
-            />
-            {errors.lastName && (
-              <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>
-            )}
+          {/* DOB and Gender */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-1">
+                Date of Birth <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                id="dateOfBirth"
+                name="dateOfBirth"
+                value={formData.dateOfBirth}
+                onChange={handleInputChange}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+              {errors.dateOfBirth && (
+                <p className="mt-1 text-sm text-red-600">{errors.dateOfBirth}</p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">
+                Gender
+              </label>
+              <select
+                id="gender"
+                name="gender"
+                value={formData.gender || ''}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {genderOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
-        {/* Date of Birth */}
-        <div>
-          <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-1">
-            Date of Birth <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="date"
-            id="dateOfBirth"
-            name="dateOfBirth"
-            value={formData.dateOfBirth}
-            onChange={handleInputChange}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'
-            }`}
-          />
-          {errors.dateOfBirth && (
-            <p className="mt-1 text-sm text-red-600">{errors.dateOfBirth}</p>
-          )}
+        {/* Section 2: School Information */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">School Information</h2>
+
+          {/* Current School */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label htmlFor="schoolName" className="block text-sm font-medium text-gray-700 mb-1">
+                Current School Name
+              </label>
+              <input
+                type="text"
+                id="schoolName"
+                name="schoolName"
+                value={formData.schoolName || ''}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., Poway Elementary"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="schoolDistrict" className="block text-sm font-medium text-gray-700 mb-1">
+                School District
+              </label>
+              <select
+                id="schoolDistrict"
+                name="schoolDistrict"
+                value={formData.schoolDistrict || ''}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select district</option>
+                {COMMON_SCHOOL_DISTRICTS.map((district) => (
+                  <option key={district} value={district}>
+                    {district}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Grade Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label htmlFor="grade" className="block text-sm font-medium text-gray-700 mb-1">
+                Current Grade (Public School)
+              </label>
+              <input
+                type="text"
+                id="grade"
+                name="grade"
+                value={formData.grade || ''}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., 5th Grade, Kindergarten"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="priorTamilLevel" className="block text-sm font-medium text-gray-700 mb-1">
+                Prior Tamil Experience
+              </label>
+              <select
+                id="priorTamilLevel"
+                name="priorTamilLevel"
+                value={formData.priorTamilLevel || ''}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {tamilLevelOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
 
-        {/* School Info */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="grade" className="block text-sm font-medium text-gray-700 mb-1">
-              Grade/Class (Optional)
+        {/* Section 3: Home Address */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Home Address</h2>
+
+          <div className="mb-4">
+            <label htmlFor="street" className="block text-sm font-medium text-gray-700 mb-1">
+              Street Address
             </label>
             <input
               type="text"
-              id="grade"
-              name="grade"
-              value={formData.grade || ''}
-              onChange={handleInputChange}
+              id="street"
+              value={formData.address?.street || ''}
+              onChange={(e) => handleNestedChange('address', 'street', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="e.g., 5th Grade"
+              placeholder="e.g., 12345 Main Street, Apt 101"
             />
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
+                City
+              </label>
+              <input
+                type="text"
+                id="city"
+                value={formData.address?.city || ''}
+                onChange={(e) => handleNestedChange('address', 'city', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., San Diego"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-1">
+                ZIP Code
+              </label>
+              <input
+                type="text"
+                id="zipCode"
+                value={formData.address?.zipCode || ''}
+                onChange={(e) => handleNestedChange('address', 'zipCode', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., 92128"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Section 4: Parent/Guardian Information */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Parent/Guardian Information</h2>
+
+          {/* Mother's Information */}
+          <div className="mb-6">
+            <h3 className="text-md font-medium text-gray-800 mb-3 pb-2 border-b">Mother&apos;s Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={formData.contacts?.mother?.name || ''}
+                  onChange={(e) => handleNestedChange('contacts', 'name', e.target.value, 'mother')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="First Last"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  value={formData.contacts?.mother?.email || ''}
+                  onChange={(e) => handleNestedChange('contacts', 'email', e.target.value, 'mother')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="email@example.com"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  value={formData.contacts?.mother?.phone || ''}
+                  onChange={(e) => handleNestedChange('contacts', 'phone', e.target.value, 'mother')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="(858) 555-1234"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Employer (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={formData.contacts?.mother?.employer || ''}
+                  onChange={(e) => handleNestedChange('contacts', 'employer', e.target.value, 'mother')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Company name"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Father's Information */}
           <div>
-            <label htmlFor="schoolName" className="block text-sm font-medium text-gray-700 mb-1">
-              School Name (Optional)
-            </label>
-            <input
-              type="text"
-              id="schoolName"
-              name="schoolName"
-              value={formData.schoolName || ''}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Regular school name"
-            />
+            <h3 className="text-md font-medium text-gray-800 mb-3 pb-2 border-b">Father&apos;s Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={formData.contacts?.father?.name || ''}
+                  onChange={(e) => handleNestedChange('contacts', 'name', e.target.value, 'father')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="First Last"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  value={formData.contacts?.father?.email || ''}
+                  onChange={(e) => handleNestedChange('contacts', 'email', e.target.value, 'father')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="email@example.com"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  value={formData.contacts?.father?.phone || ''}
+                  onChange={(e) => handleNestedChange('contacts', 'phone', e.target.value, 'father')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="(858) 555-1234"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Employer (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={formData.contacts?.father?.employer || ''}
+                  onChange={(e) => handleNestedChange('contacts', 'employer', e.target.value, 'father')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Company name"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Tamil Level */}
-        <div>
-          <label htmlFor="priorTamilLevel" className="block text-sm font-medium text-gray-700 mb-1">
-            Prior Tamil Experience (Optional)
-          </label>
-          <select
-            id="priorTamilLevel"
-            name="priorTamilLevel"
-            value={formData.priorTamilLevel || ''}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {tamilLevelOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* Section 5: Additional Information */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Additional Information</h2>
 
-        {/* Medical Notes */}
-        <div>
-          <label htmlFor="medicalNotes" className="block text-sm font-medium text-gray-700 mb-1">
-            Medical Notes / Allergies (Optional)
-          </label>
-          <textarea
-            id="medicalNotes"
-            name="medicalNotes"
-            value={formData.medicalNotes || ''}
-            onChange={handleInputChange}
-            rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Any medical conditions, allergies, or special needs we should be aware of"
-          />
-        </div>
+          {/* Medical Notes */}
+          <div className="mb-4">
+            <label htmlFor="medicalNotes" className="block text-sm font-medium text-gray-700 mb-1">
+              Medical Notes / Allergies
+            </label>
+            <textarea
+              id="medicalNotes"
+              name="medicalNotes"
+              value={formData.medicalNotes || ''}
+              onChange={handleInputChange}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Any medical conditions, allergies, or special needs we should be aware of"
+            />
+          </div>
 
-        {/* Photo Consent */}
-        <div className="flex items-start gap-3">
-          <input
-            type="checkbox"
-            id="photoConsent"
-            name="photoConsent"
-            checked={formData.photoConsent}
-            onChange={handleInputChange}
-            className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-          />
-          <label htmlFor="photoConsent" className="text-sm text-gray-700">
-            I consent to photos of my child being taken and used for school-related purposes
-            (newsletters, website, etc.)
-          </label>
+          {/* Photo Consent */}
+          <div className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              id="photoConsent"
+              name="photoConsent"
+              checked={formData.photoConsent}
+              onChange={handleInputChange}
+              className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label htmlFor="photoConsent" className="text-sm text-gray-700">
+              I consent to photos of my child being taken and used for school-related purposes
+              (newsletters, website, social media, etc.)
+            </label>
+          </div>
         </div>
 
         {/* Submit Buttons */}
-        <div className="flex justify-end gap-3 pt-4 border-t">
+        <div className="flex justify-end gap-3 pt-4">
           <Link
             href="/parent/students"
             className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
@@ -254,7 +516,7 @@ export default function RegisterStudentPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-6 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isSubmitting ? (
               <>

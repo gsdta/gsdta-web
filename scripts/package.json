@@ -5,9 +5,12 @@
   "private": true,
   "scripts": {
     "seed": "node seed-emulator.js",
-    "seed:clear": "node seed-emulator.js --clear"
+    "seed:clear": "node seed-emulator.js --clear",
+    "import:2025-26": "node import-2025-26-data.js",
+    "import:2025-26:dry-run": "node import-2025-26-data.js --dry-run"
   },
   "dependencies": {
-    "firebase-admin": "^13.5.0"
+    "firebase-admin": "^13.5.0",
+    "xlsx": "^0.18.5"
   }
 }

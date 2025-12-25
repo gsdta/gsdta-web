@@ -1,0 +1,611 @@
+/**
+ * Import 2025-26 School Year Data from Excel
+ *
+ * Usage: node scripts/import-2025-26-data.js [--dry-run] [--students] [--teachers] [--textbooks] [--classes]
+ *
+ * Prerequisites:
+ * - Firebase emulators must be running (for local testing)
+ * - Or set GOOGLE_APPLICATION_CREDENTIALS for production
+ * - npm install xlsx in the scripts folder
+ *
+ * Options:
+ * --dry-run     Preview what would be imported without writing to database
+ * --students    Import only students
+ * --teachers    Import only teacher assignments
+ * --textbooks   Import only textbooks
+ * --classes     Import only classes
+ * --volunteers  Import only volunteers (HV helpers)
+ * --all         Import everything (default if no options specified)
+ */
+
+// Set emulator hosts if not in production
+if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+  process.env.FIRESTORE_EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST || 'localhost:8889';
+  process.env.FIREBASE_AUTH_EMULATOR_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST || 'localhost:9099';
+}
+
+const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || process.env.GCLOUD_PROJECT || 'demo-gsdta';
+
+const admin = require('firebase-admin');
+const XLSX = require('xlsx');
+const path = require('path');
+
+// Initialize Firebase Admin
+admin.initializeApp({ projectId: PROJECT_ID });
+const auth = admin.auth();
+const db = admin.firestore();
+const { Timestamp, FieldValue } = admin.firestore;
+
+// Excel file path
+const EXCEL_PATH = path.join(__dirname, '../docs/GSDTA Student and Teacher 2025-26.xlsx');
+
+// Default password for pre-created parent accounts
+const DEFAULT_PASSWORD = 'Gsdta2025!';
+
+// Academic year
+const ACADEMIC_YEAR = '2025-2026';
+
+// Parse command line arguments
+const args = process.argv.slice(2);
+const DRY_RUN = args.includes('--dry-run');
+const IMPORT_ALL = args.includes('--all') || args.filter(a => a.startsWith('--')).length === 0 || (args.length === 1 && DRY_RUN);
+const IMPORT_STUDENTS = IMPORT_ALL || args.includes('--students');
+const IMPORT_TEACHERS = IMPORT_ALL || args.includes('--teachers');
+const IMPORT_TEXTBOOKS = IMPORT_ALL || args.includes('--textbooks');
+const IMPORT_CLASSES = IMPORT_ALL || args.includes('--classes');
+const IMPORT_VOLUNTEERS = IMPORT_ALL || args.includes('--volunteers');
+
+// Grade mapping from Excel names to app grade IDs
+const GRADE_MAPPING = {
+  'Mazhalai 1': 'ps-1',
+  'Mazhalai-1': 'ps-1',
+  'Mazhalai 2': 'ps-2',
+  'Mazhalai-2': 'ps-2',
+  'KG': 'kg',
+  'Kindergarten': 'kg',
+  'Basic 1': 'kg',
+  'Grade 1': 'grade-1',
+  'Grade-1': 'grade-1',
+  'Basic 2': 'grade-1',
+  'Grade 2': 'grade-2',
+  'Grade-2': 'grade-2',
+  'Grade 3': 'grade-3',
+  'Grade-3': 'grade-3',
+  'Grade 4': 'grade-4',
+  'Grade-4': 'grade-4',
+  'Grade 5': 'grade-5',
+  'Grade-5': 'grade-5',
+  'Grade 6': 'grade-6',
+  'Grade-6': 'grade-6',
+  'Grade 7': 'grade-7',
+  'Grade-7': 'grade-7',
+  'Grade 8': 'grade-8',
+  'Grade-8': 'grade-8',
+  'PS-1': 'ps-1',
+  'PS-2': 'ps-2',
+};
+
+// Grade display names
+const GRADE_NAMES = {
+  'ps-1': 'Pre-School 1 (Mazhalai 1)',
+  'ps-2': 'Pre-School 2 (Mazhalai 2)',
+  'kg': 'Kindergarten',
+  'grade-1': 'Grade 1',
+  'grade-2': 'Grade 2',
+  'grade-3': 'Grade 3',
+  'grade-4': 'Grade 4',
+  'grade-5': 'Grade 5',
+  'grade-6': 'Grade 6',
+  'grade-7': 'Grade 7',
+  'grade-8': 'Grade 8',
+};
+
+/**
+ * Parse date from various formats to ISO string
+ */
+function parseDateToISO(dateValue) {
+  if (!dateValue) return null;
+
+  // Already a Date object (from Excel)
+  if (dateValue instanceof Date) {
+    return dateValue.toISOString().split('T')[0];
+  }
+
+  const str = String(dateValue).trim();
+
+  // ISO format: 2017-04-05 or 2017-04-05 00:00:00
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+    return str.split(' ')[0].split('T')[0];
+  }
+
+  // M/D/YYYY or MM/DD/YYYY format
+  const mdyMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (mdyMatch) {
+    const [, month, day, year] = mdyMatch;
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+
+  // M-D-YYYY format
+  const mdyDashMatch = str.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+  if (mdyDashMatch) {
+    const [, month, day, year] = mdyDashMatch;
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+
+  console.warn(`  Warning: Could not parse date: ${str}`);
+  return null;
+}
+
+/**
+ * Parse full name into first and last name
+ */
+function parseFullName(fullName) {
+  if (!fullName) return { firstName: '', lastName: '' };
+
+  const parts = String(fullName).trim().split(/\s+/);
+  if (parts.length === 1) {
+    return { firstName: parts[0], lastName: '' };
+  }
+
+  // Last part is last name, rest is first name
+  const lastName = parts.pop();
+  const firstName = parts.join(' ');
+
+  return { firstName, lastName };
+}
+
+/**
+ * Normalize phone number
+ */
+function normalizePhone(phone) {
+  if (!phone) return null;
+  // Remove non-digits except leading +
+  const cleaned = String(phone).replace(/[^\d+]/g, '');
+  return cleaned || null;
+}
+
+/**
+ * Parse gender from Excel value
+ */
+function parseGender(value) {
+  if (!value) return null;
+  const str = String(value).toLowerCase().trim();
+  if (str === 'boy' || str === 'male' || str === 'm') return 'Boy';
+  if (str === 'girl' || str === 'female' || str === 'f') return 'Girl';
+  return 'Other';
+}
+
+/**
+ * Map enrolling grade to grade ID
+ */
+function mapEnrollingGrade(value) {
+  if (!value) return null;
+  const str = String(value).trim();
+
+  // Direct mapping
+  if (GRADE_MAPPING[str]) return GRADE_MAPPING[str];
+
+  // Try to extract grade
+  for (const [key, id] of Object.entries(GRADE_MAPPING)) {
+    if (str.toLowerCase().includes(key.toLowerCase())) {
+      return id;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Read Excel workbook
+ */
+function readExcelFile() {
+  console.log(`\nReading Excel file: ${EXCEL_PATH}`);
+  const workbook = XLSX.readFile(EXCEL_PATH);
+  console.log(`  Found sheets: ${workbook.SheetNames.join(', ')}`);
+  return workbook;
+}
+
+/**
+ * Import students from Registration sheet
+ */
+async function importStudents(workbook) {
+  console.log('\n=== Importing Students ===');
+
+  const sheet = workbook.Sheets['Registration'];
+  if (!sheet) {
+    console.log('  Registration sheet not found!');
+    return { imported: 0, skipped: 0, errors: 0 };
+  }
+
+  const data = XLSX.utils.sheet_to_json(sheet);
+  console.log(`  Found ${data.length} student records`);
+
+  let imported = 0;
+  let skipped = 0;
+  let errors = 0;
+  const parentEmails = new Map(); // Track parent accounts to create
+
+  for (const row of data) {
+    try {
+      const fullName = row['Student Name (First Last)'];
+      if (!fullName) {
+        skipped++;
+        continue;
+      }
+
+      const { firstName, lastName } = parseFullName(fullName);
+      const dateOfBirth = parseDateToISO(row['DOB']);
+      const gender = parseGender(row['Gender']);
+      const schoolName = row['Current Public School Name'] || null;
+      const schoolDistrict = row['Your School District ']?.trim() || null;
+      const grade = row['Grade in Public (2025-26)'] || null;
+      const priorTamilLevel = row['Last year grade in Tamil School'] || null;
+      const enrollingGrade = mapEnrollingGrade(row['Enrolling Grade 2025-26']);
+
+      // Parent contacts
+      const motherEmail = row["Mother's email"]?.trim()?.toLowerCase() || null;
+      const fatherEmail = row["Father's email"]?.trim()?.toLowerCase() || null;
+
+      const contacts = {
+        mother: {
+          name: row["Mother's Name (First Last)"] || null,
+          email: motherEmail,
+          phone: normalizePhone(row["Mother's Mobile "]),
+          employer: row["Mother's Employer"] || null,
+        },
+        father: {
+          name: row["Father's Name (First Last)"] || null,
+          email: fatherEmail,
+          phone: normalizePhone(row["Father's Mobile"]),
+          employer: row["Father's Employer"] || null,
+        },
+      };
+
+      // Address
+      const address = {
+        street: row['Home Address (Street name and Unit)'] || null,
+        city: row['City'] || null,
+        zipCode: row['Zip Code'] ? String(row['Zip Code']) : null,
+      };
+
+      // Track primary parent email for account creation
+      const primaryEmail = motherEmail || fatherEmail;
+      if (primaryEmail && !parentEmails.has(primaryEmail)) {
+        parentEmails.set(primaryEmail, {
+          email: primaryEmail,
+          displayName: contacts.mother?.name || contacts.father?.name || 'Parent',
+        });
+      }
+
+      const studentData = {
+        firstName,
+        lastName,
+        dateOfBirth,
+        gender,
+        schoolName,
+        schoolDistrict,
+        grade,
+        priorTamilLevel,
+        enrollingGrade,
+        contacts,
+        address,
+        parentId: null, // Will be set when parent account is created
+        parentEmail: primaryEmail,
+        status: 'pending',
+        photoConsent: false,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      };
+
+      if (DRY_RUN) {
+        console.log(`  [DRY-RUN] Would import: ${firstName} ${lastName} (${enrollingGrade || 'no grade'})`);
+      } else {
+        await db.collection('students').add(studentData);
+        console.log(`  Imported: ${firstName} ${lastName}`);
+      }
+
+      imported++;
+    } catch (err) {
+      console.error(`  Error importing student: ${err.message}`);
+      errors++;
+    }
+  }
+
+  // Create parent accounts
+  console.log(`\n  Creating ${parentEmails.size} parent accounts...`);
+  for (const [email, info] of parentEmails) {
+    try {
+      if (DRY_RUN) {
+        console.log(`  [DRY-RUN] Would create parent account: ${email}`);
+      } else {
+        // Check if user already exists
+        try {
+          await auth.getUserByEmail(email);
+          console.log(`  Parent account exists: ${email}`);
+        } catch (e) {
+          if (e.code === 'auth/user-not-found') {
+            // Create new user
+            const userRecord = await auth.createUser({
+              email,
+              password: DEFAULT_PASSWORD,
+              displayName: info.displayName,
+              emailVerified: false,
+            });
+
+            // Create user document
+            await db.collection('users').doc(userRecord.uid).set({
+              email,
+              displayName: info.displayName,
+              roles: ['parent'],
+              status: 'active',
+              createdAt: Timestamp.now(),
+              updatedAt: Timestamp.now(),
+            });
+
+            // Update students with this parent's ID
+            const studentsSnapshot = await db.collection('students')
+              .where('parentEmail', '==', email)
+              .get();
+
+            const batch = db.batch();
+            studentsSnapshot.docs.forEach(doc => {
+              batch.update(doc.ref, { parentId: userRecord.uid });
+            });
+            await batch.commit();
+
+            console.log(`  Created parent account: ${email} (${studentsSnapshot.size} students linked)`);
+          } else {
+            throw e;
+          }
+        }
+      }
+    } catch (err) {
+      console.error(`  Error creating parent account ${email}: ${err.message}`);
+    }
+  }
+
+  return { imported, skipped, errors };
+}
+
+/**
+ * Import textbooks from Books sheet
+ */
+async function importTextbooks(workbook) {
+  console.log('\n=== Importing Textbooks ===');
+
+  const sheet = workbook.Sheets['Books'];
+  if (!sheet) {
+    console.log('  Books sheet not found!');
+    return { imported: 0, skipped: 0, errors: 0 };
+  }
+
+  const data = XLSX.utils.sheet_to_json(sheet);
+  console.log(`  Found ${data.length} textbook records`);
+
+  let imported = 0;
+  let skipped = 0;
+  let errors = 0;
+  let currentGrade = null;
+
+  for (const row of data) {
+    try {
+      // Track current grade (some rows only have grade, textbook rows have item numbers)
+      if (row['Grade']) {
+        currentGrade = row['Grade'];
+      }
+
+      const itemNumber = row['Item No'];
+      const name = row['Job Name'];
+
+      if (!itemNumber || !name) {
+        skipped++;
+        continue;
+      }
+
+      const gradeId = mapEnrollingGrade(currentGrade);
+      if (!gradeId) {
+        console.log(`  Skipping textbook (no grade mapping): ${name}`);
+        skipped++;
+        continue;
+      }
+
+      // Determine textbook type
+      let type = 'combined';
+      const nameLower = name.toLowerCase();
+      if (nameLower.includes('textbook') && !nameLower.includes('hw') && !nameLower.includes('homework')) {
+        type = 'textbook';
+      } else if ((nameLower.includes('hw') || nameLower.includes('homework')) && !nameLower.includes('textbook')) {
+        type = 'homework';
+      }
+
+      // Extract semester if present
+      let semester = null;
+      if (nameLower.includes('first semester')) semester = 'First';
+      else if (nameLower.includes('second semester')) semester = 'Second';
+      else if (nameLower.includes('third semester')) semester = 'Third';
+
+      const textbookData = {
+        gradeId,
+        gradeName: GRADE_NAMES[gradeId] || currentGrade,
+        itemNumber: String(itemNumber).trim(),
+        name: name.trim(),
+        type,
+        semester,
+        pageCount: row['Page No'] || 0,
+        copies: row['No of copies'] || 0,
+        unitCost: null, // Not in Excel
+        academicYear: ACADEMIC_YEAR,
+        status: 'active',
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      };
+
+      if (DRY_RUN) {
+        console.log(`  [DRY-RUN] Would import textbook: ${name} (${gradeId})`);
+      } else {
+        await db.collection('textbooks').add(textbookData);
+        console.log(`  Imported textbook: ${name}`);
+      }
+
+      imported++;
+    } catch (err) {
+      console.error(`  Error importing textbook: ${err.message}`);
+      errors++;
+    }
+  }
+
+  return { imported, skipped, errors };
+}
+
+/**
+ * Parse teacher info and extract volunteer helpers (HV)
+ */
+function parseTeacherInfo(teacherStr) {
+  if (!teacherStr) return { teachers: [], volunteers: [] };
+
+  const teachers = [];
+  const volunteers = [];
+
+  // Split by comma or /
+  const parts = String(teacherStr).split(/[,/]/).map(s => s.trim()).filter(Boolean);
+
+  for (const part of parts) {
+    const isVolunteer = part.includes('(HV)') || part.includes('(hv)');
+    const cleanName = part.replace(/\s*\(HV\)\s*/gi, '').trim();
+
+    if (isVolunteer) {
+      const { firstName, lastName } = parseFullName(cleanName);
+      volunteers.push({ firstName, lastName, type: 'high_school' });
+    } else {
+      const { firstName, lastName } = parseFullName(cleanName);
+      teachers.push({ firstName, lastName });
+    }
+  }
+
+  return { teachers, volunteers };
+}
+
+/**
+ * Import volunteers (HV helpers) from Teacher sheet
+ */
+async function importVolunteers(workbook) {
+  console.log('\n=== Importing Volunteers (HV Helpers) ===');
+
+  const sheet = workbook.Sheets['Teacher'];
+  if (!sheet) {
+    console.log('  Teacher sheet not found!');
+    return { imported: 0, skipped: 0, errors: 0 };
+  }
+
+  const data = XLSX.utils.sheet_to_json(sheet);
+
+  let imported = 0;
+  let skipped = 0;
+  let errors = 0;
+  const seenVolunteers = new Set();
+
+  for (const row of data) {
+    try {
+      // Check assistant teacher columns for HV markers
+      const assistantCols = ['Asst. Teacher', 'Asst. Teacher.1'];
+
+      for (const col of assistantCols) {
+        const { volunteers } = parseTeacherInfo(row[col]);
+
+        for (const vol of volunteers) {
+          const key = `${vol.firstName}-${vol.lastName}`.toLowerCase();
+          if (seenVolunteers.has(key)) continue;
+          seenVolunteers.add(key);
+
+          const volunteerData = {
+            firstName: vol.firstName,
+            lastName: vol.lastName,
+            type: 'high_school',
+            status: 'active',
+            academicYear: ACADEMIC_YEAR,
+            classAssignments: [],
+            createdAt: Timestamp.now(),
+            updatedAt: Timestamp.now(),
+          };
+
+          if (DRY_RUN) {
+            console.log(`  [DRY-RUN] Would import volunteer: ${vol.firstName} ${vol.lastName}`);
+          } else {
+            await db.collection('volunteers').add(volunteerData);
+            console.log(`  Imported volunteer: ${vol.firstName} ${vol.lastName}`);
+          }
+
+          imported++;
+        }
+      }
+    } catch (err) {
+      console.error(`  Error importing volunteer: ${err.message}`);
+      errors++;
+    }
+  }
+
+  return { imported, skipped, errors };
+}
+
+/**
+ * Main import function
+ */
+async function main() {
+  console.log('='.repeat(60));
+  console.log('GSDTA 2025-26 Data Import Script');
+  console.log('='.repeat(60));
+
+  if (DRY_RUN) {
+    console.log('\n*** DRY RUN MODE - No data will be written ***\n');
+  }
+
+  console.log(`Project ID: ${PROJECT_ID}`);
+  console.log(`Academic Year: ${ACADEMIC_YEAR}`);
+  console.log(`Import options: ${JSON.stringify({
+    students: IMPORT_STUDENTS,
+    teachers: IMPORT_TEACHERS,
+    textbooks: IMPORT_TEXTBOOKS,
+    classes: IMPORT_CLASSES,
+    volunteers: IMPORT_VOLUNTEERS,
+  })}`);
+
+  const workbook = readExcelFile();
+  const results = {};
+
+  if (IMPORT_STUDENTS) {
+    results.students = await importStudents(workbook);
+  }
+
+  if (IMPORT_TEXTBOOKS) {
+    results.textbooks = await importTextbooks(workbook);
+  }
+
+  if (IMPORT_VOLUNTEERS) {
+    results.volunteers = await importVolunteers(workbook);
+  }
+
+  // Summary
+  console.log('\n' + '='.repeat(60));
+  console.log('IMPORT SUMMARY');
+  console.log('='.repeat(60));
+
+  for (const [type, result] of Object.entries(results)) {
+    console.log(`\n${type.toUpperCase()}:`);
+    console.log(`  Imported: ${result.imported}`);
+    console.log(`  Skipped: ${result.skipped}`);
+    console.log(`  Errors: ${result.errors}`);
+  }
+
+  if (DRY_RUN) {
+    console.log('\n*** DRY RUN COMPLETE - No data was written ***');
+  } else {
+    console.log('\nImport complete!');
+  }
+
+  process.exit(0);
+}
+
+main().catch(err => {
+  console.error('Fatal error:', err);
+  process.exit(1);
+});
