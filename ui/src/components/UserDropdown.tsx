@@ -35,7 +35,9 @@ export function UserDropdown() {
 
     if (!user) return null;
 
-    const hasMultipleRoles = user.roles.length > 1;
+    // Defensive: handle stale sessionStorage data that may lack roles
+    const roles = user.roles ?? [];
+    const hasMultipleRoles = roles.length > 1;
 
     const closeDropdown = () => setOpen(false);
 
@@ -107,7 +109,9 @@ export function UserDropdownMobile({ onItemClick }: { onItemClick?: () => void }
 
     if (!user) return null;
 
-    const hasMultipleRoles = user.roles.length > 1;
+    // Defensive: handle stale sessionStorage data that may lack roles
+    const roles = user.roles ?? [];
+    const hasMultipleRoles = roles.length > 1;
 
     const handleClick = () => {
         onItemClick?.();

@@ -124,6 +124,15 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
             const raw = sessionStorage.getItem(STORAGE_KEY);
             if (raw) {
                 const parsed = JSON.parse(raw) as User;
+                // Validate and migrate stale data: ensure roles array exists
+                if (!parsed.roles && parsed.role) {
+                    parsed.roles = [parsed.role];
+                    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+                } else if (!parsed.roles) {
+                    // Invalid data without role info - clear it
+                    sessionStorage.removeItem(STORAGE_KEY);
+                    return;
+                }
                 setUser(parsed);
             }
         } catch {}
@@ -176,9 +185,19 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
             try {
                 await lazyLoadFirebase();
                 const { getFirebaseAuth } = await import("@/lib/firebase/client");
-                const { onAuthStateChanged, onIdTokenChanged } = await import("firebase/auth");
+                const { onAuthStateChanged, onIdTokenChanged, getRedirectResult } = await import("firebase/auth");
 
                 const auth = getFirebaseAuth();
+
+                // Handle redirect result from Google sign-in (must be called early)
+                try {
+                    const result = await getRedirectResult(auth);
+                    if (result?.user) {
+                        console.log("[Firebase] Redirect sign-in completed for:", result.user.email);
+                    }
+                } catch (redirectErr) {
+                    console.error("[Firebase] Redirect result error:", redirectErr);
+                }
 
                 // Register token provider for apiFetch
                 setAuthTokenProvider(async () => auth.currentUser ? await auth.currentUser.getIdToken() : null);
@@ -305,8 +324,9 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
             // In firebase mode, just update local state (role is client-side only)
             setUser((prev) => {
                 if (!prev) return prev;
-                // Verify the user has this role
-                if (!prev.roles.includes(role)) {
+                // Verify the user has this role (defensive: handle missing roles)
+                const userRoles = prev.roles ?? [];
+                if (!userRoles.includes(role)) {
                     console.warn(`User does not have role: ${role}`);
                     return prev;
                 }
