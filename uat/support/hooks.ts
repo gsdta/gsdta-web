@@ -35,7 +35,11 @@ BeforeAll(async function () {
 /**
  * Scenario setup - runs before each scenario
  */
-Before(async function (this: CustomWorld) {
+Before(async function (this: CustomWorld, scenario) {
+  const scenarioName = scenario.pickle.name;
+  const featureFile = scenario.pickle.uri.split('/').pop();
+  console.log(`\n▶️  STARTING: ${scenarioName} (${featureFile})`);
+
   // Initialize browser and page
   await this.init();
 
@@ -122,6 +126,19 @@ Before({ tags: '@parent and not @auth' }, async function (this: CustomWorld) {
  * Scenario teardown - runs after each scenario
  */
 After(async function (this: CustomWorld, scenario) {
+  const scenarioName = scenario.pickle.name;
+  const status = scenario.result?.status;
+  const duration = scenario.result?.duration;
+  const durationMs = duration ? Math.round(Number(duration.nanos) / 1_000_000 + (duration.seconds || 0) * 1000) : 0;
+
+  if (status === Status.PASSED) {
+    console.log(`✅ PASSED: ${scenarioName} (${durationMs}ms)`);
+  } else if (status === Status.FAILED) {
+    console.log(`❌ FAILED: ${scenarioName} (${durationMs}ms)`);
+  } else {
+    console.log(`⏭️  ${status}: ${scenarioName}`);
+  }
+
   // Take screenshot on failure
   if (scenario.result?.status === Status.FAILED) {
     try {
