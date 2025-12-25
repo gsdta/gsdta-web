@@ -560,10 +560,50 @@ async function importVolunteers(workbook) {
 }
 
 /**
+ * Create grade documents in Firestore
+ */
+async function ensureGrades() {
+  console.log('\n=== Ensuring Grades Exist ===');
+
+  const GRADES = [
+    { id: 'ps-1', name: 'Pre-School 1', displayName: 'Mazhalai 1', order: 1 },
+    { id: 'ps-2', name: 'Pre-School 2', displayName: 'Mazhalai 2', order: 2 },
+    { id: 'kg', name: 'Kindergarten', displayName: 'KG', order: 3 },
+    { id: 'grade-1', name: 'Grade 1', displayName: 'Grade 1', order: 4 },
+    { id: 'grade-2', name: 'Grade 2', displayName: 'Grade 2', order: 5 },
+    { id: 'grade-3', name: 'Grade 3', displayName: 'Grade 3', order: 6 },
+    { id: 'grade-4', name: 'Grade 4', displayName: 'Grade 4', order: 7 },
+    { id: 'grade-5', name: 'Grade 5', displayName: 'Grade 5', order: 8 },
+    { id: 'grade-6', name: 'Grade 6', displayName: 'Grade 6', order: 9 },
+    { id: 'grade-7', name: 'Grade 7', displayName: 'Grade 7', order: 10 },
+    { id: 'grade-8', name: 'Grade 8', displayName: 'Grade 8', order: 11 },
+  ];
+
+  for (const grade of GRADES) {
+    if (DRY_RUN) {
+      console.log(`  [DRY-RUN] Would create grade: ${grade.id} - ${grade.displayName}`);
+    } else {
+      await db.collection('grades').doc(grade.id).set({
+        name: grade.name,
+        displayName: grade.displayName,
+        order: grade.order,
+        status: 'active',
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      }, { merge: true });
+      console.log(`  Created/updated grade: ${grade.id} - ${grade.displayName}`);
+    }
+  }
+}
+
+/**
  * Import classes from Teacher sheet and assign students from roster sheets
  */
 async function importClasses(workbook) {
   console.log('\n=== Importing Classes ===');
+
+  // First ensure grades exist
+  await ensureGrades();
 
   const teacherSheet = workbook.Sheets['Teacher'];
   if (!teacherSheet) {
@@ -572,7 +612,7 @@ async function importClasses(workbook) {
   }
 
   const teacherData = XLSX.utils.sheet_to_json(teacherSheet);
-  console.log(`  Found ${teacherData.length} class records in Teacher sheet`);
+  console.log(`\n  Found ${teacherData.length} class records in Teacher sheet`);
 
   let imported = 0;
   let skipped = 0;
@@ -737,6 +777,7 @@ async function importClasses(workbook) {
             await matchedDoc.ref.update({
               classId,
               enrollingGrade: gradeId,
+              status: 'active', // Assigned to class = active
               updatedAt: Timestamp.now(),
             });
             studentsAssigned++;
@@ -751,6 +792,7 @@ async function importClasses(workbook) {
             await studentDoc.ref.update({
               classId,
               enrollingGrade: gradeId,
+              status: 'active', // Assigned to class = active
               updatedAt: Timestamp.now(),
             });
             studentsAssigned++;
