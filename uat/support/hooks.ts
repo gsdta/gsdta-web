@@ -30,6 +30,16 @@ BeforeAll(async function () {
 
   console.log('UAT Tests Starting...');
   console.log(`Target URL: ${process.env.UAT_BASE_URL || 'https://app.qa.gsdta.com'}`);
+
+  // Log environment variable status (without values for security)
+  console.log('[ENV] Environment variables status:');
+  console.log(`[ENV] UAT_ADMIN_EMAIL: ${process.env.UAT_ADMIN_EMAIL ? 'SET' : 'NOT SET'}`);
+  console.log(`[ENV] UAT_ADMIN_PASSWORD: ${process.env.UAT_ADMIN_PASSWORD ? 'SET' : 'NOT SET'}`);
+  console.log(`[ENV] UAT_TEACHER_EMAIL: ${process.env.UAT_TEACHER_EMAIL ? 'SET' : 'NOT SET'}`);
+  console.log(`[ENV] UAT_TEACHER_PASSWORD: ${process.env.UAT_TEACHER_PASSWORD ? 'SET' : 'NOT SET'}`);
+  console.log(`[ENV] UAT_PARENT_EMAIL: ${process.env.UAT_PARENT_EMAIL ? 'SET' : 'NOT SET'}`);
+  console.log(`[ENV] UAT_PARENT_PASSWORD: ${process.env.UAT_PARENT_PASSWORD ? 'SET' : 'NOT SET'}`);
+  console.log(`[ENV] FIREBASE_API_KEY: ${process.env.FIREBASE_API_KEY ? 'SET' : 'NOT SET'}`);
 });
 
 /**

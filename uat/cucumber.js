@@ -25,7 +25,7 @@ module.exports = {
   },
   ci: {
     ...common,
-    parallel: 4, // Run 4 scenarios in parallel for speed
+    parallel: 2, // Run 2 scenarios in parallel (reduced from 4 for auth stability)
     timeout: 120000, // 2 minutes for CI stability
     tags: 'not @skip and not @wip and not @manual',
     retry: 1, // Retry failed scenarios once

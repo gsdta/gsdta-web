@@ -51,26 +51,37 @@ Then('the page should load without errors', async function (this: CustomWorld) {
 
 // Navigation Steps
 Given('I am on the home page', async function (this: CustomWorld) {
+  console.log('[STEP] Navigating to home page...');
   await this.page.goto('/', { waitUntil: 'domcontentloaded' });
-  await this.page.waitForLoadState('load');
+  console.log(`[STEP] DOM loaded, URL: ${this.page.url()}`);
+  console.log('[STEP] Waiting for networkidle...');
+  await this.page.waitForLoadState('networkidle');
+  console.log('[STEP] Home page fully loaded');
 });
 
 When('I navigate to the about page', async function (this: CustomWorld) {
+  console.log('[STEP] Navigating to /about...');
   await this.page.goto('/about', { waitUntil: 'domcontentloaded' });
+  console.log(`[STEP] Arrived at: ${this.page.url()}`);
 });
 
 When(
   'I navigate to the {string} page',
   async function (this: CustomWorld, pagePath: string) {
+    console.log(`[STEP] Navigating to /${pagePath}...`);
     await this.page.goto(`/${pagePath}`, { waitUntil: 'domcontentloaded' });
+    console.log(`[STEP] Arrived at: ${this.page.url()}`);
   }
 );
 
 Given(
   'I navigate to {string}',
   async function (this: CustomWorld, path: string) {
+    console.log(`[STEP] Navigating to ${path}...`);
     await this.page.goto(path, { waitUntil: 'domcontentloaded' });
+    console.log(`[STEP] DOM loaded, URL: ${this.page.url()}`);
     await this.page.waitForLoadState('load');
+    console.log('[STEP] Page fully loaded');
   }
 );
 

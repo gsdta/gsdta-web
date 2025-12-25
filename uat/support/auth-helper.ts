@@ -7,7 +7,16 @@ import {
   Auth,
   UserCredential,
 } from 'firebase/auth';
-import { Config } from './config';
+import { Config, validateRoleCredentials } from './config';
+
+/**
+ * Mask sensitive data for logging (show first 3 chars + length)
+ */
+function maskSensitive(value: string | undefined): string {
+  if (!value) return '<empty>';
+  if (value.length <= 3) return '***';
+  return `${value.substring(0, 3)}...[${value.length} chars]`;
+}
 
 /**
  * Authentication helper for UAT tests against live QA Firebase
@@ -177,6 +186,10 @@ export class AuthHelper {
    * Login as admin user via UI
    */
   async loginAsAdmin(): Promise<void> {
+    console.log('[AUTH] loginAsAdmin() called');
+    console.log(`[AUTH] Admin email: ${maskSensitive(this.config.adminEmail)}`);
+    console.log(`[AUTH] Admin password: ${maskSensitive(this.config.adminPassword)}`);
+    validateRoleCredentials(this.config, 'admin');
     await this.loginViaUI(this.config.adminEmail, this.config.adminPassword);
   }
 
@@ -184,6 +197,10 @@ export class AuthHelper {
    * Login as teacher user via UI
    */
   async loginAsTeacher(): Promise<void> {
+    console.log('[AUTH] loginAsTeacher() called');
+    console.log(`[AUTH] Teacher email: ${maskSensitive(this.config.teacherEmail)}`);
+    console.log(`[AUTH] Teacher password: ${maskSensitive(this.config.teacherPassword)}`);
+    validateRoleCredentials(this.config, 'teacher');
     await this.loginViaUI(this.config.teacherEmail, this.config.teacherPassword);
   }
 
@@ -191,6 +208,10 @@ export class AuthHelper {
    * Login as parent user via UI
    */
   async loginAsParent(): Promise<void> {
+    console.log('[AUTH] loginAsParent() called');
+    console.log(`[AUTH] Parent email: ${maskSensitive(this.config.parentEmail)}`);
+    console.log(`[AUTH] Parent password: ${maskSensitive(this.config.parentPassword)}`);
+    validateRoleCredentials(this.config, 'parent');
     await this.loginViaUI(this.config.parentEmail, this.config.parentPassword);
   }
 
@@ -198,14 +219,23 @@ export class AuthHelper {
    * Logout current user
    */
   async logout(): Promise<void> {
+    console.log('[AUTH] logout() called');
+    console.log(`[AUTH] Current URL before logout: ${this.page.url()}`);
+
     // Sign out from Firebase SDK
+    console.log('[AUTH] Signing out from Firebase SDK...');
     await signOut(this.auth);
+    console.log('[AUTH] Firebase SDK signOut complete');
 
     // Navigate to logout page
+    console.log('[AUTH] Navigating to /logout...');
     await this.page.goto('/logout', { waitUntil: 'domcontentloaded' });
+    console.log(`[AUTH] After /logout navigation, URL: ${this.page.url()}`);
 
     // Wait for redirect to home or signin
+    console.log('[AUTH] Waiting for redirect to /signin or home...');
     await this.page.waitForURL(/\/(signin|$)/, { timeout: 10000 });
+    console.log(`[AUTH] Logout complete, final URL: ${this.page.url()}`);
   }
 
   /**
