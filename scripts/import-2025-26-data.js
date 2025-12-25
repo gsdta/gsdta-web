@@ -430,12 +430,8 @@ async function importTeachers(workbook) {
   let errors = 0;
   const seenTeachers = new Map(); // email -> teacher info
 
-  // Collect unique teachers from all classes
-  for (const row of data) {
-    const mainTeacher = row['Main Teacher'];
-    const mainEmail = row['Email address']?.trim()?.toLowerCase();
-    const gradeExcel = row['School Grade'];
-    const section = row['Section'] || 'A';
+  // Helper to process teacher from a row
+  function processTeacher(mainTeacher, mainEmail, gradeExcel, section, assistantTeacher, assistantEmail) {
     const gradeId = GRADE_MAPPING[gradeExcel] || GRADE_MAPPING[gradeExcel?.trim()];
 
     if (mainTeacher && mainEmail && !seenTeachers.has(mainEmail)) {
@@ -455,19 +451,21 @@ async function importTeachers(workbook) {
       if (teacher) {
         teacher.classAssignments.push({
           gradeId,
-          section,
+          section: section || 'A',
           role: 'primary',
         });
       }
     }
 
-    // Handle assistant teachers (they may not have emails in test data)
-    const assistantTeacher = row['Asst. Teacher'];
+    // Handle assistant teachers
     if (assistantTeacher) {
       const { teachers: assistants } = parseTeacherInfo(assistantTeacher);
       for (const asst of assistants) {
-        // Generate email for assistant if not provided
-        const asstEmail = `${asst.firstName.toLowerCase()}.${asst.lastName.toLowerCase()}@gsdta-test.org`;
+        // Use provided email or generate one
+        let asstEmail = assistantEmail?.trim()?.toLowerCase();
+        if (!asstEmail || asstEmail.includes(' ')) {
+          asstEmail = `${asst.firstName.toLowerCase()}.${asst.lastName.toLowerCase()}@gsdta-test.org`;
+        }
         if (!seenTeachers.has(asstEmail)) {
           seenTeachers.set(asstEmail, {
             firstName: asst.firstName,
@@ -481,12 +479,35 @@ async function importTeachers(workbook) {
         if (teacher && gradeId) {
           teacher.classAssignments.push({
             gradeId,
-            section,
+            section: section || 'A',
             role: 'assistant',
           });
         }
       }
     }
+  }
+
+  // Collect unique teachers from all classes (both left and right columns)
+  for (const row of data) {
+    // Left side columns (original)
+    processTeacher(
+      row['Main Teacher'],
+      row['Email address']?.trim()?.toLowerCase(),
+      row['School Grade'],
+      row['Section'],
+      row['Asst. Teacher'],
+      row['Email address_1']
+    );
+
+    // Right side columns (production Excel has two-column layout)
+    processTeacher(
+      row['Main Teacher_1'],
+      row['Email address_2']?.trim()?.toLowerCase(),
+      row['School Grade_1'],
+      row['Section_1'],
+      row['Asst. Teacher_1'],
+      row['Email address_3']
+    );
   }
 
   console.log(`  Found ${seenTeachers.size} unique teachers`);
@@ -813,93 +834,118 @@ async function importClasses(workbook) {
   });
   console.log(`  Found ${teacherByEmail.size} teachers`);
 
-  // Step 1: Create classes from Teacher sheet
-  for (const row of teacherData) {
-    try {
-      const gradeExcel = row['School Grade'];
-      const section = row['Section'] || 'A';
-      const room = row['Room'] || null;
-      const mainTeacher = row['Main Teacher'];
-      const mainTeacherEmail = row['Email address'];
-      const assistantTeacher = row['Asst. Teacher'];
+  // Helper to create a class from row data
+  async function createClassFromRow(gradeExcel, section, room, mainTeacher, mainTeacherEmail, assistantTeacher, assistantTeacherEmail) {
+    if (!gradeExcel) return null;
 
-      if (!gradeExcel) {
-        skipped++;
-        continue;
-      }
+    const gradeId = GRADE_MAPPING[gradeExcel] || GRADE_MAPPING[gradeExcel.trim()];
+    if (!gradeId) {
+      console.log(`  Warning: Unknown grade "${gradeExcel}", skipping`);
+      return null;
+    }
 
-      const gradeId = GRADE_MAPPING[gradeExcel] || GRADE_MAPPING[gradeExcel.trim()];
-      if (!gradeId) {
-        console.log(`  Warning: Unknown grade "${gradeExcel}", skipping`);
-        skipped++;
-        continue;
-      }
+    const gradeName = GRADE_NAMES[gradeId] || gradeExcel;
+    const className = `${gradeName} Section ${section || 'A'}`;
+    const classKey = `${gradeId}-${section || 'A'}`.toLowerCase();
 
-      const gradeName = GRADE_NAMES[gradeId] || gradeExcel;
-      const className = `${gradeName} Section ${section}`;
-      const classKey = `${gradeId}-${section}`.toLowerCase();
+    // Skip if class already created
+    if (classIdMap.has(classKey)) {
+      return null;
+    }
 
-      // Parse teachers with proper IDs
-      const teachers = [];
-      if (mainTeacher) {
-        const email = mainTeacherEmail?.trim()?.toLowerCase();
-        const teacherInfo = email ? teacherByEmail.get(email) : null;
+    // Parse teachers with proper IDs
+    const teachers = [];
+    if (mainTeacher) {
+      const email = mainTeacherEmail?.trim()?.toLowerCase();
+      const teacherInfo = email ? teacherByEmail.get(email) : null;
+      teachers.push({
+        teacherId: teacherInfo?.id || `pending-${mainTeacher.trim().replace(/\s+/g, '-').toLowerCase()}`,
+        teacherName: teacherInfo?.name || mainTeacher.trim(),
+        teacherEmail: email || null,
+        role: 'primary',
+        assignedAt: Timestamp.now(),
+        assignedBy: 'system-import',
+      });
+    }
+    if (assistantTeacher) {
+      const { teachers: assistants } = parseTeacherInfo(assistantTeacher);
+      for (const asst of assistants) {
+        const asstName = `${asst.firstName} ${asst.lastName}`;
+        // Use provided email or generate one
+        let asstEmail = assistantTeacherEmail?.trim()?.toLowerCase();
+        if (!asstEmail || asstEmail.includes(' ')) {
+          asstEmail = `${asst.firstName.toLowerCase()}.${asst.lastName.toLowerCase()}@gsdta-test.org`;
+        }
+        const teacherInfo = teacherByEmail.get(asstEmail);
         teachers.push({
-          teacherId: teacherInfo?.id || `pending-${mainTeacher.trim().replace(/\s+/g, '-').toLowerCase()}`,
-          teacherName: teacherInfo?.name || mainTeacher.trim(),
-          teacherEmail: email || null,
-          role: 'primary',
+          teacherId: teacherInfo?.id || `pending-${asstName.replace(/\s+/g, '-').toLowerCase()}`,
+          teacherName: teacherInfo?.name || asstName,
+          teacherEmail: teacherInfo?.email || asstEmail,
+          role: 'assistant',
           assignedAt: Timestamp.now(),
           assignedBy: 'system-import',
         });
       }
-      if (assistantTeacher) {
-        const { teachers: assistants } = parseTeacherInfo(assistantTeacher);
-        for (const asst of assistants) {
-          const asstName = `${asst.firstName} ${asst.lastName}`;
-          const asstEmail = `${asst.firstName.toLowerCase()}.${asst.lastName.toLowerCase()}@gsdta-test.org`;
-          const teacherInfo = teacherByEmail.get(asstEmail);
-          teachers.push({
-            teacherId: teacherInfo?.id || `pending-${asstName.replace(/\s+/g, '-').toLowerCase()}`,
-            teacherName: teacherInfo?.name || asstName,
-            teacherEmail: teacherInfo?.email || asstEmail,
-            role: 'assistant',
-            assignedAt: Timestamp.now(),
-            assignedBy: 'system-import',
-          });
-        }
-      }
+    }
 
-      const classData = {
-        name: className,
-        gradeId,
-        gradeName,
-        section,
-        room,
-        day: 'Saturday', // Default
-        time: '10:00 AM - 12:00 PM', // Default
-        capacity: 25,
-        enrolled: 0,
-        teachers,
-        status: 'active',
-        academicYear: ACADEMIC_YEAR,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-      };
+    const classData = {
+      name: className,
+      gradeId,
+      gradeName,
+      section: section || 'A',
+      room,
+      day: 'Saturday',
+      time: '10:00 AM - 12:00 PM',
+      capacity: 25,
+      enrolled: 0,
+      teachers,
+      status: 'active',
+      academicYear: ACADEMIC_YEAR,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    };
 
-      if (DRY_RUN) {
-        console.log(`  [DRY-RUN] Would create class: ${className}`);
-        const dryRunId = `dry-run-${classKey}`;
-        classIdMap.set(classKey, dryRunId);
-        classNameMap.set(dryRunId, className);
-      } else {
-        const docRef = await db.collection('classes').add(classData);
-        classIdMap.set(classKey, docRef.id);
-        classNameMap.set(docRef.id, className);
-        console.log(`  Created class: ${className} (${docRef.id})`);
-      }
+    if (DRY_RUN) {
+      console.log(`  [DRY-RUN] Would create class: ${className}`);
+      const dryRunId = `dry-run-${classKey}`;
+      classIdMap.set(classKey, dryRunId);
+      classNameMap.set(dryRunId, className);
+      return 'dry-run';
+    }
 
-      imported++;
+    const docRef = await db.collection('classes').add(classData);
+    classIdMap.set(classKey, docRef.id);
+    classNameMap.set(docRef.id, className);
+    console.log(`  Created class: ${className} (${docRef.id})`);
+    return docRef.id;
+  }
+
+  // Step 1: Create classes from Teacher sheet (both left and right columns)
+  for (const row of teacherData) {
+    try {
+      // Left side columns
+      const result1 = await createClassFromRow(
+        row['School Grade'],
+        row['Section'],
+        row['Room'],
+        row['Main Teacher'],
+        row['Email address'],
+        row['Asst. Teacher'],
+        row['Email address_1']
+      );
+      if (result1) imported++;
+
+      // Right side columns (production Excel has two-column layout)
+      const result2 = await createClassFromRow(
+        row['School Grade_1'],
+        row['Section_1'],
+        null, // Room is usually only in left column
+        row['Main Teacher_1'],
+        row['Email address_2'],
+        row['Asst. Teacher_1'],
+        row['Email address_3']
+      );
+      if (result2) imported++;
     } catch (err) {
       console.error(`  Error creating class: ${err.message}`);
       errors++;
