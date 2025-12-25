@@ -1,0 +1,101 @@
+# Reusable workflow for building Docker image only
+# Called by workflows that want to build in parallel with tests
+
+name: Build Docker Image
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Target environment (qa or production)'
+        type: string
+        required: true
+      gcp_project_id:
+        description: 'GCP Project ID for deployment (where Cloud Run lives)'
+        type: string
+        required: true
+      secrets_project_id:
+        description: 'GCP Project ID where secrets are stored'
+        type: string
+        required: true
+      site_url:
+        description: 'Site URL for the environment'
+        type: string
+        required: true
+      runner:
+        description: 'Runner to use'
+        type: string
+        default: 'ubuntu-latest'
+      image_tag:
+        description: 'Docker image tag (defaults to commit SHA)'
+        type: string
+        default: ''
+    secrets:
+      GCP_SA_KEY:
+        required: true
+    outputs:
+      image_uri:
+        description: 'Full URI of the built Docker image'
+        value: ${{ jobs.build.outputs.image_uri }}
+
+env:
+  GAR_LOCATION: us-central1
+  GAR_REPO: web-apps
+
+jobs:
+  build:
+    name: Build Docker Image
+    runs-on: ${{ inputs.runner }}
+    outputs:
+      image_uri: ${{ steps.meta.outputs.image_uri }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - run: gcloud auth configure-docker ${{ env.GAR_LOCATION }}-docker.pkg.dev --quiet
+
+      - name: Compute metadata
+        id: meta
+        shell: bash
+        run: |
+          TAG="${{ inputs.image_tag }}"
+          [ -z "$TAG" ] && TAG="${GITHUB_SHA::7}"
+
+          IMAGE_URI="${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ inputs.gcp_project_id }}/${{ env.GAR_REPO }}/gsdta-web:${{ inputs.environment }}-${TAG}"
+
+          echo "image_uri=$IMAGE_URI" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "📦 Image: $IMAGE_URI"
+
+      - name: Fetch Firebase secrets
+        id: secrets
+        run: |
+          echo "api_key=$(gcloud secrets versions access latest --secret=FIREBASE_API_KEY --project=${{ inputs.secrets_project_id }})" >> $GITHUB_OUTPUT
+          echo "auth_domain=$(gcloud secrets versions access latest --secret=FIREBASE_AUTH_DOMAIN --project=${{ inputs.secrets_project_id }})" >> $GITHUB_OUTPUT
+          echo "project_id=$(gcloud secrets versions access latest --secret=FIREBASE_PROJECT_ID --project=${{ inputs.secrets_project_id }})" >> $GITHUB_OUTPUT
+          echo "app_id=$(gcloud secrets versions access latest --secret=FIREBASE_APP_ID --project=${{ inputs.secrets_project_id }})" >> $GITHUB_OUTPUT
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.image_uri }}
+          no-cache: true
+          build-args: |
+            VERSION=${{ steps.meta.outputs.tag }}
+            COMMIT=${{ github.sha }}
+            NEXT_PUBLIC_AUTH_MODE=firebase
+            NEXT_PUBLIC_API_BASE_URL=/api
+            NEXT_PUBLIC_USE_MSW=false
+            NEXT_PUBLIC_SITE_URL=${{ inputs.site_url }}
+            NEXT_PUBLIC_FIREBASE_API_KEY=${{ steps.secrets.outputs.api_key }}
+            NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ steps.secrets.outputs.auth_domain }}
+            NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ steps.secrets.outputs.project_id }}
+            NEXT_PUBLIC_FIREBASE_APP_ID=${{ steps.secrets.outputs.app_id }}
