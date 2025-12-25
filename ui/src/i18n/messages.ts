@@ -215,6 +215,21 @@ export const messages: Record<Lang, Record<string, string>> = {
         "enrollment.title": "Class Enrollment",
         "enrollment.subtitle": "Apply for classes and track your enrollment applications.",
         "enrollment.apply": "Apply for a Class",
+
+        // Password change
+        "nav.changePassword": "Change Password",
+        "password.change.title": "Change Password",
+        "password.change.subtitle": "Update your account password",
+        "password.change.current": "Current Password",
+        "password.change.new": "New Password",
+        "password.change.confirm": "Confirm New Password",
+        "password.change.submit": "Update Password",
+        "password.change.success": "Password updated successfully",
+        "password.change.error.mismatch": "New passwords do not match",
+        "password.change.error.weak": "Password must be at least 8 characters",
+        "password.change.error.wrong": "Current password is incorrect",
+        "password.change.error.generic": "Failed to update password. Please try again.",
+        "password.change.googleUser": "You signed in with Google. Please manage your password through your Google account.",
     },
     ta: {
         // Nav
@@ -430,5 +445,20 @@ export const messages: Record<Lang, Record<string, string>> = {
         "enrollment.title": "வகுப்பு சேர்க்கை",
         "enrollment.subtitle": "வகுப்புகளுக்கு விண்ணப்பித்து உங்கள் சேர்க்கை நிலையைப் பாருங்கள்.",
         "enrollment.apply": "ஒரு வகுப்பிற்கு விண்ணப்பிக்க",
+
+        // Password change
+        "nav.changePassword": "கடவுச்சொல்லை மாற்று",
+        "password.change.title": "கடவுச்சொல்லை மாற்று",
+        "password.change.subtitle": "உங்கள் கணக்கு கடவுச்சொல்லைப் புதுப்பிக்கவும்",
+        "password.change.current": "தற்போதைய கடவுச்சொல்",
+        "password.change.new": "புதிய கடவுச்சொல்",
+        "password.change.confirm": "புதிய கடவுச்சொல்லை உறுதிப்படுத்தவும்",
+        "password.change.submit": "கடவுச்சொல்லைப் புதுப்பி",
+        "password.change.success": "கடவுச்சொல் வெற்றிகரமாகப் புதுப்பிக்கப்பட்டது",
+        "password.change.error.mismatch": "புதிய கடவுச்சொற்கள் பொருந்தவில்லை",
+        "password.change.error.weak": "கடவுச்சொல் குறைந்தது 8 எழுத்துக்கள் இருக்க வேண்டும்",
+        "password.change.error.wrong": "தற்போதைய கடவுச்சொல் தவறானது",
+        "password.change.error.generic": "கடவுச்சொல்லைப் புதுப்பிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.",
+        "password.change.googleUser": "நீங்கள் Google மூலம் உள்நுழைந்துள்ளீர்கள். உங்கள் Google கணக்கில் கடவுச்சொல்லை நிர்வகிக்கவும்.",
     },
 };
