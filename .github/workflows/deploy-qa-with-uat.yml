@@ -1,6 +1,6 @@
 # QA Environment Deployment with UAT
 # Triggered by: push to develop branch
-# Flow: Tests + Build (parallel) -> Deploy to QA -> UAT Tests -> Auto-merge to main
+# Flow: Tests + Build (parallel) -> Deploy to QA -> UAT Tests -> Merge to main
 
 name: Deploy to QA with UAT
 
