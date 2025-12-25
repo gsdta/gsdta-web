@@ -206,10 +206,10 @@ Then(
     console.log(`[NAV] Checking for "${linkText}" link in navigation...`);
     console.log(`[NAV] Current URL: ${this.page.url()}`);
 
-    // Wait for page to fully hydrate before checking navigation
-    console.log('[NAV] Waiting for networkidle...');
-    await this.page.waitForLoadState('networkidle');
-    console.log('[NAV] networkidle reached');
+    // Wait for page load state (not networkidle - third-party scripts may keep connections open)
+    console.log('[NAV] Waiting for load state...');
+    await this.page.waitForLoadState('load');
+    console.log('[NAV] Page loaded');
 
     const navLink = this.page.locator(`nav a:has-text("${linkText}")`);
     const count = await navLink.count();

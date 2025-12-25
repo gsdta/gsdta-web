@@ -54,9 +54,9 @@ Given('I am on the home page', async function (this: CustomWorld) {
   console.log('[STEP] Navigating to home page...');
   await this.page.goto('/', { waitUntil: 'domcontentloaded' });
   console.log(`[STEP] DOM loaded, URL: ${this.page.url()}`);
-  console.log('[STEP] Waiting for networkidle...');
-  await this.page.waitForLoadState('networkidle');
-  console.log('[STEP] Home page fully loaded');
+  // Wait for page load state (not networkidle - third-party scripts may keep connections open)
+  await this.page.waitForLoadState('load');
+  console.log('[STEP] Home page loaded');
 });
 
 When('I navigate to the about page', async function (this: CustomWorld) {

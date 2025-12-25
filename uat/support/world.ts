@@ -44,11 +44,35 @@ export class CustomWorld extends World<CustomWorldParameters> {
       slowMo: this.config.slowMo,
     });
 
+    // Set language cookie to English before creating context
+    // This ensures the app renders in English (the app uses i18n:lang cookie/localStorage)
+    const baseUrl = this.parameters.baseUrl || this.config.baseUrl;
+    const urlObj = new URL(baseUrl);
+
     this.context = await this.browser.newContext({
       viewport: { width: 1280, height: 720 },
-      baseURL: this.parameters.baseUrl || this.config.baseUrl,
+      baseURL: baseUrl,
       locale: 'en-US',
       timezoneId: 'America/Los_Angeles',
+      storageState: {
+        cookies: [{
+          name: 'i18n:lang',
+          value: 'en',
+          domain: urlObj.hostname,
+          path: '/',
+          expires: Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60,
+          httpOnly: false,
+          secure: urlObj.protocol === 'https:',
+          sameSite: 'Lax',
+        }],
+        origins: [{
+          origin: baseUrl,
+          localStorage: [{
+            name: 'i18n:lang',
+            value: 'en',
+          }],
+        }],
+      },
     });
 
     this.page = await this.context.newPage();

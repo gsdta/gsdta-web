@@ -37,23 +37,28 @@ print_info() {
 }
 
 # Parse command line arguments
-TAG="@smoke"
-PROFILE="smoke"
+MODE="full"  # Default: run smoke then full suite (like CI)
+TAG=""
+PROFILE=""
 BASE_URL="${UAT_BASE_URL:-https://app.qa.gsdta.com}"
 HEADLESS="true"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         --tag)
+            MODE="tag"
             TAG="$2"
+            PROFILE="default"
             shift 2
             ;;
         --all)
+            MODE="all"
             TAG="not @skip and not @wip"
             PROFILE="default"
             shift
             ;;
         --smoke)
+            MODE="smoke"
             TAG="@smoke"
             PROFILE="smoke"
             shift
@@ -67,6 +72,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --ci)
+            MODE="ci"
             PROFILE="ci"
             TAG="not @skip and not @wip and not @manual"
             shift
@@ -75,16 +81,18 @@ while [[ $# -gt 0 ]]; do
             echo "Usage: $0 [options]"
             echo ""
             echo "Options:"
-            echo "  --smoke           Run smoke tests only (default)"
+            echo "  (no args)         Run smoke tests first, then full suite (like CI)"
+            echo "  --smoke           Run smoke tests only"
             echo "  --all             Run all tests (excluding @skip and @wip)"
             echo "  --tag TAG         Run tests with specific tag (e.g., @auth, @public)"
             echo "  --url URL         Override base URL (default: https://app.qa.gsdta.com)"
             echo "  --headed          Run with visible browser (default: headless)"
-            echo "  --ci              Run in CI mode with reports"
+            echo "  --ci              Run in CI mode with parallel execution and reports"
             echo "  --help            Show this help message"
             echo ""
             echo "Examples:"
-            echo "  $0                          # Run smoke tests"
+            echo "  $0                          # Run smoke + full suite (like CI)"
+            echo "  $0 --smoke                  # Run smoke tests only"
             echo "  $0 --all                    # Run all tests"
             echo "  $0 --tag @auth              # Run auth tests only"
             echo "  $0 --tag '@smoke and @api'  # Run smoke API tests"
@@ -111,7 +119,10 @@ done
 
 # Display configuration
 print_info "Target URL: $BASE_URL"
-print_info "Tags: $TAG"
+print_info "Mode: $MODE"
+if [ -n "$TAG" ]; then
+    print_info "Tags: $TAG"
+fi
 print_info "Headless: $HEADLESS"
 echo ""
 
@@ -179,22 +190,51 @@ else
 fi
 
 # Step 5: Run UAT tests
-print_step "Running UAT tests..."
 echo ""
 
 # Set environment variables
 export UAT_BASE_URL="$BASE_URL"
 export HEADLESS="$HEADLESS"
 
-# Run Cucumber tests
-if npx cucumber-js --tags "$TAG" --profile "$PROFILE"; then
+# Function to run tests and handle results
+run_tests() {
+    local tag="$1"
+    local profile="$2"
+    local description="$3"
+
+    print_step "Running $description..."
+    echo ""
+
+    if npx cucumber-js --tags "$tag" --profile "$profile"; then
+        print_success "$description passed!"
+        return 0
+    else
+        print_error "$description failed!"
+        return 1
+    fi
+}
+
+# Function to show final results
+show_results() {
+    local success="$1"
     cd "$SCRIPT_DIR"
     echo ""
-    print_success "UAT tests completed successfully!"
-    echo ""
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${GREEN}✨ UAT Tests Passed ✨${NC}"
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+    if [ "$success" = "true" ]; then
+        echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${GREEN}✨ UAT Tests Passed ✨${NC}"
+        echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    else
+        echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${RED}❌ UAT Tests Failed${NC}"
+        echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo ""
+        echo "Debugging options:"
+        echo "  1. Check screenshots: ls uat/reports/screenshots/"
+        echo "  2. Run with visible browser: $0 --headed"
+        echo "  3. Run specific tag: $0 --tag @public"
+        echo "  4. Check QA logs in GCP Console"
+    fi
     echo ""
 
     # Show report location if exists
@@ -203,28 +243,38 @@ if npx cucumber-js --tags "$TAG" --profile "$PROFILE"; then
         echo "  open uat/reports/cucumber-report.html"
         echo ""
     fi
+}
 
-    exit 0
-else
-    cd "$SCRIPT_DIR"
-    echo ""
-    print_error "UAT tests failed!"
-    echo ""
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo "Debugging options:"
-    echo "  1. Check screenshots: ls uat/reports/screenshots/"
-    echo "  2. Run with visible browser: $0 --headed"
-    echo "  3. Run specific tag: $0 --tag @public"
-    echo "  4. Check QA logs in GCP Console"
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo ""
-
-    # Show report location if exists
-    if [ -f "uat/reports/cucumber-report.html" ]; then
-        echo "View HTML report:"
-        echo "  open uat/reports/cucumber-report.html"
+# Execute based on mode
+case $MODE in
+    full)
+        # Run smoke tests first, then full suite (like CI)
+        print_info "Running smoke tests first, then full suite..."
         echo ""
-    fi
 
-    exit 1
-fi
+        if run_tests "@smoke" "smoke" "Smoke tests"; then
+            echo ""
+            if run_tests "not @skip and not @wip and not @manual" "default" "Full test suite"; then
+                show_results "true"
+                exit 0
+            else
+                show_results "false"
+                exit 1
+            fi
+        else
+            print_error "Smoke tests failed - skipping full suite"
+            show_results "false"
+            exit 1
+        fi
+        ;;
+    smoke|all|tag|ci)
+        # Run single test suite
+        if run_tests "$TAG" "$PROFILE" "UAT tests ($MODE)"; then
+            show_results "true"
+            exit 0
+        else
+            show_results "false"
+            exit 1
+        fi
+        ;;
+esac
