@@ -5,6 +5,17 @@ import { useI18n } from "@/i18n/LanguageProvider";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { UserDropdown, UserDropdownMobile } from "@/components/UserDropdown";
 import { useState } from "react";
+import type { Role } from "@/lib/auth-types";
+
+// Get dashboard URL based on user role
+function getDashboardUrl(role: Role): string {
+    switch (role) {
+        case "admin": return "/admin";
+        case "teacher": return "/teacher/dashboard";
+        case "parent": return "/parent/dashboard";
+        default: return "/";
+    }
+}
 
 // Static navigation links shown to all users
 const staticNav = [
@@ -46,6 +57,11 @@ export function Header() {
                             {t(item.labelKey)}
                         </Link>
                     ))}
+                    {user && (
+                        <Link href={getDashboardUrl(user.role)} className="hover:underline text-gray-900 font-medium">
+                            {t("nav.dashboard")}
+                        </Link>
+                    )}
                     {/* Contact intentionally removed from header */}
                     <LanguageSwitcher />
                     {user ? (
@@ -91,6 +107,11 @@ export function Header() {
                                 {t(item.labelKey)}
                             </Link>
                         ))}
+                        {user && (
+                            <Link href={getDashboardUrl(user.role)} className="hover:underline text-gray-900 font-medium" onClick={close}>
+                                {t("nav.dashboard")}
+                            </Link>
+                        )}
                         {user ? (
                             <UserDropdownMobile onItemClick={close} />
                         ) : (
