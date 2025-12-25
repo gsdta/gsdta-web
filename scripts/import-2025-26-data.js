@@ -712,17 +712,17 @@ async function ensureGrades() {
   console.log('\n=== Ensuring Grades Exist ===');
 
   const GRADES = [
-    { id: 'ps-1', name: 'Pre-School 1', displayName: 'Mazhalai 1', order: 1 },
-    { id: 'ps-2', name: 'Pre-School 2', displayName: 'Mazhalai 2', order: 2 },
-    { id: 'kg', name: 'Kindergarten', displayName: 'KG', order: 3 },
-    { id: 'grade-1', name: 'Grade 1', displayName: 'Grade 1', order: 4 },
-    { id: 'grade-2', name: 'Grade 2', displayName: 'Grade 2', order: 5 },
-    { id: 'grade-3', name: 'Grade 3', displayName: 'Grade 3', order: 6 },
-    { id: 'grade-4', name: 'Grade 4', displayName: 'Grade 4', order: 7 },
-    { id: 'grade-5', name: 'Grade 5', displayName: 'Grade 5', order: 8 },
-    { id: 'grade-6', name: 'Grade 6', displayName: 'Grade 6', order: 9 },
-    { id: 'grade-7', name: 'Grade 7', displayName: 'Grade 7', order: 10 },
-    { id: 'grade-8', name: 'Grade 8', displayName: 'Grade 8', order: 11 },
+    { id: 'ps-1', name: 'Pre-School 1', displayName: 'Mazhalai 1', displayOrder: 1 },
+    { id: 'ps-2', name: 'Pre-School 2', displayName: 'Mazhalai 2', displayOrder: 2 },
+    { id: 'kg', name: 'Kindergarten', displayName: 'KG', displayOrder: 3 },
+    { id: 'grade-1', name: 'Grade 1', displayName: 'Grade 1', displayOrder: 4 },
+    { id: 'grade-2', name: 'Grade 2', displayName: 'Grade 2', displayOrder: 5 },
+    { id: 'grade-3', name: 'Grade 3', displayName: 'Grade 3', displayOrder: 6 },
+    { id: 'grade-4', name: 'Grade 4', displayName: 'Grade 4', displayOrder: 7 },
+    { id: 'grade-5', name: 'Grade 5', displayName: 'Grade 5', displayOrder: 8 },
+    { id: 'grade-6', name: 'Grade 6', displayName: 'Grade 6', displayOrder: 9 },
+    { id: 'grade-7', name: 'Grade 7', displayName: 'Grade 7', displayOrder: 10 },
+    { id: 'grade-8', name: 'Grade 8', displayName: 'Grade 8', displayOrder: 11 },
   ];
 
   for (const grade of GRADES) {
@@ -732,7 +732,7 @@ async function ensureGrades() {
       await db.collection('grades').doc(grade.id).set({
         name: grade.name,
         displayName: grade.displayName,
-        order: grade.order,
+        displayOrder: grade.displayOrder,
         status: 'active',
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
