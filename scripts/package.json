@@ -7,7 +7,10 @@
     "seed": "node seed-emulator.js",
     "seed:clear": "node seed-emulator.js --clear",
     "import:2025-26": "node import-2025-26-data.js",
-    "import:2025-26:dry-run": "node import-2025-26-data.js --dry-run"
+    "import:2025-26:dry-run": "node import-2025-26-data.js --dry-run",
+    "import:test": "node import-2025-26-data.js --test",
+    "import:test:dry-run": "node import-2025-26-data.js --test --dry-run",
+    "generate:test-data": "node generate-test-data.js"
   },
   "dependencies": {
     "firebase-admin": "^13.5.0",
