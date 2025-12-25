@@ -160,6 +160,12 @@ export default function AdminStudentDetailsPage({
 
         {/* Action Buttons */}
         <div className="flex gap-2">
+          <Link
+            href={`/admin/students/${id}/edit`}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Edit
+          </Link>
           {student.status === 'pending' && (
             <button
               onClick={handleAdmit}
