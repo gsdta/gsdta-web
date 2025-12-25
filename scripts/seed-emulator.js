@@ -524,7 +524,7 @@ async function seedClasses() {
         teachers: cls.teachers ? cls.teachers.map(t => ({
           ...t,
           assignedAt: admin.firestore.Timestamp.fromDate(t.assignedAt)
-        })) : undefined,
+        })) : [],
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       };
