@@ -60,6 +60,37 @@ describe('AdminStudentDetailsPage', () => {
     parentId: 'parent-1',
   };
 
+  // Student with all new 2025-26 fields
+  const mockStudentWithAllFields = {
+    ...mockStudent,
+    gender: 'Boy',
+    dateOfBirth: '2016-03-20',
+    schoolName: 'Poway Elementary',
+    schoolDistrict: 'Poway Unified School District',
+    grade: '3rd Grade',
+    priorTamilLevel: 'beginner',
+    address: {
+      street: '12345 Main Street',
+      city: 'San Diego',
+      zipCode: '92128',
+    },
+    contacts: {
+      mother: {
+        name: 'Priya Kumar',
+        email: 'priya@example.com',
+        phone: '8585551234',
+        employer: 'Tech Corp',
+      },
+      father: {
+        name: 'Raj Kumar',
+        email: 'raj@example.com',
+        phone: '8585555678',
+        employer: 'Finance Inc',
+      },
+    },
+    medicalNotes: 'Peanut allergy',
+  };
+
   const mockClasses = [
     { id: 'class-1', name: 'Class 1', level: 'Beginner', day: 'Sat', time: '10am', capacity: 20, enrolled: 5, available: 15 },
   ];
@@ -221,10 +252,143 @@ describe('AdminStudentDetailsPage', () => {
         <AdminStudentDetailsPage params={mockParams} />
       </React.Suspense>
     );
-    
+
     await waitFor(() => {
       expect(screen.getByText('parent@test.com')).toBeInTheDocument();
       expect(screen.getByText('parent-1')).toBeInTheDocument();
+    });
+  });
+
+  // ============================================================================
+  // New field tests for 2025-26 data integration
+  // ============================================================================
+
+  describe('New Fields Display', () => {
+    test('ASD-011: Displays gender field', async () => {
+      (adminGetStudent as jest.Mock).mockResolvedValue(mockStudentWithAllFields);
+      render(
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <AdminStudentDetailsPage params={mockParams} />
+        </React.Suspense>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Gender')).toBeInTheDocument();
+        // Gender appears in both header and details section
+        expect(screen.getAllByText('Boy').length).toBeGreaterThanOrEqual(1);
+      });
+    });
+
+    test('ASD-012: Displays school district', async () => {
+      (adminGetStudent as jest.Mock).mockResolvedValue(mockStudentWithAllFields);
+      render(
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <AdminStudentDetailsPage params={mockParams} />
+        </React.Suspense>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('School District')).toBeInTheDocument();
+        expect(screen.getByText('Poway Unified School District')).toBeInTheDocument();
+      });
+    });
+
+    test('ASD-013: Displays address section', async () => {
+      (adminGetStudent as jest.Mock).mockResolvedValue(mockStudentWithAllFields);
+      render(
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <AdminStudentDetailsPage params={mockParams} />
+        </React.Suspense>
+      );
+
+      await waitFor(() => {
+        // Check for address-related content (may be in Home Address section)
+        const pageContent = document.body.textContent;
+        expect(pageContent).toContain('12345 Main Street');
+        expect(pageContent).toContain('San Diego');
+        expect(pageContent).toContain('92128');
+      });
+    });
+
+    test('ASD-014: Displays mother contact information', async () => {
+      (adminGetStudent as jest.Mock).mockResolvedValue(mockStudentWithAllFields);
+      render(
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <AdminStudentDetailsPage params={mockParams} />
+        </React.Suspense>
+      );
+
+      await waitFor(() => {
+        // The section title is "Mother's Contact" in the actual UI
+        expect(screen.getByText("Mother's Contact")).toBeInTheDocument();
+        expect(screen.getByText('Priya Kumar')).toBeInTheDocument();
+        expect(screen.getByText('priya@example.com')).toBeInTheDocument();
+        expect(screen.getByText('8585551234')).toBeInTheDocument();
+        expect(screen.getByText('Tech Corp')).toBeInTheDocument();
+      });
+    });
+
+    test('ASD-015: Displays father contact information', async () => {
+      (adminGetStudent as jest.Mock).mockResolvedValue(mockStudentWithAllFields);
+      render(
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <AdminStudentDetailsPage params={mockParams} />
+        </React.Suspense>
+      );
+
+      await waitFor(() => {
+        // The section title is "Father's Contact" in the actual UI
+        expect(screen.getByText("Father's Contact")).toBeInTheDocument();
+        expect(screen.getByText('Raj Kumar')).toBeInTheDocument();
+        expect(screen.getByText('raj@example.com')).toBeInTheDocument();
+        expect(screen.getByText('8585555678')).toBeInTheDocument();
+        expect(screen.getByText('Finance Inc')).toBeInTheDocument();
+      });
+    });
+
+    test('ASD-016: Displays medical notes', async () => {
+      (adminGetStudent as jest.Mock).mockResolvedValue(mockStudentWithAllFields);
+      render(
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <AdminStudentDetailsPage params={mockParams} />
+        </React.Suspense>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Medical Notes')).toBeInTheDocument();
+        expect(screen.getByText('Peanut allergy')).toBeInTheDocument();
+      });
+    });
+
+    test('ASD-017: Handles missing optional fields gracefully', async () => {
+      // Student without new fields (backwards compatibility)
+      (adminGetStudent as jest.Mock).mockResolvedValue(mockStudent);
+      render(
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <AdminStudentDetailsPage params={mockParams} />
+        </React.Suspense>
+      );
+
+      await waitFor(() => {
+        // Should still render student name
+        expect(screen.getByRole('heading', { name: /Arun Kumar/i })).toBeInTheDocument();
+        // Should not crash when contacts/address are undefined
+        expect(screen.queryByText('Peanut allergy')).not.toBeInTheDocument();
+      });
+    });
+
+    test('ASD-018: Displays school name and grade', async () => {
+      (adminGetStudent as jest.Mock).mockResolvedValue(mockStudentWithAllFields);
+      render(
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <AdminStudentDetailsPage params={mockParams} />
+        </React.Suspense>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Poway Elementary')).toBeInTheDocument();
+        expect(screen.getByText('3rd Grade')).toBeInTheDocument();
+      });
     });
   });
 });

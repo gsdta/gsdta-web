@@ -29,6 +29,8 @@ export interface ClassOption {
   name: string;
   gradeId: string;
   gradeName?: string;
+  section?: string;
+  room?: string;
   day: string;
   time: string;
   capacity: number;
@@ -140,6 +142,8 @@ export async function adminGetClass(getIdToken: TokenGetter, classId: string): P
 export interface CreateClassInput {
   name: string;
   gradeId: string;
+  section?: string;
+  room?: string;
   day: string;
   time: string;
   capacity: number;
@@ -149,6 +153,8 @@ export interface CreateClassInput {
 export interface UpdateClassInput {
   name?: string;
   gradeId?: string;
+  section?: string;
+  room?: string;
   day?: string;
   time?: string;
   capacity?: number;

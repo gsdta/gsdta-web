@@ -7,15 +7,100 @@ import { z } from 'zod';
 export type StudentStatus = 'pending' | 'admitted' | 'active' | 'inactive' | 'withdrawn';
 
 /**
+ * Gender options for students
+ */
+export type Gender = 'Boy' | 'Girl' | 'Other';
+
+/**
+ * Parent/Guardian contact information
+ */
+export interface ParentContact {
+  name?: string;
+  email?: string;
+  phone?: string;
+  employer?: string;
+}
+
+/**
+ * Both parents' contact information
+ */
+export interface StudentContacts {
+  mother?: ParentContact;
+  father?: ParentContact;
+}
+
+/**
+ * Student address information
+ */
+export interface StudentAddress {
+  street?: string;
+  city?: string;
+  zipCode?: string;
+}
+
+/**
+ * Common school districts in San Diego area
+ */
+export const COMMON_SCHOOL_DISTRICTS = [
+  'Poway Unified School District',
+  'San Diego Unified School District',
+  'San Dieguito Union High School District',
+  'Carlsbad Unified School District',
+  'Solana Beach School District',
+  'Temecula Valley Unified School District',
+  'Del Mar Union School District',
+  'Encinitas Union School District',
+  'Rancho Santa Fe School District',
+  'Other',
+] as const;
+
+/**
+ * Gender options for dropdown
+ */
+export const genderOptions = [
+  { value: '', label: 'Select gender' },
+  { value: 'Boy', label: 'Boy' },
+  { value: 'Girl', label: 'Girl' },
+  { value: 'Other', label: 'Other / Prefer not to say' },
+];
+
+/**
+ * Schema for parent contact
+ */
+const parentContactSchema = z.object({
+  name: z.string().max(200).optional(),
+  email: z.string().email().max(200).optional().or(z.literal('')),
+  phone: z.string().max(20).optional(),
+  employer: z.string().max(200).optional(),
+}).optional();
+
+/**
+ * Schema for student address
+ */
+const addressSchema = z.object({
+  street: z.string().max(300).optional(),
+  city: z.string().max(100).optional(),
+  zipCode: z.string().max(10).optional(),
+}).optional();
+
+/**
  * Schema for creating a new student (parent registration)
  */
 export const createStudentSchema = z.object({
   firstName: z.string().min(1, 'First name is required').max(100),
   lastName: z.string().min(1, 'Last name is required').max(100),
   dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+  gender: z.enum(['Boy', 'Girl', 'Other']).optional(),
   grade: z.string().max(50).optional(),
   schoolName: z.string().max(200).optional(),
+  schoolDistrict: z.string().max(200).optional(),
   priorTamilLevel: z.string().max(50).optional(),
+  enrollingGrade: z.string().max(50).optional(),
+  address: addressSchema,
+  contacts: z.object({
+    mother: parentContactSchema,
+    father: parentContactSchema,
+  }).optional(),
   medicalNotes: z.string().max(1000).optional(),
   photoConsent: z.boolean().default(false),
 });
@@ -29,9 +114,17 @@ export const updateStudentSchema = z.object({
   firstName: z.string().min(1).max(100).optional(),
   lastName: z.string().min(1).max(100).optional(),
   dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  gender: z.enum(['Boy', 'Girl', 'Other']).optional(),
   grade: z.string().max(50).optional(),
   schoolName: z.string().max(200).optional(),
+  schoolDistrict: z.string().max(200).optional(),
   priorTamilLevel: z.string().max(50).optional(),
+  enrollingGrade: z.string().max(50).optional(),
+  address: addressSchema,
+  contacts: z.object({
+    mother: parentContactSchema,
+    father: parentContactSchema,
+  }).optional(),
   medicalNotes: z.string().max(1000).optional(),
   photoConsent: z.boolean().optional(),
 });
@@ -47,11 +140,16 @@ export interface Student {
   lastName: string;
   name: string;
   dateOfBirth: string;
+  gender?: Gender;
   parentId?: string;
   parentEmail?: string;
+  contacts?: StudentContacts;
+  address?: StudentAddress;
   grade?: string;
   schoolName?: string;
+  schoolDistrict?: string;
   priorTamilLevel?: string;
+  enrollingGrade?: string;
   medicalNotes?: string;
   photoConsent: boolean;
   classId?: string;
@@ -73,8 +171,11 @@ export interface StudentListItem {
   lastName: string;
   name: string;
   dateOfBirth: string;
+  gender?: Gender;
   grade?: string;
   schoolName?: string;
+  schoolDistrict?: string;
+  enrollingGrade?: string;
   classId?: string;
   className?: string;
   status: StudentStatus;
@@ -99,9 +200,31 @@ export const newStudentDefaults: CreateStudentInput = {
   firstName: '',
   lastName: '',
   dateOfBirth: '',
+  gender: undefined,
   grade: '',
   schoolName: '',
+  schoolDistrict: '',
   priorTamilLevel: '',
+  enrollingGrade: '',
+  address: {
+    street: '',
+    city: '',
+    zipCode: '',
+  },
+  contacts: {
+    mother: {
+      name: '',
+      email: '',
+      phone: '',
+      employer: '',
+    },
+    father: {
+      name: '',
+      email: '',
+      phone: '',
+      employer: '',
+    },
+  },
   medicalNotes: '',
   photoConsent: false,
 };

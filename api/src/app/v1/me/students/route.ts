@@ -5,14 +5,34 @@ import { getStudentsByParentId, createStudent } from '@/lib/firestoreStudents';
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
 
+// Zod schema for parent contact
+const parentContactSchema = z.object({
+  name: z.string().max(100).optional(),
+  email: z.string().email().max(200).optional().or(z.literal('')),
+  phone: z.string().max(20).optional(),
+  employer: z.string().max(200).optional(),
+}).optional();
+
 // Zod schema for student registration
 const createStudentSchema = z.object({
   firstName: z.string().min(1, 'First name is required').max(100),
   lastName: z.string().min(1, 'Last name is required').max(100),
   dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+  gender: z.enum(['Boy', 'Girl', 'Other']).optional(),
   grade: z.string().max(50).optional(),
   schoolName: z.string().max(200).optional(),
+  schoolDistrict: z.string().max(200).optional(),
   priorTamilLevel: z.string().max(50).optional(),
+  enrollingGrade: z.string().max(50).optional(),
+  address: z.object({
+    street: z.string().max(200).optional(),
+    city: z.string().max(100).optional(),
+    zipCode: z.string().max(20).optional(),
+  }).optional(),
+  contacts: z.object({
+    mother: parentContactSchema,
+    father: parentContactSchema,
+  }).optional(),
   medicalNotes: z.string().max(1000).optional(),
   photoConsent: z.boolean().optional(),
 });
@@ -234,9 +254,14 @@ export async function POST(req: NextRequest) {
           lastName: student.lastName,
           name: `${student.firstName} ${student.lastName}`,
           dateOfBirth: student.dateOfBirth,
+          gender: student.gender,
           grade: student.grade,
           schoolName: student.schoolName,
+          schoolDistrict: student.schoolDistrict,
           priorTamilLevel: student.priorTamilLevel,
+          enrollingGrade: student.enrollingGrade,
+          address: student.address,
+          contacts: student.contacts,
           medicalNotes: student.medicalNotes,
           photoConsent: student.photoConsent,
           status: student.status,
