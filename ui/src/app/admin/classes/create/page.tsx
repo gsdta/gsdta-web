@@ -20,6 +20,8 @@ export default function CreateClassPage() {
   const [formData, setFormData] = useState<CreateClassInput>({
     name: '',
     gradeId: '',
+    section: '',
+    room: '',
     day: 'Saturday',
     time: '',
     capacity: 20,
@@ -207,6 +209,43 @@ export default function CreateClassPage() {
               ))}
             </select>
             {errors.day && <p className="mt-1 text-sm text-red-600">{errors.day}</p>}
+          </div>
+        </div>
+
+        {/* Section and Room */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="section" className="block text-sm font-medium text-gray-700 mb-1">
+              Section (Optional)
+            </label>
+            <select
+              id="section"
+              name="section"
+              value={formData.section || ''}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">No section</option>
+              <option value="A">Section A</option>
+              <option value="B">Section B</option>
+              <option value="C">Section C</option>
+              <option value="D">Section D</option>
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="room" className="block text-sm font-medium text-gray-700 mb-1">
+              Room (Optional)
+            </label>
+            <input
+              type="text"
+              id="room"
+              name="room"
+              value={formData.room || ''}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g., B01, B02"
+            />
           </div>
         </div>
 

@@ -7,6 +7,38 @@ import { Timestamp } from 'firebase-admin/firestore';
 export type StudentStatus = 'pending' | 'admitted' | 'active' | 'inactive' | 'withdrawn';
 
 /**
+ * Gender options for students
+ */
+export type Gender = 'Boy' | 'Girl' | 'Other';
+
+/**
+ * Student address information
+ */
+export interface StudentAddress {
+  street?: string;
+  city?: string;
+  zipCode?: string;
+}
+
+/**
+ * Parent/Guardian contact information
+ */
+export interface ParentContact {
+  name?: string;
+  email?: string;
+  phone?: string;
+  employer?: string;
+}
+
+/**
+ * Both parents' contact information
+ */
+export interface StudentContacts {
+  mother?: ParentContact;
+  father?: ParentContact;
+}
+
+/**
  * Full Student record as stored in Firestore
  */
 export interface Student {
@@ -16,15 +48,24 @@ export interface Student {
   firstName: string;
   lastName: string;
   dateOfBirth: string;              // ISO format YYYY-MM-DD
+  gender?: Gender;                  // Boy, Girl, Other
 
   // Parent Relationship
   parentId: string;                 // Parent's user UID
   parentEmail?: string;             // Denormalized for admin convenience
 
+  // Extended Parent Contacts (for both parents)
+  contacts?: StudentContacts;       // Mother and father contact info
+
+  // Address
+  address?: StudentAddress;         // Home address
+
   // Academic Info
-  grade?: string;                   // e.g., "5th Grade"
+  grade?: string;                   // e.g., "5th Grade" (public school grade)
   schoolName?: string;              // Regular school name
+  schoolDistrict?: string;          // e.g., "Poway Unified School District"
   priorTamilLevel?: string;         // Previous Tamil learning level
+  enrollingGrade?: string;          // Target Tamil school grade (e.g., "grade-3")
 
   // Class Assignment (admin sets)
   classId?: string;                 // Assigned class ID
@@ -54,9 +95,14 @@ export interface CreateStudentDto {
   firstName: string;
   lastName: string;
   dateOfBirth: string;              // ISO format YYYY-MM-DD
+  gender?: Gender;
   grade?: string;
   schoolName?: string;
+  schoolDistrict?: string;
   priorTamilLevel?: string;
+  enrollingGrade?: string;
+  address?: StudentAddress;
+  contacts?: StudentContacts;
   medicalNotes?: string;
   photoConsent?: boolean;
 }
@@ -68,9 +114,14 @@ export interface UpdateStudentDto {
   firstName?: string;
   lastName?: string;
   dateOfBirth?: string;
+  gender?: Gender;
   grade?: string;
   schoolName?: string;
+  schoolDistrict?: string;
   priorTamilLevel?: string;
+  enrollingGrade?: string;
+  address?: StudentAddress;
+  contacts?: StudentContacts;
   medicalNotes?: string;
   photoConsent?: boolean;
 }
@@ -82,9 +133,14 @@ export interface AdminUpdateStudentDto {
   firstName?: string;
   lastName?: string;
   dateOfBirth?: string;
+  gender?: Gender;
   grade?: string;
   schoolName?: string;
+  schoolDistrict?: string;
   priorTamilLevel?: string;
+  enrollingGrade?: string;
+  address?: StudentAddress;
+  contacts?: StudentContacts;
   medicalNotes?: string;
   photoConsent?: boolean;
   status?: StudentStatus;
@@ -109,6 +165,9 @@ export interface StudentListFilters {
   search?: string;                  // Search by name
   parentId?: string;                // Filter by parent
   classId?: string;                 // Filter by class
+  gradeId?: string;                 // Filter by enrolling grade
+  schoolDistrict?: string;          // Filter by school district
+  gender?: Gender;                  // Filter by gender
   limit?: number;
   offset?: number;
 }
@@ -132,12 +191,32 @@ export interface LinkedStudentView {
   lastName: string;
   name: string;                     // Computed: firstName + lastName
   dateOfBirth: string;
+  gender?: Gender;
   grade?: string;
   schoolName?: string;
+  schoolDistrict?: string;
   priorTamilLevel?: string;
+  enrollingGrade?: string;
   classId?: string;
   className?: string;
   status: StudentStatus;
   createdAt: string;
   updatedAt: string;
 }
+
+/**
+ * Common school districts in San Diego area
+ * Used for dropdown suggestions
+ */
+export const COMMON_SCHOOL_DISTRICTS = [
+  'Poway Unified School District',
+  'San Diego Unified School District',
+  'San Dieguito Union High School District',
+  'Carlsbad Unified School District',
+  'Solana Beach School District',
+  'Temecula Valley Unified School District',
+  'Del Mar Union School District',
+  'Encinitas Union School District',
+  'Rancho Santa Fe School District',
+  'Other',
+] as const;
