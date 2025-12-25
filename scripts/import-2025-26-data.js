@@ -766,6 +766,22 @@ async function importClasses(workbook) {
   const classIdMap = new Map(); // Maps "grade-section" to classId
   const classNameMap = new Map(); // Maps classId to className
 
+  // Load existing teachers to get their IDs
+  console.log('\n  Loading teacher IDs...');
+  const teachersSnapshot = await db.collection('teachers').get();
+  const teacherByEmail = new Map();
+  teachersSnapshot.docs.forEach(doc => {
+    const data = doc.data();
+    if (data.email) {
+      teacherByEmail.set(data.email.toLowerCase(), {
+        id: doc.id,
+        name: `${data.firstName} ${data.lastName}`.trim(),
+        email: data.email,
+      });
+    }
+  });
+  console.log(`  Found ${teacherByEmail.size} teachers`);
+
   // Step 1: Create classes from Teacher sheet
   for (const row of teacherData) {
     try {
@@ -792,24 +808,33 @@ async function importClasses(workbook) {
       const className = `${gradeName} Section ${section}`;
       const classKey = `${gradeId}-${section}`.toLowerCase();
 
-      // Parse teachers
+      // Parse teachers with proper IDs
       const teachers = [];
       if (mainTeacher) {
-        const { firstName, lastName } = parseFullName(mainTeacher);
+        const email = mainTeacherEmail?.trim()?.toLowerCase();
+        const teacherInfo = email ? teacherByEmail.get(email) : null;
         teachers.push({
-          name: mainTeacher.trim(),
-          email: mainTeacherEmail?.trim()?.toLowerCase() || null,
+          teacherId: teacherInfo?.id || `pending-${mainTeacher.trim().replace(/\s+/g, '-').toLowerCase()}`,
+          teacherName: teacherInfo?.name || mainTeacher.trim(),
+          teacherEmail: email || null,
           role: 'primary',
           assignedAt: Timestamp.now(),
+          assignedBy: 'system-import',
         });
       }
       if (assistantTeacher) {
         const { teachers: assistants } = parseTeacherInfo(assistantTeacher);
         for (const asst of assistants) {
+          const asstName = `${asst.firstName} ${asst.lastName}`;
+          const asstEmail = `${asst.firstName.toLowerCase()}.${asst.lastName.toLowerCase()}@gsdta-test.org`;
+          const teacherInfo = teacherByEmail.get(asstEmail);
           teachers.push({
-            name: `${asst.firstName} ${asst.lastName}`,
+            teacherId: teacherInfo?.id || `pending-${asstName.replace(/\s+/g, '-').toLowerCase()}`,
+            teacherName: teacherInfo?.name || asstName,
+            teacherEmail: teacherInfo?.email || asstEmail,
             role: 'assistant',
             assignedAt: Timestamp.now(),
+            assignedBy: 'system-import',
           });
         }
       }
