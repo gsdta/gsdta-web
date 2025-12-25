@@ -1,7 +1,6 @@
 # GSDTA Web
 
-[![CI (develop)](https://github.com/gsdta/gsdta-web/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/gsdta/gsdta-web/actions/workflows/ci.yml)
-[![Deploy (main)](https://github.com/gsdta/gsdta-web/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/gsdta/gsdta-web/actions/workflows/deploy.yml)
+[![Deploy to QA with UAT](https://github.com/gsdta/gsdta-web/actions/workflows/deploy-qa-with-uat.yml/badge.svg)](https://github.com/gsdta/gsdta-web/actions/workflows/deploy-qa-with-uat.yml)
 
 Modern Tamil school management system with Next.js UI and API, deployed as a single Docker container.
 
