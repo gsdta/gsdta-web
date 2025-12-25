@@ -13,6 +13,7 @@
     "test:public": "cucumber-js --tags @public",
     "test:parallel": "cucumber-js --parallel 4",
     "test:ci": "cucumber-js --profile ci",
+    "test:shakeout": "cucumber-js --profile shakeout",
     "lint": "eslint . --ext .ts",
     "typecheck": "tsc --noEmit"
   },

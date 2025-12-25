@@ -1,0 +1,78 @@
+# Reusable workflow for post-deployment shakeout tests
+# Validates critical static pages after deployment
+
+name: Shakeout Tests
+
+on:
+  workflow_call:
+    inputs:
+      base_url:
+        description: 'Base URL to test against'
+        required: true
+        type: string
+      runner:
+        description: 'GitHub runner to use'
+        required: false
+        type: string
+        default: ubuntu-latest
+    outputs:
+      passed:
+        description: 'Whether all shakeout tests passed'
+        value: ${{ jobs.shakeout.outputs.passed }}
+
+jobs:
+  shakeout:
+    name: Production Shakeout
+    runs-on: ${{ inputs.runner }}
+    outputs:
+      passed: ${{ steps.result.outputs.passed }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: uat/package-lock.json
+
+      - name: Wait for site to be ready
+        run: |
+          for i in {1..10}; do
+            if curl -sf "${{ inputs.base_url }}/api/v1/health" > /dev/null; then
+              echo "Site is ready"
+              exit 0
+            fi
+            echo "Waiting for site... attempt $i"
+            sleep 5
+          done
+          echo "Site not ready after 10 attempts"
+          exit 1
+
+      - name: Install dependencies
+        working-directory: uat
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium
+
+      - name: Run shakeout tests
+        id: tests
+        working-directory: uat
+        run: npm run test:shakeout
+        env:
+          UAT_BASE_URL: ${{ inputs.base_url }}
+
+      - name: Upload shakeout report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shakeout-report
+          path: uat/reports/
+          retention-days: 7
+
+      - name: Set result output
+        id: result
+        if: always()
+        run: echo "passed=${{ steps.tests.outcome == 'success' }}" >> $GITHUB_OUTPUT

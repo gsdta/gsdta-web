@@ -35,5 +35,16 @@ module.exports = {
       ['json', 'reports/cucumber-report.json'],
       ['html', 'reports/cucumber-report.html']
     ]
+  },
+  shakeout: {
+    ...common,
+    tags: '@shakeout',
+    timeout: 30000,
+    format: [
+      'summary',
+      'progress-bar',
+      ['json', 'reports/shakeout-report.json'],
+      ['html', 'reports/shakeout-report.html']
+    ]
   }
 };
