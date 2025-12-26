@@ -84,18 +84,19 @@ function corsHeaders(origin: string | null) {
 }
 
 // Zod schemas for profile update validation
+// Address fields are optional strings - allow empty strings since the whole address is optional
 const addressSchema = z.object({
-  street: z.string().min(1, 'Street is required'),
-  city: z.string().min(1, 'City is required'),
-  state: z.string().min(1, 'State is required'),
-  zip: z.string().min(1, 'ZIP code is required'),
+  street: z.string(),
+  city: z.string(),
+  state: z.string(),
+  zip: z.string(),
   country: z.string().optional(),
 }).strict();
 
 const profileUpdateSchema = z.object({
-  name: z.string().min(1).optional(),
-  firstName: z.string().min(1).optional(),
-  lastName: z.string().min(1).optional(),
+  name: z.string().optional(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
   phone: z.string().optional(),
   address: addressSchema.optional(),
   preferredLanguage: z.enum(['en', 'ta']).optional(),
