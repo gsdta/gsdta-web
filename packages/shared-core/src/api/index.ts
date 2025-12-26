@@ -1,4 +1,24 @@
-// API module - to be populated in Phase 2
-// This will contain the refactored API client and domain modules
+// API Client
+export {
+  ApiError,
+  apiFetch,
+  withTrailingSlash,
+  type ApiFetchOptions,
+  type ApiResponse,
+} from "./client";
 
-export {};
+// Student API
+export {
+  createStudent,
+  getMyStudents,
+  getStudentById,
+  updateStudent,
+  adminGetStudents,
+  adminGetStudent,
+  adminAdmitStudent,
+  adminAssignClass,
+  adminUpdateStudent,
+  getStudent,
+  listStudents,
+  type AdminStudentsListParams,
+} from "./student";

@@ -7,8 +7,8 @@ export * from './types';
 // Re-export platform adapter
 export * from './platform';
 
-// API functions will be added in Phase 2
-// export * from './api';
+// Re-export API functions
+export * from './api';
 
 // Utility functions will be added in Phase 2
 // export * from './utils';

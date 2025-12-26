@@ -25,6 +25,12 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@gsdta/shared-core": [
+        "../packages/shared-core/src/index.ts"
+      ],
+      "@gsdta/shared-core/*": [
+        "../packages/shared-core/src/*"
       ]
     },
     "types": [
