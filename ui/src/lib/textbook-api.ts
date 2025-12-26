@@ -1,6 +1,17 @@
 /**
- * Textbook API client functions
+ * Textbook API - Backward compatible wrappers
+ *
+ * These wrappers maintain the old function signatures (with getIdToken parameter)
+ * but delegate to the shared-core APIs which use the platform adapter for auth.
  */
+
+import {
+  adminGetTextbooks as _adminGetTextbooks,
+  adminGetTextbook as _adminGetTextbook,
+  adminCreateTextbook as _adminCreateTextbook,
+  adminUpdateTextbook as _adminUpdateTextbook,
+  adminDeleteTextbook as _adminDeleteTextbook,
+} from "@gsdta/shared-core/api";
 
 import type {
   Textbook,
@@ -8,148 +19,62 @@ import type {
   UpdateTextbookInput,
   TextbookListFilters,
   TextbookListResponse,
-} from './textbook-types';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+} from "./textbook-types";
 
 type GetIdTokenFn = () => Promise<string | null>;
 
 /**
  * Get all textbooks with optional filters
+ * @deprecated Use shared-core API directly - getIdToken is no longer needed
  */
 export async function adminGetTextbooks(
-  getIdToken: GetIdTokenFn,
+  _getIdToken: GetIdTokenFn,
   filters: TextbookListFilters = {}
 ): Promise<TextbookListResponse> {
-  const token = await getIdToken();
-  if (!token) throw new Error('Not authenticated');
-
-  const params = new URLSearchParams();
-  if (filters.gradeId) params.append('gradeId', filters.gradeId);
-  if (filters.type) params.append('type', filters.type);
-  if (filters.academicYear) params.append('academicYear', filters.academicYear);
-  if (filters.status) params.append('status', filters.status);
-  if (filters.limit) params.append('limit', String(filters.limit));
-  if (filters.offset) params.append('offset', String(filters.offset));
-
-  const url = `${API_BASE}/api/v1/admin/textbooks${params.toString() ? `?${params.toString()}` : ''}`;
-
-  const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(error.message || `Failed to fetch textbooks: ${res.status}`);
-  }
-
-  const data = await res.json();
-  return data.data;
+  return _adminGetTextbooks(filters);
 }
 
 /**
  * Get a single textbook by ID
+ * @deprecated Use shared-core API directly - getIdToken is no longer needed
  */
 export async function adminGetTextbook(
-  getIdToken: GetIdTokenFn,
+  _getIdToken: GetIdTokenFn,
   id: string
 ): Promise<Textbook> {
-  const token = await getIdToken();
-  if (!token) throw new Error('Not authenticated');
-
-  const res = await fetch(`${API_BASE}/api/v1/admin/textbooks/${id}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(error.message || `Failed to fetch textbook: ${res.status}`);
-  }
-
-  const data = await res.json();
-  return data.data.textbook;
+  return _adminGetTextbook(id);
 }
 
 /**
  * Create a new textbook
+ * @deprecated Use shared-core API directly - getIdToken is no longer needed
  */
 export async function adminCreateTextbook(
-  getIdToken: GetIdTokenFn,
+  _getIdToken: GetIdTokenFn,
   input: CreateTextbookInput
 ): Promise<Textbook> {
-  const token = await getIdToken();
-  if (!token) throw new Error('Not authenticated');
-
-  const res = await fetch(`${API_BASE}/api/v1/admin/textbooks`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(input),
-  });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(error.message || `Failed to create textbook: ${res.status}`);
-  }
-
-  const data = await res.json();
-  return data.data.textbook;
+  return _adminCreateTextbook(input);
 }
 
 /**
  * Update a textbook
+ * @deprecated Use shared-core API directly - getIdToken is no longer needed
  */
 export async function adminUpdateTextbook(
-  getIdToken: GetIdTokenFn,
+  _getIdToken: GetIdTokenFn,
   id: string,
   input: UpdateTextbookInput
 ): Promise<Textbook> {
-  const token = await getIdToken();
-  if (!token) throw new Error('Not authenticated');
-
-  const res = await fetch(`${API_BASE}/api/v1/admin/textbooks/${id}`, {
-    method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(input),
-  });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(error.message || `Failed to update textbook: ${res.status}`);
-  }
-
-  const data = await res.json();
-  return data.data.textbook;
+  return _adminUpdateTextbook(id, input);
 }
 
 /**
  * Delete a textbook (soft delete)
+ * @deprecated Use shared-core API directly - getIdToken is no longer needed
  */
 export async function adminDeleteTextbook(
-  getIdToken: GetIdTokenFn,
+  _getIdToken: GetIdTokenFn,
   id: string
 ): Promise<void> {
-  const token = await getIdToken();
-  if (!token) throw new Error('Not authenticated');
-
-  const res = await fetch(`${API_BASE}/api/v1/admin/textbooks/${id}`, {
-    method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(error.message || `Failed to delete textbook: ${res.status}`);
-  }
+  return _adminDeleteTextbook(id);
 }

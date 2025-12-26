@@ -1,6 +1,17 @@
 /**
- * Volunteer API client functions
+ * Volunteer API - Backward compatible wrappers
+ *
+ * These wrappers maintain the old function signatures (with getIdToken parameter)
+ * but delegate to the shared-core APIs which use the platform adapter for auth.
  */
+
+import {
+  adminGetVolunteers as _adminGetVolunteers,
+  adminGetVolunteer as _adminGetVolunteer,
+  adminCreateVolunteer as _adminCreateVolunteer,
+  adminUpdateVolunteer as _adminUpdateVolunteer,
+  adminDeleteVolunteer as _adminDeleteVolunteer,
+} from "@gsdta/shared-core/api";
 
 import type {
   Volunteer,
@@ -8,149 +19,62 @@ import type {
   UpdateVolunteerInput,
   VolunteerListFilters,
   VolunteerListResponse,
-} from './volunteer-types';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+} from "./volunteer-types";
 
 type GetIdTokenFn = () => Promise<string | null>;
 
 /**
  * Get all volunteers with optional filters
+ * @deprecated Use shared-core API directly - getIdToken is no longer needed
  */
 export async function adminGetVolunteers(
-  getIdToken: GetIdTokenFn,
+  _getIdToken: GetIdTokenFn,
   filters: VolunteerListFilters = {}
 ): Promise<VolunteerListResponse> {
-  const token = await getIdToken();
-  if (!token) throw new Error('Not authenticated');
-
-  const params = new URLSearchParams();
-  if (filters.type) params.append('type', filters.type);
-  if (filters.status) params.append('status', filters.status);
-  if (filters.classId) params.append('classId', filters.classId);
-  if (filters.academicYear) params.append('academicYear', filters.academicYear);
-  if (filters.search) params.append('search', filters.search);
-  if (filters.limit) params.append('limit', String(filters.limit));
-  if (filters.offset) params.append('offset', String(filters.offset));
-
-  const url = `${API_BASE}/api/v1/admin/volunteers${params.toString() ? `?${params.toString()}` : ''}`;
-
-  const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(error.message || `Failed to fetch volunteers: ${res.status}`);
-  }
-
-  const data = await res.json();
-  return data.data;
+  return _adminGetVolunteers(filters);
 }
 
 /**
  * Get a single volunteer by ID
+ * @deprecated Use shared-core API directly - getIdToken is no longer needed
  */
 export async function adminGetVolunteer(
-  getIdToken: GetIdTokenFn,
+  _getIdToken: GetIdTokenFn,
   id: string
 ): Promise<Volunteer> {
-  const token = await getIdToken();
-  if (!token) throw new Error('Not authenticated');
-
-  const res = await fetch(`${API_BASE}/api/v1/admin/volunteers/${id}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(error.message || `Failed to fetch volunteer: ${res.status}`);
-  }
-
-  const data = await res.json();
-  return data.data.volunteer;
+  return _adminGetVolunteer(id);
 }
 
 /**
  * Create a new volunteer
+ * @deprecated Use shared-core API directly - getIdToken is no longer needed
  */
 export async function adminCreateVolunteer(
-  getIdToken: GetIdTokenFn,
+  _getIdToken: GetIdTokenFn,
   input: CreateVolunteerInput
 ): Promise<Volunteer> {
-  const token = await getIdToken();
-  if (!token) throw new Error('Not authenticated');
-
-  const res = await fetch(`${API_BASE}/api/v1/admin/volunteers`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(input),
-  });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(error.message || `Failed to create volunteer: ${res.status}`);
-  }
-
-  const data = await res.json();
-  return data.data.volunteer;
+  return _adminCreateVolunteer(input);
 }
 
 /**
  * Update a volunteer
+ * @deprecated Use shared-core API directly - getIdToken is no longer needed
  */
 export async function adminUpdateVolunteer(
-  getIdToken: GetIdTokenFn,
+  _getIdToken: GetIdTokenFn,
   id: string,
   input: UpdateVolunteerInput
 ): Promise<Volunteer> {
-  const token = await getIdToken();
-  if (!token) throw new Error('Not authenticated');
-
-  const res = await fetch(`${API_BASE}/api/v1/admin/volunteers/${id}`, {
-    method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(input),
-  });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(error.message || `Failed to update volunteer: ${res.status}`);
-  }
-
-  const data = await res.json();
-  return data.data.volunteer;
+  return _adminUpdateVolunteer(id, input);
 }
 
 /**
  * Delete a volunteer (soft delete)
+ * @deprecated Use shared-core API directly - getIdToken is no longer needed
  */
 export async function adminDeleteVolunteer(
-  getIdToken: GetIdTokenFn,
+  _getIdToken: GetIdTokenFn,
   id: string
 ): Promise<void> {
-  const token = await getIdToken();
-  if (!token) throw new Error('Not authenticated');
-
-  const res = await fetch(`${API_BASE}/api/v1/admin/volunteers/${id}`, {
-    method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(error.message || `Failed to delete volunteer: ${res.status}`);
-  }
+  return _adminDeleteVolunteer(id);
 }
