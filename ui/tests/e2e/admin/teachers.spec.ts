@@ -61,11 +61,13 @@ test.describe('Admin Teachers Management', () => {
     // Check if table exists (may be empty state)
     const table = page.locator('table');
     if (await table.isVisible()) {
-      await expect(page.getByRole('columnheader', { name: 'Name' })).toBeVisible();
-      await expect(page.getByRole('columnheader', { name: 'Email' })).toBeVisible();
-      await expect(page.getByRole('columnheader', { name: 'Status' })).toBeVisible();
-      await expect(page.getByRole('columnheader', { name: 'Joined' })).toBeVisible();
-      await expect(page.getByRole('columnheader', { name: 'Actions' })).toBeVisible();
+      // Use thead th locator since columnheader role may not be recognized consistently
+      const headerRow = page.locator('thead tr');
+      await expect(headerRow.locator('th', { hasText: 'Name' })).toBeVisible();
+      await expect(headerRow.locator('th', { hasText: 'Email' })).toBeVisible();
+      await expect(headerRow.locator('th', { hasText: 'Status' })).toBeVisible();
+      await expect(headerRow.locator('th', { hasText: 'Joined' })).toBeVisible();
+      // Note: Actions column was removed - rows are now clickable with action menus
     }
   });
 
@@ -97,7 +99,7 @@ test.describe('Admin Teachers Management', () => {
     }
   });
 
-  test('TE2E-008: View link is present in actions column', async ({ page }) => {
+  test('TE2E-008: Clickable rows show action menu with View Details', async ({ page }) => {
     await page.goto('/admin/users/teachers/list');
 
     // Wait for loading
@@ -105,19 +107,19 @@ test.describe('Admin Teachers Management', () => {
 
     const table = page.locator('table');
     if (await table.isVisible()) {
-      // Check that View links exist
-      const viewLinks = page.getByRole('link', { name: 'View' });
-      const count = await viewLinks.count();
+      // Check that rows are clickable (role="button")
+      const rows = page.locator('tbody tr[role="button"]');
+      const count = await rows.count();
       if (count > 0) {
-        // Check first View link has correct href pattern
-        const firstViewLink = viewLinks.first();
-        const href = await firstViewLink.getAttribute('href');
-        expect(href).toMatch(/\/admin\/users\/teachers\/[^/]+$/);
+        // Click first row to open action menu
+        await rows.first().click();
+        // Verify View Details menuitem appears
+        await expect(page.getByRole('menuitem', { name: 'View Details' })).toBeVisible();
       }
     }
   });
 
-  test('TE2E-009: Edit link is present in actions column', async ({ page }) => {
+  test('TE2E-009: Clickable rows show action menu with Edit', async ({ page }) => {
     await page.goto('/admin/users/teachers/list');
 
     // Wait for loading
@@ -125,14 +127,14 @@ test.describe('Admin Teachers Management', () => {
 
     const table = page.locator('table');
     if (await table.isVisible()) {
-      // Check that Edit links exist
-      const editLinks = page.getByRole('link', { name: 'Edit' });
-      const count = await editLinks.count();
+      // Check that rows are clickable (role="button")
+      const rows = page.locator('tbody tr[role="button"]');
+      const count = await rows.count();
       if (count > 0) {
-        // Check first Edit link has correct href pattern
-        const firstEditLink = editLinks.first();
-        const href = await firstEditLink.getAttribute('href');
-        expect(href).toMatch(/\/admin\/users\/teachers\/[^/]+\/edit$/);
+        // Click first row to open action menu
+        await rows.first().click();
+        // Verify Edit menuitem appears
+        await expect(page.getByRole('menuitem', { name: 'Edit' })).toBeVisible();
       }
     }
   });
@@ -176,11 +178,13 @@ test.describe('Admin Teacher View Page', () => {
     await page.goto('/admin/users/teachers/list');
     await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
 
-    const viewLinks = page.getByRole('link', { name: 'View' });
-    const count = await viewLinks.count();
+    const rows = page.locator('tbody tr[role="button"]');
+    const count = await rows.count();
 
     if (count > 0) {
-      await viewLinks.first().click();
+      // Click first row to open action menu
+      await rows.first().click();
+      await page.getByRole('menuitem', { name: 'View Details' }).click();
       await expect(page.getByText('Back to Teachers')).toBeVisible();
     }
   });
@@ -189,11 +193,13 @@ test.describe('Admin Teacher View Page', () => {
     await page.goto('/admin/users/teachers/list');
     await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
 
-    const viewLinks = page.getByRole('link', { name: 'View' });
-    const count = await viewLinks.count();
+    const rows = page.locator('tbody tr[role="button"]');
+    const count = await rows.count();
 
     if (count > 0) {
-      await viewLinks.first().click();
+      // Click first row to open action menu
+      await rows.first().click();
+      await page.getByRole('menuitem', { name: 'View Details' }).click();
 
       // Wait for the view page to load
       await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
@@ -207,11 +213,13 @@ test.describe('Admin Teacher View Page', () => {
     await page.goto('/admin/users/teachers/list');
     await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
 
-    const viewLinks = page.getByRole('link', { name: 'View' });
-    const count = await viewLinks.count();
+    const rows = page.locator('tbody tr[role="button"]');
+    const count = await rows.count();
 
     if (count > 0) {
-      await viewLinks.first().click();
+      // Click first row to open action menu
+      await rows.first().click();
+      await page.getByRole('menuitem', { name: 'View Details' }).click();
       await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
 
       await expect(page.getByRole('heading', { name: 'Account Information' })).toBeVisible();
@@ -222,11 +230,13 @@ test.describe('Admin Teacher View Page', () => {
     await page.goto('/admin/users/teachers/list');
     await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
 
-    const viewLinks = page.getByRole('link', { name: 'View' });
-    const count = await viewLinks.count();
+    const rows = page.locator('tbody tr[role="button"]');
+    const count = await rows.count();
 
     if (count > 0) {
-      await viewLinks.first().click();
+      // Click first row to open action menu
+      await rows.first().click();
+      await page.getByRole('menuitem', { name: 'View Details' }).click();
       await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
 
       await expect(page.getByRole('link', { name: 'Edit Teacher' })).toBeVisible();
@@ -254,11 +264,13 @@ test.describe('Admin Teacher Edit Page', () => {
     await page.goto('/admin/users/teachers/list');
     await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
 
-    const editLinks = page.getByRole('link', { name: 'Edit' });
-    const count = await editLinks.count();
+    const rows = page.locator('tbody tr[role="button"]');
+    const count = await rows.count();
 
     if (count > 0) {
-      await editLinks.first().click();
+      // Click first row to open action menu
+      await rows.first().click();
+      await page.getByRole('menuitem', { name: 'Edit' }).click();
       await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
 
       // Check for form fields
@@ -273,11 +285,13 @@ test.describe('Admin Teacher Edit Page', () => {
     await page.goto('/admin/users/teachers/list');
     await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
 
-    const editLinks = page.getByRole('link', { name: 'Edit' });
-    const count = await editLinks.count();
+    const rows = page.locator('tbody tr[role="button"]');
+    const count = await rows.count();
 
     if (count > 0) {
-      await editLinks.first().click();
+      // Click first row to open action menu
+      await rows.first().click();
+      await page.getByRole('menuitem', { name: 'Edit' }).click();
       await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
 
       await expect(page.getByText('Back to Teacher Details')).toBeVisible();
@@ -288,11 +302,13 @@ test.describe('Admin Teacher Edit Page', () => {
     await page.goto('/admin/users/teachers/list');
     await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
 
-    const editLinks = page.getByRole('link', { name: 'Edit' });
-    const count = await editLinks.count();
+    const rows = page.locator('tbody tr[role="button"]');
+    const count = await rows.count();
 
     if (count > 0) {
-      await editLinks.first().click();
+      // Click first row to open action menu
+      await rows.first().click();
+      await page.getByRole('menuitem', { name: 'Edit' }).click();
       await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
 
       await expect(page.getByRole('link', { name: 'Cancel' })).toBeVisible();
@@ -303,11 +319,13 @@ test.describe('Admin Teacher Edit Page', () => {
     await page.goto('/admin/users/teachers/list');
     await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
 
-    const editLinks = page.getByRole('link', { name: 'Edit' });
-    const count = await editLinks.count();
+    const rows = page.locator('tbody tr[role="button"]');
+    const count = await rows.count();
 
     if (count > 0) {
-      await editLinks.first().click();
+      // Click first row to open action menu
+      await rows.first().click();
+      await page.getByRole('menuitem', { name: 'Edit' }).click();
       await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
 
       await expect(page.getByRole('button', { name: 'Save Changes' })).toBeVisible();
@@ -318,11 +336,13 @@ test.describe('Admin Teacher Edit Page', () => {
     await page.goto('/admin/users/teachers/list');
     await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
 
-    const editLinks = page.getByRole('link', { name: 'Edit' });
-    const count = await editLinks.count();
+    const rows = page.locator('tbody tr[role="button"]');
+    const count = await rows.count();
 
     if (count > 0) {
-      await editLinks.first().click();
+      // Click first row to open action menu
+      await rows.first().click();
+      await page.getByRole('menuitem', { name: 'Edit' }).click();
       await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
 
       const emailInput = page.locator('input#email');
@@ -334,11 +354,13 @@ test.describe('Admin Teacher Edit Page', () => {
     await page.goto('/admin/users/teachers/list');
     await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
 
-    const editLinks = page.getByRole('link', { name: 'Edit' });
-    const count = await editLinks.count();
+    const rows = page.locator('tbody tr[role="button"]');
+    const count = await rows.count();
 
     if (count > 0) {
-      await editLinks.first().click();
+      // Click first row to open action menu
+      await rows.first().click();
+      await page.getByRole('menuitem', { name: 'Edit' }).click();
       await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
 
       const statusSelect = page.locator('select#status');

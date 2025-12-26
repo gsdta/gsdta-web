@@ -2,10 +2,10 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
 import { adminGetStudents, adminAdmitStudent } from '@/lib/student-api';
 import { statusConfig, type Student, type StudentStatus, type StudentStatusCounts } from '@/lib/student-types';
+import { TableRowActionMenu, useTableRowActions, type TableAction } from '@/components/TableRowActionMenu';
 
 type StatusFilter = StudentStatus | 'all';
 
@@ -23,6 +23,24 @@ export default function AdminStudentsPage() {
     (searchParams.get('status') as StatusFilter) || 'all'
   );
   const [admittingId, setAdmittingId] = useState<string | null>(null);
+  const { selectedItem, menuPosition, handleRowClick, closeMenu, isMenuOpen } = useTableRowActions<Student>();
+
+  const getStudentActions = useCallback((student: Student): TableAction[] => [
+    { label: 'View Details', onClick: () => router.push(`/admin/students/${student.id}`) },
+    { label: 'Edit', onClick: () => router.push(`/admin/students/${student.id}/edit`) },
+    {
+      label: admittingId === student.id ? 'Admitting...' : 'Admit',
+      onClick: () => handleAdmit(student.id),
+      variant: 'success',
+      hidden: student.status !== 'pending',
+      disabled: admittingId === student.id,
+    },
+    {
+      label: 'Assign Class',
+      onClick: () => router.push(`/admin/students/${student.id}?action=assign`),
+      hidden: student.status !== 'admitted',
+    },
+  ], [router, admittingId]);
 
   const fetchStudents = useCallback(async () => {
     try {
@@ -209,9 +227,6 @@ export default function AdminStudentsPage() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Edit
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Student
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -226,24 +241,20 @@ export default function AdminStudentsPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Registered
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {students.map((student) => {
                   const status = statusConfig[student.status] || statusConfig.pending;
                   return (
-                    <tr key={student.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Link
-                          href={`/admin/students/${student.id}/edit`}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          Edit
-                        </Link>
-                      </td>
+                    <tr
+                      key={student.id}
+                      onClick={(e) => handleRowClick(e, student)}
+                      className="hover:bg-blue-50 cursor-pointer transition-colors"
+                      tabIndex={0}
+                      role="button"
+                      onKeyDown={(e) => e.key === 'Enter' && handleRowClick(e as unknown as React.MouseEvent, student)}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
@@ -283,33 +294,6 @@ export default function AdminStudentsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {formatDate(student.createdAt)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end gap-2">
-                          <Link
-                            href={`/admin/students/${student.id}`}
-                            className="text-blue-600 hover:text-blue-900"
-                          >
-                            View
-                          </Link>
-                          {student.status === 'pending' && (
-                            <button
-                              onClick={() => handleAdmit(student.id)}
-                              disabled={admittingId === student.id}
-                              className="text-green-600 hover:text-green-900 disabled:opacity-50"
-                            >
-                              {admittingId === student.id ? 'Admitting...' : 'Admit'}
-                            </button>
-                          )}
-                          {student.status === 'admitted' && (
-                            <Link
-                              href={`/admin/students/${student.id}?action=assign`}
-                              className="text-purple-600 hover:text-purple-900"
-                            >
-                              Assign Class
-                            </Link>
-                          )}
-                        </div>
-                      </td>
                     </tr>
                   );
                 })}
@@ -318,6 +302,15 @@ export default function AdminStudentsPage() {
           </div>
         )}
       </div>
+
+      {/* Action Menu */}
+      {isMenuOpen && selectedItem && menuPosition && (
+        <TableRowActionMenu
+          actions={getStudentActions(selectedItem)}
+          position={menuPosition}
+          onClose={closeMenu}
+        />
+      )}
     </div>
   );
 }

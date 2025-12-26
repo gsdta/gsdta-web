@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { adminGetGrades, adminUpdateGrade, adminSeedGrades, adminCheckGradesSeeded } from '@/lib/grade-api';
 import type { Grade, GradeStatus } from '@/lib/grade-types';
+import { TableRowActionMenu, useTableRowActions, type TableAction } from '@/components/TableRowActionMenu';
 
 export default function AdminGradesPage() {
   const { getIdToken } = useAuth();
@@ -19,6 +20,8 @@ export default function AdminGradesPage() {
   const [updating, setUpdating] = useState(false);
   const [seeding, setSeeding] = useState(false);
   const [isSeeded, setIsSeeded] = useState(true);
+  const { selectedItem, menuPosition, handleRowClick, closeMenu, isMenuOpen } = useTableRowActions<Grade>();
+
 
   const fetchGrades = useCallback(async () => {
     try {
@@ -84,8 +87,9 @@ export default function AdminGradesPage() {
         displayName: editForm.displayName,
         displayOrder: parseInt(editForm.displayOrder, 10),
       });
-      cancelEditing();
-      fetchGrades();
+      setEditingGradeId(null);
+      setEditForm({ displayName: '', displayOrder: '' });
+      await fetchGrades();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update grade');
     } finally {
@@ -105,6 +109,59 @@ export default function AdminGradesPage() {
     } finally {
       setUpdating(false);
     }
+  };
+
+  // Not using useCallback intentionally - we need latest editForm values
+  const getGradeActions = (grade: Grade): TableAction[] => {
+    // If this grade is being edited, show Save/Cancel actions
+    if (editingGradeId === grade.id) {
+      return [
+        {
+          label: updating ? 'Saving...' : 'Save',
+          onClick: async () => {
+            // Read current values from DOM inputs to work around stale closure issues
+            // Note: This is a workaround - the inputs are in the table, not in the menu
+            const textInput = document.querySelector('tbody input[type="text"]') as HTMLInputElement | null;
+            const numberInput = document.querySelector('tbody input[type="number"]') as HTMLInputElement | null;
+
+            const displayName = textInput?.value ?? editForm.displayName;
+            const displayOrder = numberInput?.value ?? editForm.displayOrder;
+
+            try {
+              setUpdating(true);
+              setError(null);
+              await adminUpdateGrade(getIdToken, grade.id, {
+                displayName,
+                displayOrder: parseInt(displayOrder, 10),
+              });
+              setEditingGradeId(null);
+              setEditForm({ displayName: '', displayOrder: '' });
+              await fetchGrades();
+            } catch (err) {
+              setError(err instanceof Error ? err.message : 'Failed to update grade');
+            } finally {
+              setUpdating(false);
+            }
+          },
+          variant: 'success',
+          disabled: updating,
+        },
+        {
+          label: 'Cancel',
+          onClick: () => cancelEditing(),
+        },
+      ];
+    }
+    // Otherwise show Edit and Activate/Deactivate
+    return [
+      { label: 'Edit', onClick: () => startEditing(grade) },
+      {
+        label: grade.status === 'active' ? 'Deactivate' : 'Activate',
+        onClick: () => handleToggleStatus(grade),
+        variant: grade.status === 'active' ? 'danger' : 'success',
+        disabled: updating,
+      },
+    ];
   };
 
   const statusConfig = {
@@ -197,14 +254,26 @@ export default function AdminGradesPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {grades.map((grade) => (
-                <tr key={grade.id} className="hover:bg-gray-50">
+                <tr
+                  key={grade.id}
+                  data-grade-id={grade.id}
+                  onClick={(e) => {
+                    // Don't open menu if clicking on input elements
+                    if ((e.target as HTMLElement).tagName === 'INPUT') return;
+                    handleRowClick(e, grade);
+                  }}
+                  className="hover:bg-blue-50 cursor-pointer transition-colors"
+                  tabIndex={0}
+                  role="button"
+                  onKeyDown={(e) => {
+                    if ((e.target as HTMLElement).tagName === 'INPUT') return;
+                    if (e.key === 'Enter') handleRowClick(e as unknown as React.MouseEvent, grade);
+                  }}
+                >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {editingGradeId === grade.id ? (
                       <input
@@ -213,6 +282,7 @@ export default function AdminGradesPage() {
                         onChange={(e) =>
                           setEditForm((prev) => ({ ...prev, displayOrder: e.target.value }))
                         }
+                        onClick={(e) => e.stopPropagation()}
                         className="w-16 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
                         min="1"
                         max="100"
@@ -235,6 +305,7 @@ export default function AdminGradesPage() {
                         onChange={(e) =>
                           setEditForm((prev) => ({ ...prev, displayName: e.target.value }))
                         }
+                        onClick={(e) => e.stopPropagation()}
                         className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
                       />
                     ) : (
@@ -248,50 +319,20 @@ export default function AdminGradesPage() {
                       {statusConfig[grade.status].label}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    {editingGradeId === grade.id ? (
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={() => handleUpdate(grade.id)}
-                          disabled={updating}
-                          className="text-green-600 hover:text-green-900 disabled:opacity-50"
-                        >
-                          {updating ? 'Saving...' : 'Save'}
-                        </button>
-                        <button
-                          onClick={cancelEditing}
-                          className="text-gray-600 hover:text-gray-900"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={() => startEditing(grade)}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleToggleStatus(grade)}
-                          disabled={updating}
-                          className={
-                            grade.status === 'active'
-                              ? 'text-red-600 hover:text-red-900 disabled:opacity-50'
-                              : 'text-green-600 hover:text-green-900 disabled:opacity-50'
-                          }
-                        >
-                          {grade.status === 'active' ? 'Deactivate' : 'Activate'}
-                        </button>
-                      </div>
-                    )}
-                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Action Menu */}
+      {isMenuOpen && selectedItem && menuPosition && (
+        <TableRowActionMenu
+          actions={getGradeActions(selectedItem)}
+          position={menuPosition}
+          onClose={closeMenu}
+        />
       )}
 
       {/* Info Box */}

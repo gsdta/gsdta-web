@@ -87,16 +87,6 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
                 Admin Portal
               </Link>
 
-              {/* Desktop - Home link */}
-              <nav className="hidden md:flex items-center space-x-4">
-                <Link href="/admin" className="text-sm text-gray-600 hover:text-gray-900">
-                  Dashboard
-                </Link>
-                <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">
-                  Home
-                </Link>
-              </nav>
-
               {/* Mobile menu button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
