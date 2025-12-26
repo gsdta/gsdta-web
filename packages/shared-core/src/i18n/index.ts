@@ -1,4 +1,8 @@
-// i18n module - to be populated in Phase 3
-// This will contain the translation messages
+/**
+ * i18n module
+ *
+ * Translation messages for English and Tamil.
+ * Shared across web and mobile platforms.
+ */
 
-export {};
+export { messages, type Lang } from "./messages";
