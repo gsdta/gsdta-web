@@ -14,6 +14,12 @@ COPY package.json package-lock.json ./
 COPY ui/package.json ./ui/
 COPY api/package.json ./api/
 COPY scripts/package.json ./scripts/
+COPY packages/shared-core/package.json ./packages/shared-core/
+COPY packages/shared-firebase/package.json ./packages/shared-firebase/
+
+# Copy shared packages source (needed for workspace resolution)
+COPY packages/shared-core/ ./packages/shared-core/
+COPY packages/shared-firebase/ ./packages/shared-firebase/
 
 # Install all workspace dependencies at once
 RUN npm ci --ignore-scripts
@@ -27,6 +33,9 @@ WORKDIR /app
 # Copy all node_modules from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/ui/node_modules ./ui/node_modules
+
+# Copy shared packages (workspace dependencies)
+COPY --from=deps /app/packages ./packages
 
 # Copy UI source
 COPY ui/ ./ui/
