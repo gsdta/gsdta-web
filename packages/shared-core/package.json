@@ -1,0 +1,25 @@
+{
+  "name": "@gsdta/shared-core",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./types": "./src/types/index.ts",
+    "./api": "./src/api/index.ts",
+    "./utils": "./src/utils/index.ts",
+    "./i18n": "./src/i18n/index.ts",
+    "./platform": "./src/platform/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "jest"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

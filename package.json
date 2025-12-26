@@ -24,6 +24,7 @@
     "uat:shakeout": "cd uat && npm run test:shakeout"
   },
   "workspaces": [
+    "packages/shared-core",
     "ui",
     "api",
     "scripts",
