@@ -24,6 +24,13 @@ COPY packages/shared-firebase/ ./packages/shared-firebase/
 # Install all workspace dependencies at once
 RUN npm ci --ignore-scripts
 
+# Install platform-specific lightningcss for Linux (must run from workspace root)
+RUN if [ "$(uname -m)" = "x86_64" ]; then \
+      npm install --no-save lightningcss-linux-x64-musl; \
+    elif [ "$(uname -m)" = "aarch64" ]; then \
+      npm install --no-save lightningcss-linux-arm64-musl; \
+    fi
+
 # =============================================================================
 # Stage 2: Build UI
 # =============================================================================
@@ -33,6 +40,9 @@ WORKDIR /app
 # Copy all node_modules from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/ui/node_modules ./ui/node_modules
+
+# Copy root package.json for workspace resolution
+COPY --from=deps /app/package.json ./package.json
 
 # Copy shared packages (workspace dependencies)
 COPY --from=deps /app/packages ./packages
@@ -76,14 +86,6 @@ RUN set -eu \
      fi
 
 WORKDIR /app/ui
-
-# Install platform-specific lightningcss for Linux
-# Use BuildKit's automatic platform variables
-RUN if [ "$(uname -m)" = "x86_64" ]; then \
-      npm install --no-save lightningcss-linux-x64-musl; \
-    elif [ "$(uname -m)" = "aarch64" ]; then \
-      npm install --no-save lightningcss-linux-arm64-musl; \
-    fi
 
 RUN npm run build
 
