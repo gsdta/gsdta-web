@@ -25,10 +25,11 @@ COPY packages/shared-firebase/ ./packages/shared-firebase/
 RUN npm ci --ignore-scripts
 
 # Install platform-specific lightningcss for Linux (must run from workspace root)
+# Use --ignore-scripts to avoid triggering postinstall scripts that need source files
 RUN if [ "$(uname -m)" = "x86_64" ]; then \
-      npm install --no-save lightningcss-linux-x64-musl; \
+      npm install --no-save --ignore-scripts lightningcss-linux-x64-musl; \
     elif [ "$(uname -m)" = "aarch64" ]; then \
-      npm install --no-save lightningcss-linux-arm64-musl; \
+      npm install --no-save --ignore-scripts lightningcss-linux-arm64-musl; \
     fi
 
 # =============================================================================
