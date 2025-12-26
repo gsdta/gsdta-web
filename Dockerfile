@@ -24,12 +24,16 @@ COPY packages/shared-firebase/ ./packages/shared-firebase/
 # Install all workspace dependencies at once
 RUN npm ci --ignore-scripts
 
-# Install platform-specific lightningcss for Linux (must run from workspace root)
+# Install platform-specific native binaries for Linux Alpine (musl)
 # Use --ignore-scripts to avoid triggering postinstall scripts that need source files
 RUN if [ "$(uname -m)" = "x86_64" ]; then \
-      npm install --no-save --ignore-scripts lightningcss-linux-x64-musl; \
+      npm install --no-save --ignore-scripts \
+        lightningcss-linux-x64-musl \
+        @tailwindcss/oxide-linux-x64-musl; \
     elif [ "$(uname -m)" = "aarch64" ]; then \
-      npm install --no-save --ignore-scripts lightningcss-linux-arm64-musl; \
+      npm install --no-save --ignore-scripts \
+        lightningcss-linux-arm64-musl \
+        @tailwindcss/oxide-linux-arm64-musl; \
     fi
 
 # =============================================================================
