@@ -60,16 +60,6 @@ export default function ParentLayoutClient({ children }: { children: React.React
                 Parent Portal
               </Link>
 
-              {/* Desktop - Home link */}
-              <nav className="hidden md:flex items-center space-x-4">
-                <Link href="/parent" className="text-sm text-gray-600 hover:text-gray-900">
-                  Dashboard
-                </Link>
-                <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">
-                  Home
-                </Link>
-              </nav>
-
               {/* Mobile menu button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

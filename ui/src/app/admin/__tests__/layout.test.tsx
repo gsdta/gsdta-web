@@ -48,7 +48,7 @@ describe('AdminLayout', () => {
     expect(screen.getByText('Admin Portal')).toBeInTheDocument();
   });
 
-  test('AL-003: Renders dashboard and home links in header', () => {
+  test('AL-003: Renders Admin Portal title in header', () => {
     mockUsePathname.mockReturnValue('/admin');
 
     render(
@@ -57,10 +57,8 @@ describe('AdminLayout', () => {
       </AdminLayout>
     );
 
-    // Desktop navigation links (not dropdowns)
-    const dashboardLinks = screen.getAllByRole('link', { name: /dashboard/i });
-    expect(dashboardLinks.length).toBeGreaterThan(0);
-    expect(screen.getByRole('link', { name: /^home$/i })).toBeInTheDocument();
+    // Admin Portal link should be in the header
+    expect(screen.getByRole('link', { name: /Admin Portal/i })).toBeInTheDocument();
   });
 
   test('AL-004: Renders sidebar with all navigation sections', () => {

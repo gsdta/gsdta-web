@@ -5,6 +5,7 @@ import { useAuth } from '@/components/AuthProvider';
 import { adminGetVolunteers, adminCreateVolunteer, adminUpdateVolunteer, adminDeleteVolunteer } from '@/lib/volunteer-api';
 import type { Volunteer, VolunteerStatus, VolunteerType, CreateVolunteerInput } from '@/lib/volunteer-types';
 import { VOLUNTEER_TYPES, GRADE_LEVELS, DAYS_OF_WEEK, CURRENT_ACADEMIC_YEAR } from '@/lib/volunteer-types';
+import { TableRowActionMenu, useTableRowActions, type TableAction } from '@/components/TableRowActionMenu';
 
 export default function AdminVolunteersPage() {
   const { getIdToken } = useAuth();
@@ -16,6 +17,21 @@ export default function AdminVolunteersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
+  const { selectedItem, menuPosition, handleRowClick, closeMenu, isMenuOpen } = useTableRowActions<Volunteer>();
+
+  const getVolunteerActions = useCallback((volunteer: Volunteer): TableAction[] => [
+    {
+      label: volunteer.status === 'active' ? 'Deactivate' : 'Activate',
+      onClick: () => handleToggleStatus(volunteer),
+      variant: volunteer.status === 'active' ? 'warning' : 'success',
+    },
+    {
+      label: 'Remove',
+      onClick: () => handleDelete(volunteer),
+      variant: 'danger',
+    },
+  ], []);
+
   const [createForm, setCreateForm] = useState<CreateVolunteerInput>({
     firstName: '',
     lastName: '',
@@ -226,14 +242,18 @@ export default function AdminVolunteersPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {volunteers.map((volunteer) => (
-                <tr key={volunteer.id} className="hover:bg-gray-50">
+                <tr
+                  key={volunteer.id}
+                  onClick={(e) => handleRowClick(e, volunteer)}
+                  className="hover:bg-blue-50 cursor-pointer transition-colors"
+                  tabIndex={0}
+                  role="button"
+                  onKeyDown={(e) => e.key === 'Enter' && handleRowClick(e as unknown as React.MouseEvent, volunteer)}
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
                       {volunteer.firstName} {volunteer.lastName}
@@ -275,29 +295,20 @@ export default function AdminVolunteersPage() {
                       {statusConfig[volunteer.status].label}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => handleToggleStatus(volunteer)}
-                      className={
-                        volunteer.status === 'active'
-                          ? 'text-yellow-600 hover:text-yellow-900 mr-3'
-                          : 'text-green-600 hover:text-green-900 mr-3'
-                      }
-                    >
-                      {volunteer.status === 'active' ? 'Deactivate' : 'Activate'}
-                    </button>
-                    <button
-                      onClick={() => handleDelete(volunteer)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Remove
-                    </button>
-                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Action Menu */}
+      {isMenuOpen && selectedItem && menuPosition && (
+        <TableRowActionMenu
+          actions={getVolunteerActions(selectedItem)}
+          position={menuPosition}
+          onClose={closeMenu}
+        />
       )}
 
       {/* Create Modal */}

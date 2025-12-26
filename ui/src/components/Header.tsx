@@ -52,16 +52,16 @@ export function Header() {
 
                 {/* Desktop nav - same links for all users */}
                 <nav className="hidden sm:flex items-center gap-4 text-sm">
-                    {staticNav.map((item) => (
-                        <Link key={item.href} href={item.href} className="hover:underline text-gray-900">
-                            {t(item.labelKey)}
-                        </Link>
-                    ))}
                     {user && (
                         <Link href={getDashboardUrl(user.role)} className="hover:underline text-gray-900 font-medium">
                             {t("nav.dashboard")}
                         </Link>
                     )}
+                    {staticNav.map((item) => (
+                        <Link key={item.href} href={item.href} className="hover:underline text-gray-900">
+                            {t(item.labelKey)}
+                        </Link>
+                    ))}
                     {/* Contact intentionally removed from header */}
                     <LanguageSwitcher />
                     {user ? (
@@ -102,16 +102,16 @@ export function Header() {
                     className="sm:hidden border-t border-gray-200 bg-white/90 supports-[backdrop-filter]:bg-white/70 backdrop-blur"
                 >
                     <div className="mx-auto max-w-6xl px-4 py-3 flex flex-col gap-3 text-sm">
-                        {staticNav.map((item) => (
-                            <Link key={item.href} href={item.href} className="hover:underline text-gray-900" onClick={close}>
-                                {t(item.labelKey)}
-                            </Link>
-                        ))}
                         {user && (
                             <Link href={getDashboardUrl(user.role)} className="hover:underline text-gray-900 font-medium" onClick={close}>
                                 {t("nav.dashboard")}
                             </Link>
                         )}
+                        {staticNav.map((item) => (
+                            <Link key={item.href} href={item.href} className="hover:underline text-gray-900" onClick={close}>
+                                {t(item.labelKey)}
+                            </Link>
+                        ))}
                         {user ? (
                             <UserDropdownMobile onItemClick={close} />
                         ) : (

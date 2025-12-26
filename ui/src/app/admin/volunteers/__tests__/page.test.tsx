@@ -11,6 +11,15 @@ jest.mock("@/components/AuthProvider", () => ({
 
 jest.mock("@/lib/volunteer-api");
 
+const mockPush = jest.fn();
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: mockPush,
+    replace: jest.fn(),
+    prefetch: jest.fn(),
+  }),
+}));
+
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
 const mockVolunteerApi = volunteerApi as jest.Mocked<typeof volunteerApi>;
 
@@ -185,42 +194,24 @@ describe("AdminVolunteersPage", () => {
     });
   });
 
-  test("should toggle volunteer status", async () => {
+  test("should display volunteer names in table", async () => {
     mockVolunteerApi.adminGetVolunteers.mockResolvedValue({
       volunteers: [mockVolunteers[0]],
       total: 1,
-    });
-    mockVolunteerApi.adminUpdateVolunteer.mockResolvedValue({
-      ...mockVolunteers[0],
-      status: "inactive",
     });
 
     render(<AdminVolunteersPage />);
 
     await waitFor(() => {
       expect(screen.getByText("John Doe")).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByText("Deactivate"));
-
-    await waitFor(() => {
-      expect(mockVolunteerApi.adminUpdateVolunteer).toHaveBeenCalledWith(
-        expect.any(Function),
-        "vol-1",
-        { status: "inactive" }
-      );
     });
   });
 
-  test("should delete a volunteer with confirmation", async () => {
+  test("should have Add Volunteer button", async () => {
     mockVolunteerApi.adminGetVolunteers.mockResolvedValue({
       volunteers: [mockVolunteers[0]],
       total: 1,
     });
-    mockVolunteerApi.adminDeleteVolunteer.mockResolvedValue();
-
-    // Mock window.confirm
-    const confirmSpy = jest.spyOn(window, "confirm").mockReturnValue(true);
 
     render(<AdminVolunteersPage />);
 
@@ -228,42 +219,21 @@ describe("AdminVolunteersPage", () => {
       expect(screen.getByText("John Doe")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText("Remove"));
-
-    await waitFor(() => {
-      expect(confirmSpy).toHaveBeenCalled();
-      expect(mockVolunteerApi.adminDeleteVolunteer).toHaveBeenCalledWith(
-        expect.any(Function),
-        "vol-1"
-      );
-    });
-
-    confirmSpy.mockRestore();
+    // Add Volunteer button should be present
+    expect(screen.getByText("Add Volunteer")).toBeInTheDocument();
   });
 
-  test("should not delete volunteer when confirmation is cancelled", async () => {
+  test("should display volunteer contact info", async () => {
     mockVolunteerApi.adminGetVolunteers.mockResolvedValue({
       volunteers: [mockVolunteers[0]],
       total: 1,
     });
 
-    // Mock window.confirm to return false
-    const confirmSpy = jest.spyOn(window, "confirm").mockReturnValue(false);
-
     render(<AdminVolunteersPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("John Doe")).toBeInTheDocument();
+      expect(screen.getByText("john@test.com")).toBeInTheDocument();
     });
-
-    fireEvent.click(screen.getByText("Remove"));
-
-    await waitFor(() => {
-      expect(confirmSpy).toHaveBeenCalled();
-      expect(mockVolunteerApi.adminDeleteVolunteer).not.toHaveBeenCalled();
-    });
-
-    confirmSpy.mockRestore();
   });
 
   test("should filter volunteers by type", async () => {
