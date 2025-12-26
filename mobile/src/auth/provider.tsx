@@ -32,6 +32,12 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
+// Check if Google Sign-In is configured
+const isGoogleConfigured = Boolean(
+  process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ||
+    process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
+);
+
 // API base URL
 const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.gsdta.com';
@@ -40,6 +46,7 @@ interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
   error: string | null;
+  isGoogleAvailable: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithEmailPassword: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -92,10 +99,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [firebaseApp, setFirebaseApp] = useState<FirebaseApp | null>(null);
 
   // Initialize Google auth request
+  // Provide dummy values when not configured to prevent hook from crashing
   const [request, response, promptAsync] = Google.useAuthRequest({
-    clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
+    clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || 'not-configured',
     iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
     androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+    webClientId:
+      process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || 'not-configured.apps.googleusercontent.com',
   });
 
   // Initialize Firebase
@@ -174,6 +184,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = useCallback(async () => {
     setError(null);
+    if (!isGoogleConfigured) {
+      setError('Google Sign-In is not configured. Use email/password instead.');
+      return;
+    }
     if (!request) {
       setError('Google Sign-In is not available');
       return;
@@ -231,6 +245,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         loading,
         error,
+        isGoogleAvailable: isGoogleConfigured,
         signInWithGoogle,
         signInWithEmailPassword,
         signOut,
