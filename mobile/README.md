@@ -114,26 +114,59 @@ For development builds with native Firebase:
 
 ### 4. Run the App
 
-#### Development with Expo Go
+#### Quick Start (Recommended)
+
+Start everything with one command from the monorepo root:
 
 ```bash
-cd mobile
-npx expo start
+npm run dev:mobile
 ```
 
-Scan the QR code with:
-- iOS: Camera app → tap the notification
-- Android: Expo Go app
+This will:
+1. Start Firebase emulators
+2. Seed test data
+3. Start the API server
+4. Start Expo development server
 
-#### iOS Simulator (macOS only)
+**Test Users:**
+| User | Email | Password |
+|------|-------|----------|
+| Admin | admin@test.com | admin123 |
+| Teacher | teacher@test.com | teacher123 |
+| Parent | parent@test.com | parent123 |
+
+#### Manual Start
+
+If you prefer to start services individually:
 
 ```bash
+# Terminal 1: Start emulators
+npm run emulators
+
+# Terminal 2: Seed test data (run once)
+./seed.sh
+
+# Terminal 3: Start API
+FIRESTORE_EMULATOR_HOST=localhost:8889 FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 npm run dev:api
+
+# Terminal 4: Start mobile
+cd mobile && npx expo start
+```
+
+#### Running on Devices
+
+After `npx expo start`:
+- Press `i` for iOS Simulator
+- Press `a` for Android Emulator
+- Scan QR code with Expo Go app on physical device
+
+#### Native Builds
+
+```bash
+# iOS Simulator (macOS only)
 npx expo run:ios
-```
 
-#### Android Emulator
-
-```bash
+# Android Emulator
 npx expo run:android
 ```
 
