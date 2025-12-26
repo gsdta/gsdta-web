@@ -29,7 +29,8 @@
     "ui",
     "api",
     "scripts",
-    "uat"
+    "uat",
+    "mobile"
   ],
   "devDependencies": {}
 }
