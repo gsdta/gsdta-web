@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api-client';
+import { TableRowActionMenu, useTableRowActions, type TableAction } from '@/components/TableRowActionMenu';
 
 interface Teacher {
   uid: string;
@@ -24,16 +26,24 @@ interface TeachersResponse {
 }
 
 export default function TeachersListPage() {
+  const router = useRouter();
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Filters
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
   const [limit] = useState(50);
   const [offset, setOffset] = useState(0);
+
+  const { selectedItem, menuPosition, handleRowClick, closeMenu, isMenuOpen } = useTableRowActions<Teacher>();
+
+  const getTeacherActions = useCallback((teacher: Teacher): TableAction[] => [
+    { label: 'View Details', onClick: () => router.push(`/admin/users/teachers/${teacher.uid}`) },
+    { label: 'Edit', onClick: () => router.push(`/admin/users/teachers/${teacher.uid}/edit`) },
+  ], [router]);
 
   useEffect(() => {
     fetchTeachers();
@@ -193,14 +203,18 @@ export default function TeachersListPage() {
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Joined
                         </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {teachers.map((teacher) => (
-                        <tr key={teacher.uid} className="hover:bg-gray-50">
+                        <tr
+                          key={teacher.uid}
+                          onClick={(e) => handleRowClick(e, teacher)}
+                          className="hover:bg-blue-50 cursor-pointer transition-colors"
+                          tabIndex={0}
+                          role="button"
+                          onKeyDown={(e) => e.key === 'Enter' && handleRowClick(e as unknown as React.MouseEvent, teacher)}
+                        >
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">
                               {teacher.name || teacher.email.split('@')[0] || 'Unknown'}
@@ -221,23 +235,9 @@ export default function TeachersListPage() {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                            {teacher.createdAt 
+                            {teacher.createdAt
                               ? new Date(teacher.createdAt).toLocaleDateString()
                               : 'N/A'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <a
-                              href={`/admin/users/teachers/${teacher.uid}`}
-                              className="text-blue-600 hover:text-blue-800 mr-4"
-                            >
-                              View
-                            </a>
-                            <a
-                              href={`/admin/users/teachers/${teacher.uid}/edit`}
-                              className="text-gray-600 hover:text-gray-800"
-                            >
-                              Edit
-                            </a>
                           </td>
                         </tr>
                       ))}
@@ -271,6 +271,15 @@ export default function TeachersListPage() {
               </>
             )}
           </>
+        )}
+
+        {/* Action Menu */}
+        {isMenuOpen && selectedItem && menuPosition && (
+          <TableRowActionMenu
+            actions={getTeacherActions(selectedItem)}
+            position={menuPosition}
+            onClose={closeMenu}
+          />
         )}
       </div>
   );

@@ -128,44 +128,38 @@ describe('AdminStudentsPage', () => {
     expect(mockPush).toHaveBeenCalledWith('/admin/students?status=pending');
   });
 
-  test('ASL-007: Admit button visible for pending students', async () => {
-    (adminGetStudents as jest.Mock).mockResolvedValue({ students: [mockStudents[0]], counts: mockCounts }); // pending
-    render(<AdminStudentsPage />);
-    await waitFor(() => {
-      expect(screen.getByText('Admit')).toBeInTheDocument();
-    });
-  });
-
-  test('ASL-008: Admit button hidden for active students', async () => {
-    (adminGetStudents as jest.Mock).mockResolvedValue({ students: [mockStudents[1]], counts: mockCounts }); // active
-    render(<AdminStudentsPage />);
-    await waitFor(() => {
-      expect(screen.queryByText('Admit')).not.toBeInTheDocument();
-    });
-  });
-
-  test('ASL-009: Click admit calls API', async () => {
-    (adminGetStudents as jest.Mock).mockResolvedValue({ students: [mockStudents[0]], counts: mockCounts });
-    (adminAdmitStudent as jest.Mock).mockResolvedValue({});
-    
-    render(<AdminStudentsPage />);
-    await waitFor(() => expect(screen.getByText('Admit')).toBeInTheDocument());
-    
-    fireEvent.click(screen.getByText('Admit'));
-    
-    expect(global.confirm).toHaveBeenCalled();
-    await waitFor(() => {
-      expect(adminAdmitStudent).toHaveBeenCalledWith(mockGetIdToken, 'student-1');
-      // Should refresh list
-      expect(adminGetStudents).toHaveBeenCalledTimes(2);
-    });
-  });
-
-  test('ASL-010: View link navigates to student details', async () => {
+  test('ASL-007: Rows are clickable (role=button)', async () => {
     (adminGetStudents as jest.Mock).mockResolvedValue({ students: [mockStudents[0]], counts: mockCounts });
     render(<AdminStudentsPage />);
     await waitFor(() => {
-        expect(screen.getByText('View')).toHaveAttribute('href', '/admin/students/student-1');
+      // Rows should have role="button" for clickability
+      const buttons = screen.getAllByRole('button');
+      expect(buttons.length).toBeGreaterThan(0);
+    });
+  });
+
+  test('ASL-008: Pending status shows pending badge', async () => {
+    (adminGetStudents as jest.Mock).mockResolvedValue({ students: [mockStudents[0]], counts: mockCounts });
+    render(<AdminStudentsPage />);
+    await waitFor(() => {
+      expect(screen.getByText('Pending Review')).toBeInTheDocument();
+    });
+  });
+
+  test('ASL-009: Active status shows active badge', async () => {
+    (adminGetStudents as jest.Mock).mockResolvedValue({ students: [mockStudents[1]], counts: mockCounts });
+    render(<AdminStudentsPage />);
+    await waitFor(() => {
+      // Active appears in table badge
+      expect(screen.getByText('Active')).toBeInTheDocument();
+    });
+  });
+
+  test('ASL-010: Class name displayed for assigned students', async () => {
+    (adminGetStudents as jest.Mock).mockResolvedValue({ students: [mockStudents[1]], counts: mockCounts });
+    render(<AdminStudentsPage />);
+    await waitFor(() => {
+      expect(screen.getByText('Tamil Basic')).toBeInTheDocument();
     });
   });
 
@@ -177,29 +171,28 @@ describe('AdminStudentsPage', () => {
     });
   });
 
-  test('ASL-012: Edit column header is visible', async () => {
+  test('ASL-012: Table has standard column headers', async () => {
     (adminGetStudents as jest.Mock).mockResolvedValue({ students: mockStudents, counts: mockCounts });
     render(<AdminStudentsPage />);
     await waitFor(() => {
-      expect(screen.getByRole('columnheader', { name: /edit/i })).toBeInTheDocument();
+      expect(screen.getByRole('columnheader', { name: /student/i })).toBeInTheDocument();
+      expect(screen.getByRole('columnheader', { name: /status/i })).toBeInTheDocument();
     });
   });
 
-  test('ASL-013: Edit link visible for each student', async () => {
-    (adminGetStudents as jest.Mock).mockResolvedValue({ students: mockStudents, counts: mockCounts });
-    render(<AdminStudentsPage />);
-    await waitFor(() => {
-      const editLinks = screen.getAllByRole('link', { name: 'Edit' });
-      expect(editLinks.length).toBe(mockStudents.length);
-    });
-  });
-
-  test('ASL-014: Edit link navigates to student edit page', async () => {
+  test('ASL-013: Not assigned shown for students without class', async () => {
     (adminGetStudents as jest.Mock).mockResolvedValue({ students: [mockStudents[0]], counts: mockCounts });
     render(<AdminStudentsPage />);
     await waitFor(() => {
-      const editLink = screen.getByRole('link', { name: 'Edit' });
-      expect(editLink).toHaveAttribute('href', '/admin/students/student-1/edit');
+      expect(screen.getByText('Not assigned')).toBeInTheDocument();
+    });
+  });
+
+  test('ASL-014: Parent email is displayed', async () => {
+    (adminGetStudents as jest.Mock).mockResolvedValue({ students: [mockStudents[0]], counts: mockCounts });
+    render(<AdminStudentsPage />);
+    await waitFor(() => {
+      expect(screen.getByText('parent@test.com')).toBeInTheDocument();
     });
   });
 });
