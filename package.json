@@ -25,6 +25,7 @@
   },
   "workspaces": [
     "packages/shared-core",
+    "packages/shared-firebase",
     "ui",
     "api",
     "scripts",
