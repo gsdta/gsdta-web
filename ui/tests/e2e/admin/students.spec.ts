@@ -95,9 +95,13 @@ test.describe('Admin Student Management', () => {
     await expect(page.locator('h1').filter({ hasText: 'Students' })).toBeVisible();
     await page.waitForSelector('table', { timeout: 10000 });
 
-    // Find the row with Arun Kumar and click the View link
-    const arunRow = page.getByRole('row').filter({ hasText: 'Arun Kumar' });
-    await arunRow.getByRole('link', { name: 'View' }).click();
+    // Find the row with Arun Kumar and click on it to open action menu
+    // Note: rows have role="button" so we use locator instead of getByRole('row')
+    const arunRow = page.locator('tbody tr').filter({ hasText: 'Arun Kumar' });
+    await arunRow.click();
+
+    // Click "View Details" from the action menu
+    await page.getByRole('menuitem', { name: 'View Details' }).click();
 
     // Should navigate to detail page
     await expect(page).toHaveURL(/.*\/admin\/students\/[a-zA-Z0-9-]+/);
@@ -108,9 +112,10 @@ test.describe('Admin Student Management', () => {
     await page.goto('/admin/students');
     await page.waitForSelector('table', { timeout: 10000 });
 
-    // Click View link for Arun Kumar
-    const arunRow = page.getByRole('row').filter({ hasText: 'Arun Kumar' });
-    await arunRow.getByRole('link', { name: 'View' }).click();
+    // Click on row for Arun Kumar to open action menu
+    const arunRow = page.locator('tbody tr').filter({ hasText: 'Arun Kumar' });
+    await arunRow.click();
+    await page.getByRole('menuitem', { name: 'View Details' }).click();
 
     await expect(page.getByRole('heading', { name: /Arun Kumar/i })).toBeVisible();
 
@@ -122,9 +127,10 @@ test.describe('Admin Student Management', () => {
     await page.goto('/admin/students');
     await page.waitForSelector('table', { timeout: 10000 });
 
-    // Click View link for Arun Kumar
-    const arunRow = page.getByRole('row').filter({ hasText: 'Arun Kumar' });
-    await arunRow.getByRole('link', { name: 'View' }).click();
+    // Click on row for Arun Kumar to open action menu
+    const arunRow = page.locator('tbody tr').filter({ hasText: 'Arun Kumar' });
+    await arunRow.click();
+    await page.getByRole('menuitem', { name: 'View Details' }).click();
 
     await expect(page.getByRole('heading', { name: /Arun Kumar/i })).toBeVisible();
 
@@ -136,9 +142,10 @@ test.describe('Admin Student Management', () => {
     await page.goto('/admin/students');
     await page.waitForSelector('table', { timeout: 10000 });
 
-    // Click View link for Arun Kumar
-    const arunRow = page.getByRole('row').filter({ hasText: 'Arun Kumar' });
-    await arunRow.getByRole('link', { name: 'View' }).click();
+    // Click on row for Arun Kumar to open action menu
+    const arunRow = page.locator('tbody tr').filter({ hasText: 'Arun Kumar' });
+    await arunRow.click();
+    await page.getByRole('menuitem', { name: 'View Details' }).click();
 
     await expect(page.getByRole('heading', { name: /Arun Kumar/i })).toBeVisible();
 
@@ -152,9 +159,10 @@ test.describe('Admin Student Management', () => {
     await page.goto('/admin/students');
     await page.waitForSelector('table', { timeout: 10000 });
 
-    // Click View link for Arun Kumar
-    const arunRow = page.getByRole('row').filter({ hasText: 'Arun Kumar' });
-    await arunRow.getByRole('link', { name: 'View' }).click();
+    // Click on row for Arun Kumar to open action menu
+    const arunRow = page.locator('tbody tr').filter({ hasText: 'Arun Kumar' });
+    await arunRow.click();
+    await page.getByRole('menuitem', { name: 'View Details' }).click();
 
     await expect(page.getByRole('heading', { name: /Arun Kumar/i })).toBeVisible();
 
@@ -166,9 +174,10 @@ test.describe('Admin Student Management', () => {
     await page.goto('/admin/students');
     await page.waitForSelector('table', { timeout: 10000 });
 
-    // Click View link for Arun Kumar
-    const arunRow = page.getByRole('row').filter({ hasText: 'Arun Kumar' });
-    await arunRow.getByRole('link', { name: 'View' }).click();
+    // Click on row for Arun Kumar to open action menu
+    const arunRow = page.locator('tbody tr').filter({ hasText: 'Arun Kumar' });
+    await arunRow.click();
+    await page.getByRole('menuitem', { name: 'View Details' }).click();
 
     await expect(page.getByRole('heading', { name: /Arun Kumar/i })).toBeVisible();
 
@@ -185,25 +194,27 @@ test.describe('Admin Student Management', () => {
   // Student Edit E2E Tests
   // ============================================
 
-  test('AE2E-026: Edit link visible in students table', async ({ page }) => {
+  test('AE2E-026: Rows are clickable in students table', async ({ page }) => {
     await page.goto('/admin/students');
     await page.waitForSelector('table', { timeout: 10000 });
 
-    // Check Edit column header exists (th element with text Edit)
-    await expect(page.locator('thead th').filter({ hasText: 'Edit' })).toBeVisible();
+    // Rows should be clickable (role="button")
+    const firstRow = page.locator('tbody tr').filter({ hasText: 'Arun Kumar' });
+    await expect(firstRow).toHaveAttribute('role', 'button');
 
-    // Check Edit link in first student row
-    const firstRow = page.getByRole('row').filter({ hasText: 'Arun Kumar' });
-    await expect(firstRow.getByRole('link', { name: 'Edit' })).toBeVisible();
+    // Click row to open action menu
+    await firstRow.click();
+    await expect(page.getByRole('menuitem', { name: 'Edit' })).toBeVisible();
   });
 
-  test('AE2E-027: Edit link from table navigates to edit page', async ({ page }) => {
+  test('AE2E-027: Edit action from table navigates to edit page', async ({ page }) => {
     await page.goto('/admin/students');
     await page.waitForSelector('table', { timeout: 10000 });
 
-    // Click Edit link for Arun Kumar
-    const arunRow = page.getByRole('row').filter({ hasText: 'Arun Kumar' });
-    await arunRow.getByRole('link', { name: 'Edit' }).click();
+    // Click on row for Arun Kumar to open action menu
+    const arunRow = page.locator('tbody tr').filter({ hasText: 'Arun Kumar' });
+    await arunRow.click();
+    await page.getByRole('menuitem', { name: 'Edit' }).click();
 
     // Verify navigation to edit page
     await expect(page).toHaveURL(/.*\/admin\/students\/[a-zA-Z0-9-]+\/edit/);
@@ -214,9 +225,10 @@ test.describe('Admin Student Management', () => {
     await page.goto('/admin/students');
     await page.waitForSelector('table', { timeout: 10000 });
 
-    // Click Edit link for Arun Kumar
-    const arunRow = page.getByRole('row').filter({ hasText: 'Arun Kumar' });
-    await arunRow.getByRole('link', { name: 'Edit' }).click();
+    // Click on row for Arun Kumar to open action menu
+    const arunRow = page.locator('tbody tr').filter({ hasText: 'Arun Kumar' });
+    await arunRow.click();
+    await page.getByRole('menuitem', { name: 'Edit' }).click();
 
     await expect(page.getByRole('heading', { name: 'Edit Student' })).toBeVisible();
 
@@ -228,8 +240,9 @@ test.describe('Admin Student Management', () => {
     await page.goto('/admin/students');
     await page.waitForSelector('table', { timeout: 10000 });
 
-    const arunRow = page.getByRole('row').filter({ hasText: 'Arun Kumar' });
-    await arunRow.getByRole('link', { name: 'Edit' }).click();
+    const arunRow = page.locator('tbody tr').filter({ hasText: 'Arun Kumar' });
+    await arunRow.click();
+    await page.getByRole('menuitem', { name: 'Edit' }).click();
 
     await expect(page.getByRole('heading', { name: 'Edit Student' })).toBeVisible();
 
@@ -244,8 +257,9 @@ test.describe('Admin Student Management', () => {
     await page.goto('/admin/students');
     await page.waitForSelector('table', { timeout: 10000 });
 
-    const arunRow = page.getByRole('row').filter({ hasText: 'Arun Kumar' });
-    await arunRow.getByRole('link', { name: 'Edit' }).click();
+    const arunRow = page.locator('tbody tr').filter({ hasText: 'Arun Kumar' });
+    await arunRow.click();
+    await page.getByRole('menuitem', { name: 'Edit' }).click();
 
     await expect(page.getByRole('heading', { name: 'Edit Student' })).toBeVisible();
 
@@ -258,8 +272,10 @@ test.describe('Admin Student Management', () => {
     await page.goto('/admin/students');
     await page.waitForSelector('table', { timeout: 10000 });
 
-    const arunRow = page.getByRole('row').filter({ hasText: 'Arun Kumar' });
-    await arunRow.getByRole('link', { name: 'Edit' }).click();
+    // Click on row for Arun Kumar to open action menu
+    const arunRow = page.locator('tbody tr').filter({ hasText: 'Arun Kumar' });
+    await arunRow.click();
+    await page.getByRole('menuitem', { name: 'Edit' }).click();
 
     await expect(page.getByRole('heading', { name: 'Edit Student' })).toBeVisible();
 
@@ -275,8 +291,10 @@ test.describe('Admin Student Management', () => {
     await page.goto('/admin/students');
     await page.waitForSelector('table', { timeout: 10000 });
 
-    const arunRow = page.getByRole('row').filter({ hasText: 'Arun Kumar' });
-    await arunRow.getByRole('link', { name: 'View' }).click();
+    // Click on row for Arun Kumar to open action menu
+    const arunRow = page.locator('tbody tr').filter({ hasText: 'Arun Kumar' });
+    await arunRow.click();
+    await page.getByRole('menuitem', { name: 'View Details' }).click();
 
     await expect(page.getByRole('heading', { name: /Arun Kumar/i })).toBeVisible();
 
@@ -288,8 +306,10 @@ test.describe('Admin Student Management', () => {
     await page.goto('/admin/students');
     await page.waitForSelector('table', { timeout: 10000 });
 
-    const arunRow = page.getByRole('row').filter({ hasText: 'Arun Kumar' });
-    await arunRow.getByRole('link', { name: 'View' }).click();
+    // Click on row for Arun Kumar to open action menu
+    const arunRow = page.locator('tbody tr').filter({ hasText: 'Arun Kumar' });
+    await arunRow.click();
+    await page.getByRole('menuitem', { name: 'View Details' }).click();
 
     await expect(page.getByRole('heading', { name: /Arun Kumar/i })).toBeVisible();
 

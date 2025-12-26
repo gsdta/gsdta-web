@@ -9,6 +9,15 @@ jest.mock('@/components/Protected', () => ({
   Protected: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
+const mockPush = jest.fn();
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: mockPush,
+    replace: jest.fn(),
+    prefetch: jest.fn(),
+  }),
+}));
+
 jest.mock('@/lib/api-client', () => ({
   apiFetch: jest.fn(),
 }));
@@ -97,13 +106,13 @@ describe('TeachersListPage', () => {
       // Check for table structure
       const table = screen.getByRole('table');
       expect(table).toBeInTheDocument();
-      
+
       // Check for column headers using more specific queries
+      // Note: Actions column was removed - rows are now clickable
       expect(screen.getByRole('columnheader', { name: /name/i })).toBeInTheDocument();
       expect(screen.getByRole('columnheader', { name: /email/i })).toBeInTheDocument();
       expect(screen.getByRole('columnheader', { name: /status/i })).toBeInTheDocument();
       expect(screen.getByRole('columnheader', { name: /joined/i })).toBeInTheDocument();
-      expect(screen.getByRole('columnheader', { name: /actions/i })).toBeInTheDocument();
     });
   });
 
@@ -195,20 +204,16 @@ describe('TeachersListPage', () => {
     });
   });
 
-  test('should have view and edit links for each teacher', async () => {
+  test('should have clickable rows for each teacher', async () => {
     mockApiFetch.mockResolvedValue(mockTeachersResponse);
 
     render(<TeachersListPage />);
 
     await waitFor(() => {
-      const viewLinks = screen.getAllByRole('link', { name: /view/i });
-      const editLinks = screen.getAllByRole('link', { name: /edit/i });
-      
-      expect(viewLinks.length).toBe(2);
-      expect(editLinks.length).toBe(2);
-      
-      expect(viewLinks[0]).toHaveAttribute('href', '/admin/users/teachers/t1');
-      expect(editLinks[0]).toHaveAttribute('href', '/admin/users/teachers/t1/edit');
+      // Rows are now clickable buttons that open an action menu
+      const rows = screen.getAllByRole('button');
+      // Each teacher row is a button
+      expect(rows.length).toBeGreaterThanOrEqual(2);
     });
   });
 

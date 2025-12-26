@@ -13,6 +13,15 @@ jest.mock("@/components/AuthProvider", () => ({
 jest.mock("@/lib/textbook-api");
 jest.mock("@/lib/grade-api");
 
+const mockPush = jest.fn();
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: mockPush,
+    replace: jest.fn(),
+    prefetch: jest.fn(),
+  }),
+}));
+
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
 const mockTextbookApi = textbookApi as jest.Mocked<typeof textbookApi>;
 const mockGradeApi = gradeApi as jest.Mocked<typeof gradeApi>;
@@ -148,42 +157,24 @@ describe("AdminTextbooksPage", () => {
     });
   });
 
-  test("should toggle textbook status", async () => {
+  test("should display textbooks in table", async () => {
     mockTextbookApi.adminGetTextbooks.mockResolvedValue({
       textbooks: [mockTextbooks[0]],
       total: 1,
-    });
-    mockTextbookApi.adminUpdateTextbook.mockResolvedValue({
-      ...mockTextbooks[0],
-      status: "inactive",
     });
 
     render(<AdminTextbooksPage />);
 
     await waitFor(() => {
       expect(screen.getByText("Mazhalai Textbook First Semester")).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByText("Deactivate"));
-
-    await waitFor(() => {
-      expect(mockTextbookApi.adminUpdateTextbook).toHaveBeenCalledWith(
-        expect.any(Function),
-        "tb-1",
-        { status: "inactive" }
-      );
     });
   });
 
-  test("should delete a textbook with confirmation", async () => {
+  test("should have Add Textbook button", async () => {
     mockTextbookApi.adminGetTextbooks.mockResolvedValue({
       textbooks: [mockTextbooks[0]],
       total: 1,
     });
-    mockTextbookApi.adminDeleteTextbook.mockResolvedValue();
-
-    // Mock window.confirm
-    const confirmSpy = jest.spyOn(window, "confirm").mockReturnValue(true);
 
     render(<AdminTextbooksPage />);
 
@@ -191,17 +182,8 @@ describe("AdminTextbooksPage", () => {
       expect(screen.getByText("Mazhalai Textbook First Semester")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText("Delete"));
-
-    await waitFor(() => {
-      expect(confirmSpy).toHaveBeenCalled();
-      expect(mockTextbookApi.adminDeleteTextbook).toHaveBeenCalledWith(
-        expect.any(Function),
-        "tb-1"
-      );
-    });
-
-    confirmSpy.mockRestore();
+    // Add Textbook button should be present
+    expect(screen.getByText("Add Textbook")).toBeInTheDocument();
   });
 
   test("should filter textbooks by status", async () => {

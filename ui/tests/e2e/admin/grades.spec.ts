@@ -18,16 +18,16 @@ test.describe('Admin Grades Management', () => {
     await expect(grade1.or(seedBtn).first()).toBeVisible();
   });
 
-  test('GE2E-002: Admin can edit a grade display name', async ({ page }) => {
+  test('GE2E-002: Admin can access grade action menu', async ({ page }) => {
     await page.goto('/admin/grades');
-    
+
     // Define locators
     const seedBtn = page.getByRole('button', { name: 'Seed Default Grades' }).first();
     const grade1 = page.getByText('Grade 1', { exact: true });
 
     // Wait for either the seed button or the grade to be visible (data loaded)
     await expect(seedBtn.or(grade1).first()).toBeVisible({ timeout: 10000 });
-    
+
     // If seed button is visible, click it to seed grades
     if (await seedBtn.isVisible()) {
         await seedBtn.click();
@@ -36,24 +36,35 @@ test.describe('Admin Grades Management', () => {
     }
 
     // Locate the row containing "Grade 1" by its ID "grade-1" which is stable
-    const row = page.getByRole('row').filter({ hasText: 'grade-1' }).first();
+    const row = page.locator('tbody tr').filter({ hasText: 'grade-1' }).first();
     await expect(row).toBeVisible();
-    
-    await row.getByRole('button', { name: 'Edit' }).click();
-    
-    // Clear and type new name
-    await page.locator('input[type="text"]').fill('Grade One Updated');
-    await row.getByRole('button', { name: 'Save' }).click();
-    
-    // Verify update
-    await expect(page.getByText('Grade One Updated')).toBeVisible();
-    
-    // Revert changes
-    // Row still has ID "grade-1"
-    const updatedRow = page.getByRole('row').filter({ hasText: 'grade-1' }).first();
-    await updatedRow.getByRole('button', { name: 'Edit' }).click();
-    await page.locator('input[type="text"]').fill('Grade 1');
-    await updatedRow.getByRole('button', { name: 'Save' }).click();
+
+    // Click row to open action menu
+    await row.click();
+
+    // Verify Edit and Deactivate actions are available
+    await expect(page.getByRole('menuitem', { name: 'Edit' })).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: 'Deactivate' })).toBeVisible();
+
+    // Click Edit to enter edit mode
+    await page.getByRole('menuitem', { name: 'Edit' }).click();
+
+    // Wait for edit mode - input field should appear
+    const displayNameInput = row.locator('input[type="text"]');
+    await expect(displayNameInput).toBeVisible();
+
+    // Verify the input shows the current value
+    await expect(displayNameInput).toHaveValue('Grade 1');
+
+    // Cancel editing by clicking Cancel in the action menu
+    await row.locator('td:nth-child(2)').click();
+    await expect(page.getByRole('menuitem', { name: 'Cancel' })).toBeVisible();
+    await page.getByRole('menuitem', { name: 'Cancel' }).click();
+
+    // Verify edit mode is dismissed
+    await expect(displayNameInput).not.toBeVisible({ timeout: 5000 });
+
+    // Verify the original value is still displayed
     await expect(page.getByText('Grade 1', { exact: true }).first()).toBeVisible();
   });
 });

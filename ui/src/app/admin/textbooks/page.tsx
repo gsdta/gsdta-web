@@ -7,6 +7,7 @@ import { adminGetGrades } from '@/lib/grade-api';
 import type { Textbook, TextbookStatus, TextbookType, CreateTextbookInput } from '@/lib/textbook-types';
 import { TEXTBOOK_TYPES, SEMESTERS, CURRENT_ACADEMIC_YEAR } from '@/lib/textbook-types';
 import type { Grade } from '@/lib/grade-types';
+import { TableRowActionMenu, useTableRowActions, type TableAction } from '@/components/TableRowActionMenu';
 
 export default function AdminTextbooksPage() {
   const { getIdToken } = useAuth();
@@ -18,6 +19,21 @@ export default function AdminTextbooksPage() {
   const [gradeFilter, setGradeFilter] = useState<string>('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
+  const { selectedItem, menuPosition, handleRowClick, closeMenu, isMenuOpen } = useTableRowActions<Textbook>();
+
+  const getTextbookActions = useCallback((textbook: Textbook): TableAction[] => [
+    {
+      label: textbook.status === 'active' ? 'Deactivate' : 'Activate',
+      onClick: () => handleToggleStatus(textbook),
+      variant: textbook.status === 'active' ? 'warning' : 'success',
+    },
+    {
+      label: 'Delete',
+      onClick: () => handleDelete(textbook),
+      variant: 'danger',
+    },
+  ], []);
+
   const [createForm, setCreateForm] = useState<CreateTextbookInput>({
     gradeId: '',
     itemNumber: '',
@@ -220,14 +236,18 @@ export default function AdminTextbooksPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {textbooks.map((textbook) => (
-                <tr key={textbook.id} className="hover:bg-gray-50">
+                <tr
+                  key={textbook.id}
+                  onClick={(e) => handleRowClick(e, textbook)}
+                  className="hover:bg-blue-50 cursor-pointer transition-colors"
+                  tabIndex={0}
+                  role="button"
+                  onKeyDown={(e) => e.key === 'Enter' && handleRowClick(e as unknown as React.MouseEvent, textbook)}
+                >
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
                     {textbook.itemNumber}
                   </td>
@@ -256,29 +276,20 @@ export default function AdminTextbooksPage() {
                       {statusConfig[textbook.status].label}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => handleToggleStatus(textbook)}
-                      className={
-                        textbook.status === 'active'
-                          ? 'text-yellow-600 hover:text-yellow-900 mr-3'
-                          : 'text-green-600 hover:text-green-900 mr-3'
-                      }
-                    >
-                      {textbook.status === 'active' ? 'Deactivate' : 'Activate'}
-                    </button>
-                    <button
-                      onClick={() => handleDelete(textbook)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Delete
-                    </button>
-                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Action Menu */}
+      {isMenuOpen && selectedItem && menuPosition && (
+        <TableRowActionMenu
+          actions={getTextbookActions(selectedItem)}
+          position={menuPosition}
+          onClose={closeMenu}
+        />
       )}
 
       {/* Create Modal */}

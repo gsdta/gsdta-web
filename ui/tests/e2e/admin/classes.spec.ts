@@ -30,6 +30,8 @@ test.describe('Admin Class Management', () => {
   });
 
   test('CE2E-004: Complete class creation flow', async ({ page }) => {
+    const uniqueClassName = `E2E Test Class ${Date.now()}`;
+
     await page.goto('/admin/classes');
 
     // Wait for page to load
@@ -45,7 +47,7 @@ test.describe('Admin Class Management', () => {
     await page.waitForSelector('select[name="gradeId"]', { timeout: 10000 });
 
     // Fill in the form
-    await page.fill('input[name="name"]', 'E2E Test Class');
+    await page.fill('input[name="name"]', uniqueClassName);
     await page.selectOption('select[name="gradeId"]', { index: 1 }); // Select first available grade
     await page.selectOption('select[name="day"]', 'Sunday');
     await page.fill('input[name="time"]', '2:00 PM - 4:00 PM');
@@ -59,7 +61,7 @@ test.describe('Admin Class Management', () => {
 
     // Wait for table to load and verify new class appears
     await page.waitForSelector('table', { timeout: 10000 });
-    await expect(page.getByText('E2E Test Class')).toBeVisible();
+    await expect(page.getByText(uniqueClassName)).toBeVisible();
   });
 
   // ============================================
@@ -102,6 +104,8 @@ test.describe('Admin Class Management', () => {
   });
 
   test('CE2E-012: Create class with section and room', async ({ page }) => {
+    const uniqueClassName = `Grade 1 Section A ${Date.now()}`;
+
     await page.goto('/admin/classes/create');
     await expect(page.getByRole('heading', { name: 'Create New Class' })).toBeVisible();
 
@@ -109,7 +113,7 @@ test.describe('Admin Class Management', () => {
     await page.waitForSelector('select[name="gradeId"]', { timeout: 10000 });
 
     // Fill required fields
-    await page.fill('input[name="name"]', 'Grade 1 Section A');
+    await page.fill('input[name="name"]', uniqueClassName);
     await page.selectOption('select[name="gradeId"]', { index: 1 });
     await page.selectOption('select[name="day"]', 'Saturday');
     await page.fill('input[name="time"]', '10:00 AM - 12:00 PM');
@@ -127,10 +131,12 @@ test.describe('Admin Class Management', () => {
 
     // Verify new class appears
     await page.waitForSelector('table', { timeout: 10000 });
-    await expect(page.getByText('Grade 1 Section A')).toBeVisible();
+    await expect(page.getByText(uniqueClassName)).toBeVisible();
   });
 
   test('CE2E-013: Section and room are optional', async ({ page }) => {
+    const uniqueClassName = `No Section Class ${Date.now()}`;
+
     await page.goto('/admin/classes/create');
     await expect(page.getByRole('heading', { name: 'Create New Class' })).toBeVisible();
 
@@ -138,7 +144,7 @@ test.describe('Admin Class Management', () => {
     await page.waitForSelector('select[name="gradeId"]', { timeout: 10000 });
 
     // Fill only required fields (no section or room)
-    await page.fill('input[name="name"]', 'No Section Class');
+    await page.fill('input[name="name"]', uniqueClassName);
     await page.selectOption('select[name="gradeId"]', { index: 1 });
     await page.selectOption('select[name="day"]', 'Saturday');
     await page.fill('input[name="time"]', '2:00 PM - 4:00 PM');
@@ -150,6 +156,6 @@ test.describe('Admin Class Management', () => {
     // Should still redirect successfully
     await expect(page).toHaveURL(/.*\/admin\/classes/);
     await page.waitForSelector('table', { timeout: 10000 });
-    await expect(page.getByText('No Section Class')).toBeVisible();
+    await expect(page.getByText(uniqueClassName)).toBeVisible();
   });
 });

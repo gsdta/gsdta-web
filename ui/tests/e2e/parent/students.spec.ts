@@ -38,6 +38,8 @@ test.describe('Parent Student Management', () => {
   });
 
   test('PE2E-004: Complete student registration flow', async ({ page }) => {
+    const uniqueLastName = `Playwright${Date.now()}`;
+
     await page.goto('/parent/students/register');
 
     // Wait for page to load
@@ -45,7 +47,7 @@ test.describe('Parent Student Management', () => {
 
     // Fill required fields
     await page.fill('input[name="firstName"]', 'TestChild');
-    await page.fill('input[name="lastName"]', 'Playwright');
+    await page.fill('input[name="lastName"]', uniqueLastName);
     await page.fill('input[name="dateOfBirth"]', '2015-06-15');
 
     // Optional fields
@@ -62,7 +64,7 @@ test.describe('Parent Student Management', () => {
     await expect(page.getByText(/Student registered successfully/i)).toBeVisible();
 
     // Should see new student in list
-    await expect(page.getByText('TestChild Playwright')).toBeVisible();
+    await expect(page.getByText(`TestChild ${uniqueLastName}`)).toBeVisible();
 
     // New student should have Pending status
     await expect(page.getByText('Pending').first()).toBeVisible();
@@ -155,12 +157,14 @@ test.describe('Parent Student Management', () => {
   });
 
   test('PE2E-015: Complete registration with all new fields', async ({ page }) => {
+    const uniqueLastName = `AllFields${Date.now()}`;
+
     await page.goto('/parent/students/register');
     await expect(page.getByRole('heading', { name: 'Register New Student' })).toBeVisible();
 
     // Required fields
     await page.fill('input[name="firstName"]', 'NewStudent');
-    await page.fill('input[name="lastName"]', 'AllFields');
+    await page.fill('input[name="lastName"]', uniqueLastName);
     await page.fill('input[name="dateOfBirth"]', '2016-03-20');
 
     // New fields - Gender
@@ -194,7 +198,7 @@ test.describe('Parent Student Management', () => {
     // Should redirect successfully
     await expect(page).toHaveURL(/.*\/parent\/students\/?\?registered=true/);
     await expect(page.getByText(/Student registered successfully/i)).toBeVisible();
-    await expect(page.getByText('NewStudent AllFields')).toBeVisible();
+    await expect(page.getByText(`NewStudent ${uniqueLastName}`)).toBeVisible();
   });
 
   test('PE2E-016: Medical notes textarea is visible and editable', async ({ page }) => {

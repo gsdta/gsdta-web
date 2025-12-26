@@ -2,12 +2,15 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { adminGetClasses, adminUpdateClass, formatTeachersDisplay, type Class } from '@/lib/class-api';
 import { adminGetGradeOptions } from '@/lib/grade-api';
 import type { GradeOption } from '@/lib/grade-types';
+import { TableRowActionMenu, useTableRowActions, type TableAction } from '@/components/TableRowActionMenu';
 
 export default function ClassesPage() {
+  const router = useRouter();
   const { getIdToken } = useAuth();
   const [classes, setClasses] = useState<Class[]>([]);
   const [grades, setGrades] = useState<GradeOption[]>([]);
@@ -16,6 +19,17 @@ export default function ClassesPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [gradeFilter, setGradeFilter] = useState<string>('');
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const { selectedItem, menuPosition, handleRowClick, closeMenu, isMenuOpen } = useTableRowActions<Class>();
+
+  const getClassActions = useCallback((cls: Class): TableAction[] => [
+    { label: 'Edit', onClick: () => router.push(`/admin/classes/${cls.id}/edit`) },
+    {
+      label: togglingId === cls.id ? '...' : (cls.status === 'active' ? 'Deactivate' : 'Activate'),
+      onClick: () => handleToggleStatus(cls),
+      variant: cls.status === 'active' ? 'danger' : 'success',
+      disabled: togglingId === cls.id,
+    },
+  ], [router, togglingId]);
 
   const fetchGrades = useCallback(async () => {
     try {
@@ -183,14 +197,18 @@ export default function ClassesPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {classes.map((cls) => (
-                  <tr key={cls.id} className="hover:bg-gray-50">
+                  <tr
+                    key={cls.id}
+                    onClick={(e) => handleRowClick(e, cls)}
+                    className="hover:bg-blue-50 cursor-pointer transition-colors"
+                    tabIndex={0}
+                    role="button"
+                    onKeyDown={(e) => e.key === 'Enter' && handleRowClick(e as unknown as React.MouseEvent, cls)}
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{cls.name}</div>
                     </td>
@@ -244,31 +262,6 @@ export default function ClassesPage() {
                         {cls.status === 'active' ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end gap-2">
-                        <Link
-                          href={`/admin/classes/${cls.id}/edit`}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          Edit
-                        </Link>
-                        <button
-                          onClick={() => handleToggleStatus(cls)}
-                          disabled={togglingId === cls.id}
-                          className={`${
-                            cls.status === 'active'
-                              ? 'text-red-600 hover:text-red-900'
-                              : 'text-green-600 hover:text-green-900'
-                          } disabled:opacity-50`}
-                        >
-                          {togglingId === cls.id
-                            ? '...'
-                            : cls.status === 'active'
-                            ? 'Deactivate'
-                            : 'Activate'}
-                        </button>
-                      </div>
-                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -276,6 +269,15 @@ export default function ClassesPage() {
           </div>
         )}
       </div>
+
+      {/* Action Menu */}
+      {isMenuOpen && selectedItem && menuPosition && (
+        <TableRowActionMenu
+          actions={getClassActions(selectedItem)}
+          position={menuPosition}
+          onClose={closeMenu}
+        />
+      )}
     </div>
   );
 }
