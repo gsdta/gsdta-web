@@ -19,7 +19,12 @@ COPY ui/package.json ui/package-lock.json ./ui/
 COPY ui/scripts ./ui/scripts
 
 # Install all dependencies using npm workspaces
-RUN npm ci --workspace=ui
+RUN npm install --workspace=ui
+
+# Ensure correct platform-specific native binaries for Alpine Linux (musl)
+# npm may skip optional dependencies, so we explicitly install the musl binary
+RUN npm install @tailwindcss/oxide-linux-arm64-musl --workspace=ui --save-optional 2>/dev/null || \
+    npm install @tailwindcss/oxide-linux-x64-musl --workspace=ui --save-optional 2>/dev/null || true
 
 # Set working directory to ui
 WORKDIR /workspace/ui
