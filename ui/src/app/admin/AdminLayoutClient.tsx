@@ -69,7 +69,8 @@ const superAdminNav: NavSection = {
   items: [
     { label: 'Admin Users', href: '/admin/super-admin/admins', icon: '👑' },
     { label: 'Audit Log', href: '/admin/super-admin/audit-log', icon: '📋' },
-    // Future phases will add: Security, Settings, Recovery, Export
+    { label: 'Security', href: '/admin/super-admin/security', icon: '🛡️' },
+    // Future phases will add: Settings, Recovery, Export
   ],
 };
 
