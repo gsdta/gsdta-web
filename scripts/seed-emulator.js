@@ -194,8 +194,9 @@ const SAMPLE_CLASSES = [
     teacherName: 'Test Teacher', // Legacy field
     teachers: [
       {
-        userId: 'test-teacher-uid',
-        name: 'Test Teacher',
+        teacherId: 'test-teacher-uid',
+        teacherName: 'Test Teacher',
+        teacherEmail: 'teacher@test.com',
         role: 'primary',
         assignedAt: new Date()
       }
@@ -217,8 +218,9 @@ const SAMPLE_CLASSES = [
     teacherName: 'Sarah Johnson', // Legacy field
     teachers: [
       {
-        userId: 'teacher-test-002',
-        name: 'Sarah Johnson',
+        teacherId: 'teacher-test-002',
+        teacherName: 'Sarah Johnson',
+        teacherEmail: 'teacher2@test.com',
         role: 'primary',
         assignedAt: new Date()
       }
@@ -602,6 +604,76 @@ async function seedInvites() {
   }
 }
 
+// Sample attendance data
+const SAMPLE_ATTENDANCE = [
+  // Attendance for class-001 on 2025-01-18 (Saturday)
+  {
+    id: 'attendance-001',
+    classId: 'class-001',
+    className: 'PS-1 Section A - Saturday AM',
+    date: '2025-01-18',
+    studentId: 'student-001',
+    studentName: 'Arun Kumar',
+    status: 'present',
+    recordedBy: 'test-teacher-uid',
+    recordedByName: 'Test Teacher',
+    docStatus: 'active'
+  },
+  {
+    id: 'attendance-002',
+    classId: 'class-001',
+    className: 'PS-1 Section A - Saturday AM',
+    date: '2025-01-18',
+    studentId: 'student-003',
+    studentName: 'Vikram Patel',
+    status: 'late',
+    arrivalTime: '10:15 AM',
+    notes: 'Traffic delay',
+    recordedBy: 'test-teacher-uid',
+    recordedByName: 'Test Teacher',
+    docStatus: 'active'
+  },
+  // Attendance for class-001 on 2025-01-11 (previous Saturday)
+  {
+    id: 'attendance-003',
+    classId: 'class-001',
+    className: 'PS-1 Section A - Saturday AM',
+    date: '2025-01-11',
+    studentId: 'student-001',
+    studentName: 'Arun Kumar',
+    status: 'present',
+    recordedBy: 'test-teacher-uid',
+    recordedByName: 'Test Teacher',
+    docStatus: 'active'
+  },
+  {
+    id: 'attendance-004',
+    classId: 'class-001',
+    className: 'PS-1 Section A - Saturday AM',
+    date: '2025-01-11',
+    studentId: 'student-003',
+    studentName: 'Vikram Patel',
+    status: 'absent',
+    notes: 'Sick',
+    recordedBy: 'test-teacher-uid',
+    recordedByName: 'Test Teacher',
+    docStatus: 'active'
+  },
+  // Attendance for class-002 on 2025-01-18
+  {
+    id: 'attendance-005',
+    classId: 'class-002',
+    className: 'Grade 3 Section A - Saturday PM',
+    date: '2025-01-18',
+    studentId: 'student-002',
+    studentName: 'Priya Sharma',
+    status: 'present',
+    recordedBy: 'teacher-test-002',
+    recordedByName: 'Sarah Johnson',
+    docStatus: 'active'
+  }
+];
+
 // Sample hero content
 const SAMPLE_HERO_CONTENT = [
   {
@@ -675,6 +747,29 @@ const SAMPLE_HERO_CONTENT = [
 ];
 
 /**
+ * Seed attendance records
+ */
+async function seedAttendance() {
+  console.log('\n📝 Seeding attendance records...');
+
+  for (const record of SAMPLE_ATTENDANCE) {
+    try {
+      const attendanceData = {
+        ...record,
+        recordedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      };
+
+      await db.collection('attendance').doc(record.id).set(attendanceData, { merge: true });
+      console.log(`  ✅ Created attendance: ${record.studentName} (${record.date}) - ${record.status}`);
+    } catch (error) {
+      console.error(`  ❌ Error creating attendance for ${record.studentName}:`, error.message);
+    }
+  }
+}
+
+/**
  * Seed hero content
  */
 async function seedHeroContent() {
@@ -709,7 +804,7 @@ async function clearAllData() {
   
   try {
     // Clear Firestore collections
-    const collections = ['users', 'students', 'classes', 'grades', 'invites', 'heroContent'];
+    const collections = ['users', 'students', 'classes', 'grades', 'invites', 'attendance', 'heroContent'];
     for (const collectionName of collections) {
       const snapshot = await db.collection(collectionName).get();
       const batch = db.batch();
@@ -759,6 +854,7 @@ async function main() {
     await seedClasses();
     await seedStudents();
     await seedInvites();
+    await seedAttendance();
     await seedHeroContent();
 
     console.log('\n✅ Seeding complete!\n');
