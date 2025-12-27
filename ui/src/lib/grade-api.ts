@@ -1,3 +1,20 @@
+/**
+ * Grade API - Backward compatible wrappers
+ *
+ * These wrappers maintain the old function signatures (with getIdToken parameter)
+ * but delegate to the shared-core APIs which use the platform adapter for auth.
+ */
+
+import {
+  adminGetGrades as _adminGetGrades,
+  adminGetGradeOptions as _adminGetGradeOptions,
+  adminGetGrade as _adminGetGrade,
+  adminCreateGrade as _adminCreateGrade,
+  adminUpdateGrade as _adminUpdateGrade,
+  adminSeedGrades as _adminSeedGrades,
+  adminCheckGradesSeeded as _adminCheckGradesSeeded,
+} from "@gsdta/shared-core/api";
+
 import type {
   Grade,
   GradeOption,
@@ -6,177 +23,81 @@ import type {
   GradesResponse,
   SeedGradesResponse,
   GradeStatus,
-} from './grade-types';
+} from "./grade-types";
 
 type TokenGetter = () => Promise<string | null>;
 
-interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  message?: string;
-  code?: string;
-}
-
 /**
  * Get all grades (admin)
+ * @deprecated Use shared-core API directly - getIdToken is no longer needed
  */
 export async function adminGetGrades(
-  getIdToken: TokenGetter,
-  params: { status?: GradeStatus | 'all' } = {}
+  _getIdToken: TokenGetter,
+  params: { status?: GradeStatus | "all" } = {}
 ): Promise<GradesResponse> {
-  const token = await getIdToken();
-  if (!token) throw new Error('Not authenticated');
-
-  const queryParams = new URLSearchParams();
-  if (params.status) queryParams.set('status', params.status);
-
-  const url = `/api/v1/admin/grades/${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
-
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  const json = (await res.json()) as ApiResponse<GradesResponse>;
-
-  if (!res.ok) {
-    throw new Error(json.message || 'Failed to fetch grades');
-  }
-
-  return json.data!;
+  return _adminGetGrades(params);
 }
 
 /**
  * Get active grade options for dropdowns (admin)
+ * @deprecated Use shared-core API directly - getIdToken is no longer needed
  */
-export async function adminGetGradeOptions(getIdToken: TokenGetter): Promise<GradeOption[]> {
-  const result = await adminGetGrades(getIdToken, { status: 'active' });
-  return result.grades.map((g) => ({
-    id: g.id,
-    name: g.name,
-    displayName: g.displayName,
-    displayOrder: g.displayOrder,
-  }));
+export async function adminGetGradeOptions(
+  _getIdToken: TokenGetter
+): Promise<GradeOption[]> {
+  return _adminGetGradeOptions();
 }
 
 /**
  * Get a single grade by ID (admin)
+ * @deprecated Use shared-core API directly - getIdToken is no longer needed
  */
 export async function adminGetGrade(
-  getIdToken: TokenGetter,
+  _getIdToken: TokenGetter,
   gradeId: string
 ): Promise<Grade> {
-  const token = await getIdToken();
-  if (!token) throw new Error('Not authenticated');
-
-  const res = await fetch(`/api/v1/admin/grades/${gradeId}/`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  const json = (await res.json()) as ApiResponse<{ grade: Grade }>;
-
-  if (!res.ok) {
-    throw new Error(json.message || 'Failed to fetch grade');
-  }
-
-  return json.data!.grade;
+  return _adminGetGrade(gradeId);
 }
 
 /**
  * Create a new grade (admin)
+ * @deprecated Use shared-core API directly - getIdToken is no longer needed
  */
 export async function adminCreateGrade(
-  getIdToken: TokenGetter,
+  _getIdToken: TokenGetter,
   data: CreateGradeInput
 ): Promise<Grade> {
-  const token = await getIdToken();
-  if (!token) throw new Error('Not authenticated');
-
-  const res = await fetch('/api/v1/admin/grades/', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  });
-
-  const json = (await res.json()) as ApiResponse<{ grade: Grade }>;
-
-  if (!res.ok) {
-    throw new Error(json.message || 'Failed to create grade');
-  }
-
-  return json.data!.grade;
+  return _adminCreateGrade(data);
 }
 
 /**
  * Update a grade (admin)
+ * @deprecated Use shared-core API directly - getIdToken is no longer needed
  */
 export async function adminUpdateGrade(
-  getIdToken: TokenGetter,
+  _getIdToken: TokenGetter,
   gradeId: string,
   data: UpdateGradeInput
 ): Promise<Grade> {
-  const token = await getIdToken();
-  if (!token) throw new Error('Not authenticated');
-
-  const res = await fetch(`/api/v1/admin/grades/${gradeId}/`, {
-    method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  });
-
-  const json = (await res.json()) as ApiResponse<{ grade: Grade }>;
-
-  if (!res.ok) {
-    throw new Error(json.message || 'Failed to update grade');
-  }
-
-  return json.data!.grade;
+  return _adminUpdateGrade(gradeId, data);
 }
 
 /**
  * Seed default grades (admin)
+ * @deprecated Use shared-core API directly - getIdToken is no longer needed
  */
-export async function adminSeedGrades(getIdToken: TokenGetter): Promise<SeedGradesResponse> {
-  const token = await getIdToken();
-  if (!token) throw new Error('Not authenticated');
-
-  const res = await fetch('/api/v1/admin/grades/seed/', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  const json = (await res.json()) as ApiResponse<SeedGradesResponse>;
-
-  if (!res.ok) {
-    throw new Error(json.message || 'Failed to seed grades');
-  }
-
-  return json.data!;
+export async function adminSeedGrades(
+  _getIdToken: TokenGetter
+): Promise<SeedGradesResponse> {
+  return _adminSeedGrades();
 }
 
 /**
  * Check if grades have been seeded (admin)
+ * @deprecated Use shared-core API directly - getIdToken is no longer needed
  */
-export async function adminCheckGradesSeeded(getIdToken: TokenGetter): Promise<boolean> {
-  const token = await getIdToken();
-  if (!token) throw new Error('Not authenticated');
-
-  const res = await fetch('/api/v1/admin/grades/seed/', {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  const json = (await res.json()) as ApiResponse<{ seeded: boolean }>;
-
-  if (!res.ok) {
-    throw new Error(json.message || 'Failed to check seed status');
-  }
-
-  return json.data!.seeded;
+export async function adminCheckGradesSeeded(
+  _getIdToken: TokenGetter
+): Promise<boolean> {
+  return _adminCheckGradesSeeded();
 }

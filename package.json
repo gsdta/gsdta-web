@@ -10,6 +10,7 @@
     "emulators:reset": "rm -rf firebase-data && npm run emulators",
     "dev:ui": "cd ui && npm run dev",
     "dev:api": "cd api && npm run dev",
+    "dev:mobile": "./start-mobile-local.sh",
     "build:ui": "cd ui && npm run build",
     "build:api": "cd api && npm run build",
     "lint:ui": "cd ui && npm run lint",
@@ -24,10 +25,13 @@
     "uat:shakeout": "cd uat && npm run test:shakeout"
   },
   "workspaces": [
+    "packages/shared-core",
+    "packages/shared-firebase",
     "ui",
     "api",
     "scripts",
-    "uat"
+    "uat",
+    "mobile"
   ],
   "devDependencies": {}
 }
