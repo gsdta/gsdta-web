@@ -4,19 +4,28 @@ FROM node:20-alpine
 # Install dependencies for development
 RUN apk add --no-cache libc6-compat curl
 
-WORKDIR /app
+WORKDIR /workspace
 
-# Copy package files
+# Copy root package.json for workspaces config
 COPY package.json package-lock.json ./
 
+# Copy workspace packages
+COPY packages ./packages
+
+# Copy UI package files
+COPY ui/package.json ui/package-lock.json ./ui/
+
 # Copy scripts directory BEFORE npm install (needed for postinstall)
-COPY scripts ./scripts
+COPY ui/scripts ./ui/scripts
 
-# Install all dependencies (including dev dependencies)
-RUN npm ci
+# Install all dependencies using npm workspaces
+RUN npm ci --workspace=ui
 
-# Copy source code
-COPY . .
+# Set working directory to ui
+WORKDIR /workspace/ui
+
+# Copy UI source code
+COPY ui/ .
 
 # Expose port
 EXPOSE 3000

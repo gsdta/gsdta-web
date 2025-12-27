@@ -24,14 +24,16 @@ services:
   # UI (Development)
   ui-dev:
     build:
-      context: ./ui
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: ui/Dockerfile.dev
     ports:
       - "3000:3000"
     volumes:
-      - ./ui:/app
-      - /app/node_modules
-      - /app/.next
+      - ./ui:/workspace/ui
+      - ./packages:/workspace/packages
+      - /workspace/node_modules
+      - /workspace/ui/node_modules
+      - /workspace/ui/.next
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_AUTH_MODE=firebase
