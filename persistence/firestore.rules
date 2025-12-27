@@ -91,6 +91,13 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    // Admin promotions: super_admin only (track admin role changes)
+    match /adminPromotions/{promotionId} {
+      allow get, list: if isSuperAdmin();
+      allow create: if isSuperAdmin();
+      // No update or delete - these are audit records
+    }
+
     // Attendance collection: teachers can manage attendance for their classes
     match /attendance/{recordId} {
       // Helper to check if user is a teacher
