@@ -15,6 +15,7 @@ import {
   GoogleAuthProvider,
   signInWithCredential,
   sendEmailVerification as firebaseSendEmailVerification,
+  connectAuthEmulator,
 } from 'firebase/auth';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
@@ -41,6 +42,10 @@ const isGoogleConfigured = Boolean(
 // API base URL
 const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.gsdta.com';
+
+// Firebase Auth Emulator (for local development)
+const FIREBASE_AUTH_EMULATOR_HOST =
+  process.env.EXPO_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST;
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -72,8 +77,7 @@ async function fetchUserProfile(token: string): Promise<AuthUser | null> {
       return null;
     }
 
-    const data = (await response.json()) as { data: MeApiResponse };
-    const meData = data.data;
+    const meData = (await response.json()) as MeApiResponse;
 
     // Map API response to AuthUser
     const roles = meData.roles as Role[];
@@ -110,12 +114,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Initialize Firebase
   useEffect(() => {
+    let app: FirebaseApp;
     if (getApps().length === 0) {
-      const app = initializeApp(firebaseConfig);
-      setFirebaseApp(app);
+      app = initializeApp(firebaseConfig);
     } else {
-      setFirebaseApp(getApps()[0]);
+      app = getApps()[0];
     }
+
+    // Connect to Auth Emulator in development
+    if (FIREBASE_AUTH_EMULATOR_HOST) {
+      const auth = getAuth(app);
+      try {
+        connectAuthEmulator(auth, `http://${FIREBASE_AUTH_EMULATOR_HOST}`, {
+          disableWarnings: true,
+        });
+        console.log('Connected to Firebase Auth Emulator:', FIREBASE_AUTH_EMULATOR_HOST);
+      } catch (e) {
+        // Emulator already connected (happens on hot reload)
+        console.log('Auth emulator already connected');
+      }
+    }
+
+    setFirebaseApp(app);
   }, []);
 
   // Set up auth state listener
