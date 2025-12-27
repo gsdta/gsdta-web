@@ -12,6 +12,7 @@ function isFirebaseMode(): boolean {
 
 function routeForRole(role: Role): string {
     switch (role) {
+        case "super_admin": return "/admin";  // Super admin uses admin dashboard
         case "admin": return "/admin";
         case "teacher": return "/teacher";
         default: return "/parent";

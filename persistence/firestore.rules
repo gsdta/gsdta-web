@@ -8,8 +8,15 @@ service cloud.firestore {
     function userDoc(uid) {
       return get(/databases/$(database)/documents/users/$(uid));
     }
+    function isSuperAdmin() {
+      return isSignedIn() && ('super_admin' in userDoc(request.auth.uid).data.roles) && userDoc(request.auth.uid).data.status == 'active';
+    }
     function isAdmin() {
-      return isSignedIn() && ('admin' in userDoc(request.auth.uid).data.roles) && userDoc(request.auth.uid).data.status == 'active';
+      // Admin check includes super_admin (role hierarchy)
+      return isSignedIn() && (
+        ('admin' in userDoc(request.auth.uid).data.roles) ||
+        ('super_admin' in userDoc(request.auth.uid).data.roles)
+      ) && userDoc(request.auth.uid).data.status == 'active';
     }
 
     // Users collection: users/{uid}
