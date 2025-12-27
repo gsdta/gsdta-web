@@ -110,6 +110,8 @@ COPY api/ ./api/
 # Disable telemetry during build and force standalone output
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_OUTPUT=standalone
+# NODE_ENV=production required for API's next.config.ts to enable standalone output
+ENV NODE_ENV=production
 
 WORKDIR /app/api
 RUN npm run build
