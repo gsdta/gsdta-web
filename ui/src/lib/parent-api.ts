@@ -1,77 +1,51 @@
+/**
+ * Parent API - Backward compatible wrappers
+ *
+ * These wrappers maintain the old function signatures (with getIdToken parameter)
+ * but delegate to the shared-core APIs which use the platform adapter for auth.
+ */
+
+import {
+  getProfile as _getProfile,
+  updateProfile as _updateProfile,
+  getLinkedStudents as _getLinkedStudents,
+} from "@gsdta/shared-core/api";
+
 import type {
   ProfileResponse,
   ProfileUpdatePayload,
-  StudentsResponse,
   LinkedStudent,
-} from './parent-types';
+} from "./parent-types";
 
 type TokenGetter = () => Promise<string | null>;
 
 /**
  * Get the authenticated user's profile
+ * @deprecated Use shared-core API directly - getIdToken is no longer needed
  */
-export async function getProfile(getIdToken: TokenGetter): Promise<ProfileResponse> {
-  const token = await getIdToken();
-  if (!token) throw new Error('Not authenticated');
-
-  // Use trailing slash to avoid 308 redirect that strips Authorization header
-  const res = await fetch('/api/v1/me/', {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Failed to fetch profile' }));
-    throw new Error(error.message || 'Failed to fetch profile');
-  }
-
-  return res.json();
+export async function getProfile(
+  _getIdToken: TokenGetter
+): Promise<ProfileResponse> {
+  return _getProfile();
 }
 
 /**
  * Update the authenticated user's profile
+ * @deprecated Use shared-core API directly - getIdToken is no longer needed
  */
 export async function updateProfile(
-  getIdToken: TokenGetter,
+  _getIdToken: TokenGetter,
   data: ProfileUpdatePayload
 ): Promise<ProfileResponse> {
-  const token = await getIdToken();
-  if (!token) throw new Error('Not authenticated');
-
-  // Use trailing slash to avoid 308 redirect that strips Authorization header
-  const res = await fetch('/api/v1/me/', {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Failed to update profile' }));
-    throw new Error(error.message || 'Failed to update profile');
-  }
-
-  return res.json();
+  return _updateProfile(data);
 }
 
 /**
  * Get students linked to the authenticated user
+ * @deprecated Use shared-core API directly - getIdToken is no longer needed
  */
-export async function getLinkedStudents(getIdToken: TokenGetter): Promise<LinkedStudent[]> {
-  const token = await getIdToken();
-  if (!token) throw new Error('Not authenticated');
-
-  // Use trailing slash to avoid 308 redirect that strips Authorization header
-  const res = await fetch('/api/v1/me/students/', {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Failed to fetch students' }));
-    throw new Error(error.message || 'Failed to fetch students');
-  }
-
-  const data: StudentsResponse = await res.json();
-  return data.data?.students || [];
+export async function getLinkedStudents(
+  _getIdToken: TokenGetter
+): Promise<LinkedStudent[]> {
+  return _getLinkedStudents();
 }

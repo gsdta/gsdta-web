@@ -9,11 +9,31 @@ import {
   type ClassTeacher,
   type CreateClassInput,
 } from '../class-api';
+import { initializePlatform } from '@gsdta/shared-core';
 
 const mockGetIdToken = jest.fn().mockResolvedValue('test-token');
 
 describe('class-api', () => {
   let fetchSpy: jest.SpyInstance;
+
+  beforeAll(() => {
+    // Initialize platform with mock adapters for testing
+    initializePlatform({
+      storage: {
+        get: async () => null,
+        set: async () => {},
+        remove: async () => {},
+        clear: async () => {},
+      },
+      auth: {
+        getToken: async () => 'test-token',
+      },
+      network: {
+        fetch: (...args: Parameters<typeof fetch>) => global.fetch(...args),
+        baseUrl: '/api',
+      },
+    });
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
