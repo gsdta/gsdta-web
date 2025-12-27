@@ -131,11 +131,12 @@ RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 # Install supervisor to run both UI and API
 RUN apk add --no-cache supervisor
 
-# Copy UI files
-COPY --from=ui-builder /app/ui/public ./ui/public
-RUN mkdir -p ui/.next && chown nextjs:nodejs ui/.next
-COPY --from=ui-builder --chown=nextjs:nodejs /app/ui/.next/standalone ./ui/
+# Copy UI standalone output (includes node_modules, packages/, and ui/ with server.js)
+# With outputFileTracingRoot set to monorepo root, standalone contains the full workspace structure
+COPY --from=ui-builder --chown=nextjs:nodejs /app/ui/.next/standalone ./
+# Copy static files and public assets (not included in standalone output)
 COPY --from=ui-builder --chown=nextjs:nodejs /app/ui/.next/static ./ui/.next/static
+COPY --from=ui-builder /app/ui/public ./ui/public
 
 # Copy API files
 RUN mkdir -p api/.next && chown nextjs:nodejs api/.next
