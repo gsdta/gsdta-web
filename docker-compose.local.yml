@@ -24,14 +24,20 @@ services:
   # UI (Development)
   ui-dev:
     build:
-      context: ./ui
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: ui/Dockerfile.dev
     ports:
       - "3000:3000"
     volumes:
-      - ./ui:/app
-      - /app/node_modules
-      - /app/.next
+      # Mount source directories for hot reloading (NOT node_modules)
+      - ./ui/src:/workspace/ui/src
+      - ./ui/public:/workspace/ui/public
+      - ./ui/tests:/workspace/ui/tests
+      - ./packages:/workspace/packages
+      # Named volumes to preserve container's node_modules
+      - ui_node_modules:/workspace/ui/node_modules
+      - workspace_node_modules:/workspace/node_modules
+      - ui_next:/workspace/ui/.next
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_AUTH_MODE=firebase
@@ -74,3 +80,6 @@ services:
 
 volumes:
   firebase-data:
+  ui_node_modules:
+  workspace_node_modules:
+  ui_next:
