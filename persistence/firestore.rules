@@ -68,6 +68,44 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    // Students collection: teachers can read students in their classes
+    match /students/{studentId} {
+      // Read: admin, parent (own children), or teacher (assigned class)
+      allow get: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.parentId == request.auth.uid
+        // Teacher access is handled at API level for class-based filtering
+      );
+
+      // List: admin only (teachers use API with class filter)
+      allow list: if isAdmin();
+
+      // Create/Update/Delete: admin only
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Attendance collection: teachers can manage attendance for their classes
+    match /attendance/{recordId} {
+      // Helper to check if user is a teacher
+      function isTeacher() {
+        return isSignedIn() &&
+               'teacher' in userDoc(request.auth.uid).data.roles &&
+               userDoc(request.auth.uid).data.status == 'active';
+      }
+
+      // Read: admin or teacher (API handles class-based filtering)
+      allow get, list: if isSignedIn() && (isAdmin() || isTeacher());
+
+      // Create: admin or teacher
+      allow create: if isSignedIn() && (isAdmin() || isTeacher());
+
+      // Update: admin or teacher (within edit window - validated at API level)
+      allow update: if isSignedIn() && (isAdmin() || isTeacher());
+
+      // Delete: admin only (soft delete preferred)
+      allow delete: if isAdmin();
+    }
+
     // Default deny for everything else
   }
 }
