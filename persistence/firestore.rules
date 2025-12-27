@@ -98,6 +98,13 @@ service cloud.firestore {
       // No update or delete - these are audit records
     }
 
+    // Audit log: super_admin only (comprehensive audit trail)
+    match /auditLog/{entryId} {
+      allow get, list: if isSuperAdmin();
+      allow create: if isSuperAdmin();
+      // No update or delete - audit logs are immutable
+    }
+
     // Attendance collection: teachers can manage attendance for their classes
     match /attendance/{recordId} {
       // Helper to check if user is a teacher

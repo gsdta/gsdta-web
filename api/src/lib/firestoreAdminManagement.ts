@@ -6,6 +6,7 @@
 
 import { adminDb } from './firebaseAdmin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { logSuperAdminAction } from './auditLog';
 
 export type AdminPromotion = {
   id: string;
@@ -162,6 +163,22 @@ export async function promoteToAdmin(
 
   await promotionRef.set(promotionData);
 
+  // Log audit entry
+  await logSuperAdminAction(
+    performedBy,
+    performedByEmail,
+    'admin.promote',
+    'user',
+    targetUid,
+    {
+      changes: [
+        { field: 'roles', oldValue: currentRoles, newValue: newRoles },
+      ],
+      metadata: { reason, targetEmail: userData.email },
+    },
+    { severity: 'warning' }
+  );
+
   return {
     success: true,
     promotion: {
@@ -231,6 +248,22 @@ export async function demoteFromAdmin(
   };
 
   await promotionRef.set(promotionData);
+
+  // Log audit entry
+  await logSuperAdminAction(
+    performedBy,
+    performedByEmail,
+    'admin.demote',
+    'user',
+    targetUid,
+    {
+      changes: [
+        { field: 'roles', oldValue: currentRoles, newValue: newRoles },
+      ],
+      metadata: { reason, targetEmail: userData.email },
+    },
+    { severity: 'warning' }
+  );
 
   return {
     success: true,
