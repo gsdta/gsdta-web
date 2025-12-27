@@ -72,7 +72,7 @@ const superAdminNav: NavSection = {
     { label: 'Security', href: '/admin/super-admin/security', icon: '🛡️' },
     { label: 'Settings', href: '/admin/super-admin/settings', icon: '⚙️' },
     { label: 'Recovery', href: '/admin/super-admin/recovery', icon: '🔄' },
-    // Future phases will add: Export
+    { label: 'Data Export', href: '/admin/super-admin/export', icon: '📦' },
   ],
 };
 

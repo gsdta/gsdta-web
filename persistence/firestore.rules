@@ -136,6 +136,13 @@ service cloud.firestore {
       // No delete - suspension records are preserved for audit
     }
 
+    // Export jobs: super_admin only (data export)
+    match /exportJobs/{jobId} {
+      allow get, list: if isSuperAdmin();
+      allow create, update: if isSuperAdmin();
+      // No delete - export job records are preserved
+    }
+
     // Attendance collection: teachers can manage attendance for their classes
     match /attendance/{recordId} {
       // Helper to check if user is a teacher
