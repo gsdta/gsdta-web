@@ -11,6 +11,7 @@ import React, {
 import type {Role, User, AuthProvider as AuthProviderType} from "@/lib/auth-types";
 import type { User as FirebaseUser } from "firebase/auth";
 import {setDebugUser, EFFECTIVE_BASE_URL, setAuthTokenProvider, apiFetch} from "@/lib/api-client";
+import { setWebAuthTokenGetter } from "@/platform";
 
 // Firebase (loaded lazily to avoid errors in mock mode)
 let firebaseLoaded = false as boolean;
@@ -199,8 +200,10 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
                     console.error("[Firebase] Redirect result error:", redirectErr);
                 }
 
-                // Register token provider for apiFetch
+                // Register token provider for apiFetch (legacy api-client)
                 setAuthTokenProvider(async () => auth.currentUser ? await auth.currentUser.getIdToken() : null);
+                // Register token provider for shared-core platform adapter
+                setWebAuthTokenGetter(async () => auth.currentUser ? await auth.currentUser.getIdToken() : null);
 
                 const unsubscribeState = onAuthStateChanged(auth, async (fbUser: FirebaseUser | null) => {
                     if (!fbUser) {
@@ -249,6 +252,7 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
                     unsubscribeState();
                     unsubscribeToken();
                     setAuthTokenProvider(null);
+                    setWebAuthTokenGetter(null);
                 };
             } catch {
                 // Fallback to mock if firebase fails to init

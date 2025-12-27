@@ -14,9 +14,27 @@ COPY package.json package-lock.json ./
 COPY ui/package.json ./ui/
 COPY api/package.json ./api/
 COPY scripts/package.json ./scripts/
+COPY packages/shared-core/package.json ./packages/shared-core/
+COPY packages/shared-firebase/package.json ./packages/shared-firebase/
+
+# Copy shared packages source (needed for workspace resolution)
+COPY packages/shared-core/ ./packages/shared-core/
+COPY packages/shared-firebase/ ./packages/shared-firebase/
 
 # Install all workspace dependencies at once
 RUN npm ci --ignore-scripts
+
+# Install platform-specific native binaries for Linux Alpine (musl)
+# Use --ignore-scripts to avoid triggering postinstall scripts that need source files
+RUN if [ "$(uname -m)" = "x86_64" ]; then \
+      npm install --no-save --ignore-scripts \
+        lightningcss-linux-x64-musl \
+        @tailwindcss/oxide-linux-x64-musl; \
+    elif [ "$(uname -m)" = "aarch64" ]; then \
+      npm install --no-save --ignore-scripts \
+        lightningcss-linux-arm64-musl \
+        @tailwindcss/oxide-linux-arm64-musl; \
+    fi
 
 # =============================================================================
 # Stage 2: Build UI
@@ -27,6 +45,12 @@ WORKDIR /app
 # Copy all node_modules from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/ui/node_modules ./ui/node_modules
+
+# Copy root package.json for workspace resolution
+COPY --from=deps /app/package.json ./package.json
+
+# Copy shared packages (workspace dependencies)
+COPY --from=deps /app/packages ./packages
 
 # Copy UI source
 COPY ui/ ./ui/
@@ -68,14 +92,6 @@ RUN set -eu \
 
 WORKDIR /app/ui
 
-# Install platform-specific lightningcss for Linux
-# Use BuildKit's automatic platform variables
-RUN if [ "$(uname -m)" = "x86_64" ]; then \
-      npm install --no-save lightningcss-linux-x64-musl; \
-    elif [ "$(uname -m)" = "aarch64" ]; then \
-      npm install --no-save lightningcss-linux-arm64-musl; \
-    fi
-
 RUN npm run build
 
 # =============================================================================
@@ -94,6 +110,8 @@ COPY api/ ./api/
 # Disable telemetry during build and force standalone output
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_OUTPUT=standalone
+# NODE_ENV=production required for API's next.config.ts to enable standalone output
+ENV NODE_ENV=production
 
 WORKDIR /app/api
 RUN npm run build
@@ -113,11 +131,12 @@ RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 # Install supervisor to run both UI and API
 RUN apk add --no-cache supervisor
 
-# Copy UI files
-COPY --from=ui-builder /app/ui/public ./ui/public
-RUN mkdir -p ui/.next && chown nextjs:nodejs ui/.next
-COPY --from=ui-builder --chown=nextjs:nodejs /app/ui/.next/standalone ./ui/
+# Copy UI standalone output (includes node_modules, packages/, and ui/ with server.js)
+# With outputFileTracingRoot set to monorepo root, standalone contains the full workspace structure
+COPY --from=ui-builder --chown=nextjs:nodejs /app/ui/.next/standalone ./
+# Copy static files and public assets (not included in standalone output)
 COPY --from=ui-builder --chown=nextjs:nodejs /app/ui/.next/static ./ui/.next/static
+COPY --from=ui-builder /app/ui/public ./ui/public
 
 # Copy API files
 RUN mkdir -p api/.next && chown nextjs:nodejs api/.next
