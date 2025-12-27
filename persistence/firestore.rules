@@ -120,6 +120,22 @@ service cloud.firestore {
       // No delete - config should be updated, not deleted
     }
 
+    // Deleted data archive: super_admin only (for data recovery)
+    match /deletedData/{entryId} {
+      allow get, list: if isSuperAdmin();
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin(); // For marking as restored
+      // No delete - deleted data is auto-purged after retention period
+    }
+
+    // User suspensions: super_admin only (emergency actions)
+    match /suspensions/{suspensionId} {
+      allow get, list: if isSuperAdmin();
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin(); // For lifting suspensions
+      // No delete - suspension records are preserved for audit
+    }
+
     // Attendance collection: teachers can manage attendance for their classes
     match /attendance/{recordId} {
       // Helper to check if user is a teacher
