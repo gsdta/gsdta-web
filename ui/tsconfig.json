@@ -25,6 +25,18 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@gsdta/shared-core": [
+        "../packages/shared-core/src/index.ts"
+      ],
+      "@gsdta/shared-core/*": [
+        "../packages/shared-core/src/*"
+      ],
+      "@gsdta/shared-firebase": [
+        "../packages/shared-firebase/src/index.ts"
+      ],
+      "@gsdta/shared-firebase/*": [
+        "../packages/shared-firebase/src/*"
       ]
     },
     "types": [
