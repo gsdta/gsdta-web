@@ -59,11 +59,6 @@ export default function TeacherViewPage({
     fetchTeacher();
   }, [uid]);
 
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString();
-  };
-
   const formatDateTime = (dateStr: string | null) => {
     if (!dateStr) return '-';
     return new Date(dateStr).toLocaleString();

@@ -35,6 +35,7 @@ export async function adminGetGrades(
   _getIdToken: TokenGetter,
   params: { status?: GradeStatus | "all" } = {}
 ): Promise<GradesResponse> {
+  void _getIdToken; // Backward compatibility - parameter no longer used
   return _adminGetGrades(params);
 }
 
@@ -45,6 +46,7 @@ export async function adminGetGrades(
 export async function adminGetGradeOptions(
   _getIdToken: TokenGetter
 ): Promise<GradeOption[]> {
+  void _getIdToken; // Backward compatibility - parameter no longer used
   return _adminGetGradeOptions();
 }
 
@@ -56,6 +58,7 @@ export async function adminGetGrade(
   _getIdToken: TokenGetter,
   gradeId: string
 ): Promise<Grade> {
+  void _getIdToken; // Backward compatibility - parameter no longer used
   return _adminGetGrade(gradeId);
 }
 
@@ -67,6 +70,7 @@ export async function adminCreateGrade(
   _getIdToken: TokenGetter,
   data: CreateGradeInput
 ): Promise<Grade> {
+  void _getIdToken; // Backward compatibility - parameter no longer used
   return _adminCreateGrade(data);
 }
 
@@ -79,6 +83,7 @@ export async function adminUpdateGrade(
   gradeId: string,
   data: UpdateGradeInput
 ): Promise<Grade> {
+  void _getIdToken; // Backward compatibility - parameter no longer used
   return _adminUpdateGrade(gradeId, data);
 }
 
@@ -89,6 +94,7 @@ export async function adminUpdateGrade(
 export async function adminSeedGrades(
   _getIdToken: TokenGetter
 ): Promise<SeedGradesResponse> {
+  void _getIdToken; // Backward compatibility - parameter no longer used
   return _adminSeedGrades();
 }
 
@@ -99,5 +105,6 @@ export async function adminSeedGrades(
 export async function adminCheckGradesSeeded(
   _getIdToken: TokenGetter
 ): Promise<boolean> {
+  void _getIdToken; // Backward compatibility - parameter no longer used
   return _adminCheckGradesSeeded();
 }
