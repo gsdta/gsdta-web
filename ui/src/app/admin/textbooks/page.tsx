@@ -21,27 +21,7 @@ export default function AdminTextbooksPage() {
   const [creating, setCreating] = useState(false);
   const { selectedItem, menuPosition, handleRowClick, closeMenu, isMenuOpen } = useTableRowActions<Textbook>();
 
-  const handleToggleStatus = async (textbook: Textbook) => {
-    try {
-      const newStatus: TextbookStatus = textbook.status === 'active' ? 'inactive' : 'active';
-      await adminUpdateTextbook(getIdToken, textbook.id, { status: newStatus });
-      fetchTextbooks();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update textbook');
-    }
-  };
-
-  const handleDelete = async (textbook: Textbook) => {
-    if (!confirm(`Are you sure you want to delete "${textbook.name}"?`)) return;
-    try {
-      await adminDeleteTextbook(getIdToken, textbook.id);
-      fetchTextbooks();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete textbook');
-    }
-  };
-
-  const getTextbookActions = (textbook: Textbook): TableAction[] => [
+  const getTextbookActions = useCallback((textbook: Textbook): TableAction[] => [
     {
       label: textbook.status === 'active' ? 'Deactivate' : 'Activate',
       onClick: () => handleToggleStatus(textbook),
@@ -52,7 +32,7 @@ export default function AdminTextbooksPage() {
       onClick: () => handleDelete(textbook),
       variant: 'danger',
     },
-  ];
+  ], []);
 
   const [createForm, setCreateForm] = useState<CreateTextbookInput>({
     gradeId: '',
@@ -117,6 +97,26 @@ export default function AdminTextbooksPage() {
       setError(err instanceof Error ? err.message : 'Failed to create textbook');
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleToggleStatus = async (textbook: Textbook) => {
+    try {
+      const newStatus: TextbookStatus = textbook.status === 'active' ? 'inactive' : 'active';
+      await adminUpdateTextbook(getIdToken, textbook.id, { status: newStatus });
+      fetchTextbooks();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update textbook');
+    }
+  };
+
+  const handleDelete = async (textbook: Textbook) => {
+    if (!confirm(`Are you sure you want to delete "${textbook.name}"?`)) return;
+    try {
+      await adminDeleteTextbook(getIdToken, textbook.id);
+      fetchTextbooks();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete textbook');
     }
   };
 

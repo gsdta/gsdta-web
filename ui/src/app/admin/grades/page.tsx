@@ -79,6 +79,24 @@ export default function AdminGradesPage() {
     setEditForm({ displayName: '', displayOrder: '' });
   };
 
+  const handleUpdate = async (gradeId: string) => {
+    try {
+      setUpdating(true);
+      setError(null);
+      await adminUpdateGrade(getIdToken, gradeId, {
+        displayName: editForm.displayName,
+        displayOrder: parseInt(editForm.displayOrder, 10),
+      });
+      setEditingGradeId(null);
+      setEditForm({ displayName: '', displayOrder: '' });
+      await fetchGrades();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update grade');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const handleToggleStatus = async (grade: Grade) => {
     try {
       setUpdating(true);

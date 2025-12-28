@@ -19,27 +19,7 @@ export default function AdminVolunteersPage() {
   const [creating, setCreating] = useState(false);
   const { selectedItem, menuPosition, handleRowClick, closeMenu, isMenuOpen } = useTableRowActions<Volunteer>();
 
-  const handleToggleStatus = async (volunteer: Volunteer) => {
-    try {
-      const newStatus: VolunteerStatus = volunteer.status === 'active' ? 'inactive' : 'active';
-      await adminUpdateVolunteer(getIdToken, volunteer.id, { status: newStatus });
-      fetchVolunteers();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update volunteer');
-    }
-  };
-
-  const handleDelete = async (volunteer: Volunteer) => {
-    if (!confirm(`Are you sure you want to remove ${volunteer.firstName} ${volunteer.lastName}?`)) return;
-    try {
-      await adminDeleteVolunteer(getIdToken, volunteer.id);
-      fetchVolunteers();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete volunteer');
-    }
-  };
-
-  const getVolunteerActions = (volunteer: Volunteer): TableAction[] => [
+  const getVolunteerActions = useCallback((volunteer: Volunteer): TableAction[] => [
     {
       label: volunteer.status === 'active' ? 'Deactivate' : 'Activate',
       onClick: () => handleToggleStatus(volunteer),
@@ -50,7 +30,7 @@ export default function AdminVolunteersPage() {
       onClick: () => handleDelete(volunteer),
       variant: 'danger',
     },
-  ];
+  ], []);
 
   const [createForm, setCreateForm] = useState<CreateVolunteerInput>({
     firstName: '',
@@ -110,6 +90,26 @@ export default function AdminVolunteersPage() {
       setError(err instanceof Error ? err.message : 'Failed to create volunteer');
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleToggleStatus = async (volunteer: Volunteer) => {
+    try {
+      const newStatus: VolunteerStatus = volunteer.status === 'active' ? 'inactive' : 'active';
+      await adminUpdateVolunteer(getIdToken, volunteer.id, { status: newStatus });
+      fetchVolunteers();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update volunteer');
+    }
+  };
+
+  const handleDelete = async (volunteer: Volunteer) => {
+    if (!confirm(`Are you sure you want to remove ${volunteer.firstName} ${volunteer.lastName}?`)) return;
+    try {
+      await adminDeleteVolunteer(getIdToken, volunteer.id);
+      fetchVolunteers();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete volunteer');
     }
   };
 
