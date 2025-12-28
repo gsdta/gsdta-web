@@ -9,9 +9,6 @@ import type {
   AdminFeature,
   TeacherFeature,
   ParentFeature,
-  ADMIN_FEATURES,
-  TEACHER_FEATURES,
-  PARENT_FEATURES,
 } from '@/types/featureFlags';
 
 // Feature lists
@@ -89,7 +86,7 @@ type RoleSectionProps = {
 };
 
 function RoleSection({
-  role,
+  role: _role,
   title,
   description,
   features,
