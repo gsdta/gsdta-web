@@ -281,6 +281,115 @@ export async function adminUpdateStudent(
   return json.data!.student;
 }
 
+// Bulk Import Types and Functions
+
+export interface BulkImportRowError {
+  row: number;
+  errors: Array<{
+    field: string;
+    value: string;
+    message: string;
+  }>;
+}
+
+export interface BulkImportResult {
+  success: number;
+  failed: number;
+  total: number;
+  students: Array<{
+    id: string;
+    firstName: string;
+    lastName: string;
+    parentEmail: string;
+    parentId: string;
+    status: string;
+  }>;
+  errors: BulkImportRowError[];
+  warnings: string[];
+  createdParents: string[];
+  message: string;
+  dryRun?: boolean;
+  valid?: number;
+  invalid?: number;
+}
+
+export interface BulkImportRequest {
+  csvData: string;
+  dryRun?: boolean;
+  createParents?: boolean;
+}
+
+/**
+ * Bulk import students from CSV (admin)
+ */
+export async function adminBulkImportStudents(
+  getIdToken: TokenGetter,
+  request: BulkImportRequest
+): Promise<BulkImportResult> {
+  const token = await getIdToken();
+  if (!token) throw new Error('Not authenticated');
+
+  const res = await fetch('/api/v1/admin/students/bulk-import/', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(request),
+  });
+
+  const json = await res.json();
+
+  if (!res.ok && res.status !== 207) {
+    throw new Error(json.message || 'Failed to import students');
+  }
+
+  return json as BulkImportResult;
+}
+
+// Bulk Class Assignment Types and Functions
+
+export interface BulkAssignClassResult {
+  success: boolean;
+  updated: string[];
+  failed: Array<{
+    id: string;
+    name: string;
+    reason: string;
+  }>;
+  message: string;
+  enrolledCount?: number;
+}
+
+/**
+ * Bulk assign class to multiple students (admin)
+ */
+export async function adminBulkAssignClass(
+  getIdToken: TokenGetter,
+  studentIds: string[],
+  classId: string
+): Promise<BulkAssignClassResult> {
+  const token = await getIdToken();
+  if (!token) throw new Error('Not authenticated');
+
+  const res = await fetch('/api/v1/admin/students/bulk-assign-class/', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ studentIds, classId }),
+  });
+
+  const json = await res.json();
+
+  if (!res.ok) {
+    throw new Error(json.message || 'Failed to assign class');
+  }
+
+  return json as BulkAssignClassResult;
+}
+
 // Aliases for legacy/refactored components
 export const getStudent = getStudentById;
 export const listStudents = getMyStudents;
