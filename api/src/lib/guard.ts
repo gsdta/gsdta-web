@@ -13,6 +13,24 @@ export type AuthContext = {
 
 // Test user profiles for test mode
 const testUsers: Record<string, { token: VerifiedToken; profile: UserProfile }> = {
+  superAdmin: {
+    token: {
+      uid: 'test-super-admin-uid',
+      email: 'superadmin@test.com',
+      emailVerified: true,
+    },
+    profile: {
+      uid: 'test-super-admin-uid',
+      email: 'superadmin@test.com',
+      name: 'Test Super Admin',
+      firstName: 'Test',
+      lastName: 'SuperAdmin',
+      roles: ['super_admin'],
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  },
   admin: {
     token: {
       uid: 'test-admin-uid',
@@ -101,7 +119,9 @@ async function mockVerify(authHeader: string | null | undefined): Promise<Verifi
   const token = match[1];
   
   // Match test tokens to test users
-  if (token === 'test-admin-token') {
+  if (token === 'test-super-admin-token') {
+    return testUsers.superAdmin.token;
+  } else if (token === 'test-admin-token') {
     return testUsers.admin.token;
   } else if (token === 'test-teacher-token') {
     return testUsers.teacher.token;
@@ -172,7 +192,12 @@ export async function requireAuth(
   }
 
   if (Array.isArray(requireRoles) && requireRoles.length > 0) {
-    const hasRole = (profile.roles || []).some((r) => requireRoles.includes(r));
+    const userRoles = profile.roles || [];
+    // Role hierarchy: super_admin implicitly has admin privileges
+    const hasRole = requireRoles.some((required) =>
+      userRoles.includes(required) ||
+      (required === 'admin' && userRoles.includes('super_admin'))
+    );
     if (!hasRole) {
       throw new AuthError(403, 'auth/forbidden', 'Insufficient privileges');
     }

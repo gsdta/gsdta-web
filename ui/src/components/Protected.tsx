@@ -12,10 +12,23 @@ function isFirebaseMode(): boolean {
 
 function routeForRole(role: Role): string {
     switch (role) {
+        case "super_admin": return "/admin";  // Super admin uses admin dashboard
         case "admin": return "/admin";
         case "teacher": return "/teacher";
         default: return "/parent";
     }
+}
+
+/**
+ * Check if user has required role, with role hierarchy:
+ * - super_admin can access anything requiring 'admin'
+ */
+function hasRequiredRole(userRole: Role, requiredRoles: Role[]): boolean {
+    // Direct match
+    if (requiredRoles.includes(userRole)) return true;
+    // Role hierarchy: super_admin has admin privileges
+    if (userRole === "super_admin" && requiredRoles.includes("admin")) return true;
+    return false;
 }
 
 type Props = { children: React.ReactNode; roles?: Role[]; deferUnauthRedirect?: boolean };
@@ -41,7 +54,7 @@ export function Protected({children, roles, deferUnauthRedirect = false}: Props)
             } else if (isFirebaseMode() && process.env.NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION !== "true" && user.emailVerified === false) {
                 // Gate unverified email/password users; send them to /signin to see banner
                 router.replace("/signin?verify=true");
-            } else if (roles && !roles.includes(user.role)) {
+            } else if (roles && !hasRequiredRole(user.role, roles)) {
                 router.replace(routeForRole(user.role));
             }
         }
@@ -59,6 +72,6 @@ export function Protected({children, roles, deferUnauthRedirect = false}: Props)
         return null;
     }
     if (isFirebaseMode() && process.env.NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION !== "true" && user.emailVerified === false) return null; // redirected to /signin
-    if (roles && !roles.includes(user.role)) return null; // redirected to allowed landing
+    if (roles && !hasRequiredRole(user.role, roles)) return null; // redirected to allowed landing
     return <>{children}</>;
 }
