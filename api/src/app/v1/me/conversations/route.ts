@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/guard';
+import { AuthError } from '@/lib/auth';
 import {
   createConversation,
   getConversationsForUser,
@@ -155,8 +156,9 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error('Get conversations error:', error);
 
-    if (error instanceof Error && error.message.includes('Unauthorized')) {
-      return jsonError(401, 'UNAUTHORIZED', 'Authentication required', origin);
+    if (error instanceof AuthError) {
+      const code = error.status === 401 ? 'UNAUTHORIZED' : 'FORBIDDEN';
+      return jsonError(error.status, code, error.message, origin);
     }
 
     return jsonError(
@@ -262,8 +264,9 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('Create conversation error:', error);
 
-    if (error instanceof Error && error.message.includes('Unauthorized')) {
-      return jsonError(401, 'UNAUTHORIZED', 'Authentication required', origin);
+    if (error instanceof AuthError) {
+      const code = error.status === 401 ? 'UNAUTHORIZED' : 'FORBIDDEN';
+      return jsonError(error.status, code, error.message, origin);
     }
     if (error instanceof Error && error.message.includes('not found')) {
       return jsonError(400, 'USER_NOT_FOUND', error.message, origin);

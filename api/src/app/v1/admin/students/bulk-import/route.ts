@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import Papa from 'papaparse';
 import { requireAuth } from '@/lib/guard';
+import { AuthError } from '@/lib/auth';
 import { bulkCreateStudents } from '@/lib/firestoreStudents';
 import type {
   CsvStudentRow,
@@ -379,11 +380,8 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('Bulk import error:', error);
 
-    if (error instanceof Error && error.message.includes('Unauthorized')) {
-      return jsonError(401, 'UNAUTHORIZED', 'Authentication required', origin);
-    }
-    if (error instanceof Error && error.message.includes('Forbidden')) {
-      return jsonError(403, 'FORBIDDEN', 'Admin access required', origin);
+    if (error instanceof AuthError) {
+      return jsonError(error.status, error.code, error.message, origin);
     }
 
     return jsonError(

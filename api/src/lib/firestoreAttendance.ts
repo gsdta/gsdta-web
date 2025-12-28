@@ -10,7 +10,14 @@ import type {
   AttendanceEditHistory,
   CreateAttendanceDto,
   UpdateAttendanceDto,
+  AttendanceAnalytics,
+  AttendanceTrendPoint,
+  ClassComparison,
+  ChronicAbsentee,
+  AnalyticsFilters,
+  ChronicAbsenteeFilters,
 } from '@/types/attendance';
+import { ATTENDANCE_CONSTANTS } from '@/types/attendance';
 import { getClassById } from './firestoreClasses';
 import { getStudentById } from './firestoreStudents';
 
@@ -442,4 +449,400 @@ export async function deleteAttendanceForDate(
   await batch.commit();
 
   return records.length;
+}
+
+// ============================================
+// Analytics Functions
+// ============================================
+
+/**
+ * Get attendance analytics for a date range
+ */
+export async function getAttendanceAnalytics(
+  filters: AnalyticsFilters
+): Promise<AttendanceAnalytics> {
+  const { dateRange, classId, gradeId } = filters;
+
+  // Build query
+  let query = getDb()
+    .collection(ATTENDANCE_COLLECTION)
+    .where('docStatus', '==', 'active')
+    .where('date', '>=', dateRange.startDate)
+    .where('date', '<=', dateRange.endDate) as FirebaseFirestore.Query;
+
+  if (classId) {
+    query = query.where('classId', '==', classId);
+  }
+
+  const snap = await query.get();
+  const records = snap.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as AttendanceRecord[];
+
+  // If gradeId filter, we need to filter in memory (since gradeId is in classes collection)
+  let filteredRecords = records;
+  if (gradeId && !classId) {
+    // Get classes for this grade
+    const classesSnap = await getDb()
+      .collection('classes')
+      .where('gradeId', '==', gradeId)
+      .where('status', '==', 'active')
+      .get();
+    const gradeClassIds = new Set(classesSnap.docs.map((doc) => doc.id));
+    filteredRecords = records.filter((r) => gradeClassIds.has(r.classId));
+  }
+
+  // Calculate overall stats
+  const overallStats = {
+    present: 0,
+    absent: 0,
+    late: 0,
+    excused: 0,
+    attendanceRate: 0,
+  };
+
+  for (const record of filteredRecords) {
+    switch (record.status) {
+      case 'present':
+        overallStats.present++;
+        break;
+      case 'absent':
+        overallStats.absent++;
+        break;
+      case 'late':
+        overallStats.late++;
+        break;
+      case 'excused':
+        overallStats.excused++;
+        break;
+    }
+  }
+
+  const totalRecords = filteredRecords.length;
+  const attended = overallStats.present + overallStats.late;
+  overallStats.attendanceRate = totalRecords > 0 ? Math.round((attended / totalRecords) * 100) : 0;
+
+  // Calculate trend data (group by date)
+  const byDate = new Map<string, AttendanceRecord[]>();
+  for (const record of filteredRecords) {
+    const existing = byDate.get(record.date) || [];
+    existing.push(record);
+    byDate.set(record.date, existing);
+  }
+
+  const trendData: AttendanceTrendPoint[] = [];
+  for (const [date, dateRecords] of byDate.entries()) {
+    const point: AttendanceTrendPoint = {
+      date,
+      present: 0,
+      absent: 0,
+      late: 0,
+      excused: 0,
+      total: dateRecords.length,
+      attendanceRate: 0,
+    };
+
+    for (const record of dateRecords) {
+      switch (record.status) {
+        case 'present':
+          point.present++;
+          break;
+        case 'absent':
+          point.absent++;
+          break;
+        case 'late':
+          point.late++;
+          break;
+        case 'excused':
+          point.excused++;
+          break;
+      }
+    }
+
+    const pointAttended = point.present + point.late;
+    point.attendanceRate = point.total > 0 ? Math.round((pointAttended / point.total) * 100) : 0;
+    trendData.push(point);
+  }
+
+  // Sort by date
+  trendData.sort((a, b) => a.date.localeCompare(b.date));
+
+  // Count unique sessions (unique dates)
+  const uniqueDates = new Set(filteredRecords.map((r) => r.date));
+
+  return {
+    dateRange,
+    totalSessions: uniqueDates.size,
+    totalStudentRecords: totalRecords,
+    overallStats,
+    trendData,
+  };
+}
+
+/**
+ * Get class comparison for a date range
+ */
+export async function getClassComparison(
+  filters: AnalyticsFilters
+): Promise<ClassComparison[]> {
+  const { dateRange, gradeId } = filters;
+
+  // Get all active classes
+  let classQuery = getDb()
+    .collection('classes')
+    .where('status', '==', 'active') as FirebaseFirestore.Query;
+
+  if (gradeId) {
+    classQuery = classQuery.where('gradeId', '==', gradeId);
+  }
+
+  const classesSnap = await classQuery.get();
+  const classes = classesSnap.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+
+  // Get all attendance records for the date range
+  const attSnap = await getDb()
+    .collection(ATTENDANCE_COLLECTION)
+    .where('docStatus', '==', 'active')
+    .where('date', '>=', dateRange.startDate)
+    .where('date', '<=', dateRange.endDate)
+    .get();
+
+  const allRecords = attSnap.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as AttendanceRecord[];
+
+  // Group by class
+  const byClass = new Map<string, AttendanceRecord[]>();
+  for (const record of allRecords) {
+    const existing = byClass.get(record.classId) || [];
+    existing.push(record);
+    byClass.set(record.classId, existing);
+  }
+
+  // Build comparison data
+  const comparisons: ClassComparison[] = [];
+
+  for (const classDoc of classes) {
+    const classData = classDoc as { id: string; name: string; gradeId?: string };
+    const classRecords = byClass.get(classData.id) || [];
+
+    if (classRecords.length === 0) continue; // Skip classes with no attendance
+
+    const stats = {
+      present: 0,
+      absent: 0,
+      late: 0,
+      excused: 0,
+      attendanceRate: 0,
+    };
+
+    const uniqueStudents = new Set<string>();
+    const uniqueDates = new Set<string>();
+
+    for (const record of classRecords) {
+      uniqueStudents.add(record.studentId);
+      uniqueDates.add(record.date);
+
+      switch (record.status) {
+        case 'present':
+          stats.present++;
+          break;
+        case 'absent':
+          stats.absent++;
+          break;
+        case 'late':
+          stats.late++;
+          break;
+        case 'excused':
+          stats.excused++;
+          break;
+      }
+    }
+
+    const totalRecords = classRecords.length;
+    const attended = stats.present + stats.late;
+    stats.attendanceRate = totalRecords > 0 ? Math.round((attended / totalRecords) * 100) : 0;
+
+    comparisons.push({
+      classId: classData.id,
+      className: classData.name,
+      gradeId: classData.gradeId,
+      totalSessions: uniqueDates.size,
+      totalStudents: uniqueStudents.size,
+      stats,
+    });
+  }
+
+  // Sort by attendance rate ascending (worst first)
+  comparisons.sort((a, b) => a.stats.attendanceRate - b.stats.attendanceRate);
+
+  return comparisons;
+}
+
+/**
+ * Get chronic absentees (students below attendance threshold)
+ */
+export async function getChronicAbsentees(
+  filters: ChronicAbsenteeFilters
+): Promise<{ absentees: ChronicAbsentee[]; total: number }> {
+  const {
+    dateRange,
+    classId,
+    gradeId,
+    threshold = ATTENDANCE_CONSTANTS.CHRONIC_ABSENTEE_THRESHOLD,
+    limit = 50,
+    offset = 0,
+  } = filters;
+
+  // Get all attendance records for the date range
+  let query = getDb()
+    .collection(ATTENDANCE_COLLECTION)
+    .where('docStatus', '==', 'active')
+    .where('date', '>=', dateRange.startDate)
+    .where('date', '<=', dateRange.endDate) as FirebaseFirestore.Query;
+
+  if (classId) {
+    query = query.where('classId', '==', classId);
+  }
+
+  const snap = await query.get();
+  let records = snap.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as AttendanceRecord[];
+
+  // Filter by grade if needed
+  if (gradeId && !classId) {
+    const classesSnap = await getDb()
+      .collection('classes')
+      .where('gradeId', '==', gradeId)
+      .where('status', '==', 'active')
+      .get();
+    const gradeClassIds = new Set(classesSnap.docs.map((doc) => doc.id));
+    records = records.filter((r) => gradeClassIds.has(r.classId));
+  }
+
+  // Group by student
+  const byStudent = new Map<string, AttendanceRecord[]>();
+  for (const record of records) {
+    const existing = byStudent.get(record.studentId) || [];
+    existing.push(record);
+    byStudent.set(record.studentId, existing);
+  }
+
+  // Calculate attendance for each student
+  const studentStats: ChronicAbsentee[] = [];
+
+  for (const [studentId, studentRecords] of byStudent.entries()) {
+    const stats = {
+      present: 0,
+      absent: 0,
+      late: 0,
+      excused: 0,
+    };
+
+    let lastAttendedDate: string | undefined;
+    let studentName = '';
+    let latestClassId = '';
+    let latestClassName = '';
+
+    // Sort records by date to find last attended
+    const sortedRecords = [...studentRecords].sort((a, b) =>
+      b.date.localeCompare(a.date)
+    );
+
+    for (const record of sortedRecords) {
+      studentName = record.studentName;
+      if (!latestClassId) {
+        latestClassId = record.classId;
+        latestClassName = record.className;
+      }
+
+      switch (record.status) {
+        case 'present':
+          stats.present++;
+          if (!lastAttendedDate) lastAttendedDate = record.date;
+          break;
+        case 'absent':
+          stats.absent++;
+          break;
+        case 'late':
+          stats.late++;
+          if (!lastAttendedDate) lastAttendedDate = record.date;
+          break;
+        case 'excused':
+          stats.excused++;
+          break;
+      }
+    }
+
+    const totalSessions = studentRecords.length;
+    const attended = stats.present + stats.late;
+    const attendanceRate =
+      totalSessions > 0 ? Math.round((attended / totalSessions) * 100) : 0;
+
+    // Only include if below threshold
+    if (attendanceRate < threshold) {
+      studentStats.push({
+        studentId,
+        studentName,
+        classId: latestClassId,
+        className: latestClassName,
+        totalSessions,
+        ...stats,
+        attendanceRate,
+        lastAttendedDate,
+      });
+    }
+  }
+
+  // Sort by attendance rate (worst first)
+  studentStats.sort((a, b) => a.attendanceRate - b.attendanceRate);
+
+  const total = studentStats.length;
+  const paginated = studentStats.slice(offset, offset + limit);
+
+  return {
+    absentees: paginated,
+    total,
+  };
+}
+
+/**
+ * Export attendance records for CSV/JSON export
+ */
+export async function exportAttendanceRecords(filters: {
+  dateRange: { startDate: string; endDate: string };
+  classId?: string;
+  studentId?: string;
+}): Promise<AttendanceRecord[]> {
+  const { dateRange, classId, studentId } = filters;
+
+  let query = getDb()
+    .collection(ATTENDANCE_COLLECTION)
+    .where('docStatus', '==', 'active')
+    .where('date', '>=', dateRange.startDate)
+    .where('date', '<=', dateRange.endDate) as FirebaseFirestore.Query;
+
+  if (classId) {
+    query = query.where('classId', '==', classId);
+  }
+
+  if (studentId) {
+    query = query.where('studentId', '==', studentId);
+  }
+
+  query = query.orderBy('date', 'desc');
+
+  const snap = await query.get();
+
+  return snap.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as AttendanceRecord[];
 }

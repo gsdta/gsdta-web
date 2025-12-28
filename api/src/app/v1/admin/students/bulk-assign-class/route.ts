@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/guard';
+import { AuthError } from '@/lib/auth';
 import { bulkAssignClass } from '@/lib/firestoreStudents';
 import { getClassById, incrementEnrolled } from '@/lib/firestoreClasses';
 
@@ -132,7 +133,7 @@ export async function POST(req: NextRequest) {
     // Validate class exists and has capacity
     const classInfo = await getClassById(classId);
     if (!classInfo) {
-      return jsonError(400, 'CLASS_NOT_FOUND', 'Class not found', origin);
+      return jsonError(404, 'class/not-found', 'Class not found', origin);
     }
 
     if (classInfo.status !== 'active') {
@@ -174,11 +175,8 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('Bulk assign class error:', error);
 
-    if (error instanceof Error && error.message.includes('Unauthorized')) {
-      return jsonError(401, 'UNAUTHORIZED', 'Authentication required', origin);
-    }
-    if (error instanceof Error && error.message.includes('Forbidden')) {
-      return jsonError(403, 'FORBIDDEN', 'Admin access required', origin);
+    if (error instanceof AuthError) {
+      return jsonError(error.status, error.code, error.message, origin);
     }
 
     return jsonError(
