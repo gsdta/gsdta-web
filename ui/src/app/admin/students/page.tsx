@@ -25,7 +25,23 @@ export default function AdminStudentsPage() {
   const [admittingId, setAdmittingId] = useState<string | null>(null);
   const { selectedItem, menuPosition, handleRowClick, closeMenu, isMenuOpen } = useTableRowActions<Student>();
 
-  const getStudentActions = useCallback((student: Student): TableAction[] => [
+  const handleAdmit = async (studentId: string) => {
+    if (!confirm('Are you sure you want to admit this student?')) return;
+
+    setAdmittingId(studentId);
+    try {
+      await adminAdmitStudent(getIdToken, studentId);
+      // Refresh the list
+      fetchStudents();
+    } catch (err) {
+      console.error('Failed to admit student:', err);
+      alert('Failed to admit student');
+    } finally {
+      setAdmittingId(null);
+    }
+  };
+
+  const getStudentActions = (student: Student): TableAction[] => [
     { label: 'View Details', onClick: () => router.push(`/admin/students/${student.id}`) },
     { label: 'Edit', onClick: () => router.push(`/admin/students/${student.id}/edit`) },
     {
@@ -40,7 +56,7 @@ export default function AdminStudentsPage() {
       onClick: () => router.push(`/admin/students/${student.id}?action=assign`),
       hidden: student.status !== 'admitted',
     },
-  ], [router, admittingId]);
+  ];
 
   const fetchStudents = useCallback(async () => {
     try {
@@ -75,22 +91,6 @@ export default function AdminStudentsPage() {
       params.set('status', status);
     }
     router.push(`/admin/students${params.toString() ? `?${params.toString()}` : ''}`);
-  };
-
-  const handleAdmit = async (studentId: string) => {
-    if (!confirm('Are you sure you want to admit this student?')) return;
-
-    setAdmittingId(studentId);
-    try {
-      await adminAdmitStudent(getIdToken, studentId);
-      // Refresh the list
-      fetchStudents();
-    } catch (err) {
-      console.error('Failed to admit student:', err);
-      alert('Failed to admit student');
-    } finally {
-      setAdmittingId(null);
-    }
   };
 
   const formatDate = (dateStr: string) => {

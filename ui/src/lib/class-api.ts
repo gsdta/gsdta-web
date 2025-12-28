@@ -58,6 +58,7 @@ export async function adminGetClasses(
   _getIdToken: TokenGetter,
   params: { status?: "active" | "inactive" | "all"; gradeId?: string } = {}
 ): Promise<ClassesResponse> {
+  void _getIdToken; // Backward compatibility - parameter no longer used
   return _adminGetClasses(params);
 }
 
@@ -68,6 +69,7 @@ export async function adminGetClasses(
 export async function adminGetClassOptions(
   _getIdToken: TokenGetter
 ): Promise<ClassOption[]> {
+  void _getIdToken; // Backward compatibility - parameter no longer used
   return _adminGetClassOptions();
 }
 
@@ -79,6 +81,7 @@ export async function adminGetClass(
   _getIdToken: TokenGetter,
   classId: string
 ): Promise<AdminClass> {
+  void _getIdToken; // Backward compatibility - parameter no longer used
   return _adminGetClass(classId);
 }
 
@@ -90,6 +93,7 @@ export async function adminCreateClass(
   _getIdToken: TokenGetter,
   data: CreateClassInput
 ): Promise<AdminClass> {
+  void _getIdToken; // Backward compatibility - parameter no longer used
   return _adminCreateClass(data);
 }
 
@@ -102,6 +106,7 @@ export async function adminUpdateClass(
   classId: string,
   data: UpdateClassInput
 ): Promise<AdminClass> {
+  void _getIdToken; // Backward compatibility - parameter no longer used
   return _adminUpdateClass(classId, data);
 }
 
@@ -113,6 +118,7 @@ export async function adminGetClassTeachers(
   _getIdToken: TokenGetter,
   classId: string
 ): Promise<ClassTeacher[]> {
+  void _getIdToken; // Backward compatibility - parameter no longer used
   return _adminGetClassTeachers(classId);
 }
 
@@ -125,6 +131,7 @@ export async function adminAssignTeacher(
   classId: string,
   data: AssignTeacherInput
 ): Promise<ClassTeacher[]> {
+  void _getIdToken; // Backward compatibility - parameter no longer used
   return _adminAssignTeacher(classId, data);
 }
 
@@ -137,6 +144,7 @@ export async function adminRemoveTeacher(
   classId: string,
   teacherId: string
 ): Promise<ClassTeacher[]> {
+  void _getIdToken; // Backward compatibility - parameter no longer used
   return _adminRemoveTeacher(classId, teacherId);
 }
 
@@ -150,5 +158,6 @@ export async function adminUpdateTeacherRole(
   teacherId: string,
   role: ClassTeacherRole
 ): Promise<ClassTeacher[]> {
+  void _getIdToken; // Backward compatibility - parameter no longer used
   return _adminUpdateTeacherRole(classId, teacherId, role);
 }
