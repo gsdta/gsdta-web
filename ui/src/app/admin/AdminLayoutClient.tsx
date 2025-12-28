@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Protected } from '@/components/Protected';
+import { useAuth } from '@/components/AuthProvider';
 
 interface NavItem {
   label: string;
@@ -62,9 +63,29 @@ const adminNav: NavSection[] = [
   },
 ];
 
+// Super Admin navigation (only visible to super_admin role)
+const superAdminNav: NavSection = {
+  label: 'Super Admin',
+  items: [
+    { label: 'Admin Users', href: '/admin/super-admin/admins', icon: '👑' },
+    { label: 'Audit Log', href: '/admin/super-admin/audit-log', icon: '📋' },
+    { label: 'Security', href: '/admin/super-admin/security', icon: '🛡️' },
+    { label: 'Settings', href: '/admin/super-admin/settings', icon: '⚙️' },
+    { label: 'Recovery', href: '/admin/super-admin/recovery', icon: '🔄' },
+    { label: 'Data Export', href: '/admin/super-admin/export', icon: '📦' },
+  ],
+};
+
 export default function AdminLayoutClient({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user } = useAuth();
+
+  // Check if user is super_admin
+  const isSuperAdmin = user?.roles?.includes('super_admin') ?? false;
+
+  // Build navigation with super admin section if applicable
+  const navigation = isSuperAdmin ? [...adminNav, superAdminNav] : adminNav;
 
   const isActive = (href: string) => {
     if (href === '/admin') {
@@ -100,7 +121,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
             {/* Mobile Navigation */}
             {mobileMenuOpen && (
               <div className="md:hidden py-4 space-y-2 border-t border-gray-100">
-                {adminNav.map((section) => (
+                {navigation.map((section) => (
                   <div key={section.label}>
                     <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
                       {section.label}
@@ -132,7 +153,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
           {/* Left Sidebar - Desktop only */}
           <aside className="hidden md:block w-64 flex-shrink-0 bg-white border-r border-gray-200 min-h-[calc(100vh-4rem)] sticky top-16">
             <div className="p-4">
-              {adminNav.map((section) => (
+              {navigation.map((section) => (
                 <div key={section.label} className="mb-6">
                   <h2 className="text-xs font-semibold text-gray-500 uppercase mb-3">
                     {section.label}

@@ -423,6 +423,7 @@ export function useAuth(): AuthContextValue {
 
 function pickRole(roles: string[]): Role {
     const rset = new Set(roles);
+    if (rset.has("super_admin")) return "super_admin";
     if (rset.has("admin")) return "admin";
     if (rset.has("teacher")) return "teacher";
     return "parent";
@@ -431,8 +432,8 @@ function pickRole(roles: string[]): Role {
 function toRoleArray(roles: string[]): Role[] {
     const validRoles: Role[] = [];
     for (const r of roles) {
-        if (r === "admin" || r === "teacher" || r === "parent") {
-            validRoles.push(r);
+        if (r === "super_admin" || r === "admin" || r === "teacher" || r === "parent") {
+            validRoles.push(r as Role);
         }
     }
     return validRoles.length > 0 ? validRoles : ["parent"];
