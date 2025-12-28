@@ -1,84 +1,47 @@
 "use client";
 
 import { useI18n } from "@/i18n/LanguageProvider";
-import { useState, useMemo } from "react";
-import kgData from "@/data/calendar-kg1.json";
-import gradesData from "@/data/calendar-grades2to8.json";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { getPublicCalendarEvents } from "@/lib/calendar-api";
+import type { CalendarEvent } from "@/lib/calendar-types";
+import { EVENT_TYPE_COLORS } from "@/lib/calendar-types";
 import { generateICS, downloadICS } from "@/lib/icsGenerator";
 
 type ViewMode = "month" | "week" | "agenda";
-
-type Event = {
-  week: number | null;
-  trimester: string | null;
-  semester: string | null;
-  date: string; // ISO YYYY-MM-DD
-  sdusd: string | null;
-  pusd: string | null;
-  indiaHolidays: string | null;
-  longWeekend: string | null;
-  gsdtaDates: string | null;
-  gsdtaEvents: string | null;
-};
 
 export default function CalendarPage() {
   const { t } = useI18n();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("month");
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Helper: case-insensitive test detection per group
-  const isTrimesterTest = (label?: string | null) => !!label && label.toLowerCase().includes("test");
-  const isSemesterTest = (label?: string | null) => !!label && label.toLowerCase().includes("test");
+  // Fetch events from API
+  const fetchEvents = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-  const normalize = (e: Partial<Event>): Event => ({
-    week: e?.week ?? null,
-    trimester: e?.trimester ?? null,
-    semester: e?.semester ?? null,
-    date: e?.date as string,
-    sdusd: e?.sdusd ?? null,
-    pusd: e?.pusd ?? null,
-    indiaHolidays: e?.indiaHolidays ?? null,
-    longWeekend: e?.longWeekend ?? null,
-    gsdtaDates: e?.gsdtaDates ?? null,
-    gsdtaEvents: e?.gsdtaEvents ?? null,
-  });
+      // Fetch events for the entire academic year (roughly)
+      const today = new Date();
+      const startDate = new Date(today.getFullYear(), 0, 1).toISOString().split('T')[0]; // Jan 1
+      const endDate = new Date(today.getFullYear() + 1, 11, 31).toISOString().split('T')[0]; // Dec 31 next year
 
-  // Merge KG-1 (trimester) and Grades 2-8 (semester) data by date
-  const mergedEvents = useMemo(() => {
-    const map = new Map<string, Event>();
-
-    const upsert = (raw: Partial<Event>) => {
-      const e = normalize(raw);
-      const key = e.date;
-      const existing = map.get(key);
-      if (!existing) {
-        map.set(key, { ...e });
-      } else {
-        map.set(key, {
-          // Prefer week from either if available
-          week: existing.week ?? e.week ?? null,
-          // Keep both labels where available
-          trimester: existing.trimester ?? e.trimester ?? null,
-          semester: existing.semester ?? e.semester ?? null,
-          date: key,
-          // Merge meta fields, prefer non-null values
-          sdusd: existing.sdusd ?? e.sdusd ?? null,
-          pusd: existing.pusd ?? e.pusd ?? null,
-          indiaHolidays: existing.indiaHolidays ?? e.indiaHolidays ?? null,
-          longWeekend: existing.longWeekend ?? e.longWeekend ?? null,
-          gsdtaDates: existing.gsdtaDates ?? e.gsdtaDates ?? null,
-          gsdtaEvents: existing.gsdtaEvents ?? e.gsdtaEvents ?? null,
-        });
-      }
-    };
-
-    kgData.events.forEach(upsert);
-    gradesData.events.forEach(upsert);
-
-    // Return sorted by date ascending
-    return Array.from(map.values()).sort((a, b) => a.date.localeCompare(b.date));
+      const result = await getPublicCalendarEvents(startDate, endDate, true); // expand recurring events
+      setEvents(result.events as CalendarEvent[]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch calendar events');
+      console.error('Calendar fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
 
   // Navigation functions
   const goToToday = () => setCurrentDate(new Date());
@@ -106,7 +69,7 @@ export default function CalendarPage() {
   // Get events for a specific date
   const getEventsForDate = (date: Date) => {
     const dateStr = date.toISOString().split('T')[0];
-    return mergedEvents.filter(event => event.date === dateStr);
+    return events.filter(event => event.date === dateStr);
   };
 
   // Get week dates
@@ -146,8 +109,22 @@ export default function CalendarPage() {
   const weekDates = useMemo(() => getWeekDates(currentDate), [currentDate]);
   const monthDates = useMemo(() => getMonthCalendarDates(currentDate), [currentDate]);
 
+  // Convert API events to ICS format for download
   const handleDownloadICS = () => {
-    const icsContent = generateICS(mergedEvents);
+    // Convert CalendarEvent to the format expected by generateICS
+    const icsEvents = events.map(event => ({
+      date: event.date,
+      gsdtaEvents: event.eventType === 'gsdta' ? event.title.en : null,
+      indiaHolidays: event.eventType === 'holiday' ? event.title.en : null,
+      longWeekend: null,
+      sdusd: null,
+      pusd: null,
+      trimester: null,
+      semester: null,
+      week: null,
+      gsdtaDates: null,
+    }));
+    const icsContent = generateICS(icsEvents);
     downloadICS(icsContent);
     setShowDownloadMenu(false);
   };
@@ -171,6 +148,78 @@ export default function CalendarPage() {
   const isCurrentMonth = (date: Date) => {
     return date.getMonth() === currentDate.getMonth();
   };
+
+  // Get event type label
+  const getEventTypeLabel = (eventType: string): string => {
+    const labels: Record<string, string> = {
+      gsdta: 'GSDTA Event',
+      holiday: 'Holiday',
+      test: 'Test',
+      meeting: 'Meeting',
+      academic: 'Academic',
+      sports: 'Sports',
+      other: 'Event',
+    };
+    return labels[eventType] || 'Event';
+  };
+
+  // Get event background color based on type
+  const getEventBgColor = (eventType: string): string => {
+    const colors: Record<string, string> = {
+      gsdta: 'bg-green-100 border-green-600 text-green-800',
+      holiday: 'bg-red-100 border-red-600 text-red-800',
+      test: 'bg-yellow-100 border-yellow-600 text-yellow-800',
+      meeting: 'bg-blue-100 border-blue-600 text-blue-800',
+      academic: 'bg-purple-100 border-purple-600 text-purple-800',
+      sports: 'bg-cyan-100 border-cyan-600 text-cyan-800',
+      other: 'bg-gray-100 border-gray-600 text-gray-800',
+    };
+    return colors[eventType] || 'bg-gray-100 border-gray-600 text-gray-800';
+  };
+
+  if (loading) {
+    return (
+      <section className="flex flex-col gap-4 h-full">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h1 data-testid="page-title" className="text-3xl font-bold text-gray-900">
+            {t("nav.calendar")} 2025-26
+          </h1>
+        </div>
+        <div className="flex-1 flex items-center justify-center bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading calendar events...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="flex flex-col gap-4 h-full">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h1 data-testid="page-title" className="text-3xl font-bold text-gray-900">
+            {t("nav.calendar")} 2025-26
+          </h1>
+        </div>
+        <div className="flex-1 flex items-center justify-center bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="text-center py-12">
+            <div className="bg-red-50 text-red-700 px-6 py-4 rounded-lg mx-auto max-w-md">
+              <p className="font-semibold mb-2">Failed to load calendar</p>
+              <p className="text-sm">{error}</p>
+              <button
+                onClick={fetchEvents}
+                className="mt-4 px-4 py-2 bg-red-100 text-red-800 rounded-md hover:bg-red-200 transition-colors text-sm"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="flex flex-col gap-4 h-full">
@@ -322,7 +371,7 @@ export default function CalendarPage() {
             {/* Calendar Grid */}
             <div className="grid grid-cols-7 flex-1" style={{ gridAutoRows: '1fr' }}>
               {monthDates.map((date, index) => {
-                const events = getEventsForDate(date);
+                const dayEvents = getEventsForDate(date);
                 const isTodayDate = isToday(date);
                 const isCurrentMonthDate = isCurrentMonth(date);
 
@@ -334,7 +383,7 @@ export default function CalendarPage() {
                     } hover:bg-gray-50 transition-colors`}
                   >
                     <div className={`text-sm font-medium mb-1 ${
-                      isTodayDate 
+                      isTodayDate
                         ? 'bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center'
                         : isCurrentMonthDate
                           ? 'text-gray-900'
@@ -344,44 +393,14 @@ export default function CalendarPage() {
                     </div>
 
                     <div className="space-y-1">
-                      {events.map((event, eventIndex) => (
-                        <div key={eventIndex} className="text-xs">
-                          {event.gsdtaEvents && (
-                            <div data-event="gsdta" className="bg-green-100 text-green-800 px-1 py-0.5 rounded truncate border-l-2 border-green-600">
-                              {event.gsdtaEvents}
-                            </div>
-                          )}
-                          {event.indiaHolidays && (
-                            <div data-event="holiday" className="bg-purple-100 text-purple-800 px-1 py-0.5 rounded truncate border-l-2 border-purple-600">
-                              {event.indiaHolidays}
-                            </div>
-                          )}
-                          {event.longWeekend && (
-                            <div data-event="weekend" className="bg-indigo-100 text-indigo-800 px-1 py-0.5 rounded truncate border-l-2 border-indigo-600">
-                              {event.longWeekend}
-                            </div>
-                          )}
-                          {/* Test badges per group, case-insensitive */}
-                          {isTrimesterTest(event.trimester) && (
-                            <div data-event="test" className="bg-yellow-100 text-yellow-800 px-1 py-0.5 rounded truncate border-l-2 border-yellow-600">
-                              KG/1 Test Week
-                            </div>
-                          )}
-                          {isSemesterTest(event.semester) && (
-                            <div data-event="test" className="bg-yellow-100 text-yellow-800 px-1 py-0.5 rounded truncate border-l-2 border-yellow-600">
-                              Grades 2-8 Test Week
-                            </div>
-                          )}
-                          {event.trimester && !event.gsdtaEvents && !event.indiaHolidays && !event.longWeekend && !isTrimesterTest(event.trimester) && (
-                            <div data-event="trimester" className="bg-blue-50 text-blue-700 px-1 py-0.5 rounded truncate text-[10px]">
-                              KG-1: {event.trimester.replace('Trimester', 'T')}
-                            </div>
-                          )}
-                          {event.semester && !event.gsdtaEvents && !event.indiaHolidays && !event.longWeekend && !isSemesterTest(event.semester) && (
-                            <div data-event="semester" className="bg-teal-50 text-teal-700 px-1 py-0.5 rounded truncate text-[10px]">
-                              2-8: {event.semester.replace('Semester', 'S')}
-                            </div>
-                          )}
+                      {dayEvents.map((event, eventIndex) => (
+                        <div
+                          key={eventIndex}
+                          data-event={event.eventType}
+                          className={`text-xs px-1 py-0.5 rounded truncate border-l-2 ${getEventBgColor(event.eventType)}`}
+                          title={`${event.title.en}${event.title.ta ? ` - ${event.title.ta}` : ''}`}
+                        >
+                          {event.title.en}
                         </div>
                       ))}
                     </div>
@@ -404,7 +423,7 @@ export default function CalendarPage() {
                       {date.toLocaleDateString('en-US', { weekday: 'short' })}
                     </div>
                     <div className={`text-lg font-semibold ${
-                      isTodayDate 
+                      isTodayDate
                         ? 'bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center mx-auto mt-1'
                         : 'text-gray-900 mt-1'
                     }`}>
@@ -418,65 +437,26 @@ export default function CalendarPage() {
             {/* Week Grid */}
             <div className="grid grid-cols-7 flex-1">
               {weekDates.map((date, index) => {
-                const events = getEventsForDate(date);
+                const dayEvents = getEventsForDate(date);
                 return (
                   <div
                     key={index}
                     className="border-r border-gray-200 last:border-r-0 p-3 overflow-y-auto bg-white hover:bg-gray-50 transition-colors"
                   >
                     <div className="space-y-2">
-                      {events.map((event, eventIndex) => (
-                        <div key={eventIndex}>
-                          {event.gsdtaEvents && (
-                            <div data-event="gsdta" className="bg-green-100 text-green-800 px-2 py-2 rounded text-sm border-l-4 border-green-600">
-                              <div className="font-semibold">{t("calendar.event.gsdta")}</div>
-                              <div className="text-xs mt-1">{event.gsdtaEvents}</div>
-                            </div>
+                      {dayEvents.map((event, eventIndex) => (
+                        <div
+                          key={eventIndex}
+                          data-event={event.eventType}
+                          className={`px-2 py-2 rounded text-sm border-l-4 ${getEventBgColor(event.eventType)}`}
+                        >
+                          <div className="font-semibold">{getEventTypeLabel(event.eventType)}</div>
+                          <div className="text-xs mt-1">{event.title.en}</div>
+                          {event.title.ta && (
+                            <div className="text-xs mt-0.5 opacity-75">{event.title.ta}</div>
                           )}
-                          {event.indiaHolidays && (
-                            <div data-event="holiday" className="bg-purple-100 text-purple-800 px-2 py-2 rounded text-sm border-l-4 border-purple-600">
-                              <div className="font-semibold">{t("calendar.event.indiaHoliday")}</div>
-                              <div className="text-xs mt-1">{event.indiaHolidays}</div>
-                            </div>
-                          )}
-                          {event.longWeekend && (
-                            <div data-event="weekend" className="bg-indigo-100 text-indigo-800 px-2 py-2 rounded text-sm border-l-4 border-indigo-600">
-                              <div className="font-semibold">{t("calendar.event.longWeekend")}</div>
-                              <div className="text-xs mt-1">{event.longWeekend}</div>
-                            </div>
-                          )}
-                          {/* Test badges per group in week view */}
-                          {isTrimesterTest(event.trimester) && (
-                            <div data-event="test" className="bg-yellow-100 text-yellow-800 px-2 py-2 rounded text-sm border-l-4 border-yellow-600">
-                              <div className="font-semibold">{t("calendar.event.kg1Test")}</div>
-                              <div className="text-xs mt-1">{event.trimester}</div>
-                            </div>
-                          )}
-                          {isSemesterTest(event.semester) && (
-                            <div data-event="test" className="bg-yellow-100 text-yellow-800 px-2 py-2 rounded text-sm border-l-4 border-yellow-600">
-                              <div className="font-semibold">{t("calendar.event.gradesTest")}</div>
-                              <div className="text-xs mt-1">{event.semester}</div>
-                            </div>
-                          )}
-                          {event.sdusd && (
-                            <div className="bg-blue-50 text-blue-800 px-2 py-1 rounded text-xs">
-                              <strong>SDUSD:</strong> {event.sdusd}
-                            </div>
-                          )}
-                          {event.pusd && (
-                            <div className="bg-blue-50 text-blue-800 px-2 py-1 rounded text-xs">
-                              <strong>PUSD:</strong> {event.pusd}
-                            </div>
-                          )}
-                          {event.trimester && !isTrimesterTest(event.trimester) && (
-                            <div className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs">
-                              <strong>{t("calendar.label.kg1")}</strong> {event.trimester}
-                            </div>
-                          )}
-                          {event.semester && !isSemesterTest(event.semester) && (
-                            <div className="bg-teal-50 text-teal-700 px-2 py-1 rounded text-xs">
-                              <strong>{t("calendar.label.grades")}</strong> {event.semester}
-                            </div>
+                          {event.location && (
+                            <div className="text-xs mt-1 opacity-60">{event.location}</div>
                           )}
                         </div>
                       ))}
@@ -491,65 +471,64 @@ export default function CalendarPage() {
         {viewMode === "agenda" && (
           <div className="overflow-y-auto h-full">
             <div data-testid="agenda-events" className="divide-y divide-gray-200">
-              {mergedEvents
-                .filter(event => event.date)
-                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                .map((event, index) => (
-                  <div key={index} className="p-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex gap-4">
-                      <div className="flex-shrink-0 w-24 text-right">
-                        <div className="text-sm font-semibold text-gray-900">
-                          {new Date(event.date).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric'
-                          })}
+              {events.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  No calendar events found.
+                </div>
+              ) : (
+                events
+                  .filter(event => event.date)
+                  .sort((a, b) => a.date.localeCompare(b.date))
+                  .map((event, index) => (
+                    <div key={index} className="p-4 hover:bg-gray-50 transition-colors">
+                      <div className="flex gap-4">
+                        <div className="flex-shrink-0 w-24 text-right">
+                          <div className="text-sm font-semibold text-gray-900">
+                            {new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', {
+                              weekday: 'short'
+                            })}
+                          </div>
+                          {!event.allDay && event.startTime && (
+                            <div className="text-xs text-gray-400 mt-1">
+                              {event.startTime}
+                            </div>
+                          )}
                         </div>
-                        <div className="text-xs text-gray-500">
-                          {new Date(event.date).toLocaleDateString('en-US', {
-                            weekday: 'short'
-                          })}
-                        </div>
-                      </div>
 
-                      <div className="flex-1 space-y-2">
-                        {event.gsdtaEvents && (
-                          <div className="bg-green-100 text-green-800 px-3 py-2 rounded border-l-4 border-green-600">
-                            <div className="font-semibold">{t("calendar.event.gsdta")}</div>
-                            <div className="text-sm">{event.gsdtaEvents}</div>
+                        <div className="flex-1">
+                          <div className={`px-3 py-2 rounded border-l-4 ${getEventBgColor(event.eventType)}`}>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="inline-block w-2 h-2 rounded-full"
+                                style={{ backgroundColor: EVENT_TYPE_COLORS[event.eventType] }}
+                              />
+                              <span className="font-semibold">{getEventTypeLabel(event.eventType)}</span>
+                            </div>
+                            <div className="text-sm mt-1">{event.title.en}</div>
+                            {event.title.ta && (
+                              <div className="text-sm opacity-75">{event.title.ta}</div>
+                            )}
+                            {event.description?.en && (
+                              <div className="text-xs text-gray-600 mt-1">{event.description.en}</div>
+                            )}
+                            {event.location && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                <span className="inline-block mr-1">📍</span>
+                                {event.location}
+                              </div>
+                            )}
                           </div>
-                        )}
-                        {event.indiaHolidays && (
-                          <div className="bg-purple-100 text-purple-800 px-3 py-2 rounded border-l-4 border-purple-600">
-                            <div className="font-semibold">{t("calendar.event.indiaHoliday")}</div>
-                            <div className="text-sm">{event.indiaHolidays}</div>
-                          </div>
-                        )}
-                        {event.longWeekend && (
-                          <div className="bg-indigo-100 text-indigo-800 px-3 py-2 rounded border-l-4 border-indigo-600">
-                            <div className="font-semibold">{t("calendar.event.longWeekend")}</div>
-                            <div className="text-sm">{event.longWeekend}</div>
-                          </div>
-                        )}
-                        {event.sdusd && (
-                          <div className="bg-blue-50 text-blue-700 px-3 py-2 rounded text-sm">
-                            <strong>SDUSD:</strong> {event.sdusd}
-                          </div>
-                        )}
-                        {event.pusd && (
-                          <div className="bg-blue-50 text-blue-700 px-3 py-2 rounded text-sm">
-                            <strong>PUSD:</strong> {event.pusd}
-                          </div>
-                        )}
-                        {(event.trimester || event.semester) && (
-                          <div className="text-sm text-gray-600">
-                            {event.trimester && <span className="mr-3">📚 {t("calendar.label.kg1")} {event.trimester}</span>}
-                            {event.semester && <span>📖 {t("calendar.label.grades")} {event.semester}</span>}
-                          </div>
-                        )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+              )}
             </div>
           </div>
         )}
@@ -558,22 +537,34 @@ export default function CalendarPage() {
       {/* Legend */}
       <div className="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-200">
         <h3 className="text-sm font-semibold text-gray-900 mb-3">{t("common.legend")}</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 text-sm">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 bg-green-100 border-l-4 border-green-600 rounded"></div>
-            <span className="text-gray-700">{t("calendar.legend.events")}</span>
+            <span className="text-gray-700">GSDTA</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-red-100 border-l-4 border-red-600 rounded"></div>
+            <span className="text-gray-700">Holiday</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 bg-yellow-100 border-l-4 border-yellow-600 rounded"></div>
-            <span className="text-gray-700">{t("calendar.legend.tests")}</span>
+            <span className="text-gray-700">Test</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-blue-100 border-l-4 border-blue-600 rounded"></div>
+            <span className="text-gray-700">Meeting</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 bg-purple-100 border-l-4 border-purple-600 rounded"></div>
-            <span className="text-gray-700">{t("calendar.legend.india")}</span>
+            <span className="text-gray-700">Academic</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-indigo-100 border-l-4 border-indigo-600 rounded"></div>
-            <span className="text-gray-700">{t("calendar.legend.weekends")}</span>
+            <div className="w-4 h-4 bg-cyan-100 border-l-4 border-cyan-600 rounded"></div>
+            <span className="text-gray-700">Sports</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-gray-100 border-l-4 border-gray-600 rounded"></div>
+            <span className="text-gray-700">Other</span>
           </div>
         </div>
       </div>
@@ -582,29 +573,27 @@ export default function CalendarPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-green-50 p-4 rounded-lg border-2 border-green-200">
           <div className="text-2xl font-bold text-green-700">
-            {mergedEvents.filter(e => e.gsdtaEvents).length}
+            {events.filter(e => e.eventType === 'gsdta').length}
           </div>
-          <div className="text-sm text-gray-600">{t("calendar.legend.events")}</div>
+          <div className="text-sm text-gray-600">GSDTA Events</div>
         </div>
-        <div className="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
-          <div className="text-2xl font-bold text-purple-700">
-            {mergedEvents.filter(e => e.indiaHolidays).length}
+        <div className="bg-red-50 p-4 rounded-lg border-2 border-red-200">
+          <div className="text-2xl font-bold text-red-700">
+            {events.filter(e => e.eventType === 'holiday').length}
           </div>
-          <div className="text-sm text-gray-600">{t("calendar.legend.india")}</div>
-        </div>
-        <div className="bg-indigo-50 p-4 rounded-lg border-2 border-indigo-200">
-          <div className="text-2xl font-bold text-indigo-700">
-            {mergedEvents.filter(e => e.longWeekend).length}
-          </div>
-          <div className="text-sm text-gray-600">{t("calendar.legend.weekends")}</div>
+          <div className="text-sm text-gray-600">Holidays</div>
         </div>
         <div className="bg-yellow-50 p-4 rounded-lg border-2 border-yellow-200">
           <div className="text-2xl font-bold text-yellow-700">
-            {mergedEvents.filter(e =>
-              isTrimesterTest(e.trimester) || isSemesterTest(e.semester)
-            ).length}
+            {events.filter(e => e.eventType === 'test').length}
           </div>
-          <div className="text-sm text-gray-600">{t("calendar.stats.tests")}</div>
+          <div className="text-sm text-gray-600">Tests</div>
+        </div>
+        <div className="bg-blue-50 p-4 rounded-lg border-2 border-blue-200">
+          <div className="text-2xl font-bold text-blue-700">
+            {events.filter(e => !['gsdta', 'holiday', 'test'].includes(e.eventType)).length}
+          </div>
+          <div className="text-sm text-gray-600">Other Events</div>
         </div>
       </div>
     </section>
