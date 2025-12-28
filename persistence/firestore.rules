@@ -143,6 +143,58 @@ service cloud.firestore {
       // No delete - export job records are preserved
     }
 
+    // Conversations collection: parent-teacher messaging
+    match /conversations/{conversationId} {
+      // Helper to check if user is a teacher
+      function isTeacher() {
+        return isSignedIn() &&
+               'teacher' in userDoc(request.auth.uid).data.roles &&
+               userDoc(request.auth.uid).data.status == 'active';
+      }
+
+      // Helper to check if user is a parent
+      function isParent() {
+        return isSignedIn() &&
+               'parent' in userDoc(request.auth.uid).data.roles &&
+               userDoc(request.auth.uid).data.status == 'active';
+      }
+
+      // Read: user is a participant in the conversation
+      allow get: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.parentId == request.auth.uid ||
+        resource.data.teacherId == request.auth.uid
+      );
+
+      // List: user can only list their own conversations
+      allow list: if isSignedIn() && (
+        isAdmin() ||
+        (isParent() && resource.data.parentId == request.auth.uid) ||
+        (isTeacher() && resource.data.teacherId == request.auth.uid)
+      );
+
+      // Create/Update/Delete: handled by API only
+      allow create, update, delete: if false;
+    }
+
+    // Messages collection: messages within conversations
+    match /messages/{messageId} {
+      // Helper to get the parent conversation
+      function getConversation() {
+        return get(/databases/$(database)/documents/conversations/$(resource.data.conversationId));
+      }
+
+      // Read: user is a participant in the conversation
+      allow get, list: if isSignedIn() && (
+        isAdmin() ||
+        getConversation().data.parentId == request.auth.uid ||
+        getConversation().data.teacherId == request.auth.uid
+      );
+
+      // Create/Update/Delete: handled by API only
+      allow create, update, delete: if false;
+    }
+
     // Attendance collection: teachers can manage attendance for their classes
     match /attendance/{recordId} {
       // Helper to check if user is a teacher
