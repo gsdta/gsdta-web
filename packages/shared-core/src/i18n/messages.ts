@@ -282,6 +282,8 @@ export const messages: Record<Lang, Record<string, string>> = {
         "selectRole.currentRole": "Current",
 
         // Role names and descriptions
+        "roles.superAdmin": "Super Administrator",
+        "roles.superAdminDescription": "Full system access including admin management and security.",
         "roles.admin": "Administrator",
         "roles.adminDescription": "Manage users, classes, and system settings.",
         "roles.teacher": "Teacher",
@@ -571,6 +573,8 @@ export const messages: Record<Lang, Record<string, string>> = {
         "selectRole.currentRole": "தற்போதைய",
 
         // Role names and descriptions
+        "roles.superAdmin": "மூத்த நிர்வாகி",
+        "roles.superAdminDescription": "நிர்வாகி மேலாண்மை மற்றும் பாதுகாப்பு உட்பட முழு அமைப்பு அணுகல்.",
         "roles.admin": "நிர்வாகி",
         "roles.adminDescription": "பயனர்கள், வகுப்புகள் மற்றும் அமைப்பு அமைப்புகளை நிர்வகிக்கவும்.",
         "roles.teacher": "ஆசிரியர்",

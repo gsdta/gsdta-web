@@ -111,6 +111,16 @@ async function verifyAuthPasswordSignIn(email, password) {
 const TEST_USERS = [
   // E2E test users (used by Cucumber tests)
   {
+    uid: 'test-super-admin-uid',
+    email: 'superadmin@test.com',
+    password: 'superadmin123',
+    displayName: 'Super Admin',
+    firstName: 'Super',
+    lastName: 'Admin',
+    roles: ['super_admin'],
+    status: 'active'
+  },
+  {
     uid: 'test-admin-uid',
     email: 'admin@test.com',
     password: 'admin123',
@@ -452,7 +462,7 @@ async function seedAuthUsers() {
   }
 
   // Verify the main E2E credentials can actually sign in via the emulator REST API.
-  const required = ['admin@test.com', 'teacher@test.com', 'parent@test.com'];
+  const required = ['superadmin@test.com', 'admin@test.com', 'teacher@test.com', 'parent@test.com'];
   for (const email of required) {
     const user = TEST_USERS.find((u) => u.email === email);
     if (!user) continue;
@@ -861,11 +871,12 @@ async function main() {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('Test Credentials:');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('  Admin:    admin@test.com    / admin123');
-    console.log('  Teacher:  teacher@test.com  / teacher123');
-    console.log('  Teacher2: teacher2@test.com / teacher123');
-    console.log('  Parent:   parent@test.com   / parent123');
-    console.log('  Parent2:  parent2@test.com  / parent123');
+    console.log('  SuperAdmin: superadmin@test.com / superadmin123');
+    console.log('  Admin:      admin@test.com      / admin123');
+    console.log('  Teacher:    teacher@test.com    / teacher123');
+    console.log('  Teacher2:   teacher2@test.com   / teacher123');
+    console.log('  Parent:     parent@test.com     / parent123');
+    console.log('  Parent2:    parent2@test.com    / parent123');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('\nTest Invite Tokens:');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
