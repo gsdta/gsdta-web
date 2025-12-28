@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
+import { requireFeature } from '@/lib/featureFlags';
 import { adminDb } from '@/lib/firebaseAdmin';
 import { Timestamp } from 'firebase-admin/firestore';
 import type { CreateHeroContentDto } from '@/types/heroContent';
@@ -81,6 +82,7 @@ export async function GET(req: NextRequest) {
   try {
     const authz = req.headers.get('authorization');
     await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'HeroContent');
 
     const { searchParams } = new URL(req.url);
     const statusFilter = searchParams.get('status') || 'all';
@@ -145,6 +147,7 @@ export async function POST(req: NextRequest) {
   try {
     const authz = req.headers.get('authorization');
     const { profile } = await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'HeroContent');
 
     const body = await req.json();
     const validData = createHeroContentSchema.parse(body) as CreateHeroContentDto;

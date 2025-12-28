@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Protected } from '@/components/Protected';
 import { useAuth } from '@/components/AuthProvider';
+import { useFeatureFlags } from '@/context/FeatureFlagsContext';
+import { filterNavSections } from '@/lib/featureMapping';
 
 interface NavItem {
   label: string;
@@ -74,6 +76,7 @@ const superAdminNav: NavSection = {
   label: 'Super Admin',
   items: [
     { label: 'Admin Users', href: '/admin/super-admin/admins', icon: '👑' },
+    { label: 'Feature Flags', href: '/admin/super-admin/feature-flags', icon: '🚩' },
     { label: 'Audit Log', href: '/admin/super-admin/audit-log', icon: '📋' },
     { label: 'Security', href: '/admin/super-admin/security', icon: '🛡️' },
     { label: 'Settings', href: '/admin/super-admin/settings', icon: '⚙️' },
@@ -86,12 +89,18 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user } = useAuth();
+  const { isFeatureEnabled } = useFeatureFlags();
 
   // Check if user is super_admin
   const isSuperAdmin = user?.roles?.includes('super_admin') ?? false;
 
   // Build navigation with super admin section if applicable
-  const navigation = isSuperAdmin ? [...adminNav, superAdminNav] : adminNav;
+  const baseNavigation = isSuperAdmin ? [...adminNav, superAdminNav] : adminNav;
+
+  // Filter navigation based on feature flags
+  const navigation = useMemo(() => {
+    return filterNavSections(baseNavigation, 'admin', isFeatureEnabled);
+  }, [baseNavigation, isFeatureEnabled]);
 
   const isActive = (href: string) => {
     if (href === '/admin') {

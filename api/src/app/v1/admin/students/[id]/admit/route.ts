@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
+import { requireFeature } from '@/lib/featureFlags';
 import { admitStudent, getStudentById } from '@/lib/firestoreStudents';
 import { randomUUID } from 'crypto';
 
@@ -93,6 +94,7 @@ export async function PATCH(
   try {
     const authz = req.headers.get('authorization');
     const authContext = await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Students');
     const { token } = authContext;
 
     // Check if student exists

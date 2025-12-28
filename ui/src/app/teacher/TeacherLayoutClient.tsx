@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Protected } from '@/components/Protected';
+import { useFeatureFlags } from '@/context/FeatureFlagsContext';
+import { filterNavSections } from '@/lib/featureMapping';
 
 interface NavItem {
   label: string;
@@ -41,6 +43,12 @@ const teacherNav: NavSection[] = [
 export default function TeacherLayoutClient({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isFeatureEnabled } = useFeatureFlags();
+
+  // Filter navigation based on feature flags
+  const navigation = useMemo(() => {
+    return filterNavSections(teacherNav, 'teacher', isFeatureEnabled);
+  }, [isFeatureEnabled]);
 
   const isActive = (href: string) => {
     if (href === '/teacher') {
@@ -76,7 +84,7 @@ export default function TeacherLayoutClient({ children }: { children: React.Reac
             {/* Mobile Navigation */}
             {mobileMenuOpen && (
               <div className="md:hidden py-4 space-y-2 border-t border-gray-100">
-                {teacherNav.map((section) => (
+                {navigation.map((section) => (
                   <div key={section.label}>
                     <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
                       {section.label}
@@ -108,7 +116,7 @@ export default function TeacherLayoutClient({ children }: { children: React.Reac
           {/* Left Sidebar - Desktop only */}
           <aside className="hidden md:block w-64 flex-shrink-0 bg-white border-r border-gray-200 min-h-[calc(100vh-4rem)] sticky top-16">
             <div className="p-4">
-              {teacherNav.map((section) => (
+              {navigation.map((section) => (
                 <div key={section.label} className="mb-6">
                   <h2 className="text-xs font-semibold text-gray-500 uppercase mb-3">
                     {section.label}

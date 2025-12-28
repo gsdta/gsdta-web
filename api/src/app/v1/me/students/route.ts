@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
+import { requireFeature } from '@/lib/featureFlags';
 import { getStudentsByParentId, createStudent } from '@/lib/firestoreStudents';
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
@@ -145,6 +146,7 @@ export async function GET(req: NextRequest) {
   try {
     const authz = req.headers.get('authorization');
     const authContext = await requireAuth(authz, { requireActive: true });
+    await requireFeature('parent', 'Students');
     const { token } = authContext;
 
     // Get students linked to this parent
@@ -227,6 +229,7 @@ export async function POST(req: NextRequest) {
     const authz = req.headers.get('authorization');
     // Require parent role for student registration
     const authContext = await requireAuth(authz, { requireActive: true, requireRoles: ['parent'] });
+    await requireFeature('parent', 'StudentRegistration');
     const { token, profile } = authContext;
 
     // Parse and validate request body

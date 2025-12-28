@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/guard';
 import { AuthError } from '@/lib/auth';
+import { requireFeature } from '@/lib/featureFlags';
 import {
   createConversation,
   getConversationsForUser,
@@ -121,6 +122,9 @@ export async function GET(req: NextRequest) {
       return jsonError(403, 'FORBIDDEN', 'User role not supported for messaging', origin);
     }
 
+    // Check feature flag based on role
+    await requireFeature(role, 'Messaging');
+
     // Parse query parameters
     const url = new URL(req.url);
     const limit = parseInt(url.searchParams.get('limit') || '50', 10);
@@ -229,6 +233,9 @@ export async function POST(req: NextRequest) {
     if (!role) {
       return jsonError(403, 'FORBIDDEN', 'User role not supported for messaging', origin);
     }
+
+    // Check feature flag based on role
+    await requireFeature(role, 'Messaging');
 
     // Parse request body
     const body = await req.json();

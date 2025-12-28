@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
+import { requireFeature } from '@/lib/featureFlags';
 import {
   getCalendarEventById,
   updateCalendarEvent,
@@ -109,6 +110,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   try {
     const authz = req.headers.get('authorization');
     const { token } = await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Calendar');
 
     const event = await getCalendarEventById(id);
 
@@ -142,6 +144,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
   try {
     const authz = req.headers.get('authorization');
     const { token, profile } = await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Calendar');
 
     // Parse and validate request body
     let body: unknown;
@@ -192,6 +195,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
   try {
     const authz = req.headers.get('authorization');
     const { token } = await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Calendar');
 
     const deleted = await deleteCalendarEvent(id, token.uid);
 
