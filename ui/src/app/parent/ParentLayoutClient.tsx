@@ -29,6 +29,10 @@ const parentNav: NavSection[] = [
     ],
   },
   {
+    label: 'Communication',
+    items: [{ label: 'Messages', href: '/parent/messages', icon: '💬' }],
+  },
+  {
     label: 'Account',
     items: [
       { label: 'My Profile', href: '/parent/profile', icon: '👤' },

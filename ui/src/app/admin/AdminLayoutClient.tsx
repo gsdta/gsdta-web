@@ -58,6 +58,12 @@ const adminNav: NavSection[] = [
     ],
   },
   {
+    label: 'Analytics',
+    items: [
+      { label: 'Attendance Analytics', href: '/admin/attendance/analytics', icon: '📈' },
+    ],
+  },
+  {
     label: 'Content',
     items: [{ label: 'Hero Content', href: '/admin/content/hero', icon: '🖼️' }],
   },

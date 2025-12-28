@@ -1,8 +1,8 @@
 # GSDTA Web Application - Requirements Document
 
-**Version**: 1.0
+**Version**: 1.1
 **Classification**: Master Reference Document
-**Last Updated**: December 27, 2025
+**Last Updated**: December 27, 2025 (Updated with Super Admin features)
 **Purpose**: This document serves as the definitive source of truth for all features and capabilities of the GSDTA Tamil School Management System.
 
 ---
@@ -33,7 +33,8 @@ GSDTA Web is a comprehensive school management system designed for a non-profit 
 | Capability | Status | Description |
 |------------|--------|-------------|
 | User Authentication | COMPLETE | Firebase-based email/password and Google OAuth |
-| Role-Based Access Control | COMPLETE | Admin, Teacher, Parent roles with distinct permissions |
+| Role-Based Access Control | COMPLETE | Super Admin, Admin, Teacher, Parent roles with distinct permissions |
+| Super Admin Portal | COMPLETE | Admin management, audit logs, security, system config, data recovery |
 | Teacher Onboarding | COMPLETE | Invite-based teacher registration system |
 | Parent Portal | COMPLETE | Student registration, profile management |
 | Teacher Portal | COMPLETE | Dashboard, class roster, attendance tracking |
@@ -113,6 +114,24 @@ GSDTA Web is a comprehensive school management system designed for a non-profit 
 | Student | View-only (future) | Linked by Parent |
 
 ### Role Capabilities Matrix
+
+#### Super Admin Capabilities
+
+| Feature | Create | Read | Update | Delete |
+|---------|--------|------|--------|--------|
+| Admin Users | Promote | All | All | Demote |
+| Teachers | Invite | All | All | Deactivate |
+| Students | Manual/Bulk | All | All | Deactivate |
+| Parents | - | All | All | Deactivate |
+| Classes | Yes | All | All | Deactivate |
+| Grades | Yes | All | All | Deactivate |
+| Hero Content | Yes | All | All | Yes |
+| System Config | - | All | Yes | - |
+| Audit Logs | - | All | - | - |
+| Security Events | - | All | Resolve | - |
+| Deleted Data | - | All | Restore | - |
+| Data Export | Yes | All | - | - |
+| Suspensions | Yes | All | Lift | - |
 
 #### Admin Capabilities
 
@@ -264,6 +283,119 @@ Admin → Create Invite → Token Generated → Teacher Clicks Link
 | View student details | COMPLETE |
 | Admit pending students | COMPLETE |
 | Assign class to student | COMPLETE |
+
+#### 3.7 Super Admin Portal
+
+**Status**: COMPLETE (December 2025)
+
+Super Admins have the highest level of access and control over the entire system. They have all capabilities of regular admins plus elevated permissions.
+
+##### Admin User Management
+
+| Feature | Status |
+|---------|--------|
+| View all admin users | COMPLETE |
+| Search admin users | COMPLETE |
+| View promotable non-admin users | COMPLETE |
+| Promote user to admin role | COMPLETE |
+| Demote admin to regular user | COMPLETE |
+| Role badges and status display | COMPLETE |
+| Promotion/demotion with reason | COMPLETE |
+| Cannot demote super_admin users | COMPLETE |
+
+##### Audit Logging System
+
+| Feature | Status |
+|---------|--------|
+| Comprehensive audit trail | COMPLETE |
+| Log all admin actions | COMPLETE |
+| Filter by user/action/resource | COMPLETE |
+| Filter by severity level | COMPLETE |
+| Date range filtering | COMPLETE |
+| Pagination support | COMPLETE |
+| Export audit logs to CSV | COMPLETE |
+| Severity levels (info/warning/critical) | COMPLETE |
+
+##### Security Monitoring
+
+| Feature | Status |
+|---------|--------|
+| Security events dashboard | COMPLETE |
+| Failed login tracking | COMPLETE |
+| Rate limit violation monitoring | COMPLETE |
+| Unauthorized access attempts | COMPLETE |
+| Suspicious activity detection | COMPLETE |
+| Event filtering by type | COMPLETE |
+| Security statistics view | COMPLETE |
+
+##### System Configuration
+
+| Feature | Status |
+|---------|--------|
+| Enable/disable maintenance mode | COMPLETE |
+| Bilingual maintenance messages (EN/TA) | COMPLETE |
+| Maintenance mode scheduling | COMPLETE |
+| Role-based access during maintenance | COMPLETE |
+| Configure rate limits (invite/login/API) | COMPLETE |
+| Backup schedule configuration | COMPLETE |
+| Backup frequency (daily/weekly) | COMPLETE |
+| Retention days configuration | COMPLETE |
+
+##### Emergency Actions & Data Recovery
+
+| Feature | Status |
+|---------|--------|
+| Emergency user suspension | COMPLETE |
+| Suspension severity (warning/temp/permanent) | COMPLETE |
+| Suspension duration for temporary | COMPLETE |
+| Lift user suspension | COMPLETE |
+| Suspension history tracking | COMPLETE |
+| Soft delete with 90-day retention | COMPLETE |
+| View deleted data by collection | COMPLETE |
+| Restore deleted data | COMPLETE |
+| Prevent overwriting existing docs | COMPLETE |
+
+##### System Data Export
+
+| Feature | Status |
+|---------|--------|
+| Full system export (all collections) | COMPLETE |
+| Users export | COMPLETE |
+| Students export | COMPLETE |
+| Audit logs export | COMPLETE |
+| Classes export | COMPLETE |
+| Export job tracking | COMPLETE |
+| Download link generation | COMPLETE |
+| 24-hour download expiry | COMPLETE |
+| Export progress tracking | COMPLETE |
+
+##### Firestore Collections (Super Admin)
+
+| Collection | Purpose |
+|------------|---------|
+| adminPromotions | Tracks all admin promotions/demotions |
+| auditLog | Comprehensive action audit trail |
+| securityEvents | Security event logging |
+| systemConfig | System configuration (maintenance, rate limits, backup) |
+| deletedData | Soft-deleted records (90-day retention) |
+| suspensions | User suspension records |
+| exportJobs | Data export job tracking |
+
+##### API Endpoints (Super Admin)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/super-admin/users/admins` | List all admin users |
+| POST | `/api/v1/super-admin/users/:uid/promote` | Promote user to admin |
+| POST | `/api/v1/super-admin/users/:uid/demote` | Demote admin to user |
+| GET | `/api/v1/super-admin/audit-log` | Query audit logs |
+| GET | `/api/v1/super-admin/security` | Security events/stats |
+| GET/POST | `/api/v1/super-admin/config` | System configuration |
+| POST | `/api/v1/super-admin/users/:uid/emergency-suspend` | Emergency suspend |
+| GET | `/api/v1/super-admin/deleted-data` | List deleted data |
+| POST | `/api/v1/super-admin/deleted-data/:id/restore` | Restore data |
+| POST | `/api/v1/super-admin/export` | Create export job |
+| GET | `/api/v1/super-admin/export/:jobId` | Get export status |
 
 ### 4. Parent Portal
 
