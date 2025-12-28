@@ -91,6 +91,78 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
 }
 
 /**
+ * Find a user by email address.
+ * Returns null if no user found.
+ */
+export async function getUserByEmail(email: string): Promise<UserProfile | null> {
+  const normalizedEmail = email.toLowerCase().trim();
+  const snap = await getDb()
+    .collection('users')
+    .where('email', '==', normalizedEmail)
+    .limit(1)
+    .get();
+
+  if (snap.empty) return null;
+
+  const doc = snap.docs[0];
+  const data = doc.data();
+
+  return {
+    uid: doc.id,
+    email: data.email,
+    name: data.name,
+    firstName: data.firstName,
+    lastName: data.lastName,
+    roles: Array.isArray(data.roles) ? data.roles : [],
+    status: data.status || 'unknown',
+    phone: data.phone,
+    address: data.address,
+    preferredLanguage: data.preferredLanguage,
+    notificationPreferences: data.notificationPreferences,
+    createdAt: data.createdAt,
+    updatedAt: data.updatedAt,
+  } as UserProfile;
+}
+
+/**
+ * Find or create a parent user by email.
+ * If user exists, returns existing profile.
+ * If user doesn't exist, creates a placeholder parent account.
+ * Returns the user profile and whether it was newly created.
+ */
+export async function findOrCreateParentByEmail(
+  email: string,
+  name?: string
+): Promise<{ profile: UserProfile; created: boolean }> {
+  const normalizedEmail = email.toLowerCase().trim();
+
+  // Check if user already exists
+  const existing = await getUserByEmail(normalizedEmail);
+  if (existing) {
+    return { profile: existing, created: false };
+  }
+
+  // Create a new placeholder parent account
+  // Use a generated UID since we don't have Firebase Auth user yet
+  const placeholderUid = `placeholder_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const displayName = name || normalizedEmail.split('@')[0];
+
+  const profile: UserProfile = {
+    uid: placeholderUid,
+    email: normalizedEmail,
+    name: displayName,
+    roles: ['parent'],
+    status: 'pending', // Pending until they complete registration
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  await getDb().collection('users').doc(placeholderUid).set(profile);
+
+  return { profile, created: true };
+}
+
+/**
  * Create a new user profile in Firestore.
  * Used for first-time parent signups.
  */

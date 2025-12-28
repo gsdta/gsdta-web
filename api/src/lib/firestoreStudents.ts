@@ -10,6 +10,13 @@ import type {
   LinkedStudentView,
   StudentStatus,
 } from '@/types/student';
+import type {
+  ValidatedStudentData,
+  BulkImportResult,
+  BulkImportRowError,
+  ImportedStudent,
+} from '@/types/bulkImport';
+import { getUserByEmail, findOrCreateParentByEmail } from './firestoreUsers';
 
 // Test hook: allow overriding adminDb provider during tests
 let getDb = adminDb;
@@ -326,4 +333,267 @@ export async function countStudentsByStatus(): Promise<Record<StudentStatus, num
   }
 
   return counts;
+}
+
+/**
+ * Bulk create students from validated import data.
+ * Uses Firestore batch writes for atomic operations.
+ * Maximum 500 students per batch (Firestore limit).
+ *
+ * @param students - Array of validated student data
+ * @param createParents - If true, create placeholder parent accounts for unknown emails
+ * @returns BulkImportResult with success/failure counts and details
+ */
+export async function bulkCreateStudents(
+  students: ValidatedStudentData[],
+  createParents: boolean = false
+): Promise<BulkImportResult> {
+  const result: BulkImportResult = {
+    success: 0,
+    failed: 0,
+    total: students.length,
+    students: [],
+    errors: [],
+    warnings: [],
+    createdParents: [],
+  };
+
+  if (students.length === 0) {
+    return result;
+  }
+
+  // Group students by parent email for efficient lookup
+  const studentsByParent = new Map<string, { index: number; student: ValidatedStudentData }[]>();
+  students.forEach((student, index) => {
+    const email = student.parentEmail.toLowerCase().trim();
+    if (!studentsByParent.has(email)) {
+      studentsByParent.set(email, []);
+    }
+    studentsByParent.get(email)!.push({ index, student });
+  });
+
+  // Resolve parent accounts
+  const parentMap = new Map<string, { uid: string; email: string }>();
+  const parentErrors: BulkImportRowError[] = [];
+
+  for (const [email, studentGroup] of studentsByParent) {
+    if (createParents) {
+      // Find or create parent
+      const { profile, created } = await findOrCreateParentByEmail(email);
+      parentMap.set(email, { uid: profile.uid, email: profile.email || email });
+      if (created) {
+        result.createdParents.push(email);
+        result.warnings.push(`Created placeholder parent account for: ${email}`);
+      }
+    } else {
+      // Just look up existing parent
+      const parent = await getUserByEmail(email);
+      if (parent) {
+        parentMap.set(email, { uid: parent.uid, email: parent.email || email });
+      } else {
+        // Parent not found - mark all students with this email as failed
+        for (const { index } of studentGroup) {
+          parentErrors.push({
+            row: index + 1, // 1-indexed for user display
+            errors: [
+              {
+                field: 'parentEmail',
+                value: email,
+                message: `Parent account not found for email: ${email}. Set createParents=true to auto-create.`,
+              },
+            ],
+          });
+        }
+      }
+    }
+  }
+
+  // Add parent errors to result
+  result.errors.push(...parentErrors);
+  result.failed += parentErrors.length;
+
+  // Filter out students with parent errors
+  const validStudents = students
+    .map((student, index) => ({ student, index }))
+    .filter(({ student }) => parentMap.has(student.parentEmail.toLowerCase().trim()));
+
+  if (validStudents.length === 0) {
+    return result;
+  }
+
+  // Process in batches of 500 (Firestore limit)
+  const BATCH_SIZE = 500;
+  const now = Timestamp.now();
+
+  for (let i = 0; i < validStudents.length; i += BATCH_SIZE) {
+    const batchStudents = validStudents.slice(i, i + BATCH_SIZE);
+    const batch = getDb().batch();
+    const batchRecords: { docRef: FirebaseFirestore.DocumentReference; data: Omit<Student, 'id'>; index: number }[] = [];
+
+    for (const { student, index } of batchStudents) {
+      const parentEmail = student.parentEmail.toLowerCase().trim();
+      const parent = parentMap.get(parentEmail)!;
+
+      const studentData: Omit<Student, 'id'> = {
+        firstName: student.firstName.trim(),
+        lastName: student.lastName.trim(),
+        dateOfBirth: student.dateOfBirth,
+        gender: student.gender,
+        parentId: parent.uid,
+        parentEmail: parent.email,
+        grade: student.grade,
+        schoolName: student.schoolName,
+        schoolDistrict: student.schoolDistrict,
+        priorTamilLevel: student.priorTamilLevel,
+        enrollingGrade: student.enrollingGrade,
+        address: student.address,
+        contacts: student.contacts,
+        medicalNotes: student.medicalNotes,
+        photoConsent: student.photoConsent,
+        status: 'pending',
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      const docRef = getDb().collection(STUDENTS_COLLECTION).doc();
+      batch.set(docRef, studentData);
+      batchRecords.push({ docRef, data: studentData, index });
+    }
+
+    try {
+      await batch.commit();
+
+      // Record successful imports
+      for (const { docRef, data, index } of batchRecords) {
+        result.success++;
+        result.students.push({
+          id: docRef.id,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          parentEmail: data.parentEmail || '',
+          parentId: data.parentId,
+          status: data.status,
+        });
+      }
+    } catch (error) {
+      // Batch failed - mark all students in this batch as failed
+      for (const { index } of batchRecords) {
+        result.failed++;
+        result.errors.push({
+          row: index + 1,
+          errors: [
+            {
+              field: 'batch',
+              value: '',
+              message: `Batch write failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            },
+          ],
+        });
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Bulk assign class to multiple students.
+ * Validates capacity and student status before assignment.
+ *
+ * @param studentIds - Array of student IDs to assign
+ * @param classId - Class ID to assign
+ * @param className - Class display name
+ * @returns Object with updated and failed student IDs
+ */
+export async function bulkAssignClass(
+  studentIds: string[],
+  classId: string,
+  className: string
+): Promise<{
+  updated: string[];
+  failed: Array<{ id: string; name: string; reason: string }>;
+}> {
+  const result = {
+    updated: [] as string[],
+    failed: [] as Array<{ id: string; name: string; reason: string }>,
+  };
+
+  if (studentIds.length === 0) {
+    return result;
+  }
+
+  // Validate all students first
+  const studentsToUpdate: Student[] = [];
+
+  for (const studentId of studentIds) {
+    const student = await getStudentById(studentId);
+
+    if (!student) {
+      result.failed.push({
+        id: studentId,
+        name: 'Unknown',
+        reason: 'Student not found',
+      });
+      continue;
+    }
+
+    if (!['admitted', 'active'].includes(student.status)) {
+      result.failed.push({
+        id: studentId,
+        name: `${student.firstName} ${student.lastName}`,
+        reason: `Invalid status: ${student.status}. Only admitted or active students can be assigned.`,
+      });
+      continue;
+    }
+
+    studentsToUpdate.push(student);
+  }
+
+  if (studentsToUpdate.length === 0) {
+    return result;
+  }
+
+  // Process in batches of 500
+  const BATCH_SIZE = 500;
+  const now = Timestamp.now();
+
+  for (let i = 0; i < studentsToUpdate.length; i += BATCH_SIZE) {
+    const batchStudents = studentsToUpdate.slice(i, i + BATCH_SIZE);
+    const batch = getDb().batch();
+
+    for (const student of batchStudents) {
+      const docRef = getDb().collection(STUDENTS_COLLECTION).doc(student.id);
+
+      const updateData: Record<string, unknown> = {
+        classId,
+        className,
+        updatedAt: now,
+      };
+
+      // Transition admitted → active when assigning class
+      if (student.status === 'admitted') {
+        updateData.status = 'active';
+      }
+
+      batch.update(docRef, updateData);
+    }
+
+    try {
+      await batch.commit();
+
+      for (const student of batchStudents) {
+        result.updated.push(student.id);
+      }
+    } catch (error) {
+      for (const student of batchStudents) {
+        result.failed.push({
+          id: student.id,
+          name: `${student.firstName} ${student.lastName}`,
+          reason: `Batch update failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        });
+      }
+    }
+  }
+
+  return result;
 }
