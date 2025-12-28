@@ -10,6 +10,7 @@ const SKIP_EMAIL_VERIFICATION = process.env.NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION 
 
 function routeForRole(role: Role): string {
   switch (role) {
+    case "super_admin": return "/admin";  // Super admin uses admin dashboard
     case "admin": return "/admin";
     case "teacher": return "/teacher";
     default: return "/parent";

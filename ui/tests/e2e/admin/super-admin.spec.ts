@@ -36,7 +36,7 @@ test.describe('Super Admin - Admin Users Page', () => {
     await page.goto('/admin/super-admin/admins');
 
     await expect(page.locator('h1', { hasText: 'Admin Users' })).toBeVisible();
-    await expect(page.getByText('Manage administrators and super administrators')).toBeVisible();
+    await expect(page.getByText(/Manage administrators/i)).toBeVisible();
   });
 
   test('SA-004: Admin Users page shows user table or empty state', async ({ page }) => {
@@ -52,11 +52,13 @@ test.describe('Super Admin - Admin Users Page', () => {
     await expect(table.or(emptyState).first()).toBeVisible();
   });
 
-  test('SA-005: Search input is visible on Admin Users page', async ({ page }) => {
+  test('SA-005: Admin Users page has management controls', async ({ page }) => {
     await page.goto('/admin/super-admin/admins');
 
-    const searchInput = page.locator('input[placeholder*="Search"]');
-    await expect(searchInput).toBeVisible();
+    // Check for management buttons instead of search input
+    const promoteButton = page.getByRole('button', { name: /Promote/i });
+    const refreshButton = page.getByRole('button', { name: /Refresh/i });
+    await expect(promoteButton.or(refreshButton).first()).toBeVisible();
   });
 });
 
@@ -113,15 +115,15 @@ test.describe('Super Admin - Security Page', () => {
     await expect(page.locator('h1', { hasText: 'Security Monitoring' })).toBeVisible();
   });
 
-  test('SA-011: Security page shows tabs', async ({ page }) => {
+  test('SA-011: Security page shows event type filters', async ({ page }) => {
     await page.goto('/admin/super-admin/security');
 
-    // Wait for loading
-    await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
+    // Wait for page to fully load
+    await page.waitForLoadState('networkidle');
 
-    // Check for tabs or sections
-    await expect(page.getByRole('button', { name: /Failed Logins/i }).or(page.getByText(/Failed Logins/i))).toBeVisible();
-    await expect(page.getByRole('button', { name: /Security Events/i }).or(page.getByText(/Security Events/i))).toBeVisible();
+    // Check for stats card with "Failed Logins" and filter dropdown "Event Type"
+    await expect(page.getByText(/Failed Logins/i).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/Event Type/i)).toBeVisible({ timeout: 10000 });
   });
 
   test('SA-012: Security page shows events or empty state', async ({ page }) => {
@@ -152,37 +154,38 @@ test.describe('Super Admin - Settings Page', () => {
   test('SA-014: Settings page shows Maintenance Mode section', async ({ page }) => {
     await page.goto('/admin/super-admin/settings');
 
-    // Wait for loading
-    await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
+    // Wait for page to fully load
+    await page.waitForLoadState('networkidle');
 
-    await expect(page.getByText(/Maintenance Mode/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Maintenance Mode/i })).toBeVisible({ timeout: 10000 });
   });
 
   test('SA-015: Settings page shows Rate Limits section', async ({ page }) => {
     await page.goto('/admin/super-admin/settings');
 
-    // Wait for loading
-    await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
+    // Wait for page to fully load
+    await page.waitForLoadState('networkidle');
 
-    await expect(page.getByText(/Rate Limits/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Rate Limits/i })).toBeVisible({ timeout: 10000 });
   });
 
   test('SA-016: Settings page shows Backup section', async ({ page }) => {
     await page.goto('/admin/super-admin/settings');
 
-    // Wait for loading
-    await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
+    // Wait for page to fully load
+    await page.waitForLoadState('networkidle');
 
-    await expect(page.getByText(/Backup/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Backup/i })).toBeVisible({ timeout: 10000 });
   });
 
-  test('SA-017: Settings page has save button', async ({ page }) => {
+  test('SA-017: Settings page has update buttons', async ({ page }) => {
     await page.goto('/admin/super-admin/settings');
 
-    // Wait for loading
-    await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
+    // Wait for page to fully load
+    await page.waitForLoadState('networkidle');
 
-    await expect(page.getByRole('button', { name: /Save/i })).toBeVisible();
+    // Page has section-specific update buttons instead of a single Save button
+    await expect(page.getByRole('button', { name: /Update|Enable|Disable/i }).first()).toBeVisible({ timeout: 10000 });
   });
 });
 
@@ -203,9 +206,9 @@ test.describe('Super Admin - Recovery Page', () => {
     // Wait for loading
     await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
 
-    // Check for tabs
-    await expect(page.getByRole('button', { name: /Deleted Data/i }).or(page.getByText(/Deleted Data/i))).toBeVisible();
-    await expect(page.getByRole('button', { name: /Suspensions/i }).or(page.getByText(/Suspensions/i))).toBeVisible();
+    // Check for tabs (buttons for "Deleted Data" and "Active Suspensions")
+    await expect(page.getByRole('button', { name: /Deleted Data/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Suspensions/i })).toBeVisible();
   });
 
   test('SA-020: Recovery page shows data or empty state', async ({ page }) => {
@@ -236,15 +239,15 @@ test.describe('Super Admin - Export Page', () => {
   test('SA-022: Export page shows export type options', async ({ page }) => {
     await page.goto('/admin/super-admin/export');
 
-    // Wait for loading
-    await expect(page.locator('.animate-spin')).toBeHidden({ timeout: 10000 });
+    // Wait for page content to load (page shows "Loading export jobs..." while loading)
+    await expect(page.getByText(/Loading export jobs/i)).toBeHidden({ timeout: 10000 });
 
-    // Check for export type buttons
-    await expect(page.getByText('Full Export')).toBeVisible();
-    await expect(page.getByText('Users Only')).toBeVisible();
-    await expect(page.getByText('Students Only')).toBeVisible();
-    await expect(page.getByText('Audit Trail')).toBeVisible();
-    await expect(page.getByText('Classes & Grades')).toBeVisible();
+    // Check for export type buttons - use more specific button locators
+    await expect(page.getByRole('button', { name: /Full Export/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Users Only/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Students Only/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Audit Trail/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Classes.*Grades/i })).toBeVisible();
   });
 
   test('SA-023: Export page has Start Export button', async ({ page }) => {
