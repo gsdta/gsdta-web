@@ -1,9 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
-import { createUserProfile, updateUserProfile, type ProfileUpdateData } from '@/lib/firestoreUsers';
+import { createUserProfile, updateUserProfile, type ProfileUpdateData, type UserProfile } from '@/lib/firestoreUsers';
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
+
+/**
+ * Check if a parent profile has all required fields completed.
+ * Required: firstName, lastName, phone, and full address (street, city, state, zip)
+ */
+function checkProfileComplete(profile: UserProfile): boolean {
+  // Check firstName
+  if (!profile.firstName || profile.firstName.trim().length === 0) {
+    return false;
+  }
+  // Check lastName
+  if (!profile.lastName || profile.lastName.trim().length === 0) {
+    return false;
+  }
+  // Check phone (at least 10 digits)
+  if (!profile.phone || profile.phone.trim().length < 10) {
+    return false;
+  }
+  // Check address fields
+  const address = profile.address;
+  if (!address) {
+    return false;
+  }
+  if (!address.street || address.street.trim().length === 0) {
+    return false;
+  }
+  if (!address.city || address.city.trim().length === 0) {
+    return false;
+  }
+  if (!address.state || address.state.trim().length === 0) {
+    return false;
+  }
+  if (!address.zip || address.zip.trim().length === 0) {
+    return false;
+  }
+  return true;
+}
 
 /**
  * @swagger
@@ -158,13 +195,24 @@ export async function GET(req: NextRequest) {
       return jsonError(403, 'auth/forbidden', 'User status is not active', origin);
     }
 
+    // Check if profile is complete (for parent role)
+    const hasParentRole = profile.roles.includes('parent');
+    const profileComplete = hasParentRole ? checkProfileComplete(profile) : true;
+
     const body = {
       uid: token.uid,
       email: token.email ?? profile.email,
       name: profile.name,
+      firstName: profile.firstName,
+      lastName: profile.lastName,
       roles: profile.roles,
       status: profile.status,
+      phone: profile.phone,
+      address: profile.address,
+      preferredLanguage: profile.preferredLanguage,
+      notificationPreferences: profile.notificationPreferences,
       emailVerified: token.emailVerified,
+      isProfileComplete: profileComplete,
     };
 
     const res = NextResponse.json(body, { status: 200 });
