@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/guard';
 import { AuthError } from '@/lib/auth';
+import { requireFeature, type FeatureFlagRole } from '@/lib/featureFlags';
 import {
   getConversationById,
   canAccessConversation,
@@ -109,6 +110,9 @@ export async function GET(req: NextRequest, context: RouteContext) {
       return jsonError(403, 'FORBIDDEN', 'Not a participant in this conversation', origin);
     }
 
+    // Check feature flag based on role
+    await requireFeature(access.role as FeatureFlagRole, 'Messaging');
+
     const conversation = await getConversationById(id);
     if (!conversation) {
       return jsonError(404, 'NOT_FOUND', 'Conversation not found', origin);
@@ -182,6 +186,9 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     if (!access.canAccess) {
       return jsonError(403, 'FORBIDDEN', 'Not a participant in this conversation', origin);
     }
+
+    // Check feature flag based on role
+    await requireFeature(access.role as FeatureFlagRole, 'Messaging');
 
     await markMessagesAsRead(id, userId, access.role!);
 

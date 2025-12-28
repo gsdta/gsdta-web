@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
+import { requireFeature } from '@/lib/featureFlags';
 import { getTextbookById, updateTextbook, deleteTextbook } from '@/lib/firestoreTextbooks';
 
 export const runtime = 'nodejs';
@@ -83,6 +84,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   try {
     const authz = req.headers.get('authorization');
     await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Textbooks');
 
     const textbook = await getTextbookById(id);
 
@@ -126,6 +128,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   try {
     const authz = req.headers.get('authorization');
     await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Textbooks');
 
     const body = await req.json();
     const validData = updateTextbookSchema.parse(body);
@@ -182,6 +185,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
   try {
     const authz = req.headers.get('authorization');
     await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Textbooks');
 
     const success = await deleteTextbook(id);
 

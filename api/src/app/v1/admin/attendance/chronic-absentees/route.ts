@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/guard';
+import { requireFeature } from '@/lib/featureFlags';
 import { getChronicAbsentees } from '@/lib/firestoreAttendance';
 
 export const runtime = 'nodejs';
@@ -83,6 +84,7 @@ export async function GET(req: NextRequest) {
 
   try {
     await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'AttendanceAnalytics');
 
     // Parse query parameters
     const url = new URL(req.url);

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
+import { requireFeature } from '@/lib/featureFlags';
 import { adminDb } from '@/lib/firebaseAdmin';
 import { Timestamp } from 'firebase-admin/firestore';
 import type { UpdateHeroContentDto } from '@/types/heroContent';
@@ -84,6 +85,7 @@ export async function GET(
   try {
     const authz = req.headers.get('authorization');
     await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'HeroContent');
 
     const db = adminDb();
     const docRef = db.collection('heroContent').doc(params.id);
@@ -132,6 +134,7 @@ export async function PATCH(
   try {
     const authz = req.headers.get('authorization');
     const { profile } = await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'HeroContent');
 
     const body = await req.json();
     const validData = updateHeroContentSchema.parse(body) as UpdateHeroContentDto;
@@ -203,6 +206,7 @@ export async function DELETE(
   try {
     const authz = req.headers.get('authorization');
     await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'HeroContent');
 
     const db = adminDb();
     const docRef = db.collection('heroContent').doc(params.id);

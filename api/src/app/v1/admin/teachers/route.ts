@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
+import { requireFeature } from '@/lib/featureFlags';
 import { adminDb } from '@/lib/firebaseAdmin';
 
 export const runtime = 'nodejs';
@@ -144,6 +145,7 @@ export async function GET(req: NextRequest) {
     // Require admin role
     const authz = req.headers.get('authorization');
     await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Teachers');
 
     // Parse query parameters
     const { searchParams } = new URL(req.url);

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
+import { requireFeature } from '@/lib/featureFlags';
 import { getVolunteerById, updateVolunteer, deleteVolunteer } from '@/lib/firestoreVolunteers';
 
 export const runtime = 'nodejs';
@@ -95,6 +96,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   try {
     const authz = req.headers.get('authorization');
     await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Volunteers');
 
     const volunteer = await getVolunteerById(id);
 
@@ -142,6 +144,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   try {
     const authz = req.headers.get('authorization');
     await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Volunteers');
 
     const body = await req.json();
     const validData = updateVolunteerSchema.parse(body);
@@ -202,6 +205,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
   try {
     const authz = req.headers.get('authorization');
     await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Volunteers');
 
     const success = await deleteVolunteer(id);
 

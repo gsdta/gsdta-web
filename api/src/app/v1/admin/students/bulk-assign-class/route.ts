@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/guard';
+import { requireFeature } from '@/lib/featureFlags';
 import { AuthError } from '@/lib/auth';
 import { bulkAssignClass } from '@/lib/firestoreStudents';
 import { getClassById, incrementEnrolled } from '@/lib/firestoreClasses';
@@ -114,6 +115,7 @@ export async function POST(req: NextRequest) {
   try {
     // Require admin role
     await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Students');
 
     // Parse request body
     const body = await req.json();

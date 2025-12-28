@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
+import { requireFeature } from '@/lib/featureFlags';
 import { getAllStudents, countStudentsByStatus } from '@/lib/firestoreStudents';
 import type { StudentStatus } from '@/types/student';
 import { randomUUID } from 'crypto';
@@ -104,6 +105,7 @@ export async function GET(req: NextRequest) {
   try {
     const authz = req.headers.get('authorization');
     await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Students');
 
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status') as StudentStatus | 'all' | null;

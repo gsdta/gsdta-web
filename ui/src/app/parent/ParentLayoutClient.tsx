@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Protected } from '@/components/Protected';
 import { useAuth } from '@/components/AuthProvider';
 import ProfileCompletionModal from '@/components/ProfileCompletionModal';
+import { useFeatureFlags } from '@/context/FeatureFlagsContext';
+import { filterNavSections } from '@/lib/featureMapping';
 
 interface NavItem {
   label: string;
@@ -59,10 +61,16 @@ type ProfileData = {
 export default function ParentLayoutClient({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, getIdToken } = useAuth();
+  const { isFeatureEnabled } = useFeatureFlags();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileComplete, setProfileComplete] = useState(true);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
+
+  // Filter navigation based on feature flags
+  const navigation = useMemo(() => {
+    return filterNavSections(parentNav, 'parent', isFeatureEnabled);
+  }, [isFeatureEnabled]);
 
   // Fetch profile to check completion status
   useEffect(() => {
@@ -141,7 +149,7 @@ export default function ParentLayoutClient({ children }: { children: React.React
             {/* Mobile Navigation */}
             {mobileMenuOpen && (
               <div className="md:hidden py-4 space-y-2 border-t border-gray-100">
-                {parentNav.map((section) => (
+                {navigation.map((section) => (
                   <div key={section.label}>
                     <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
                       {section.label}
@@ -173,7 +181,7 @@ export default function ParentLayoutClient({ children }: { children: React.React
           {/* Left Sidebar - Desktop only */}
           <aside className="hidden md:block w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-4rem)] sticky top-16">
             <div className="p-4">
-              {parentNav.map((section) => (
+              {navigation.map((section) => (
                 <div key={section.label} className="mb-6">
                   <h2 className="text-xs font-semibold text-gray-500 uppercase mb-3">
                     {section.label}
