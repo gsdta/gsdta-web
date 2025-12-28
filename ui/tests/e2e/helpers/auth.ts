@@ -4,9 +4,10 @@ import { Page, BrowserContext } from '@playwright/test';
  * Authentication helper for E2E tests with Firebase Auth Emulator
  *
  * Test credentials (from seed-emulator.js):
- *   Admin:   admin@test.com   / admin123
- *   Teacher: teacher@test.com / teacher123
- *   Parent:  parent@test.com  / parent123
+ *   SuperAdmin: superadmin@test.com / superadmin123
+ *   Admin:      admin@test.com      / admin123
+ *   Teacher:    teacher@test.com    / teacher123
+ *   Parent:     parent@test.com     / parent123
  */
 
 /**
@@ -105,6 +106,13 @@ async function loginWithCredentials(
   }
 
   throw new Error(`Login failed after ${maxAttempts} attempts. Current URL: ${page.url()}. API responses: ${JSON.stringify(apiResponses)}`);
+}
+
+/**
+ * Login as super admin user in Firebase Auth Emulator
+ */
+export async function loginAsSuperAdmin(page: Page): Promise<void> {
+  await loginWithCredentials(page, 'superadmin@test.com', 'superadmin123', /\/admin/);
 }
 
 /**

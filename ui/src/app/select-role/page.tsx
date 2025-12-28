@@ -8,6 +8,12 @@ import { useI18n } from '@/i18n/LanguageProvider';
 import type { Role } from '@/lib/auth-types';
 
 const roleConfig: Record<Role, { labelKey: string; descriptionKey: string; color: string; dashboard: string }> = {
+  super_admin: {
+    labelKey: 'roles.superAdmin',
+    descriptionKey: 'roles.superAdminDescription',
+    color: 'bg-red-50 border-red-200 hover:bg-red-100 text-red-800',
+    dashboard: '/admin',
+  },
   admin: {
     labelKey: 'roles.admin',
     descriptionKey: 'roles.adminDescription',

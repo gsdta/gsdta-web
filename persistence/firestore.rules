@@ -8,8 +8,15 @@ service cloud.firestore {
     function userDoc(uid) {
       return get(/databases/$(database)/documents/users/$(uid));
     }
+    function isSuperAdmin() {
+      return isSignedIn() && ('super_admin' in userDoc(request.auth.uid).data.roles) && userDoc(request.auth.uid).data.status == 'active';
+    }
     function isAdmin() {
-      return isSignedIn() && ('admin' in userDoc(request.auth.uid).data.roles) && userDoc(request.auth.uid).data.status == 'active';
+      // Admin check includes super_admin (role hierarchy)
+      return isSignedIn() && (
+        ('admin' in userDoc(request.auth.uid).data.roles) ||
+        ('super_admin' in userDoc(request.auth.uid).data.roles)
+      ) && userDoc(request.auth.uid).data.status == 'active';
     }
 
     // Users collection: users/{uid}
@@ -82,6 +89,58 @@ service cloud.firestore {
 
       // Create/Update/Delete: admin only
       allow create, update, delete: if isAdmin();
+    }
+
+    // Admin promotions: super_admin only (track admin role changes)
+    match /adminPromotions/{promotionId} {
+      allow get, list: if isSuperAdmin();
+      allow create: if isSuperAdmin();
+      // No update or delete - these are audit records
+    }
+
+    // Audit log: super_admin only (comprehensive audit trail)
+    match /auditLog/{entryId} {
+      allow get, list: if isSuperAdmin();
+      allow create: if isSuperAdmin();
+      // No update or delete - audit logs are immutable
+    }
+
+    // Security events: super_admin only (track security incidents)
+    match /securityEvents/{eventId} {
+      allow get, list: if isSuperAdmin();
+      allow create: if isSignedIn(); // API can log events
+      allow update: if isSuperAdmin(); // Only super_admin can resolve
+      // No delete - security events are preserved
+    }
+
+    // System configuration: super_admin only
+    match /systemConfig/{configId} {
+      allow get, list: if isSuperAdmin();
+      allow create, update: if isSuperAdmin();
+      // No delete - config should be updated, not deleted
+    }
+
+    // Deleted data archive: super_admin only (for data recovery)
+    match /deletedData/{entryId} {
+      allow get, list: if isSuperAdmin();
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin(); // For marking as restored
+      // No delete - deleted data is auto-purged after retention period
+    }
+
+    // User suspensions: super_admin only (emergency actions)
+    match /suspensions/{suspensionId} {
+      allow get, list: if isSuperAdmin();
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin(); // For lifting suspensions
+      // No delete - suspension records are preserved for audit
+    }
+
+    // Export jobs: super_admin only (data export)
+    match /exportJobs/{jobId} {
+      allow get, list: if isSuperAdmin();
+      allow create, update: if isSuperAdmin();
+      // No delete - export job records are preserved
     }
 
     // Attendance collection: teachers can manage attendance for their classes
