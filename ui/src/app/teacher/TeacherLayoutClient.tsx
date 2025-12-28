@@ -32,6 +32,10 @@ const teacherNav: NavSection[] = [
       { label: 'History', href: '/teacher/attendance', icon: '📋' },
     ],
   },
+  {
+    label: 'Communication',
+    items: [{ label: 'Messages', href: '/teacher/messages', icon: '💬' }],
+  },
 ];
 
 export default function TeacherLayoutClient({ children }: { children: React.ReactNode }) {
