@@ -21,7 +21,23 @@ export default function ClassesPage() {
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const { selectedItem, menuPosition, handleRowClick, closeMenu, isMenuOpen } = useTableRowActions<Class>();
 
-  const getClassActions = useCallback((cls: Class): TableAction[] => [
+  const handleToggleStatus = async (classData: Class) => {
+    const newStatus = classData.status === 'active' ? 'inactive' : 'active';
+    if (!confirm(`Are you sure you want to mark this class as ${newStatus}?`)) return;
+
+    setTogglingId(classData.id);
+    try {
+      await adminUpdateClass(getIdToken, classData.id, { status: newStatus });
+      fetchClasses();
+    } catch (err) {
+      console.error('Failed to update class status:', err);
+      alert('Failed to update class status');
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  const getClassActions = (cls: Class): TableAction[] => [
     { label: 'Edit', onClick: () => router.push(`/admin/classes/${cls.id}/edit`) },
     {
       label: togglingId === cls.id ? '...' : (cls.status === 'active' ? 'Deactivate' : 'Activate'),
@@ -29,7 +45,7 @@ export default function ClassesPage() {
       variant: cls.status === 'active' ? 'danger' : 'success',
       disabled: togglingId === cls.id,
     },
-  ], [router, togglingId]);
+  ];
 
   const fetchGrades = useCallback(async () => {
     try {
@@ -63,22 +79,6 @@ export default function ClassesPage() {
   useEffect(() => {
     fetchClasses();
   }, [fetchClasses]);
-
-  const handleToggleStatus = async (classData: Class) => {
-    const newStatus = classData.status === 'active' ? 'inactive' : 'active';
-    if (!confirm(`Are you sure you want to mark this class as ${newStatus}?`)) return;
-
-    setTogglingId(classData.id);
-    try {
-      await adminUpdateClass(getIdToken, classData.id, { status: newStatus });
-      fetchClasses();
-    } catch (err) {
-      console.error('Failed to update class status:', err);
-      alert('Failed to update class status');
-    } finally {
-      setTogglingId(null);
-    }
-  };
 
   return (
     <div className="space-y-6">
