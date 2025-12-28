@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/guard';
 import { AuthError } from '@/lib/auth';
+import { requireFeature, type FeatureFlagRole } from '@/lib/featureFlags';
 import {
   canAccessConversation,
   getMessages,
@@ -118,6 +119,9 @@ export async function GET(req: NextRequest, context: RouteContext) {
       return jsonError(403, 'FORBIDDEN', 'Not a participant in this conversation', origin);
     }
 
+    // Check feature flag based on role
+    await requireFeature(access.role as FeatureFlagRole, 'Messaging');
+
     // Parse query parameters
     const url = new URL(req.url);
     const limit = parseInt(url.searchParams.get('limit') || '50', 10);
@@ -211,6 +215,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
     if (!access.canAccess) {
       return jsonError(403, 'FORBIDDEN', 'Not a participant in this conversation', origin);
     }
+
+    // Check feature flag based on role
+    await requireFeature(access.role as FeatureFlagRole, 'Messaging');
 
     // Parse request body
     const body = await req.json();

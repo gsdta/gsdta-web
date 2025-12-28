@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
+import { requireFeature } from '@/lib/featureFlags';
 import { getStudentById, adminUpdateStudent } from '@/lib/firestoreStudents';
 import { randomUUID } from 'crypto';
 
@@ -108,6 +109,7 @@ export async function GET(
   try {
     const authz = req.headers.get('authorization');
     await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Students');
 
     const student = await getStudentById(id);
 
@@ -228,6 +230,7 @@ export async function PATCH(
   try {
     const authz = req.headers.get('authorization');
     await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Students');
 
     const body = await req.json();
     const parseResult = adminUpdateStudentSchema.safeParse(body);

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
+import { requireFeature } from '@/lib/featureFlags';
 import { verifyTeacherAssignment } from '@/lib/teacherGuard';
 import {
   getReportCardById,
@@ -84,6 +85,7 @@ export async function GET(
   try {
     const authz = req.headers.get('authorization');
     const { token } = await requireAuth(authz, { requireRoles: ['teacher'] });
+    await requireFeature('teacher', 'Classes');
 
     // Verify teacher is assigned to this class
     await verifyTeacherAssignment(token.uid, classId);
@@ -157,6 +159,7 @@ export async function PUT(
   try {
     const authz = req.headers.get('authorization');
     const { token, profile } = await requireAuth(authz, { requireRoles: ['teacher'] });
+    await requireFeature('teacher', 'Classes');
 
     // Verify teacher is assigned to this class
     await verifyTeacherAssignment(token.uid, classId);
@@ -235,6 +238,7 @@ export async function DELETE(
   try {
     const authz = req.headers.get('authorization');
     const { token } = await requireAuth(authz, { requireRoles: ['teacher'] });
+    await requireFeature('teacher', 'Classes');
 
     // Verify teacher is assigned to this class
     await verifyTeacherAssignment(token.uid, classId);

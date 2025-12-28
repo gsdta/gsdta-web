@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
+import { requireFeature } from '@/lib/featureFlags';
 import { seedDefaultGrades, areGradesSeeded } from '@/lib/firestoreGrades';
 
 export const runtime = 'nodejs';
@@ -63,6 +64,7 @@ export async function GET(req: NextRequest) {
   try {
     const authz = req.headers.get('authorization');
     await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Grades');
 
     const seeded = await areGradesSeeded();
 
@@ -98,6 +100,7 @@ export async function POST(req: NextRequest) {
   try {
     const authz = req.headers.get('authorization');
     const { profile } = await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Grades');
 
     const result = await seedDefaultGrades(profile.uid);
 
