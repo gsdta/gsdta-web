@@ -147,6 +147,13 @@ const TEST_USERS = [
     displayName: 'Test Parent',
     firstName: 'Test',
     lastName: 'Parent',
+    phone: '5551234567',
+    address: {
+      street: '123 Test Street',
+      city: 'San Diego',
+      state: 'CA',
+      zip: '92101'
+    },
     roles: ['parent'],
     status: 'active'
   },
@@ -168,6 +175,13 @@ const TEST_USERS = [
     displayName: 'John Smith',
     firstName: 'John',
     lastName: 'Smith',
+    phone: '5559876543',
+    address: {
+      street: '456 Parent Lane',
+      city: 'San Diego',
+      state: 'CA',
+      zip: '92102'
+    },
     roles: ['parent'],
     status: 'active'
   }
@@ -476,7 +490,7 @@ async function seedAuthUsers() {
  */
 async function seedUserProfiles() {
   console.log('\n📝 Seeding user profiles in Firestore...');
-  
+
   for (const userData of TEST_USERS) {
     try {
       const userProfile = {
@@ -491,6 +505,14 @@ async function seedUserProfiles() {
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       };
+
+      // Add phone and address for parent users (required for profile completion)
+      if (userData.phone) {
+        userProfile.phone = userData.phone;
+      }
+      if (userData.address) {
+        userProfile.address = userData.address;
+      }
 
       await db.collection('users').doc(userData.uid).set(userProfile, { merge: true });
       console.log(`  ✅ Created profile: ${userData.email} (${userData.roles.join(', ')})`);

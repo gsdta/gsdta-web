@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Protected } from '@/components/Protected';
+import { useAuth } from '@/components/AuthProvider';
+import ProfileCompletionModal from '@/components/ProfileCompletionModal';
 
 interface NavItem {
   label: string;
@@ -41,9 +43,64 @@ const parentNav: NavSection[] = [
   },
 ];
 
+type ProfileData = {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  address?: {
+    street: string;
+    city: string;
+    state: string;
+    zip: string;
+  };
+  isProfileComplete?: boolean;
+};
+
 export default function ParentLayoutClient({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { user, getIdToken } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileComplete, setProfileComplete] = useState(true);
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
+
+  // Fetch profile to check completion status
+  useEffect(() => {
+    async function checkProfile() {
+      if (!user) {
+        setProfileLoading(false);
+        return;
+      }
+
+      try {
+        const token = await getIdToken();
+        if (!token) {
+          setProfileLoading(false);
+          return;
+        }
+
+        const res = await fetch('/api/v1/me/', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setProfileData(data);
+          setProfileComplete(data.isProfileComplete === true);
+        }
+      } catch (err) {
+        console.error('Failed to fetch profile:', err);
+      } finally {
+        setProfileLoading(false);
+      }
+    }
+
+    checkProfile();
+  }, [user, getIdToken]);
+
+  const handleProfileComplete = () => {
+    setProfileComplete(true);
+  };
 
   const isActive = (href: string) => {
     if (href === '/parent') {
@@ -54,6 +111,13 @@ export default function ParentLayoutClient({ children }: { children: React.React
 
   return (
     <Protected roles={['parent']}>
+      {/* Profile Completion Modal - blocks access until profile is complete */}
+      {!profileLoading && !profileComplete && (
+        <ProfileCompletionModal
+          initialData={profileData || undefined}
+          onComplete={handleProfileComplete}
+        />
+      )}
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <header className="bg-white border-b border-gray-200 sticky top-0 z-20">
