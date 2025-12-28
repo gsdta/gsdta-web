@@ -109,6 +109,9 @@ export function getFeatureFromPath(
   return null;
 }
 
+// Union type for all features
+type AllFeatures = AdminFeature | TeacherFeature | ParentFeature;
+
 /**
  * Check if a navigation item should be shown based on feature flags
  */
@@ -117,7 +120,7 @@ export function shouldShowNavItem(
   href: string,
   isFeatureEnabled: (
     role: FeatureFlagRole,
-    feature: string
+    feature: AllFeatures
   ) => boolean
 ): boolean {
   const feature = getFeatureFromPath(role, href);
@@ -136,7 +139,7 @@ export function shouldShowNavItem(
 export function filterNavItems<T extends { href: string }>(
   items: T[],
   role: FeatureFlagRole,
-  isFeatureEnabled: (role: FeatureFlagRole, feature: string) => boolean
+  isFeatureEnabled: (role: FeatureFlagRole, feature: AllFeatures) => boolean
 ): T[] {
   return items.filter((item) => shouldShowNavItem(role, item.href, isFeatureEnabled));
 }
@@ -149,7 +152,7 @@ export function filterNavSections<
 >(
   sections: T[],
   role: FeatureFlagRole,
-  isFeatureEnabled: (role: FeatureFlagRole, feature: string) => boolean
+  isFeatureEnabled: (role: FeatureFlagRole, feature: AllFeatures) => boolean
 ): T[] {
   return sections
     .map((section) => ({
