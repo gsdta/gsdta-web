@@ -7,6 +7,7 @@ import {AuthProvider} from "@/components/AuthProvider";
 import {Footer} from "@/components/Footer";
 import {LanguageProvider} from "@/i18n/LanguageProvider";
 import {PlatformInitializer} from "@/components/PlatformInitializer";
+import {FeatureFlagsProvider} from "@/context/FeatureFlagsContext";
 import { Noto_Sans_Tamil } from "next/font/google";
 import { cookies, headers } from "next/headers";
 
@@ -98,12 +99,14 @@ export default async function RootLayout({
             <PlatformInitializer>
                 <LanguageProvider initialLang={initialLang}>
                     <AuthProvider>
-                        <Header/>
-                        <main className="mx-auto max-w-6xl px-4 py-6">
-                            {children}
-                            <DevStatus/>
-                        </main>
-                        <Footer/>
+                        <FeatureFlagsProvider>
+                            <Header/>
+                            <main className="mx-auto max-w-6xl px-4 py-6">
+                                {children}
+                                <DevStatus/>
+                            </main>
+                            <Footer/>
+                        </FeatureFlagsProvider>
                     </AuthProvider>
                 </LanguageProvider>
             </PlatformInitializer>

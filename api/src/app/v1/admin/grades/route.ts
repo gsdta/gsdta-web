@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
+import { requireFeature } from '@/lib/featureFlags';
 import { getAllGrades, createGrade } from '@/lib/firestoreGrades';
 import type { GradeStatus } from '@/types/grade';
 
@@ -74,6 +75,7 @@ export async function GET(req: NextRequest) {
   try {
     const authz = req.headers.get('authorization');
     await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Grades');
 
     const { searchParams } = new URL(req.url);
     const statusFilter = (searchParams.get('status') || 'all') as GradeStatus | 'all';
@@ -119,6 +121,7 @@ export async function POST(req: NextRequest) {
   try {
     const authz = req.headers.get('authorization');
     const { profile } = await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Grades');
 
     const body = await req.json();
     const validData = createGradeSchema.parse(body);

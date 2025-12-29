@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
+import { requireFeature } from '@/lib/featureFlags';
 import { verifyTeacherAssignment } from '@/lib/teacherGuard';
 import { getGradebook } from '@/lib/firestoreStudentGrades';
 import { randomUUID } from 'crypto';
@@ -70,6 +71,7 @@ export async function GET(
   try {
     const authz = req.headers.get('authorization');
     const { token } = await requireAuth(authz, { requireRoles: ['teacher'] });
+    await requireFeature('teacher', 'Classes');
 
     // Verify teacher is assigned to this class
     await verifyTeacherAssignment(token.uid, classId);

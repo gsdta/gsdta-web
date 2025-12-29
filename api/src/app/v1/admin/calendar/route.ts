@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
+import { requireFeature } from '@/lib/featureFlags';
 import {
   createCalendarEvent,
   getAllCalendarEvents,
@@ -103,6 +104,7 @@ export async function GET(req: NextRequest) {
   try {
     const authz = req.headers.get('authorization');
     const { token } = await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Calendar');
 
     // Parse query parameters
     const url = new URL(req.url);
@@ -147,6 +149,7 @@ export async function POST(req: NextRequest) {
   try {
     const authz = req.headers.get('authorization');
     const { token, profile } = await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Calendar');
 
     // Parse and validate request body
     let body: unknown;

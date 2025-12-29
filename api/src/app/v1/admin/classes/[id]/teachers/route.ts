@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
+import { requireFeature } from '@/lib/featureFlags';
 import {
   getClassById,
   assignTeacherToClass,
@@ -92,6 +93,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   try {
     const authz = req.headers.get('authorization');
     await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Classes');
 
     // Check if class exists
     const classDoc = await getClassById(classId);
@@ -141,6 +143,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
   try {
     const authz = req.headers.get('authorization');
     const { profile } = await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Classes');
 
     const body = await req.json();
     const validData = assignTeacherSchema.parse(body);
@@ -213,6 +216,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
   try {
     const authz = req.headers.get('authorization');
     await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Classes');
 
     const body = await req.json();
     const validData = removeTeacherSchema.parse(body);
@@ -276,6 +280,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   try {
     const authz = req.headers.get('authorization');
     await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Classes');
 
     const body = await req.json();
     const validData = updateRoleSchema.parse(body);
