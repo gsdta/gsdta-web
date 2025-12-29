@@ -99,20 +99,20 @@ Feature: Production Shakeout
   # SECTION 4: DASHBOARD ACCESS VERIFICATION
   # =============================================================================
 
-  @shakeout @dashboard @admin
+  @shakeout @dashboard @admin @auth
   Scenario: PS-030 - Admin dashboard loads correctly
     Given I am logged in as admin
     Then the page should load without errors
     And I should see the admin navigation menu
     And I should see the "Students" link in the navigation
 
-  @shakeout @dashboard @teacher
+  @shakeout @dashboard @teacher @auth
   Scenario: PS-031 - Teacher dashboard loads correctly
     Given I am logged in as teacher
     Then the page should load without errors
     And I should see my classes section
 
-  @shakeout @dashboard @parent
+  @shakeout @dashboard @parent @auth
   Scenario: PS-032 - Parent dashboard loads correctly
     Given I am logged in as parent
     Then the page should load without errors
