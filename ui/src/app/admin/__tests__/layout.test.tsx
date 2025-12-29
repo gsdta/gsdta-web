@@ -17,6 +17,28 @@ jest.mock('@/components/Protected', () => ({
   Protected: ({ children }: { children: React.ReactNode }) => <div data-testid="protected">{children}</div>,
 }));
 
+jest.mock('@/context/FeatureFlagsContext', () => ({
+  useFeatureFlags: jest.fn(() => ({
+    flags: {
+      admin: {
+        Students: { enabled: true },
+        Teachers: { enabled: true },
+        Classes: { enabled: true },
+        Grades: { enabled: true },
+        Textbooks: { enabled: true },
+        Volunteers: { enabled: true },
+        AttendanceAnalytics: { enabled: true },
+        HeroContent: { enabled: true },
+        Calendar: { enabled: true },
+      },
+    },
+    loading: false,
+    error: null,
+    isFeatureEnabled: () => true,
+    refetch: jest.fn(),
+  })),
+}));
+
 import { useAuth } from '@/components/AuthProvider';
 
 jest.mock('@/components/AuthProvider', () => ({
