@@ -6,7 +6,10 @@ import { CustomWorld } from '../support/world';
  * Common step definitions used across multiple features
  */
 
+// =============================================================================
 // API Health Check Steps
+// =============================================================================
+
 When('I check the health endpoint', async function (this: CustomWorld) {
   const health = await this.apiHelper.checkHealth();
   this.state.healthCheck = health;
@@ -19,6 +22,79 @@ Then(
     expect(health.status).toBe(expectedStatus);
   }
 );
+
+// =============================================================================
+// Public API Endpoint Steps
+// =============================================================================
+
+When('I call the hero content API', async function (this: CustomWorld) {
+  const response = await this.apiHelper.get('/api/v1/hero-content');
+  this.state.apiResponse = {
+    status: response.status,
+    body: await this.apiHelper.parseJson(response),
+  };
+});
+
+When('I call the calendar API', async function (this: CustomWorld) {
+  const response = await this.apiHelper.get('/api/v1/calendar');
+  this.state.apiResponse = {
+    status: response.status,
+    body: await this.apiHelper.parseJson(response),
+  };
+});
+
+Then(
+  'the API response status should be {int}',
+  async function (this: CustomWorld, expectedStatus: number) {
+    const apiResponse = this.state.apiResponse as { status: number };
+    expect(apiResponse.status).toBe(expectedStatus);
+  }
+);
+
+// =============================================================================
+// Authenticated API Endpoint Steps
+// =============================================================================
+
+When('I call the me API endpoint', async function (this: CustomWorld) {
+  // Get the auth token from the browser context
+  const token = await this.getAuthToken();
+  const response = await this.apiHelper.get('/api/v1/me', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  this.state.apiResponse = {
+    status: response.status,
+    body: await this.apiHelper.parseJson(response),
+  };
+});
+
+When('I call the admin grades API', async function (this: CustomWorld) {
+  const token = await this.getAuthToken();
+  const response = await this.apiHelper.get('/api/v1/admin/grades', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  this.state.apiResponse = {
+    status: response.status,
+    body: await this.apiHelper.parseJson(response),
+  };
+});
+
+When('I call the admin classes API', async function (this: CustomWorld) {
+  const token = await this.getAuthToken();
+  const response = await this.apiHelper.get('/api/v1/admin/classes', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  this.state.apiResponse = {
+    status: response.status,
+    body: await this.apiHelper.parseJson(response),
+  };
+});
+
+Then('the response should contain user email', async function (this: CustomWorld) {
+  const apiResponse = this.state.apiResponse as { body: { email?: string } };
+  expect(apiResponse.body).toBeDefined();
+  expect(apiResponse.body.email).toBeDefined();
+  expect(apiResponse.body.email).toContain('@');
+});
 
 // Page Load Steps
 Then('the page should load without errors', async function (this: CustomWorld) {
@@ -158,12 +234,7 @@ When(
   }
 );
 
-When(
-  'I click the {string} button',
-  async function (this: CustomWorld, buttonText: string) {
-    await this.page.getByRole('button', { name: buttonText }).click();
-  }
-);
+// Note: "I click the {string} button" is defined in navigation.steps.ts
 
 // Form steps
 When(

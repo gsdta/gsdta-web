@@ -12,7 +12,7 @@ NC='\033[0m' # No Color
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║   Shakeout Test Runner for GSDTA Web  ║${NC}"
+echo -e "${BLUE}║   Production Shakeout Test Runner     ║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
 echo ""
 
@@ -39,6 +39,7 @@ print_info() {
 # Parse command line arguments
 BASE_URL="${UAT_BASE_URL:-https://app.gsdta.com}"
 HEADLESS="true"
+MODE="full"  # full = all shakeout tests, public = public pages only
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -58,21 +59,36 @@ while [[ $# -gt 0 ]]; do
             HEADLESS="false"
             shift
             ;;
+        --public-only)
+            MODE="public"
+            shift
+            ;;
         --help)
             echo "Usage: $0 [options]"
+            echo ""
+            echo "Production shakeout tests verify critical functionality after deployment."
+            echo "These tests should run in under 5 minutes."
             echo ""
             echo "Options:"
             echo "  --qa              Run against QA environment"
             echo "  --prod            Run against Production environment (default)"
             echo "  --url URL         Override base URL"
+            echo "  --public-only     Only run public page tests (no authentication required)"
             echo "  --headed          Run with visible browser (default: headless)"
             echo "  --help            Show this help message"
             echo ""
             echo "Examples:"
-            echo "  $0                          # Run against production"
+            echo "  $0                          # Run all shakeout tests against production"
             echo "  $0 --qa                     # Run against QA"
+            echo "  $0 --public-only            # Quick test - public pages only"
             echo "  $0 --headed                 # Run with visible browser"
             echo "  $0 --url http://localhost:3000  # Run against local"
+            echo ""
+            echo "Test Categories:"
+            echo "  Public pages:     Home, About, Calendar, Documents, etc."
+            echo "  API health:       Health endpoint, Hero content, Calendar API"
+            echo "  Authentication:   Login/logout for all roles (requires credentials)"
+            echo "  Dashboards:       Admin, Teacher, Parent dashboard access"
             echo ""
             exit 0
             ;;
@@ -86,6 +102,7 @@ done
 
 # Display configuration
 print_info "Target URL: $BASE_URL"
+print_info "Mode: $MODE ($([ "$MODE" = "public" ] && echo "public pages only" || echo "full shakeout"))"
 print_info "Headless: $HEADLESS"
 echo ""
 
@@ -134,22 +151,53 @@ else
     print_success "Playwright Chromium already installed"
 fi
 
-# Step 4: Run shakeout tests
-print_step "Running shakeout tests..."
+# Step 4: Load credentials for authenticated tests (full mode only)
+if [ "$MODE" = "full" ]; then
+    print_step "Loading credentials for authenticated tests..."
+
+    if [ -f ".env" ]; then
+        source .env
+        print_success "Loaded credentials from .env file"
+    elif [ -n "$UAT_ADMIN_EMAIL" ]; then
+        print_success "Using environment variables"
+    else
+        print_info "No credentials found - authenticated tests will be skipped"
+        print_info "To run authenticated tests, either:"
+        print_info "  1. Create uat/.env file (copy from uat/.env.example)"
+        print_info "  2. Set environment variables (UAT_ADMIN_EMAIL, etc.)"
+        print_info "  3. Or use --public-only for public page tests only"
+        echo ""
+        # Fall back to public-only mode
+        MODE="public"
+    fi
+fi
+
+# Step 5: Run shakeout tests
 echo ""
 
 # Set environment variables
 export UAT_BASE_URL="$BASE_URL"
 export HEADLESS="$HEADLESS"
 
-# Run Cucumber tests with shakeout profile
-if npx cucumber-js --profile shakeout; then
+# Determine tags based on mode
+if [ "$MODE" = "public" ]; then
+    TAGS="@shakeout and (@public or @api) and not @auth and not @admin and not @teacher and not @parent"
+    print_step "Running public page shakeout tests..."
+else
+    TAGS="@shakeout"
+    print_step "Running full shakeout tests..."
+fi
+
+echo ""
+
+# Run Cucumber tests with shakeout profile and specific tags
+if npx cucumber-js --tags "$TAGS" --profile shakeout; then
     cd "$SCRIPT_DIR"
     echo ""
     print_success "Shakeout tests completed successfully!"
     echo ""
     echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${GREEN}✨ Shakeout Tests Passed ✨${NC}"
+    echo -e "${GREEN}✨ Production Shakeout Passed ✨${NC}"
     echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo ""
 
@@ -167,10 +215,14 @@ else
     print_error "Shakeout tests failed!"
     echo ""
     echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${RED}❌ Production Shakeout Failed${NC}"
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
     echo "Debugging options:"
     echo "  1. Run with visible browser: $0 --headed"
-    echo "  2. Check the environment: curl $BASE_URL/api/v1/health"
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo "  2. Run public tests only: $0 --public-only"
+    echo "  3. Check the environment: curl $BASE_URL/api/v1/health"
+    echo "  4. Check screenshots: ls uat/reports/screenshots/"
     echo ""
 
     # Show report location if exists

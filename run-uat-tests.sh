@@ -63,6 +63,12 @@ while [[ $# -gt 0 ]]; do
             PROFILE="smoke"
             shift
             ;;
+        --shakeout)
+            MODE="shakeout"
+            TAG="@shakeout"
+            PROFILE="shakeout"
+            shift
+            ;;
         --url)
             BASE_URL="$2"
             shift 2
@@ -83,6 +89,7 @@ while [[ $# -gt 0 ]]; do
             echo "Options:"
             echo "  (no args)         Run smoke tests first, then full suite (like CI)"
             echo "  --smoke           Run smoke tests only"
+            echo "  --shakeout        Run shakeout tests only (quick post-deploy verification)"
             echo "  --all             Run all tests (excluding @skip and @wip)"
             echo "  --tag TAG         Run tests with specific tag (e.g., @auth, @public)"
             echo "  --url URL         Override base URL (default: https://app.qa.gsdta.com)"
@@ -93,6 +100,7 @@ while [[ $# -gt 0 ]]; do
             echo "Examples:"
             echo "  $0                          # Run smoke + full suite (like CI)"
             echo "  $0 --smoke                  # Run smoke tests only"
+            echo "  $0 --shakeout               # Run shakeout tests only"
             echo "  $0 --all                    # Run all tests"
             echo "  $0 --tag @auth              # Run auth tests only"
             echo "  $0 --tag '@smoke and @api'  # Run smoke API tests"
@@ -100,13 +108,15 @@ while [[ $# -gt 0 ]]; do
             echo "  $0 --url http://localhost:3000  # Run against local"
             echo ""
             echo "Environment Variables:"
-            echo "  UAT_BASE_URL          Base URL for tests"
-            echo "  UAT_ADMIN_EMAIL       Admin test user email"
-            echo "  UAT_ADMIN_PASSWORD    Admin test user password"
-            echo "  UAT_TEACHER_EMAIL     Teacher test user email"
-            echo "  UAT_TEACHER_PASSWORD  Teacher test user password"
-            echo "  UAT_PARENT_EMAIL      Parent test user email"
-            echo "  UAT_PARENT_PASSWORD   Parent test user password"
+            echo "  UAT_BASE_URL              Base URL for tests"
+            echo "  UAT_ADMIN_EMAIL           Admin test user email"
+            echo "  UAT_ADMIN_PASSWORD        Admin test user password"
+            echo "  UAT_SUPER_ADMIN_EMAIL     Super Admin test user email"
+            echo "  UAT_SUPER_ADMIN_PASSWORD  Super Admin test user password"
+            echo "  UAT_TEACHER_EMAIL         Teacher test user email"
+            echo "  UAT_TEACHER_PASSWORD      Teacher test user password"
+            echo "  UAT_PARENT_EMAIL          Parent test user email"
+            echo "  UAT_PARENT_PASSWORD       Parent test user password"
             exit 0
             ;;
         *)
@@ -267,7 +277,7 @@ case $MODE in
             exit 1
         fi
         ;;
-    smoke|all|tag|ci)
+    smoke|shakeout|all|tag|ci)
         # Run single test suite
         if run_tests "$TAG" "$PROFILE" "UAT tests ($MODE)"; then
             show_results "true"
