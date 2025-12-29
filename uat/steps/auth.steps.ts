@@ -99,6 +99,18 @@ Given('I am logged in as parent', async function (this: CustomWorld) {
   console.log('[AUTH-STEP] loginAsParent() completed');
 });
 
+Given('I am logged in as super admin', async function (this: CustomWorld) {
+  console.log('[AUTH-STEP] "I am logged in as super admin" step started');
+  console.log(`[AUTH-STEP] Current URL: ${this.page.url()}`);
+  if (this.page.url().includes('/admin')) {
+    console.log('[AUTH-STEP] Already logged in as admin, skipping login');
+    return;
+  }
+  console.log('[AUTH-STEP] Not logged in, calling loginAsSuperAdmin()...');
+  await this.authHelper.loginAsSuperAdmin();
+  console.log('[AUTH-STEP] loginAsSuperAdmin() completed');
+});
+
 // Redirect verification steps
 Then(
   'I should be redirected to the admin dashboard',
@@ -186,3 +198,4 @@ Then(
     await expect(this.page.getByText(errorMessage)).toBeVisible();
   }
 );
+
