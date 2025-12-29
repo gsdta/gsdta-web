@@ -23,6 +23,8 @@ export interface Config {
   teacherPassword: string;
   parentEmail: string;
   parentPassword: string;
+  superAdminEmail: string;
+  superAdminPassword: string;
 }
 
 export function getConfig(): Config {
@@ -41,6 +43,8 @@ export function getConfig(): Config {
     teacherPassword: process.env.UAT_TEACHER_PASSWORD || '',
     parentEmail: process.env.UAT_PARENT_EMAIL || '',
     parentPassword: process.env.UAT_PARENT_PASSWORD || '',
+    superAdminEmail: process.env.UAT_SUPER_ADMIN_EMAIL || '',
+    superAdminPassword: process.env.UAT_SUPER_ADMIN_PASSWORD || '',
   };
 }
 

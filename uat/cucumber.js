@@ -20,7 +20,7 @@ module.exports = {
   },
   smoke: {
     ...common,
-    tags: '@smoke and not @wip',
+    tags: '@smoke and not @skip and not @wip',
     timeout: 30000
   },
   ci: {
@@ -37,7 +37,7 @@ module.exports = {
   },
   shakeout: {
     ...common,
-    tags: '@shakeout',
+    tags: '@shakeout and not @skip and not @wip',
     timeout: 30000,
     format: [
       'summary',

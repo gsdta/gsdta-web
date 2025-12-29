@@ -133,6 +133,27 @@ Before({ tags: '@parent and not @auth' }, async function (this: CustomWorld) {
 });
 
 /**
+ * Tagged hook for super admin scenarios
+ */
+Before({ tags: '@super-admin and not @auth' }, async function (this: CustomWorld) {
+  console.log('[HOOK] Super admin login hook triggered');
+
+  await this.context.clearCookies();
+  console.log('[HOOK] Cookies cleared for super admin');
+
+  await this.page.waitForTimeout(500);
+
+  try {
+    console.log('[HOOK] Attempting super admin login...');
+    await this.authHelper.loginAsSuperAdmin();
+    console.log('[HOOK] Super admin login successful');
+  } catch (error) {
+    console.error('[HOOK] Failed to login as super admin:', error);
+    throw error;
+  }
+});
+
+/**
  * Scenario teardown - runs after each scenario
  */
 After(async function (this: CustomWorld, scenario) {

@@ -128,6 +128,56 @@ export class CustomWorld extends World<CustomWorldParameters> {
       await this.page.waitForLoadState('networkidle');
     }
   }
+
+  /**
+   * Get the Firebase auth token from the browser's sessionStorage
+   * Used for making authenticated API calls
+   */
+  async getAuthToken(): Promise<string> {
+    // The token is stored in sessionStorage by the Firebase Auth SDK
+    const token = await this.page.evaluate(() => {
+      // Try to get the Firebase ID token from sessionStorage
+      // Firebase stores auth state in various places depending on persistence
+      const storageKeys = Object.keys(sessionStorage);
+
+      // Look for Firebase auth key patterns
+      for (const key of storageKeys) {
+        if (key.includes('firebase:authUser')) {
+          try {
+            const authData = JSON.parse(sessionStorage.getItem(key) || '{}');
+            if (authData.stsTokenManager?.accessToken) {
+              return authData.stsTokenManager.accessToken;
+            }
+          } catch {
+            continue;
+          }
+        }
+      }
+
+      // Also check localStorage
+      const localStorageKeys = Object.keys(localStorage);
+      for (const key of localStorageKeys) {
+        if (key.includes('firebase:authUser')) {
+          try {
+            const authData = JSON.parse(localStorage.getItem(key) || '{}');
+            if (authData.stsTokenManager?.accessToken) {
+              return authData.stsTokenManager.accessToken;
+            }
+          } catch {
+            continue;
+          }
+        }
+      }
+
+      return null;
+    });
+
+    if (!token) {
+      throw new Error('No Firebase auth token found. User may not be logged in.');
+    }
+
+    return token;
+  }
 }
 
 setWorldConstructor(CustomWorld);
