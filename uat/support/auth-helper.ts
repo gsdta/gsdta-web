@@ -253,6 +253,28 @@ export class AuthHelper {
   }
 
   /**
+   * Login as super admin user via UI
+   */
+  async loginAsSuperAdmin(): Promise<void> {
+    console.log('[AUTH] loginAsSuperAdmin() called');
+    logCredential('Super Admin email', this.config.superAdminEmail);
+    logCredential('Super Admin password', this.config.superAdminPassword);
+
+    // Validate credentials exist
+    if (!this.config.superAdminEmail || !this.config.superAdminPassword) {
+      throw new Error(
+        'Missing super admin credentials: UAT_SUPER_ADMIN_EMAIL or UAT_SUPER_ADMIN_PASSWORD is not set.\n' +
+          'Please check your environment configuration or CI secrets.'
+      );
+    }
+
+    await this.loginViaUI(
+      this.config.superAdminEmail,
+      this.config.superAdminPassword
+    );
+  }
+
+  /**
    * Logout current user
    */
   async logout(): Promise<void> {
