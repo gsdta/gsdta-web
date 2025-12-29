@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
+import { requireFeature } from '@/lib/featureFlags';
 import { getGradeById, updateGrade } from '@/lib/firestoreGrades';
 
 export const runtime = 'nodejs';
@@ -77,6 +78,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   try {
     const authz = req.headers.get('authorization');
     await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Grades');
 
     const grade = await getGradeById(id);
 
@@ -120,6 +122,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   try {
     const authz = req.headers.get('authorization');
     await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Grades');
 
     const body = await req.json();
     const validData = updateGradeSchema.parse(body);

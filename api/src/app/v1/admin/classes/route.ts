@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
+import { requireFeature } from '@/lib/featureFlags';
 import { createClass, getAllClasses, getActiveClassOptions } from '@/lib/firestoreClasses';
 import { randomUUID } from 'crypto';
 
@@ -107,6 +108,7 @@ export async function GET(req: NextRequest) {
   try {
     const authz = req.headers.get('authorization');
     await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Classes');
 
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status') as 'active' | 'inactive' | 'all' | null;
@@ -243,6 +245,7 @@ export async function POST(req: NextRequest) {
   try {
     const authz = req.headers.get('authorization');
     await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Classes');
 
     // Parse and validate request body
     const body = await req.json();

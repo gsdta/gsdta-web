@@ -1,6 +1,6 @@
 # Implemented Features
 
-**Last Updated**: December 24, 2025
+**Last Updated**: December 28, 2025
 
 This document tracks all implemented features in the GSDTA web application. For complete role-based capability descriptions, see [ROLES.md](./ROLES.md).
 
@@ -254,17 +254,279 @@ Before adding new API routes, consider:
 
 ---
 
+### 9. Student Bulk Operations
+
+**Status**: Complete
+**Date**: December 2025
+
+#### Student Bulk Import (CSV)
+- ✅ CSV file upload with preview
+- ✅ Dry run validation before import
+- ✅ Create parent accounts option
+- ✅ Detailed results display
+- ✅ Error handling per row
+- ✅ CSV template download
+
+#### Student Bulk Class Assignment
+- ✅ Class selection with capacity display
+- ✅ Multi-select student list with search
+- ✅ Bulk assignment with result tracking
+- ✅ Grade/status filtering
+
+**Routes**:
+- `/admin/students/import` - Bulk CSV import
+- `/admin/students/assign-class` - Bulk class assignment
+
+**API Endpoints**:
+- `POST /api/v1/admin/students/bulk-import` - Bulk import students
+- `POST /api/v1/admin/students/bulk-assign-class` - Bulk assign to class
+
+---
+
+### 10. Parent-Teacher Messaging
+
+**Status**: Complete
+**Date**: December 2025
+
+#### Backend
+- ✅ Conversation management (create, list, get details)
+- ✅ Message sending and retrieval with pagination
+- ✅ Read receipts (mark messages as read)
+- ✅ Unread count tracking
+- ✅ Access control (parent/teacher verification)
+- ✅ Real-time Firestore listeners
+
+#### Parent UI
+- ✅ Conversation list with unread indicators
+- ✅ Message thread view
+- ✅ Message input with send functionality
+- ✅ Real-time message updates
+- ✅ Start new conversation with teacher
+
+#### Teacher UI
+- ✅ Conversation list for assigned students' parents
+- ✅ Message thread view
+- ✅ Reply to parent messages
+- ✅ View message history
+
+**Routes**:
+- `/parent/messages` - Parent messages list
+- `/parent/messages/[id]` - Parent conversation thread
+- `/teacher/messages` - Teacher messages list
+- `/teacher/messages/[id]` - Teacher conversation thread
+
+**API Endpoints**:
+- `GET/POST /api/v1/me/conversations` - List/create conversations
+- `GET/PATCH /api/v1/me/conversations/[id]` - Get details/mark read
+- `GET/POST /api/v1/me/conversations/[id]/messages` - Get/send messages
+
+---
+
+### 11. Attendance Analytics
+
+**Status**: Complete
+**Date**: December 2025
+
+#### Backend
+- ✅ Attendance rates by class
+- ✅ Attendance trends over time
+- ✅ Chronic absentee identification
+- ✅ Class comparison analytics
+- ✅ Export functionality (CSV/PDF)
+
+#### Admin UI
+- ✅ Analytics dashboard with recharts visualizations
+- ✅ Attendance rate charts
+- ✅ Trend analysis graphs
+- ✅ Chronic absentee list
+- ✅ Date range filtering
+- ✅ Export options
+
+**Routes**:
+- `/admin/attendance/analytics` - Analytics dashboard
+
+**API Endpoints**:
+- `GET /api/v1/admin/attendance/analytics` - Attendance analytics
+- `GET /api/v1/admin/attendance/chronic-absentees` - Chronic absentee list
+- `GET /api/v1/admin/attendance/comparison` - Class comparison
+- `GET /api/v1/admin/attendance/export` - Export data
+
+---
+
+### 12. School Calendar Management
+
+**Status**: Complete
+**Date**: December 2025
+
+#### Backend
+- ✅ Calendar event CRUD operations
+- ✅ Recurring events support (none, daily, weekly, monthly, yearly)
+- ✅ Bilingual support (Tamil + English)
+- ✅ Event type categorization
+- ✅ Public and admin visibility controls
+
+#### Admin UI
+- ✅ Calendar events list page
+- ✅ Create new event page
+- ✅ Edit event page
+- ✅ Delete event functionality
+- ✅ Recurring event configuration
+
+#### Public UI
+- ✅ Public calendar view
+- ✅ Merged static and dynamic events
+- ✅ Event details display
+- ✅ Bilingual event display
+
+**Routes**:
+- `/admin/calendar` - Admin calendar list
+- `/admin/calendar/new` - Create event
+- `/admin/calendar/[id]/edit` - Edit event
+- `/calendar` - Public calendar view
+
+**API Endpoints**:
+- `GET/POST /api/v1/admin/calendar` - List/create events
+- `GET/PUT/DELETE /api/v1/admin/calendar/[id]` - Get/update/delete event
+- `GET /api/v1/calendar` - Public events list
+
+---
+
+### 13. Teacher Gradebook & Assignments
+
+**Status**: Complete
+**Date**: December 2025
+
+#### Assignments Management
+- ✅ Create assignments (homework, quiz, test, project)
+- ✅ Set assignment details (name, type, due date, max score)
+- ✅ Assignment categories and weights
+- ✅ Edit and delete assignments
+- ✅ View assignments per class
+
+#### Gradebook
+- ✅ Matrix view (students x assignments)
+- ✅ Bulk grade entry
+- ✅ Individual grade updates
+- ✅ Score validation
+- ✅ Grade calculations
+
+#### Report Cards
+- ✅ Generate report cards per student
+- ✅ Include grades, attendance, comments
+- ✅ Publish to parents
+- ✅ Parent view of published report cards
+- ✅ Term-based organization
+
+**API Endpoints**:
+- `GET/POST /api/v1/teacher/classes/[classId]/assignments` - List/create assignments
+- `GET/PUT/DELETE /api/v1/teacher/classes/[classId]/assignments/[id]` - Assignment CRUD
+- `GET/POST /api/v1/teacher/classes/[classId]/assignments/[id]/grades` - Grade entry
+- `GET /api/v1/teacher/classes/[classId]/gradebook` - Gradebook matrix
+- `GET/POST /api/v1/teacher/classes/[classId]/report-cards` - Report cards
+- `GET/PUT /api/v1/teacher/classes/[classId]/report-cards/[id]` - Report card CRUD
+- `GET /api/v1/me/students/[id]/report-cards` - Parent view of report cards
+
+---
+
+### 14. Parent Profile Completion
+
+**Status**: Complete
+**Date**: December 2025
+
+#### Backend
+- ✅ `isProfileComplete` field in /api/v1/me endpoint
+- ✅ Profile completeness validation
+- ✅ Required fields checking (name, phone, address)
+
+#### Parent UI
+- ✅ Profile completion modal (blocking)
+- ✅ Required fields highlighting
+- ✅ Automatic detection on login
+- ✅ Form validation
+- ✅ Profile completion status indicator
+
+**Technical**:
+- Component: `/ui/src/components/ProfileCompletionModal.tsx`
+- Layout integration: `/ui/src/app/parent/ParentLayoutClient.tsx`
+- Types: `/packages/shared-core/src/types/parent.ts`
+
+---
+
+### 15. Feature Flags System
+
+**Status**: Complete
+**Date**: December 2025
+
+#### Overview
+Super admins can enable/disable UI features per role (admin, teacher, parent). Disabled features are hidden from navigation and blocked at the API level.
+
+#### Managed Features
+
+| Role | Features |
+|------|----------|
+| **Admin** | Students, Teachers, Classes, Grades, Textbooks, Volunteers, AttendanceAnalytics, HeroContent, Calendar |
+| **Teacher** | Classes, Attendance, Messaging |
+| **Parent** | Students, StudentRegistration, Messaging, Profile, Settings |
+
+#### Backend
+- ✅ Feature flags stored in Firestore (`systemConfig/featureFlags`)
+- ✅ Feature flag library with cache (5-min TTL)
+- ✅ `requireFeature()` helper for API route protection
+- ✅ Super admin API endpoints for management
+- ✅ Public API endpoint for fetching flags
+- ✅ Audit logging of all flag changes
+
+#### Super Admin UI
+- ✅ Dedicated management page at `/admin/super-admin/feature-flags`
+- ✅ Toggle switches grouped by role
+- ✅ Feature descriptions for each toggle
+- ✅ Save button per role group
+- ✅ Change tracking with unsaved indicator
+- ✅ Last updated timestamp
+
+#### Navigation Integration
+- ✅ Feature flags context provider
+- ✅ Navigation filtering in Admin, Teacher, Parent layouts
+- ✅ Client-side localStorage caching
+- ✅ Real-time updates on flag changes
+
+#### API Protection
+- ✅ All admin routes protected by feature flags
+- ✅ All teacher routes protected by feature flags
+- ✅ Parent routes (students, messaging) protected
+- ✅ Returns 403 with `feature/disabled` error code
+
+**Routes**:
+- `/admin/super-admin/feature-flags` - Feature flags management
+
+**API Endpoints**:
+- `GET /api/v1/feature-flags` - Public flags endpoint
+- `GET /api/v1/super-admin/feature-flags` - Get all flags (super admin)
+- `PUT /api/v1/super-admin/feature-flags` - Update flags (super admin)
+
+**Technical Files**:
+- `/api/src/lib/featureFlags.ts` - Core feature flags library
+- `/ui/src/context/FeatureFlagsContext.tsx` - React context provider
+- `/ui/src/lib/featureMapping.ts` - Path-to-feature mapping
+- `/ui/src/types/featureFlags.ts` - TypeScript types
+- `/ui/src/app/admin/super-admin/feature-flags/page.tsx` - Management UI
+
+---
+
 ## 🚧 In Progress
 
-### 1. Student Management
+### 1. Student Management Enhancements
 
 **Status**: Partially complete
-**Next Steps**: Class enrollment integration
+**Next Steps**: Transfer between classes, advanced search
 
 - ✅ Student CRUD operations
-- ⏳ Bulk import from CSV
+- ✅ Bulk import from CSV
+- ✅ Bulk class assignment
 - ✅ Grade management (via grades collection)
 - ✅ Parent associations
+- ⏳ Transfer students between classes
+- ⏳ Advanced search (parent name, teacher name)
 
 ---
 
@@ -272,59 +534,58 @@ Before adding new API routes, consider:
 
 ### High Priority
 
-1. **Student-Class Enrollment**
-   - Assign students to classes
-   - View class rosters
-   - Enrollment history
+1. **Flash News Marquee**
+   - Short text announcements (bilingual)
+   - Display priority/order
+   - Auto-show/hide by date
+   - *Note: Previous implementation reverted - needs rework*
 
-2. **Attendance Tracking**
-   - Daily attendance marking
-   - Reports and analytics
-   - Parent notifications
+2. **Payment Integration**
+   - Tuition fee payments
+   - Payment history
+   - Receipt generation
 
 ### Medium Priority
 
-1. **News & Announcements** ⚠️ *REVERTED - See Known Issues above*
-   - Flash news marquee
-   - Rich text editor
-   - Publish/schedule workflow
-   - *Note: Implementation caused firebase-admin bundling issues*
+1. **News Post Management**
+   - Rich text news articles
+   - Categories and priority
+   - Scheduling and drafts
 
-2. **Calendar Management**
-   - Event CRUD
-   - Recurring events
-   - RSVP system
-
-3. **Grade Management**
-   - Assignment grading
-   - Progress tracking
-   - Report cards
-
-### Low Priority
-
-1. **Media Library**
+2. **Media Library**
    - File upload system
    - Image management
    - Gallery creation
 
-2. **Analytics & Reports**
-   - Student reports
-   - Attendance analytics
-   - Performance tracking
+3. **Read Receipts & Attachments** (Messaging)
+   - Message read receipts
+   - File attachments in messages
 
-3. **Communications**
-   - Bulk email system
-   - SMS notifications
-   - Parent messaging
+### Low Priority
+
+1. **Student Portal**
+   - Student login and dashboard
+   - View grades and assignments
+   - Submit homework
+
+2. **Mobile App**
+   - React Native apps
+   - Push notifications
+   - Offline capability
+
+3. **Advanced Analytics**
+   - Custom reports
+   - Dashboard visualizations
+   - Export options
 
 ---
 
 ## 📊 Feature Statistics
 
-**Total Features**: 8 completed, 1 in progress
-**Completion Rate**: 89%
-**Last Feature**: Grades & Classes Management (Dec 12, 2025)
-**Next Feature**: Student-Class Enrollment
+**Total Features**: 15 completed, 1 in progress
+**Completion Rate**: 94%
+**Last Feature**: Feature Flags System (Dec 28, 2025)
+**Next Feature**: Flash News Marquee
 
 ---
 

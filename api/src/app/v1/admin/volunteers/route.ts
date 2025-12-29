@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { AuthError } from '@/lib/auth';
 import { requireAuth } from '@/lib/guard';
+import { requireFeature } from '@/lib/featureFlags';
 import { getAllVolunteers, createVolunteer } from '@/lib/firestoreVolunteers';
 import type { VolunteerStatus, VolunteerType } from '@/types/volunteer';
 
@@ -91,6 +92,7 @@ export async function GET(req: NextRequest) {
   try {
     const authz = req.headers.get('authorization');
     await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Volunteers');
 
     const { searchParams } = new URL(req.url);
     const type = (searchParams.get('type') || undefined) as VolunteerType | undefined;
@@ -146,6 +148,7 @@ export async function POST(req: NextRequest) {
   try {
     const authz = req.headers.get('authorization');
     const { profile } = await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireFeature('admin', 'Volunteers');
 
     const body = await req.json();
     const validData = createVolunteerSchema.parse(body);
