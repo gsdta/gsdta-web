@@ -21,6 +21,12 @@ export default function AdminTextbooksPage() {
   const [creating, setCreating] = useState(false);
   const { selectedItem, menuPosition, handleRowClick, closeMenu, isMenuOpen } = useTableRowActions<Textbook>();
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalTextbooks, setTotalTextbooks] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const pageSize = 50;
+
   const handleToggleStatus = async (textbook: Textbook) => {
     try {
       const newStatus: TextbookStatus = textbook.status === 'active' ? 'inactive' : 'active';
@@ -65,21 +71,26 @@ export default function AdminTextbooksPage() {
     academicYear: CURRENT_ACADEMIC_YEAR,
   });
 
-  const fetchTextbooks = useCallback(async () => {
+  const fetchTextbooks = useCallback(async (page: number = currentPage) => {
     try {
       setLoading(true);
       setError(null);
+      const offset = (page - 1) * pageSize;
       const result = await adminGetTextbooks(getIdToken, {
         status: statusFilter,
         gradeId: gradeFilter || undefined,
+        limit: pageSize,
+        offset,
       });
       setTextbooks(result.textbooks);
+      setTotalTextbooks(result.total);
+      setHasMore(offset + result.textbooks.length < result.total);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch textbooks');
     } finally {
       setLoading(false);
     }
-  }, [getIdToken, statusFilter, gradeFilter]);
+  }, [getIdToken, statusFilter, gradeFilter, currentPage, pageSize]);
 
   const fetchGrades = useCallback(async () => {
     try {
@@ -94,6 +105,18 @@ export default function AdminTextbooksPage() {
     fetchTextbooks();
     fetchGrades();
   }, [fetchTextbooks, fetchGrades]);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, gradeFilter]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    fetchTextbooks(page);
+  };
+
+  const totalPages = Math.ceil(totalTextbooks / pageSize);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -188,7 +211,7 @@ export default function AdminTextbooksPage() {
           </select>
         </div>
         <button
-          onClick={fetchTextbooks}
+          onClick={() => fetchTextbooks()}
           className="text-sm text-blue-600 hover:text-blue-800"
         >
           Refresh
@@ -280,6 +303,59 @@ export default function AdminTextbooksPage() {
               ))}
             </tbody>
           </table>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+              <div className="text-sm text-gray-500">
+                Showing {(currentPage - 1) * pageSize + 1} to{' '}
+                {Math.min(currentPage * pageSize, totalTextbooks)} of {totalTextbooks} textbooks
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  Previous
+                </button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum: number;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`px-3 py-1 text-sm rounded-md ${
+                          currentPage === pageNum
+                            ? 'bg-blue-600 text-white'
+                            : 'border border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={!hasMore}
+                  className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
