@@ -30,20 +30,21 @@ function makeFakeDb(storage: Map<string, StoredDoc> = new Map()) {
 
   // Helper to check if a value matches a filter
   const matchesFilter = (
-    val: any,
+    val: Record<string, unknown>,
     filters: Array<{ field: string; op: string; value: unknown }>
   ): boolean => {
     for (const filter of filters) {
-      const fieldValue = val[filter.field];
+      const fieldValue = val[filter.field] as string | number;
+      const filterValue = filter.value as string | number;
       switch (filter.op) {
         case '==':
-          if (fieldValue !== filter.value) return false;
+          if (fieldValue !== filterValue) return false;
           break;
         case '>=':
-          if (fieldValue < filter.value) return false;
+          if (fieldValue < filterValue) return false;
           break;
         case '<=':
-          if (fieldValue > filter.value) return false;
+          if (fieldValue > filterValue) return false;
           break;
       }
     }
