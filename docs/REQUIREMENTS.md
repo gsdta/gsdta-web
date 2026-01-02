@@ -1,8 +1,8 @@
 # GSDTA Web Application - Requirements Document
 
-**Version**: 1.1
+**Version**: 1.2
 **Classification**: Master Reference Document
-**Last Updated**: December 27, 2025 (Updated with Super Admin features)
+**Last Updated**: January 2, 2026 (Updated with Feature Flags and Dashboard Improvements)
 **Purpose**: This document serves as the definitive source of truth for all features and capabilities of the GSDTA Tamil School Management System.
 
 ---
@@ -34,11 +34,12 @@ GSDTA Web is a comprehensive school management system designed for a non-profit 
 |------------|--------|-------------|
 | User Authentication | COMPLETE | Firebase-based email/password and Google OAuth |
 | Role-Based Access Control | COMPLETE | Super Admin, Admin, Teacher, Parent roles with distinct permissions |
+| Feature Flags | COMPLETE | Dynamic feature toggling per role with UI hiding |
 | Super Admin Portal | COMPLETE | Admin management, audit logs, security, system config, data recovery |
 | Teacher Onboarding | COMPLETE | Invite-based teacher registration system |
-| Parent Portal | COMPLETE | Student registration, profile management |
-| Teacher Portal | COMPLETE | Dashboard, class roster, attendance tracking |
-| Admin Portal | COMPLETE | User management, class management, content management |
+| Parent Portal | COMPLETE | Student registration, profile management, tile-based dashboard |
+| Teacher Portal | COMPLETE | Dashboard, class roster, attendance tracking, tile-based navigation |
+| Admin Portal | COMPLETE | User management, class management, content management, tile-based dashboard |
 | Hero Content | COMPLETE | Event banners with bilingual support |
 | Grades & Classes | COMPLETE | Grade levels and class management |
 | Public Website | COMPLETE | Bilingual (Tamil/English) public-facing pages |
@@ -510,6 +511,86 @@ Super Admins have the highest level of access and control over the entire system
 | Assign to class | COMPLETE |
 | Track volunteer hours | COMPLETE |
 
+### 9. Feature Flags System
+
+**Status**: COMPLETE (January 2026)
+
+The feature flags system allows Super Admins to dynamically enable or disable features for different user roles without code deployment.
+
+#### 9.1 Feature Flag Configuration
+
+| Role | Available Features |
+|------|-------------------|
+| Admin | Students, Teachers, Classes, Grades, Textbooks, Volunteers, AttendanceAnalytics, HeroContent, Calendar |
+| Teacher | Classes, Attendance, Messaging |
+| Parent | Students, StudentRegistration, Messaging, Profile, Settings |
+
+#### 9.2 UI Behavior
+
+| Behavior | Description |
+|----------|-------------|
+| Navigation Hiding | Disabled features are hidden from sidebar navigation |
+| Dashboard Tiles | Disabled features are hidden from dashboard tile cards |
+| Query Parameter Support | Paths with query params (e.g., `/admin/students?status=pending`) correctly map to features |
+| Empty States | Shows appropriate message when features are disabled (e.g., "Registration not available") |
+| API Protection | Backend returns 403 "feature/disabled" for disabled feature endpoints |
+
+#### 9.3 Caching Strategy
+
+| Layer | Cache Duration | Storage |
+|-------|---------------|---------|
+| Frontend | 5 minutes | localStorage |
+| Backend | 5 minutes | In-memory |
+| Persistent | N/A | Firestore (`systemConfig/featureFlags`) |
+
+#### 9.4 Super Admin Feature Management
+
+| Feature | Status |
+|---------|--------|
+| View all feature flags by role | COMPLETE |
+| Toggle individual features | COMPLETE |
+| Feature descriptions for UI | COMPLETE |
+| Real-time flag updates | COMPLETE |
+| Default all-enabled configuration | COMPLETE |
+
+### 10. Dashboard Tile Navigation
+
+**Status**: COMPLETE (January 2026)
+
+All portals now feature a consistent tile-based navigation system on their dashboards.
+
+#### 10.1 Admin Dashboard Tiles
+
+| Section | Tiles |
+|---------|-------|
+| Students | All Students, Pending Review |
+| Teachers | All Teachers, Invite Teacher, Assign to Classes |
+| Classes | All Classes, Create Class, Grades |
+| Resources | Textbooks |
+| Volunteers | All Volunteers |
+| Analytics | Attendance Analytics |
+| Content | Hero Content |
+| Calendar | All Events, Create Event |
+
+#### 10.2 Teacher Dashboard Tiles
+
+| Tile | Description |
+|------|-------------|
+| My Classes | View all assigned classes |
+| Mark Attendance | Record today's attendance |
+| Attendance History | View past attendance records |
+| Messages | Communicate with parents |
+
+#### 10.3 Parent Dashboard Tiles
+
+| Tile | Description |
+|------|-------------|
+| My Students | View linked students |
+| Register Student | Add a new student |
+| Messages | Communicate with teachers |
+| My Profile | View and update profile |
+| Settings | Manage preferences |
+
 ---
 
 ## API Endpoints Reference
@@ -559,6 +640,14 @@ Super Admins have the highest level of access and control over the entire system
 | GET/POST/PATCH | `/api/v1/admin/textbooks` | Textbook CRUD |
 | GET/POST/PATCH | `/api/v1/admin/volunteers` | Volunteer CRUD |
 | GET/POST/PATCH | `/api/v1/admin/hero-content` | Hero content CRUD |
+
+### Feature Flags Endpoints
+
+| Method | Endpoint | Description | Roles |
+|--------|----------|-------------|-------|
+| GET | `/api/v1/feature-flags` | Get feature flags (public, cached) | Any |
+| GET | `/api/v1/super-admin/feature-flags` | Get feature flags with descriptions | Super Admin |
+| PUT | `/api/v1/super-admin/feature-flags` | Update feature flags | Super Admin |
 
 ### Teacher Endpoints
 
@@ -906,6 +995,8 @@ Super Admins have the highest level of access and control over the entire system
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | Dec 27, 2025 | Claude | Initial release |
+| 1.1 | Dec 27, 2025 | Claude | Added Super Admin features |
+| 1.2 | Jan 2, 2026 | Claude | Added Feature Flags system, Dashboard tile navigation |
 
 ---
 
