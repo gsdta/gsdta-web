@@ -21,6 +21,12 @@ export default function ClassesPage() {
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const { selectedItem, menuPosition, handleRowClick, closeMenu, isMenuOpen } = useTableRowActions<Class>();
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalClasses, setTotalClasses] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const pageSize = 50;
+
   const handleToggleStatus = async (classData: Class) => {
     const newStatus = classData.status === 'active' ? 'inactive' : 'active';
     if (!confirm(`Are you sure you want to mark this class as ${newStatus}?`)) return;
@@ -56,21 +62,26 @@ export default function ClassesPage() {
     }
   }, [getIdToken]);
 
-  const fetchClasses = useCallback(async () => {
+  const fetchClasses = useCallback(async (page: number = currentPage) => {
     try {
       setLoading(true);
+      const offset = (page - 1) * pageSize;
       const result = await adminGetClasses(getIdToken, {
         status: statusFilter,
         gradeId: gradeFilter || undefined,
+        limit: pageSize,
+        offset,
       });
       setClasses(result.classes);
+      setTotalClasses(result.total);
+      setHasMore(offset + result.classes.length < result.total);
     } catch (err) {
       console.error('Failed to fetch classes:', err);
       setError('Failed to load classes');
     } finally {
       setLoading(false);
     }
-  }, [getIdToken, statusFilter, gradeFilter]);
+  }, [getIdToken, statusFilter, gradeFilter, currentPage, pageSize]);
 
   useEffect(() => {
     fetchGrades();
@@ -79,6 +90,18 @@ export default function ClassesPage() {
   useEffect(() => {
     fetchClasses();
   }, [fetchClasses]);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, gradeFilter]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    fetchClasses(page);
+  };
+
+  const totalPages = Math.ceil(totalClasses / pageSize);
 
   return (
     <div className="space-y-6">
@@ -266,6 +289,59 @@ export default function ClassesPage() {
                 ))}
               </tbody>
             </table>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                <div className="text-sm text-gray-500">
+                  Showing {(currentPage - 1) * pageSize + 1} to{' '}
+                  {Math.min(currentPage * pageSize, totalClasses)} of {totalClasses} classes
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    Previous
+                  </button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum: number;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`px-3 py-1 text-sm rounded-md ${
+                            currentPage === pageNum
+                              ? 'bg-blue-600 text-white'
+                              : 'border border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={!hasMore}
+                    className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

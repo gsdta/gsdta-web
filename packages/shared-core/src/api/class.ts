@@ -100,11 +100,13 @@ export interface AssignTeacherInput {
  * Get all classes (admin)
  */
 export async function adminGetClasses(
-  params: { status?: "active" | "inactive" | "all"; gradeId?: string } = {}
+  params: { status?: "active" | "inactive" | "all"; gradeId?: string; limit?: number; offset?: number } = {}
 ): Promise<ClassesResponse> {
   const queryParams = new URLSearchParams();
   if (params.status) queryParams.set("status", params.status);
   if (params.gradeId) queryParams.set("gradeId", params.gradeId);
+  if (params.limit) queryParams.set("limit", params.limit.toString());
+  if (params.offset) queryParams.set("offset", params.offset.toString());
 
   const qs = queryParams.toString();
   const path = withTrailingSlash(`/v1/admin/classes${qs ? `?${qs}` : ""}`);

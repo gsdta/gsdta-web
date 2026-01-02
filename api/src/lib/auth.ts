@@ -1,5 +1,11 @@
 import { adminAuth } from './firebaseAdmin';
 
+// Test hook: allow overriding adminAuth for tests
+let getAuth = adminAuth;
+export function __setAuthForTests(fn: typeof adminAuth | null) {
+  getAuth = fn ?? adminAuth;
+}
+
 export type VerifiedToken = {
   uid: string;
   email: string | undefined;
@@ -57,7 +63,7 @@ export async function verifyIdToken(authorizationHeader: string | null | undefin
   }
   
   try {
-    const decoded = await adminAuth().verifyIdToken(idToken, true);
+    const decoded = await getAuth().verifyIdToken(idToken, true);
     return {
       uid: decoded.uid,
       email: decoded.email,

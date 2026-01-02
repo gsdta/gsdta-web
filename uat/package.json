@@ -14,6 +14,7 @@
     "test:parallel": "cucumber-js --parallel 4",
     "test:ci": "cucumber-js --profile ci",
     "test:shakeout": "cucumber-js --profile shakeout",
+    "test:shakeout-public": "cucumber-js --profile shakeout-public",
     "lint": "eslint . --ext .ts",
     "typecheck": "tsc --noEmit"
   },

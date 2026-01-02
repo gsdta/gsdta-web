@@ -288,3 +288,78 @@ test('isInviteUsable: should return false for expired invite', () => {
   assert.equal(isInviteUsable(invite), false);
 });
 
+// ============================================
+// ALLOW_TEST_INVITES mode tests
+// ============================================
+
+// Store original env value
+const originalAllowTestInvites = process.env.ALLOW_TEST_INVITES;
+
+test.afterEach(() => {
+  // Restore original env value
+  if (originalAllowTestInvites === undefined) {
+    delete process.env.ALLOW_TEST_INVITES;
+  } else {
+    process.env.ALLOW_TEST_INVITES = originalAllowTestInvites;
+  }
+  __setAdminDbForTests(null);
+});
+
+test('getInviteByToken: should return mock invite for test- tokens in ALLOW_TEST_INVITES mode', async () => {
+  process.env.ALLOW_TEST_INVITES = '1';
+
+  const invite = await getInviteByToken('test-invite-token');
+
+  assert.ok(invite);
+  assert.equal(invite.id, 'test');
+  assert.equal(invite.email, 'teacher@example.com');
+  assert.equal(invite.role, 'teacher');
+  assert.equal(invite.invitedBy, 'test-admin');
+  assert.equal(invite.status, 'pending');
+  assert.equal(invite.token, 'test-invite-token');
+  assert.ok(invite.expiresAt);
+  assert.ok(invite.createdAt);
+});
+
+test('getInviteByToken: should return null for non-test tokens in ALLOW_TEST_INVITES mode', async () => {
+  process.env.ALLOW_TEST_INVITES = '1';
+
+  const invite = await getInviteByToken('regular-token-not-starting-with-test');
+
+  assert.equal(invite, null);
+});
+
+test('getInviteByToken: should return null for token just containing test but not starting with it', async () => {
+  process.env.ALLOW_TEST_INVITES = '1';
+
+  const invite = await getInviteByToken('some-token-test-in-middle');
+
+  assert.equal(invite, null);
+});
+
+test('markInviteAccepted: should no-op for test invite in ALLOW_TEST_INVITES mode', async () => {
+  process.env.ALLOW_TEST_INVITES = '1';
+
+  // This should not throw and should not try to access Firestore
+  await markInviteAccepted('test', 'some-user-uid');
+
+  // No error means success
+  assert.ok(true);
+});
+
+test('markInviteAccepted: should use Firestore for non-test invites even in ALLOW_TEST_INVITES mode', async () => {
+  process.env.ALLOW_TEST_INVITES = '1';
+
+  const storedInvites = new Map<string, Record<string, unknown>>();
+  storedInvites.set('real-invite-id', { status: 'pending' });
+  const fakeProvider = (() => makeFakeDb(storedInvites)) as unknown as Parameters<typeof __setAdminDbForTests>[0];
+  __setAdminDbForTests(fakeProvider);
+
+  await markInviteAccepted('real-invite-id', 'teacher-uid-456');
+
+  const stored = storedInvites.get('real-invite-id');
+  assert.ok(stored);
+  assert.equal(stored.status, 'accepted');
+  assert.equal(stored.acceptedBy, 'teacher-uid-456');
+});
+

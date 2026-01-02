@@ -69,6 +69,13 @@ const adminNav: NavSection[] = [
     label: 'Content',
     items: [{ label: 'Hero Content', href: '/admin/content/hero', icon: '🖼️' }],
   },
+  {
+    label: 'Calendar',
+    items: [
+      { label: 'All Events', href: '/admin/calendar', icon: '📅' },
+      { label: 'Create Event', href: '/admin/calendar/new', icon: '➕' },
+    ],
+  },
 ];
 
 // Super Admin navigation (only visible to super_admin role)
