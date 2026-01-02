@@ -421,8 +421,8 @@ test('createAssignment: should throw when class not found', async () => {
       'Teacher Name'
     );
     assert.fail('Should have thrown');
-  } catch (err: any) {
-    assert.ok(err.message.includes('Class not found'));
+  } catch (err: unknown) {
+    assert.ok((err as Error).message.includes('Class not found'));
   }
 
   __setAdminDbForTests(null);
@@ -779,6 +779,7 @@ test('getAssignmentSummary: should filter out ungraded entries', async () => {
 
   const grades = [
     { pointsEarned: 80, maxPoints: 100 },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     { pointsEarned: undefined as any, maxPoints: 100 }, // Ungraded
     { pointsEarned: 60, maxPoints: 100 },
   ];
