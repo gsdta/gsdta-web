@@ -7,6 +7,7 @@ import {
   verifyTeacherAssignment,
   getTeacherClasses,
   isPrimaryTeacher,
+  verifyTeacherStudentAccess,
 } from '../teacherGuard';
 import { __setAdminDbForTests as setClassesDb } from '../firestoreClasses';
 import { AuthError } from '../auth';
@@ -307,4 +308,80 @@ test('isPrimaryTeacher: supports legacy teacherId field', () => {
 
   assert.equal(isPrimaryTeacher('t1', classData), true);
   assert.equal(isPrimaryTeacher('t2', classData), false);
+});
+
+// ============================================
+// verifyTeacherStudentAccess tests
+// ============================================
+
+test('verifyTeacherStudentAccess: returns false when studentClassId is null', async () => {
+  const result = await verifyTeacherStudentAccess('t1', null);
+  assert.equal(result, false);
+});
+
+test('verifyTeacherStudentAccess: returns false when studentClassId is undefined', async () => {
+  const result = await verifyTeacherStudentAccess('t1', undefined);
+  assert.equal(result, false);
+});
+
+test('verifyTeacherStudentAccess: returns false when studentClassId is empty string', async () => {
+  const result = await verifyTeacherStudentAccess('t1', '');
+  assert.equal(result, false);
+});
+
+test('verifyTeacherStudentAccess: returns true when teacher is assigned to class', async () => {
+  const storage = new Map();
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as any;
+  setClassesDb(fakeProvider);
+
+  storage.set('classes/c1', {
+    id: 'c1',
+    name: 'Class A',
+    teachers: [
+      {
+        teacherId: 't1',
+        teacherName: 'Teacher 1',
+        role: 'primary',
+      },
+    ],
+  });
+
+  const result = await verifyTeacherStudentAccess('t1', 'c1');
+  assert.equal(result, true);
+
+  setClassesDb(null);
+});
+
+test('verifyTeacherStudentAccess: returns false when teacher is not assigned to class', async () => {
+  const storage = new Map();
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as any;
+  setClassesDb(fakeProvider);
+
+  storage.set('classes/c1', {
+    id: 'c1',
+    name: 'Class A',
+    teachers: [
+      {
+        teacherId: 't1',
+        teacherName: 'Teacher 1',
+        role: 'primary',
+      },
+    ],
+  });
+
+  const result = await verifyTeacherStudentAccess('t2', 'c1');
+  assert.equal(result, false);
+
+  setClassesDb(null);
+});
+
+test('verifyTeacherStudentAccess: returns false when class does not exist', async () => {
+  const storage = new Map();
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as any;
+  setClassesDb(fakeProvider);
+
+  const result = await verifyTeacherStudentAccess('t1', 'nonexistent');
+  assert.equal(result, false);
+
+  setClassesDb(null);
 });

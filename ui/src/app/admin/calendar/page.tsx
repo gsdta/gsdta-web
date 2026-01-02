@@ -18,24 +18,44 @@ export default function AdminCalendarPage() {
   const [eventTypeFilter, setEventTypeFilter] = useState<EventType | 'all'>('all');
   const { selectedItem, menuPosition, handleRowClick, closeMenu, isMenuOpen } = useTableRowActions<CalendarEvent>();
 
-  const fetchEvents = useCallback(async () => {
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const pageSize = 50;
+
+  const fetchEvents = useCallback(async (page: number = currentPage) => {
     try {
       setLoading(true);
       setError(null);
+      const offset = (page - 1) * pageSize;
       const filters: CalendarEventFilters = {};
       if (statusFilter !== 'all') filters.status = statusFilter;
       if (eventTypeFilter !== 'all') filters.eventType = eventTypeFilter;
-      filters.limit = 100;
+      filters.limit = pageSize;
+      filters.offset = offset;
 
       const result = await adminGetCalendarEvents(getIdToken, filters);
       setEvents(result.events);
       setTotal(result.total);
+      setHasMore(offset + result.events.length < result.total);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch calendar events');
     } finally {
       setLoading(false);
     }
-  }, [getIdToken, statusFilter, eventTypeFilter]);
+  }, [getIdToken, statusFilter, eventTypeFilter, currentPage, pageSize]);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, eventTypeFilter]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    fetchEvents(page);
+  };
+
+  const totalPages = Math.ceil(total / pageSize);
 
   useEffect(() => {
     fetchEvents();
@@ -151,7 +171,7 @@ export default function AdminCalendarPage() {
           </select>
         </div>
         <button
-          onClick={fetchEvents}
+          onClick={() => fetchEvents()}
           className="text-sm text-blue-600 hover:text-blue-800"
         >
           Refresh
@@ -254,6 +274,59 @@ export default function AdminCalendarPage() {
               ))}
             </tbody>
           </table>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+              <div className="text-sm text-gray-500">
+                Showing {(currentPage - 1) * pageSize + 1} to{' '}
+                {Math.min(currentPage * pageSize, total)} of {total} events
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  Previous
+                </button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum: number;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`px-3 py-1 text-sm rounded-md ${
+                          currentPage === pageNum
+                            ? 'bg-blue-600 text-white'
+                            : 'border border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={!hasMore}
+                  className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

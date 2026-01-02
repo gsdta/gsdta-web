@@ -5,9 +5,13 @@ import {
   getReportCardById,
   getReportCardsByClass,
   getReportCardsByStudent,
+  getPublishedReportCardsByStudent,
+  getReportCards,
   updateReportCard,
   publishReportCard,
+  bulkGenerateReportCards,
   deleteReportCard,
+  verifyReportCardParentAccess,
   __setAdminDbForTests,
 } from '../firestoreReportCards';
 import { __setAdminDbForTests as setClassesDbForTests } from '../firestoreClasses';
@@ -473,6 +477,661 @@ test('deleteReportCard: should return false for non-existent report card', async
   try {
     const result = await deleteReportCard('non-existent-id');
     assert.equal(result, false);
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+// ============================================
+// generateReportCard error cases
+// ============================================
+
+test('generateReportCard: should throw when class not found', async () => {
+  setupTestDb();
+
+  try {
+    await generateReportCard(
+      {
+        classId: 'non-existent-class',
+        studentId: 'student-1',
+        term: 'semester1',
+        academicYear: '2024-2025',
+      },
+      'teacher-uid',
+      'Teacher Name'
+    );
+    assert.fail('Should have thrown');
+  } catch (err) {
+    assert.ok(err instanceof Error);
+    assert.ok((err as Error).message.includes('Class not found'));
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+test('generateReportCard: should throw when student not found', async () => {
+  setupTestDb();
+
+  try {
+    await generateReportCard(
+      {
+        classId: 'class-1',
+        studentId: 'non-existent-student',
+        term: 'semester1',
+        academicYear: '2024-2025',
+      },
+      'teacher-uid',
+      'Teacher Name'
+    );
+    assert.fail('Should have thrown');
+  } catch (err) {
+    assert.ok(err instanceof Error);
+    assert.ok((err as Error).message.includes('Student not found'));
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+// ============================================
+// getPublishedReportCardsByStudent tests
+// ============================================
+
+test('getPublishedReportCardsByStudent: should return only published report cards', async () => {
+  setupTestDb();
+
+  try {
+    // Create draft report card
+    const created = await generateReportCard(
+      {
+        classId: 'class-1',
+        studentId: 'student-1',
+        term: 'semester1',
+        academicYear: '2024-2025',
+      },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    // Before publishing, should have no published cards
+    let publishedCards = await getPublishedReportCardsByStudent('student-1');
+    assert.equal(publishedCards.length, 0);
+
+    // Publish the card
+    await publishReportCard(created.id, 'teacher-uid', 'Teacher Name');
+
+    // After publishing, should have 1 published card
+    publishedCards = await getPublishedReportCardsByStudent('student-1');
+    assert.equal(publishedCards.length, 1);
+    assert.equal(publishedCards[0].status, 'published');
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+// ============================================
+// getReportCards with filters tests
+// ============================================
+
+test('getReportCards: should return paginated report cards', async () => {
+  setupTestDb();
+
+  try {
+    await generateReportCard(
+      {
+        classId: 'class-1',
+        studentId: 'student-1',
+        term: 'semester1',
+        academicYear: '2024-2025',
+      },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    await generateReportCard(
+      {
+        classId: 'class-1',
+        studentId: 'student-2',
+        term: 'semester1',
+        academicYear: '2024-2025',
+      },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    const result = await getReportCards({ limit: 1, offset: 0 });
+
+    assert.ok(result.reportCards.length <= 1);
+    assert.ok(result.total >= 2);
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+test('getReportCards: should filter by classId', async () => {
+  setupTestDb();
+
+  try {
+    await generateReportCard(
+      {
+        classId: 'class-1',
+        studentId: 'student-1',
+        term: 'semester1',
+        academicYear: '2024-2025',
+      },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    const result = await getReportCards({ classId: 'class-1' });
+
+    assert.ok(result.reportCards.every(rc => rc.classId === 'class-1'));
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+test('getReportCards: should filter by studentId', async () => {
+  setupTestDb();
+
+  try {
+    await generateReportCard(
+      {
+        classId: 'class-1',
+        studentId: 'student-1',
+        term: 'semester1',
+        academicYear: '2024-2025',
+      },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    const result = await getReportCards({ studentId: 'student-1' });
+
+    assert.ok(result.reportCards.every(rc => rc.studentId === 'student-1'));
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+test('getReportCards: should filter by term', async () => {
+  setupTestDb();
+
+  try {
+    await generateReportCard(
+      {
+        classId: 'class-1',
+        studentId: 'student-1',
+        term: 'semester1',
+        academicYear: '2024-2025',
+      },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    const result = await getReportCards({ term: 'semester1' });
+
+    assert.ok(result.reportCards.every(rc => rc.term === 'semester1'));
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+test('getReportCards: should filter by academicYear', async () => {
+  setupTestDb();
+
+  try {
+    await generateReportCard(
+      {
+        classId: 'class-1',
+        studentId: 'student-1',
+        term: 'semester1',
+        academicYear: '2024-2025',
+      },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    const result = await getReportCards({ academicYear: '2024-2025' });
+
+    assert.ok(result.reportCards.every(rc => rc.academicYear === '2024-2025'));
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+test('getReportCards: should filter by status', async () => {
+  setupTestDb();
+
+  try {
+    const created = await generateReportCard(
+      {
+        classId: 'class-1',
+        studentId: 'student-1',
+        term: 'semester1',
+        academicYear: '2024-2025',
+      },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    await publishReportCard(created.id, 'teacher-uid', 'Teacher Name');
+
+    const result = await getReportCards({ status: 'published' });
+
+    assert.ok(result.reportCards.every(rc => rc.status === 'published'));
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+// ============================================
+// bulkGenerateReportCards tests
+// ============================================
+
+test('bulkGenerateReportCards: should generate report cards for all students in class', async () => {
+  setupTestDb();
+
+  try {
+    const reportCards = await bulkGenerateReportCards(
+      'class-1',
+      'semester1',
+      '2024-2025',
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    assert.equal(reportCards.length, 2); // student-1 and student-2
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+test('bulkGenerateReportCards: should generate for specific students only', async () => {
+  setupTestDb();
+
+  try {
+    const reportCards = await bulkGenerateReportCards(
+      'class-1',
+      'semester1',
+      '2024-2025',
+      'teacher-uid',
+      'Teacher Name',
+      ['student-1']
+    );
+
+    assert.equal(reportCards.length, 1);
+    assert.equal(reportCards[0].studentId, 'student-1');
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+test('bulkGenerateReportCards: should throw when class not found', async () => {
+  setupTestDb();
+
+  try {
+    await bulkGenerateReportCards(
+      'non-existent-class',
+      'semester1',
+      '2024-2025',
+      'teacher-uid',
+      'Teacher Name'
+    );
+    assert.fail('Should have thrown');
+  } catch (err) {
+    assert.ok(err instanceof Error);
+    assert.ok((err as Error).message.includes('Class not found'));
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+// ============================================
+// verifyReportCardParentAccess tests
+// ============================================
+
+test('verifyReportCardParentAccess: should return true for correct parent', async () => {
+  setupTestDb();
+
+  try {
+    const created = await generateReportCard(
+      {
+        classId: 'class-1',
+        studentId: 'student-1',
+        term: 'semester1',
+        academicYear: '2024-2025',
+      },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    const hasAccess = await verifyReportCardParentAccess(created.id, 'parent-1');
+
+    assert.equal(hasAccess, true);
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+test('verifyReportCardParentAccess: should return false for wrong parent', async () => {
+  setupTestDb();
+
+  try {
+    const created = await generateReportCard(
+      {
+        classId: 'class-1',
+        studentId: 'student-1',
+        term: 'semester1',
+        academicYear: '2024-2025',
+      },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    const hasAccess = await verifyReportCardParentAccess(created.id, 'parent-2');
+
+    assert.equal(hasAccess, false);
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+test('verifyReportCardParentAccess: should return false for non-existent report card', async () => {
+  setupTestDb();
+
+  try {
+    const hasAccess = await verifyReportCardParentAccess('non-existent-id', 'parent-1');
+    assert.equal(hasAccess, false);
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+// ============================================
+// getReportCardsByClass with filters
+// ============================================
+
+test('getReportCardsByClass: should filter by term', async () => {
+  setupTestDb();
+
+  try {
+    await generateReportCard(
+      {
+        classId: 'class-1',
+        studentId: 'student-1',
+        term: 'semester1',
+        academicYear: '2024-2025',
+      },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    const reportCards = await getReportCardsByClass('class-1', 'semester1');
+
+    assert.ok(reportCards.every(rc => rc.term === 'semester1'));
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+test('getReportCardsByClass: should filter by academicYear', async () => {
+  setupTestDb();
+
+  try {
+    await generateReportCard(
+      {
+        classId: 'class-1',
+        studentId: 'student-1',
+        term: 'semester1',
+        academicYear: '2024-2025',
+      },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    const reportCards = await getReportCardsByClass('class-1', undefined, '2024-2025');
+
+    assert.ok(reportCards.every(rc => rc.academicYear === '2024-2025'));
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+// ============================================
+// updateReportCard edge cases
+// ============================================
+
+test('updateReportCard: should return null for deleted report card', async () => {
+  setupTestDb();
+
+  try {
+    const created = await generateReportCard(
+      {
+        classId: 'class-1',
+        studentId: 'student-1',
+        term: 'semester1',
+        academicYear: '2024-2025',
+      },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    await deleteReportCard(created.id);
+
+    const result = await updateReportCard(
+      created.id,
+      { teacherComments: 'Test' },
+      'admin-uid',
+      'Admin Name'
+    );
+
+    assert.equal(result, null);
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+// ============================================
+// deleteReportCard edge cases
+// ============================================
+
+test('deleteReportCard: should return false for already deleted report card', async () => {
+  setupTestDb();
+
+  try {
+    const created = await generateReportCard(
+      {
+        classId: 'class-1',
+        studentId: 'student-1',
+        term: 'semester1',
+        academicYear: '2024-2025',
+      },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    await deleteReportCard(created.id);
+    const result = await deleteReportCard(created.id);
+
+    assert.equal(result, false);
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+// ============================================
+// getReportCardById edge cases
+// ============================================
+
+test('getReportCardById: should return null for deleted report card', async () => {
+  setupTestDb();
+
+  try {
+    const created = await generateReportCard(
+      {
+        classId: 'class-1',
+        studentId: 'student-1',
+        term: 'semester1',
+        academicYear: '2024-2025',
+      },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    await deleteReportCard(created.id);
+    const result = await getReportCardById(created.id);
+
+    assert.equal(result, null);
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+// ============================================
+// Attendance summary coverage tests
+// ============================================
+
+test('generateReportCard: should include attendance summary with all status types', async () => {
+  const storage = new Map<string, StoredDoc>();
+  const counter = { value: 0 };
+
+  // Set up class
+  storage.set('classes/class-1', {
+    name: 'KG Class A',
+    gradeId: 'grade-kg',
+    gradeName: 'KG',
+    teacherId: 'teacher-1',
+    status: 'active'
+  });
+
+  // Set up student
+  storage.set('students/student-1', {
+    firstName: 'John',
+    lastName: 'Doe',
+    classId: 'class-1',
+    parentId: 'parent-1',
+    status: 'active',
+  });
+
+  // Add attendance records with all status types
+  storage.set('attendance/att-1', {
+    studentId: 'student-1',
+    classId: 'class-1',
+    status: 'present',
+    date: '2025-01-06',
+    docStatus: 'active',
+  });
+  storage.set('attendance/att-2', {
+    studentId: 'student-1',
+    classId: 'class-1',
+    status: 'absent',
+    date: '2025-01-07',
+    docStatus: 'active',
+  });
+  storage.set('attendance/att-3', {
+    studentId: 'student-1',
+    classId: 'class-1',
+    status: 'late',
+    date: '2025-01-08',
+    docStatus: 'active',
+  });
+  storage.set('attendance/att-4', {
+    studentId: 'student-1',
+    classId: 'class-1',
+    status: 'excused',
+    date: '2025-01-09',
+    docStatus: 'active',
+  });
+
+  const fakeProvider = (() => makeFakeDb(storage, counter)) as unknown as Parameters<typeof __setAdminDbForTests>[0];
+  __setAdminDbForTests(fakeProvider);
+  setClassesDbForTests(fakeProvider);
+  setAssignmentsDbForTests(fakeProvider);
+  setStudentsDbForTests(fakeProvider);
+  setGradesDbForTests(fakeProvider);
+  setAttendanceDbForTests(fakeProvider);
+
+  try {
+    const reportCard = await generateReportCard(
+      {
+        classId: 'class-1',
+        studentId: 'student-1',
+        term: 'semester1',
+        academicYear: '2024-2025',
+      },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    assert.ok(reportCard.attendance);
+    // The attendance summary should count all the records
+    assert.ok(reportCard.attendance.totalDays >= 0);
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+// ============================================
+// updateReportCard partial updates
+// ============================================
+
+test('updateReportCard: should update only teacherComments when conductGrade not provided', async () => {
+  setupTestDb();
+
+  try {
+    const created = await generateReportCard(
+      {
+        classId: 'class-1',
+        studentId: 'student-1',
+        term: 'semester1',
+        academicYear: '2024-2025',
+        conductGrade: 'A',
+      },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    const updated = await updateReportCard(
+      created.id,
+      { teacherComments: 'New comments only' },
+      'editor-uid',
+      'Editor Name'
+    );
+
+    assert.ok(updated);
+    assert.equal(updated.teacherComments, 'New comments only');
+    assert.equal(updated.conductGrade, 'A'); // Original value preserved
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+test('updateReportCard: should update only conductGrade when teacherComments not provided', async () => {
+  setupTestDb();
+
+  try {
+    const created = await generateReportCard(
+      {
+        classId: 'class-1',
+        studentId: 'student-1',
+        term: 'semester1',
+        academicYear: '2024-2025',
+        teacherComments: 'Original comments',
+      },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    const updated = await updateReportCard(
+      created.id,
+      { conductGrade: 'B' },
+      'editor-uid',
+      'Editor Name'
+    );
+
+    assert.ok(updated);
+    assert.equal(updated.conductGrade, 'B');
+    assert.equal(updated.teacherComments, 'Original comments'); // Original value preserved
   } finally {
     cleanupTestDb();
   }

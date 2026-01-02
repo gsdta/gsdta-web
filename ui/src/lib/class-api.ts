@@ -56,7 +56,7 @@ interface ClassesResponse {
  */
 export async function adminGetClasses(
   _getIdToken: TokenGetter,
-  params: { status?: "active" | "inactive" | "all"; gradeId?: string } = {}
+  params: { status?: "active" | "inactive" | "all"; gradeId?: string; limit?: number; offset?: number } = {}
 ): Promise<ClassesResponse> {
   void _getIdToken; // Backward compatibility - parameter no longer used
   return _adminGetClasses(params);
