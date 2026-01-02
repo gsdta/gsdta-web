@@ -193,7 +193,7 @@ export default function ParentDashboard() {
       )}
 
       {/* Recent Students Preview */}
-      {!loading && students.length > 0 && (
+      {!loading && students.length > 0 && canViewStudents && (
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">Your Students</h2>
@@ -236,22 +236,30 @@ export default function ParentDashboard() {
       )}
 
       {/* Empty State */}
-      {!loading && students.length === 0 && (
+      {!loading && students.length === 0 && canViewStudents && (
         <div className="bg-white rounded-lg shadow p-6 text-center">
           <div className="text-4xl mb-4">👨‍👧‍👦</div>
           <h3 className="text-lg font-medium text-gray-900">No students registered yet</h3>
-          <p className="mt-2 text-gray-500 max-w-md mx-auto">
-            Register your child to enroll them in our Tamil school. Click the button below to get started.
-          </p>
-          <Link
-            href="/parent/students/register"
-            className="inline-flex items-center gap-2 mt-4 px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Register Your First Student
-          </Link>
+          {canRegisterStudent ? (
+            <>
+              <p className="mt-2 text-gray-500 max-w-md mx-auto">
+                Register your child to enroll them in our Tamil school. Click the button below to get started.
+              </p>
+              <Link
+                href="/parent/students/register"
+                className="inline-flex items-center gap-2 mt-4 px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Register Your First Student
+              </Link>
+            </>
+          ) : (
+            <p className="mt-2 text-gray-500 max-w-md mx-auto">
+              Student registration is currently not available. Please check back later.
+            </p>
+          )}
         </div>
       )}
     </div>
