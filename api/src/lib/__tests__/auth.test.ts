@@ -7,9 +7,14 @@ import { verifyIdToken, AuthError, __setAuthForTests } from '../auth';
 // Store original NODE_ENV
 const originalEnv = process.env.NODE_ENV;
 
+// Helper to set NODE_ENV in tests (TypeScript marks it as readonly)
+const setNodeEnv = (value: string) => {
+  (process.env as { NODE_ENV: string }).NODE_ENV = value;
+};
+
 test.afterEach(() => {
   __setAuthForTests(null);
-  process.env.NODE_ENV = originalEnv;
+  setNodeEnv(originalEnv ?? 'test');
 });
 
 // ============================================
@@ -97,7 +102,7 @@ test('verifyIdToken: should throw for Bearer with only space', async () => {
 // ============================================
 
 test('verifyIdToken: should return test admin token in test mode', async () => {
-  process.env.NODE_ENV = 'test';
+  setNodeEnv('test');
 
   const result = await verifyIdToken('Bearer test-admin-token');
 
@@ -107,7 +112,7 @@ test('verifyIdToken: should return test admin token in test mode', async () => {
 });
 
 test('verifyIdToken: should return test teacher token in test mode', async () => {
-  process.env.NODE_ENV = 'test';
+  setNodeEnv('test');
 
   const result = await verifyIdToken('Bearer test-teacher-token');
 
@@ -117,7 +122,7 @@ test('verifyIdToken: should return test teacher token in test mode', async () =>
 });
 
 test('verifyIdToken: should return test parent token in test mode', async () => {
-  process.env.NODE_ENV = 'test';
+  setNodeEnv('test');
 
   const result = await verifyIdToken('Bearer test-parent-token');
 
@@ -127,7 +132,7 @@ test('verifyIdToken: should return test parent token in test mode', async () => 
 });
 
 test('verifyIdToken: should not use test tokens in non-test mode', async () => {
-  process.env.NODE_ENV = 'production';
+  setNodeEnv('production');
 
   // Mock the auth to throw
   const mockAuth = () => ({
@@ -148,7 +153,7 @@ test('verifyIdToken: should not use test tokens in non-test mode', async () => {
 });
 
 test('verifyIdToken: should fall through to Firebase for unknown test token', async () => {
-  process.env.NODE_ENV = 'test';
+  setNodeEnv('test');
 
   // Mock the auth to throw
   const mockAuth = () => ({
@@ -172,7 +177,7 @@ test('verifyIdToken: should fall through to Firebase for unknown test token', as
 // ============================================
 
 test('verifyIdToken: should verify token with Firebase', async () => {
-  process.env.NODE_ENV = 'production';
+  setNodeEnv('production');
 
   const mockAuth = () => ({
     verifyIdToken: async (token: string, checkRevoked: boolean) => {
@@ -195,7 +200,7 @@ test('verifyIdToken: should verify token with Firebase', async () => {
 });
 
 test('verifyIdToken: should handle email_verified false', async () => {
-  process.env.NODE_ENV = 'production';
+  setNodeEnv('production');
 
   const mockAuth = () => ({
     verifyIdToken: async () => ({
@@ -212,7 +217,7 @@ test('verifyIdToken: should handle email_verified false', async () => {
 });
 
 test('verifyIdToken: should handle missing email_verified', async () => {
-  process.env.NODE_ENV = 'production';
+  setNodeEnv('production');
 
   const mockAuth = () => ({
     verifyIdToken: async () => ({
@@ -229,7 +234,7 @@ test('verifyIdToken: should handle missing email_verified', async () => {
 });
 
 test('verifyIdToken: should handle missing email', async () => {
-  process.env.NODE_ENV = 'production';
+  setNodeEnv('production');
 
   const mockAuth = () => ({
     verifyIdToken: async () => ({
@@ -247,7 +252,7 @@ test('verifyIdToken: should handle missing email', async () => {
 });
 
 test('verifyIdToken: should throw for invalid Firebase token', async () => {
-  process.env.NODE_ENV = 'production';
+  setNodeEnv('production');
 
   const mockAuth = () => ({
     verifyIdToken: async () => {
@@ -268,7 +273,7 @@ test('verifyIdToken: should throw for invalid Firebase token', async () => {
 });
 
 test('verifyIdToken: should throw for revoked token', async () => {
-  process.env.NODE_ENV = 'production';
+  setNodeEnv('production');
 
   const mockAuth = () => ({
     verifyIdToken: async () => {
@@ -287,7 +292,7 @@ test('verifyIdToken: should throw for revoked token', async () => {
 });
 
 test('verifyIdToken: should trim token whitespace', async () => {
-  process.env.NODE_ENV = 'test';
+  setNodeEnv('test');
 
   // Token with trailing whitespace should work (trim is applied)
   const result = await verifyIdToken('Bearer test-admin-token  ');
@@ -296,7 +301,7 @@ test('verifyIdToken: should trim token whitespace', async () => {
 });
 
 test('verifyIdToken: should handle bearer case-insensitively', async () => {
-  process.env.NODE_ENV = 'test';
+  setNodeEnv('test');
 
   const result = await verifyIdToken('BEARER test-admin-token');
 
@@ -304,7 +309,7 @@ test('verifyIdToken: should handle bearer case-insensitively', async () => {
 });
 
 test('verifyIdToken: should handle lowercase bearer', async () => {
-  process.env.NODE_ENV = 'test';
+  setNodeEnv('test');
 
   const result = await verifyIdToken('bearer test-admin-token');
 

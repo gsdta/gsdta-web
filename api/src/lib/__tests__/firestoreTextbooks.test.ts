@@ -166,7 +166,7 @@ test('getAllTextbooks: should return textbooks with pagination', async () => {
   storage.set('textbooks/tb2', {
     gradeId: 'g1',
     name: 'Workbook',
-    type: 'workbook',
+    type: 'homework',
     status: 'active',
   });
 
@@ -194,12 +194,12 @@ test('getAllTextbooks: should filter by gradeId', async () => {
 
 test('getAllTextbooks: should filter by type', async () => {
   const storage = new Map<string, StoredDoc>();
-  storage.set('textbooks/tb1', { type: 'workbook', status: 'active' });
+  storage.set('textbooks/tb1', { type: 'homework', status: 'active' });
 
   const fakeProvider = (() => makeFakeDb(storage)) as unknown as any;
   __setAdminDbForTests(fakeProvider);
 
-  const result = await getAllTextbooks({ type: 'workbook' });
+  const result = await getAllTextbooks({ type: 'homework' });
 
   assert.ok(result.textbooks);
 });
@@ -293,7 +293,7 @@ test('updateTextbook: should update all provided fields', async () => {
     gradeId: 'g2',
     itemNumber: 'NEW-001',
     name: 'New Name',
-    type: 'workbook',
+    type: 'homework',
     semester: 'second',
     pageCount: 100,
     copies: 20,
@@ -375,7 +375,7 @@ test('getTextbooksByGrade: should return textbooks for a grade', async () => {
   storage.set('textbooks/tb2', {
     gradeId: 'g1',
     name: 'Workbook',
-    type: 'workbook',
+    type: 'homework',
     status: 'active',
   });
   storage.set('textbooks/tb3', {

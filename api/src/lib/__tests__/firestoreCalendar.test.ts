@@ -19,7 +19,7 @@ function makeFakeDb(storage: Map<string, StoredDoc> = new Map()) {
   let docCounter = 0;
   return {
     collection: (name: string) => {
-      const applyFilter = (docs: { id: string; data: () => StoredDoc }[], field: string, op: string, value: unknown) => {
+      const applyFilter = (docs: { id: string; exists: boolean; data: () => StoredDoc }[], field: string, op: string, value: unknown) => {
         return docs.filter((doc) => {
           const data = doc.data();
           if (op === '==') {
@@ -32,7 +32,7 @@ function makeFakeDb(storage: Map<string, StoredDoc> = new Map()) {
         });
       };
 
-      const createQueryChain = (docs: { id: string; data: () => StoredDoc }[]) => {
+      const createQueryChain = (docs: { id: string; exists: boolean; data: () => StoredDoc }[]) => {
         const chain: Record<string, unknown> = {
           where: (f: string, o: string, v: unknown) => createQueryChain(applyFilter(docs, f, o, v)),
           orderBy: () => ({

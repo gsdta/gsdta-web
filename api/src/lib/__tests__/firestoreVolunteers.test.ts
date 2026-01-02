@@ -128,7 +128,7 @@ test('createVolunteer: should handle all optional fields', async () => {
     availableDays: ['Sunday'],
     availableTimes: ['Morning'],
     academicYear: '2024-2025',
-    emergencyContact: { name: 'Parent', phone: '555-0000' },
+    emergencyContact: { name: 'Parent', phone: '555-0000', relationship: 'parent' },
     notes: 'Test notes',
   });
 
@@ -383,7 +383,7 @@ test('updateVolunteer: should update all provided fields', async () => {
     availableDays: ['Saturday'],
     availableTimes: ['Afternoon'],
     academicYear: '2025-2026',
-    emergencyContact: { name: 'Test', phone: '555-0000' },
+    emergencyContact: { name: 'Test', phone: '555-0000', relationship: 'parent' },
     status: 'inactive',
     notes: 'Updated notes',
   });
