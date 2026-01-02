@@ -60,7 +60,9 @@ jobs:
       - name: Run shakeout tests
         id: tests
         working-directory: uat
-        run: npm run test:shakeout
+        # Use shakeout-public profile (public pages + API tests only)
+        # Authentication tests are skipped since CI doesn't have test user credentials
+        run: npm run test:shakeout-public
         env:
           UAT_BASE_URL: ${{ inputs.base_url }}
 

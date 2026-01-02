@@ -13,6 +13,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test $(find src -name '*.test.ts' -type f)",
+    "test:coverage": "c8 --check-coverage --lines 95 --functions 95 --branches 85 --statements 95 node --import tsx --test $(find src -name '*.test.ts' -type f)",
     "test:cucumber": "cross-env TS_NODE_PROJECT=tsconfig.cucumber.json cucumber-js",
     "test:e2e": "cross-env FIRESTORE_EMULATOR_HOST=localhost:8889 FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 start-server-and-test \"npm run serve:test\" http://localhost:8080/api/v1/health \"npm run test:cucumber\"",
     "test:e2e:seed": "npm run seed:emulator && npm run test:e2e",
@@ -29,6 +30,7 @@
   },
   "devDependencies": {
     "@cucumber/cucumber": "^11",
+    "c8": "^10.1.3",
     "@types/node": "^20",
     "@types/papaparse": "^5.5.2",
     "@types/react": "^19",

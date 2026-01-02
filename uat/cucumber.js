@@ -44,5 +44,16 @@ module.exports = {
       ['json', 'reports/shakeout-report.json'],
       ['html', 'reports/shakeout-report.html']
     ]
+  },
+  // Shakeout profile for CI - only public tests (no authentication required)
+  'shakeout-public': {
+    ...common,
+    tags: '@shakeout and not @skip and not @wip and not @auth',
+    timeout: 30000,
+    format: [
+      'summary',
+      ['json', 'reports/shakeout-report.json'],
+      ['html', 'reports/shakeout-report.html']
+    ]
   }
 };
