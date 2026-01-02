@@ -12,6 +12,9 @@ import {
   canAccessConversation,
   __setAdminDbForTests,
 } from '../firestoreMessaging';
+import { __setAdminDbForTests as setUsersDb } from '../firestoreUsers';
+import { __setAdminDbForTests as setStudentsDb } from '../firestoreStudents';
+import { __setAdminDbForTests as setClassesDb } from '../firestoreClasses';
 
 type StoredDoc = Record<string, unknown>;
 
@@ -493,6 +496,710 @@ test('getUnreadCount: should return count of unread messages', async () => {
 
   const result = await getUnreadCount('parent-1', 'parent');
   assert.equal(result, 5);
+
+  __setAdminDbForTests(null);
+});
+
+test('getUnreadCount: should return teacher unread count', async () => {
+  const storage = new Map();
+  storage.set('conversations/conv-1', {
+    parentId: 'parent-1',
+    teacherId: 'teacher-1',
+    parentUnreadCount: 0,
+    teacherUnreadCount: 4,
+  });
+
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<
+    typeof __setAdminDbForTests
+  >[0];
+  __setAdminDbForTests(fakeProvider);
+
+  const result = await getUnreadCount('teacher-1', 'teacher');
+  assert.equal(result, 4);
+
+  __setAdminDbForTests(null);
+});
+
+// ============================================
+// createConversation tests
+// ============================================
+
+test('createConversation: should throw error if initiator not found', async () => {
+  const storage = new Map();
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<
+    typeof __setAdminDbForTests
+  >[0];
+  __setAdminDbForTests(fakeProvider);
+  setUsersDb(fakeProvider);
+
+  try {
+    await createConversation('nonexistent', 'parent', {
+      targetUserId: 'teacher-1',
+      initialMessage: 'Hello',
+    });
+    assert.fail('Should have thrown');
+  } catch (err: any) {
+    assert.ok(err.message.includes('Initiator user not found'));
+  }
+
+  __setAdminDbForTests(null);
+  setUsersDb(null);
+});
+
+test('createConversation: should throw error if target not found', async () => {
+  const storage = new Map();
+  storage.set('users/parent-1', {
+    uid: 'parent-1',
+    email: 'parent@test.com',
+    name: 'Parent',
+    roles: ['parent'],
+    status: 'active',
+  });
+
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<
+    typeof __setAdminDbForTests
+  >[0];
+  __setAdminDbForTests(fakeProvider);
+  setUsersDb(fakeProvider);
+
+  try {
+    await createConversation('parent-1', 'parent', {
+      targetUserId: 'nonexistent',
+      initialMessage: 'Hello',
+    });
+    assert.fail('Should have thrown');
+  } catch (err: any) {
+    assert.ok(err.message.includes('Target user not found'));
+  }
+
+  __setAdminDbForTests(null);
+  setUsersDb(null);
+});
+
+test('createConversation: should throw error if parent targets non-teacher', async () => {
+  const storage = new Map();
+  storage.set('users/parent-1', {
+    uid: 'parent-1',
+    email: 'parent@test.com',
+    name: 'Parent',
+    roles: ['parent'],
+    status: 'active',
+  });
+  storage.set('users/parent-2', {
+    uid: 'parent-2',
+    email: 'parent2@test.com',
+    name: 'Another Parent',
+    roles: ['parent'],
+    status: 'active',
+  });
+
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<
+    typeof __setAdminDbForTests
+  >[0];
+  __setAdminDbForTests(fakeProvider);
+  setUsersDb(fakeProvider);
+
+  try {
+    await createConversation('parent-1', 'parent', {
+      targetUserId: 'parent-2',
+      initialMessage: 'Hello',
+    });
+    assert.fail('Should have thrown');
+  } catch (err: any) {
+    assert.ok(err.message.includes('Target user is not a teacher'));
+  }
+
+  __setAdminDbForTests(null);
+  setUsersDb(null);
+});
+
+test('createConversation: should throw error if teacher targets non-parent', async () => {
+  const storage = new Map();
+  storage.set('users/teacher-1', {
+    uid: 'teacher-1',
+    email: 'teacher@test.com',
+    name: 'Teacher',
+    roles: ['teacher'],
+    status: 'active',
+  });
+  storage.set('users/teacher-2', {
+    uid: 'teacher-2',
+    email: 'teacher2@test.com',
+    name: 'Another Teacher',
+    roles: ['teacher'],
+    status: 'active',
+  });
+
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<
+    typeof __setAdminDbForTests
+  >[0];
+  __setAdminDbForTests(fakeProvider);
+  setUsersDb(fakeProvider);
+
+  try {
+    await createConversation('teacher-1', 'teacher', {
+      targetUserId: 'teacher-2',
+      initialMessage: 'Hello',
+    });
+    assert.fail('Should have thrown');
+  } catch (err: any) {
+    assert.ok(err.message.includes('Target user is not a parent'));
+  }
+
+  __setAdminDbForTests(null);
+  setUsersDb(null);
+});
+
+test('createConversation: should create conversation when parent initiates', async () => {
+  const storage = new Map();
+  storage.set('users/parent-1', {
+    uid: 'parent-1',
+    email: 'parent@test.com',
+    name: 'Parent User',
+    roles: ['parent'],
+    status: 'active',
+  });
+  storage.set('users/teacher-1', {
+    uid: 'teacher-1',
+    email: 'teacher@test.com',
+    name: 'Teacher User',
+    roles: ['teacher'],
+    status: 'active',
+  });
+
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<
+    typeof __setAdminDbForTests
+  >[0];
+  __setAdminDbForTests(fakeProvider);
+  setUsersDb(fakeProvider);
+
+  const result = await createConversation('parent-1', 'parent', {
+    targetUserId: 'teacher-1',
+    initialMessage: 'Hello teacher!',
+  });
+
+  assert.ok(result.conversation);
+  assert.ok(result.message);
+  assert.equal(result.conversation.parentId, 'parent-1');
+  assert.equal(result.conversation.teacherId, 'teacher-1');
+  assert.equal(result.message.content, 'Hello teacher!');
+  assert.equal(result.message.senderRole, 'parent');
+
+  __setAdminDbForTests(null);
+  setUsersDb(null);
+});
+
+test('createConversation: should create conversation when teacher initiates', async () => {
+  const storage = new Map();
+  storage.set('users/parent-1', {
+    uid: 'parent-1',
+    email: 'parent@test.com',
+    name: 'Parent User',
+    roles: ['parent'],
+    status: 'active',
+  });
+  storage.set('users/teacher-1', {
+    uid: 'teacher-1',
+    email: 'teacher@test.com',
+    name: 'Teacher User',
+    roles: ['teacher'],
+    status: 'active',
+  });
+
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<
+    typeof __setAdminDbForTests
+  >[0];
+  __setAdminDbForTests(fakeProvider);
+  setUsersDb(fakeProvider);
+
+  const result = await createConversation('teacher-1', 'teacher', {
+    targetUserId: 'parent-1',
+    initialMessage: 'Hello parent!',
+  });
+
+  assert.ok(result.conversation);
+  assert.ok(result.message);
+  assert.equal(result.conversation.parentId, 'parent-1');
+  assert.equal(result.conversation.teacherId, 'teacher-1');
+  assert.equal(result.message.senderRole, 'teacher');
+
+  __setAdminDbForTests(null);
+  setUsersDb(null);
+});
+
+test('createConversation: admin can message as teacher role', async () => {
+  const storage = new Map();
+  storage.set('users/parent-1', {
+    uid: 'parent-1',
+    email: 'parent@test.com',
+    name: 'Parent User',
+    roles: ['parent'],
+    status: 'active',
+  });
+  storage.set('users/admin-1', {
+    uid: 'admin-1',
+    email: 'admin@test.com',
+    name: 'Admin User',
+    roles: ['admin'],
+    status: 'active',
+  });
+
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<
+    typeof __setAdminDbForTests
+  >[0];
+  __setAdminDbForTests(fakeProvider);
+  setUsersDb(fakeProvider);
+
+  // Parent can target admin since admin has teacher-like permissions
+  const result = await createConversation('parent-1', 'parent', {
+    targetUserId: 'admin-1',
+    initialMessage: 'Question for admin',
+  });
+
+  assert.ok(result.conversation);
+  assert.equal(result.conversation.teacherId, 'admin-1');
+
+  __setAdminDbForTests(null);
+  setUsersDb(null);
+});
+
+test('createConversation: should add to existing conversation', async () => {
+  const storage = new Map();
+  storage.set('users/parent-1', {
+    uid: 'parent-1',
+    email: 'parent@test.com',
+    name: 'Parent User',
+    roles: ['parent'],
+    status: 'active',
+  });
+  storage.set('users/teacher-1', {
+    uid: 'teacher-1',
+    email: 'teacher@test.com',
+    name: 'Teacher User',
+    roles: ['teacher'],
+    status: 'active',
+  });
+  // Existing conversation
+  storage.set('conversations/existing-conv', {
+    parentId: 'parent-1',
+    teacherId: 'teacher-1',
+    parentName: 'Parent User',
+    teacherName: 'Teacher User',
+    teacherUnreadCount: 0,
+  });
+
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<
+    typeof __setAdminDbForTests
+  >[0];
+  __setAdminDbForTests(fakeProvider);
+  setUsersDb(fakeProvider);
+
+  const result = await createConversation('parent-1', 'parent', {
+    targetUserId: 'teacher-1',
+    initialMessage: 'Follow up message',
+  });
+
+  assert.ok(result.conversation);
+  assert.equal(result.conversation.id, 'existing-conv');
+  assert.ok(result.message);
+
+  __setAdminDbForTests(null);
+  setUsersDb(null);
+});
+
+test('createConversation: should include student and class context', async () => {
+  const storage = new Map();
+  storage.set('users/parent-1', {
+    uid: 'parent-1',
+    email: 'parent@test.com',
+    name: 'Parent User',
+    roles: ['parent'],
+    status: 'active',
+  });
+  storage.set('users/teacher-1', {
+    uid: 'teacher-1',
+    email: 'teacher@test.com',
+    name: 'Teacher User',
+    roles: ['teacher'],
+    status: 'active',
+  });
+  storage.set('students/student-1', {
+    firstName: 'John',
+    lastName: 'Doe',
+  });
+  storage.set('classes/class-1', {
+    name: 'Tamil 101',
+  });
+
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<
+    typeof __setAdminDbForTests
+  >[0];
+  __setAdminDbForTests(fakeProvider);
+  setUsersDb(fakeProvider);
+  setStudentsDb(fakeProvider);
+  setClassesDb(fakeProvider);
+
+  const result = await createConversation('parent-1', 'parent', {
+    targetUserId: 'teacher-1',
+    initialMessage: 'About my child',
+    studentId: 'student-1',
+    classId: 'class-1',
+  });
+
+  assert.ok(result.conversation);
+  assert.equal(result.conversation.studentName, 'John Doe');
+  assert.equal(result.conversation.className, 'Tamil 101');
+
+  __setAdminDbForTests(null);
+  setUsersDb(null);
+  setStudentsDb(null);
+  setClassesDb(null);
+});
+
+// ============================================
+// sendMessage tests
+// ============================================
+
+test('sendMessage: should throw error for non-existent conversation', async () => {
+  const storage = new Map();
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<
+    typeof __setAdminDbForTests
+  >[0];
+  __setAdminDbForTests(fakeProvider);
+
+  try {
+    await sendMessage('nonexistent', 'parent-1', 'parent', 'Hello');
+    assert.fail('Should have thrown');
+  } catch (err: any) {
+    assert.ok(err.message.includes('Conversation not found'));
+  }
+
+  __setAdminDbForTests(null);
+});
+
+test('sendMessage: should throw error for non-participant', async () => {
+  const storage = new Map();
+  storage.set('conversations/conv-1', {
+    parentId: 'parent-1',
+    teacherId: 'teacher-1',
+    parentName: 'Parent',
+    teacherName: 'Teacher',
+  });
+
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<
+    typeof __setAdminDbForTests
+  >[0];
+  __setAdminDbForTests(fakeProvider);
+
+  try {
+    await sendMessage('conv-1', 'other-user', 'parent', 'Hello');
+    assert.fail('Should have thrown');
+  } catch (err: any) {
+    assert.ok(err.message.includes('User is not a participant'));
+  }
+
+  __setAdminDbForTests(null);
+});
+
+test('sendMessage: should send message as parent', async () => {
+  const storage = new Map();
+  storage.set('conversations/conv-1', {
+    parentId: 'parent-1',
+    teacherId: 'teacher-1',
+    parentName: 'Parent User',
+    teacherName: 'Teacher User',
+    teacherUnreadCount: 0,
+  });
+
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<
+    typeof __setAdminDbForTests
+  >[0];
+  __setAdminDbForTests(fakeProvider);
+
+  const message = await sendMessage('conv-1', 'parent-1', 'parent', 'Hello teacher!');
+
+  assert.ok(message.id);
+  assert.equal(message.content, 'Hello teacher!');
+  assert.equal(message.senderRole, 'parent');
+  assert.equal(message.senderName, 'Parent User');
+
+  __setAdminDbForTests(null);
+});
+
+test('sendMessage: should send message as teacher', async () => {
+  const storage = new Map();
+  storage.set('conversations/conv-1', {
+    parentId: 'parent-1',
+    teacherId: 'teacher-1',
+    parentName: 'Parent User',
+    teacherName: 'Teacher User',
+    parentUnreadCount: 0,
+  });
+
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<
+    typeof __setAdminDbForTests
+  >[0];
+  __setAdminDbForTests(fakeProvider);
+
+  const message = await sendMessage('conv-1', 'teacher-1', 'teacher', 'Hello parent!');
+
+  assert.ok(message.id);
+  assert.equal(message.content, 'Hello parent!');
+  assert.equal(message.senderRole, 'teacher');
+  assert.equal(message.senderName, 'Teacher User');
+
+  __setAdminDbForTests(null);
+});
+
+// ============================================
+// markMessagesAsRead tests
+// ============================================
+
+test('markMessagesAsRead: should throw for non-existent conversation', async () => {
+  const storage = new Map();
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<
+    typeof __setAdminDbForTests
+  >[0];
+  __setAdminDbForTests(fakeProvider);
+
+  try {
+    await markMessagesAsRead('nonexistent', 'parent-1', 'parent');
+    assert.fail('Should have thrown');
+  } catch (err: any) {
+    assert.ok(err.message.includes('Conversation not found'));
+  }
+
+  __setAdminDbForTests(null);
+});
+
+test('markMessagesAsRead: should throw for non-participant', async () => {
+  const storage = new Map();
+  storage.set('conversations/conv-1', {
+    parentId: 'parent-1',
+    teacherId: 'teacher-1',
+    parentUnreadCount: 2,
+  });
+
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<
+    typeof __setAdminDbForTests
+  >[0];
+  __setAdminDbForTests(fakeProvider);
+
+  try {
+    await markMessagesAsRead('conv-1', 'other-user', 'parent');
+    assert.fail('Should have thrown');
+  } catch (err: any) {
+    assert.ok(err.message.includes('User is not a participant'));
+  }
+
+  __setAdminDbForTests(null);
+});
+
+test('markMessagesAsRead: should mark messages as read for parent', async () => {
+  const storage = new Map();
+  storage.set('conversations/conv-1', {
+    parentId: 'parent-1',
+    teacherId: 'teacher-1',
+    parentUnreadCount: 3,
+  });
+  storage.set('messages/msg-1', {
+    conversationId: 'conv-1',
+    senderId: 'teacher-1',
+    readAt: null,
+  });
+
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<
+    typeof __setAdminDbForTests
+  >[0];
+  __setAdminDbForTests(fakeProvider);
+
+  await markMessagesAsRead('conv-1', 'parent-1', 'parent');
+
+  const conv = storage.get('conversations/conv-1') as any;
+  assert.equal(conv.parentUnreadCount, 0);
+
+  __setAdminDbForTests(null);
+});
+
+test('markMessagesAsRead: should mark messages as read for teacher', async () => {
+  const storage = new Map();
+  storage.set('conversations/conv-1', {
+    parentId: 'parent-1',
+    teacherId: 'teacher-1',
+    teacherUnreadCount: 5,
+  });
+
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<
+    typeof __setAdminDbForTests
+  >[0];
+  __setAdminDbForTests(fakeProvider);
+
+  await markMessagesAsRead('conv-1', 'teacher-1', 'teacher');
+
+  const conv = storage.get('conversations/conv-1') as any;
+  assert.equal(conv.teacherUnreadCount, 0);
+
+  __setAdminDbForTests(null);
+});
+
+// ============================================
+// getConversationsForUser additional tests
+// ============================================
+
+test('getConversationsForUser: should filter by unreadOnly for parent', async () => {
+  const storage = new Map();
+  storage.set('conversations/conv-1', {
+    parentId: 'parent-1',
+    teacherId: 'teacher-1',
+    parentUnreadCount: 0,
+    lastMessageAt: { toDate: () => new Date() },
+  });
+  storage.set('conversations/conv-2', {
+    parentId: 'parent-1',
+    teacherId: 'teacher-2',
+    parentUnreadCount: 3,
+    lastMessageAt: { toDate: () => new Date() },
+  });
+
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<
+    typeof __setAdminDbForTests
+  >[0];
+  __setAdminDbForTests(fakeProvider);
+
+  const result = await getConversationsForUser('parent-1', 'parent', { unreadOnly: true });
+
+  assert.equal(result.total, 1);
+  assert.equal(result.conversations[0].parentUnreadCount, 3);
+
+  __setAdminDbForTests(null);
+});
+
+test('getConversationsForUser: should filter by unreadOnly for teacher', async () => {
+  const storage = new Map();
+  storage.set('conversations/conv-1', {
+    parentId: 'parent-1',
+    teacherId: 'teacher-1',
+    teacherUnreadCount: 0,
+    lastMessageAt: { toDate: () => new Date() },
+  });
+  storage.set('conversations/conv-2', {
+    parentId: 'parent-2',
+    teacherId: 'teacher-1',
+    teacherUnreadCount: 2,
+    lastMessageAt: { toDate: () => new Date() },
+  });
+
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<
+    typeof __setAdminDbForTests
+  >[0];
+  __setAdminDbForTests(fakeProvider);
+
+  const result = await getConversationsForUser('teacher-1', 'teacher', { unreadOnly: true });
+
+  assert.equal(result.total, 1);
+
+  __setAdminDbForTests(null);
+});
+
+test('getConversationsForUser: should apply pagination', async () => {
+  const storage = new Map();
+  for (let i = 1; i <= 5; i++) {
+    storage.set(`conversations/conv-${i}`, {
+      parentId: 'parent-1',
+      teacherId: `teacher-${i}`,
+      lastMessageAt: { toDate: () => new Date() },
+    });
+  }
+
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<
+    typeof __setAdminDbForTests
+  >[0];
+  __setAdminDbForTests(fakeProvider);
+
+  const result = await getConversationsForUser('parent-1', 'parent', { limit: 2, offset: 0 });
+
+  // Total should reflect all conversations, regardless of pagination
+  assert.equal(result.total, 5);
+  // Conversations should be returned (limit applied at db level)
+  assert.ok(result.conversations.length > 0);
+
+  __setAdminDbForTests(null);
+});
+
+// ============================================
+// getMessages additional tests
+// ============================================
+
+test('getMessages: should indicate hasMore when more messages exist', async () => {
+  const storage = new Map();
+  for (let i = 1; i <= 55; i++) {
+    storage.set(`messages/msg-${i}`, {
+      conversationId: 'conv-1',
+      senderId: 'parent-1',
+      content: `Message ${i}`,
+      createdAt: { toDate: () => new Date() },
+    });
+  }
+
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<
+    typeof __setAdminDbForTests
+  >[0];
+  __setAdminDbForTests(fakeProvider);
+
+  const result = await getMessages('conv-1', { limit: 50 });
+
+  assert.equal(result.hasMore, true);
+  assert.equal(result.messages.length, 50);
+
+  __setAdminDbForTests(null);
+});
+
+test('getMessages: should handle before parameter', async () => {
+  const storage = new Map();
+  storage.set('messages/msg-1', {
+    conversationId: 'conv-1',
+    content: 'First',
+    createdAt: { toDate: () => new Date('2024-01-01') },
+  });
+  storage.set('messages/msg-2', {
+    conversationId: 'conv-1',
+    content: 'Second',
+    createdAt: { toDate: () => new Date('2024-01-02') },
+  });
+  storage.set('messages/msg-3', {
+    conversationId: 'conv-1',
+    content: 'Third',
+    createdAt: { toDate: () => new Date('2024-01-03') },
+  });
+
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<
+    typeof __setAdminDbForTests
+  >[0];
+  __setAdminDbForTests(fakeProvider);
+
+  const result = await getMessages('conv-1', { before: 'msg-3' });
+
+  assert.ok(Array.isArray(result.messages));
+
+  __setAdminDbForTests(null);
+});
+
+test('getMessages: should handle non-existent before message', async () => {
+  const storage = new Map();
+  storage.set('messages/msg-1', {
+    conversationId: 'conv-1',
+    content: 'First',
+    createdAt: { toDate: () => new Date() },
+  });
+
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<
+    typeof __setAdminDbForTests
+  >[0];
+  __setAdminDbForTests(fakeProvider);
+
+  const result = await getMessages('conv-1', { before: 'nonexistent' });
+
+  assert.ok(Array.isArray(result.messages));
 
   __setAdminDbForTests(null);
 });

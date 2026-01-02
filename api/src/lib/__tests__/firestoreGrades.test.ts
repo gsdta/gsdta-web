@@ -2,13 +2,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { 
-  createGrade, 
-  getGradeById, 
-  getAllGrades, 
-  updateGrade, 
+import {
+  createGrade,
+  getGradeById,
+  getAllGrades,
+  updateGrade,
   seedDefaultGrades,
-  __setAdminDbForTests 
+  getActiveGradeOptions,
+  areGradesSeeded,
+  __setAdminDbForTests
 } from '../firestoreGrades';
 import { DEFAULT_GRADES } from '@/types/grade';
 
@@ -214,6 +216,90 @@ test('seedDefaultGrades: should seed defaults if missing', async () => {
     const run2 = await seedDefaultGrades('admin-seed');
     assert.equal(run2.created, 0);
     assert.equal(run2.skipped, DEFAULT_GRADES.length);
+
+    __setAdminDbForTests(null);
+});
+
+test('getActiveGradeOptions: should return only active grades as options', async () => {
+    const storage = new Map();
+    const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<typeof __setAdminDbForTests>[0];
+    __setAdminDbForTests(fakeProvider);
+
+    storage.set('grades/g1', {
+        name: 'Grade 1',
+        displayName: 'First Grade',
+        displayOrder: 1,
+        status: 'active'
+    });
+    storage.set('grades/g2', {
+        name: 'Grade 2',
+        displayName: 'Second Grade',
+        displayOrder: 2,
+        status: 'active'
+    });
+    storage.set('grades/g3', {
+        name: 'Grade 3',
+        displayName: 'Third Grade',
+        displayOrder: 3,
+        status: 'inactive'  // Should be excluded
+    });
+
+    const options = await getActiveGradeOptions();
+
+    assert.equal(options.length, 2);
+    assert.equal(options[0].id, 'g1');
+    assert.equal(options[0].name, 'Grade 1');
+    assert.equal(options[0].displayName, 'First Grade');
+    assert.equal(options[0].displayOrder, 1);
+    assert.equal(options[1].id, 'g2');
+    assert.equal(options[1].name, 'Grade 2');
+
+    __setAdminDbForTests(null);
+});
+
+test('getActiveGradeOptions: should return empty array when no active grades', async () => {
+    const storage = new Map();
+    const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<typeof __setAdminDbForTests>[0];
+    __setAdminDbForTests(fakeProvider);
+
+    storage.set('grades/g1', {
+        name: 'Grade 1',
+        displayName: 'First Grade',
+        displayOrder: 1,
+        status: 'inactive'
+    });
+
+    const options = await getActiveGradeOptions();
+    assert.equal(options.length, 0);
+
+    __setAdminDbForTests(null);
+});
+
+test('areGradesSeeded: should return true when grades exist', async () => {
+    const storage = new Map();
+    const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<typeof __setAdminDbForTests>[0];
+    __setAdminDbForTests(fakeProvider);
+
+    storage.set('grades/g1', {
+        name: 'Grade 1',
+        displayName: 'First Grade',
+        displayOrder: 1,
+        status: 'active'
+    });
+
+    const seeded = await areGradesSeeded();
+    assert.equal(seeded, true);
+
+    __setAdminDbForTests(null);
+});
+
+test('areGradesSeeded: should return false when no grades exist', async () => {
+    const storage = new Map();
+    const fakeProvider = (() => makeFakeDb(storage)) as unknown as Parameters<typeof __setAdminDbForTests>[0];
+    __setAdminDbForTests(fakeProvider);
+
+    const seeded = await areGradesSeeded();
+    assert.equal(seeded, false);
 
     __setAdminDbForTests(null);
 });
