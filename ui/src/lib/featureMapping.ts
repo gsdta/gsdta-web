@@ -46,6 +46,7 @@ export const adminFeatureMap: Record<string, AdminFeature> = {
 
   // Calendar
   "/admin/calendar": "Calendar",
+  "/admin/calendar/new": "Calendar",
 };
 
 // Teacher path to feature mapping
@@ -94,14 +95,17 @@ export function getFeatureFromPath(
         ? teacherFeatureMap
         : parentFeatureMap;
 
+  // Strip query parameters from path
+  const cleanPath = path.split("?")[0];
+
   // Check exact match first
-  if (path in map) {
-    return map[path] as AdminFeature | TeacherFeature | ParentFeature;
+  if (cleanPath in map) {
+    return map[cleanPath] as AdminFeature | TeacherFeature | ParentFeature;
   }
 
   // Check prefix match (for dynamic routes like /admin/classes/[id]/edit)
   for (const [routePath, feature] of Object.entries(map)) {
-    if (path.startsWith(routePath + "/")) {
+    if (cleanPath.startsWith(routePath + "/")) {
       return feature as AdminFeature | TeacherFeature | ParentFeature;
     }
   }

@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ParentDashboard from '../page';
 import { useAuth } from '@/components/AuthProvider';
+import { FeatureFlagsProvider } from '@/context/FeatureFlagsContext';
 
 // Mocks
 jest.mock('@/components/AuthProvider', () => ({
@@ -22,6 +23,14 @@ jest.mock('next/link', () => {
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
 
+const renderWithProvider = (component: React.ReactNode) => {
+  return render(
+    <FeatureFlagsProvider>
+      {component}
+    </FeatureFlagsProvider>
+  );
+};
+
 describe('ParentDashboard', () => {
   const mockUser = {
     uid: 'test-parent-uid',
@@ -38,33 +47,72 @@ describe('ParentDashboard', () => {
     });
   });
 
+  // Helper to setup fetch mock for both feature flags and students API
+  const setupFetchMock = (studentsResponse: unknown) => {
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes('/api/v1/feature-flags')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({
+            success: true,
+            data: {
+              flags: {
+                parent: {
+                  Students: { enabled: true },
+                  StudentRegistration: { enabled: true },
+                  Messaging: { enabled: true },
+                  Profile: { enabled: true },
+                  Settings: { enabled: true },
+                },
+              },
+              descriptions: {},
+            },
+          }),
+        });
+      }
+      // Students API
+      return Promise.resolve(studentsResponse);
+    });
+  };
+
   test('PD-001: Renders welcome message with user name', async () => {
-    mockFetch.mockResolvedValue({
+    setupFetchMock({
       ok: true,
       json: () => Promise.resolve({ data: { students: [] } }),
     });
 
-    render(<ParentDashboard />);
+    renderWithProvider(<ParentDashboard />);
 
     expect(screen.getByText(/Welcome back, Test Parent!/)).toBeInTheDocument();
   });
 
   test('PD-002: Renders loading state initially', async () => {
-    mockFetch.mockImplementation(() => new Promise(() => {})); // Never resolves
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes('/api/v1/feature-flags')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({
+            success: true,
+            data: { flags: { parent: {} }, descriptions: {} },
+          }),
+        });
+      }
+      return new Promise(() => {}); // Never resolves for students
+    });
 
-    render(<ParentDashboard />);
+    renderWithProvider(<ParentDashboard />);
 
     // Stats show "..." during loading
     expect(screen.getAllByText('...')).toHaveLength(2); // Linked Students and Active Students
   });
 
   test('PD-003: Renders Register Student quick action link', async () => {
-    mockFetch.mockResolvedValue({
+    setupFetchMock({
       ok: true,
       json: () => Promise.resolve({ data: { students: [] } }),
     });
 
-    render(<ParentDashboard />);
+    renderWithProvider(<ParentDashboard />);
 
     await waitFor(() => {
       expect(screen.queryAllByText('...')).toHaveLength(0);
@@ -76,12 +124,12 @@ describe('ParentDashboard', () => {
   });
 
   test('PD-004: Renders all quick action links', async () => {
-    mockFetch.mockResolvedValue({
+    setupFetchMock({
       ok: true,
       json: () => Promise.resolve({ data: { students: [] } }),
     });
 
-    render(<ParentDashboard />);
+    renderWithProvider(<ParentDashboard />);
 
     await waitFor(() => {
       expect(screen.queryAllByText('...')).toHaveLength(0);
@@ -92,15 +140,16 @@ describe('ParentDashboard', () => {
     expect(screen.getByRole('link', { name: /My Students/i })).toHaveAttribute('href', '/parent/students');
     expect(screen.getByRole('link', { name: /My Profile/i })).toHaveAttribute('href', '/parent/profile');
     expect(screen.getByRole('link', { name: /Settings/i })).toHaveAttribute('href', '/parent/settings');
+    expect(screen.getByRole('link', { name: /Messages/i })).toHaveAttribute('href', '/parent/messages');
   });
 
   test('PD-005: Renders empty state with register button when no students', async () => {
-    mockFetch.mockResolvedValue({
+    setupFetchMock({
       ok: true,
       json: () => Promise.resolve({ data: { students: [] } }),
     });
 
-    render(<ParentDashboard />);
+    renderWithProvider(<ParentDashboard />);
 
     await waitFor(() => {
       expect(screen.queryAllByText('...')).toHaveLength(0);
@@ -118,12 +167,12 @@ describe('ParentDashboard', () => {
       { id: '2', name: 'Priya Kumar', grade: '3', status: 'pending' },
     ];
 
-    mockFetch.mockResolvedValue({
+    setupFetchMock({
       ok: true,
       json: () => Promise.resolve({ data: { students: mockStudents } }),
     });
 
-    render(<ParentDashboard />);
+    renderWithProvider(<ParentDashboard />);
 
     await waitFor(() => {
       expect(screen.getByText('Arun Kumar')).toBeInTheDocument();
@@ -138,12 +187,12 @@ describe('ParentDashboard', () => {
       { id: '3', name: 'Student 3', status: 'pending' },
     ];
 
-    mockFetch.mockResolvedValue({
+    setupFetchMock({
       ok: true,
       json: () => Promise.resolve({ data: { students: mockStudents } }),
     });
 
-    render(<ParentDashboard />);
+    renderWithProvider(<ParentDashboard />);
 
     await waitFor(() => {
       // Linked Students = 3
@@ -158,12 +207,12 @@ describe('ParentDashboard', () => {
       { id: '1', name: 'Arun Kumar', status: 'active' },
     ];
 
-    mockFetch.mockResolvedValue({
+    setupFetchMock({
       ok: true,
       json: () => Promise.resolve({ data: { students: mockStudents } }),
     });
 
-    render(<ParentDashboard />);
+    renderWithProvider(<ParentDashboard />);
 
     await waitFor(() => {
       expect(screen.queryByText('No students registered yet')).not.toBeInTheDocument();
@@ -175,12 +224,12 @@ describe('ParentDashboard', () => {
       { id: '1', name: 'Arun Kumar', status: 'active' },
     ];
 
-    mockFetch.mockResolvedValue({
+    setupFetchMock({
       ok: true,
       json: () => Promise.resolve({ data: { students: mockStudents } }),
     });
 
-    render(<ParentDashboard />);
+    renderWithProvider(<ParentDashboard />);
 
     await waitFor(() => {
       expect(screen.getByText('Your Students')).toBeInTheDocument();
@@ -191,12 +240,12 @@ describe('ParentDashboard', () => {
   });
 
   test('PD-010: Handles API error gracefully', async () => {
-    mockFetch.mockResolvedValue({
+    setupFetchMock({
       ok: false,
       status: 500,
     });
 
-    render(<ParentDashboard />);
+    renderWithProvider(<ParentDashboard />);
 
     await waitFor(() => {
       // Should show 0 students (fallback) - both linked and active will be 0
@@ -214,12 +263,12 @@ describe('ParentDashboard', () => {
       { id: '2', name: 'Pending Student', status: 'pending' },
     ];
 
-    mockFetch.mockResolvedValue({
+    setupFetchMock({
       ok: true,
       json: () => Promise.resolve({ data: { students: mockStudents } }),
     });
 
-    render(<ParentDashboard />);
+    renderWithProvider(<ParentDashboard />);
 
     await waitFor(() => {
       expect(screen.getByText('active')).toBeInTheDocument();

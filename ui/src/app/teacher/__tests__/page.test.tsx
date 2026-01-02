@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import TeacherDashboardPage from '../page';
 import { getTeacherDashboard } from '@/lib/teacher-api';
+import { FeatureFlagsProvider } from '@/context/FeatureFlagsContext';
 
 jest.mock('@/lib/teacher-api', () => ({
   getTeacherDashboard: jest.fn(),
@@ -15,6 +16,18 @@ jest.mock('next/link', () => {
     </a>
   );
 });
+
+// Mock fetch for feature flags
+const mockFetch = jest.fn();
+global.fetch = mockFetch;
+
+const renderWithProvider = (component: React.ReactNode) => {
+  return render(
+    <FeatureFlagsProvider>
+      {component}
+    </FeatureFlagsProvider>
+  );
+};
 
 describe('TeacherDashboardPage', () => {
   const mockDashboard = {
@@ -48,17 +61,34 @@ describe('TeacherDashboardPage', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Mock feature flags API to return all features enabled
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({
+        success: true,
+        data: {
+          flags: {
+            teacher: {
+              Classes: { enabled: true },
+              Attendance: { enabled: true },
+              Messaging: { enabled: true },
+            },
+          },
+          descriptions: {},
+        },
+      }),
+    });
   });
 
   test('TD-001: Renders loading state initially', () => {
     (getTeacherDashboard as jest.Mock).mockImplementation(() => new Promise(() => {}));
-    render(<TeacherDashboardPage />);
+    renderWithProvider(<TeacherDashboardPage />);
     expect(document.querySelector('.animate-spin')).toBeInTheDocument();
   });
 
   test('TD-002: Renders welcome message with teacher name', async () => {
     (getTeacherDashboard as jest.Mock).mockResolvedValue(mockDashboard);
-    render(<TeacherDashboardPage />);
+    renderWithProvider(<TeacherDashboardPage />);
     await waitFor(() => {
       expect(screen.getByText(/Welcome, John Smith/i)).toBeInTheDocument();
     });
@@ -66,7 +96,7 @@ describe('TeacherDashboardPage', () => {
 
   test('TD-003: Displays stats overview', async () => {
     (getTeacherDashboard as jest.Mock).mockResolvedValue(mockDashboard);
-    render(<TeacherDashboardPage />);
+    renderWithProvider(<TeacherDashboardPage />);
     await waitFor(() => {
       expect(screen.getByText('3')).toBeInTheDocument();
       expect(screen.getByText('Assigned Classes')).toBeInTheDocument();
@@ -77,7 +107,7 @@ describe('TeacherDashboardPage', () => {
 
   test('TD-004: Shows today\'s schedule when classes exist', async () => {
     (getTeacherDashboard as jest.Mock).mockResolvedValue(mockDashboard);
-    render(<TeacherDashboardPage />);
+    renderWithProvider(<TeacherDashboardPage />);
     await waitFor(() => {
       expect(screen.getByText(/Today's Schedule/i)).toBeInTheDocument();
       // Tamil Beginners appears multiple times, just check at least one exists
@@ -87,7 +117,7 @@ describe('TeacherDashboardPage', () => {
 
   test('TD-005: Renders quick actions section', async () => {
     (getTeacherDashboard as jest.Mock).mockResolvedValue(mockDashboard);
-    render(<TeacherDashboardPage />);
+    renderWithProvider(<TeacherDashboardPage />);
     await waitFor(() => {
       expect(screen.getByText('Quick Actions')).toBeInTheDocument();
       // These texts appear multiple times in the dashboard
@@ -98,7 +128,7 @@ describe('TeacherDashboardPage', () => {
 
   test('TD-006: Quick action links have correct hrefs', async () => {
     (getTeacherDashboard as jest.Mock).mockResolvedValue(mockDashboard);
-    render(<TeacherDashboardPage />);
+    renderWithProvider(<TeacherDashboardPage />);
     await waitFor(() => {
       expect(screen.getByRole('link', { name: /My Classes/i })).toHaveAttribute('href', '/teacher/classes');
     });
@@ -106,7 +136,7 @@ describe('TeacherDashboardPage', () => {
 
   test('TD-007: Shows error state on API failure', async () => {
     (getTeacherDashboard as jest.Mock).mockRejectedValue(new Error('Failed to load'));
-    render(<TeacherDashboardPage />);
+    renderWithProvider(<TeacherDashboardPage />);
     await waitFor(() => {
       expect(screen.getByText('Failed to load')).toBeInTheDocument();
     });
@@ -114,7 +144,7 @@ describe('TeacherDashboardPage', () => {
 
   test('TD-008: Shows Mark Attendance button when no attendance for today', async () => {
     (getTeacherDashboard as jest.Mock).mockResolvedValue(mockDashboard);
-    render(<TeacherDashboardPage />);
+    renderWithProvider(<TeacherDashboardPage />);
     await waitFor(() => {
       const markBtn = screen.getAllByRole('link', { name: /Mark Attendance/i })[0];
       expect(markBtn).toHaveAttribute('href', '/teacher/classes/class-1/attendance/mark');
@@ -132,7 +162,7 @@ describe('TeacherDashboardPage', () => {
       ],
     };
     (getTeacherDashboard as jest.Mock).mockResolvedValue(dashWithAttendance);
-    render(<TeacherDashboardPage />);
+    renderWithProvider(<TeacherDashboardPage />);
     await waitFor(() => {
       expect(screen.getByText('80% present')).toBeInTheDocument();
     });
@@ -140,11 +170,19 @@ describe('TeacherDashboardPage', () => {
 
   test('TD-010: My Classes section shows class cards', async () => {
     (getTeacherDashboard as jest.Mock).mockResolvedValue(mockDashboard);
-    render(<TeacherDashboardPage />);
+    renderWithProvider(<TeacherDashboardPage />);
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'My Classes' })).toBeInTheDocument();
       const classLink = screen.getByRole('link', { name: /Tamil Beginners.*Grade 1/s });
       expect(classLink).toHaveAttribute('href', '/teacher/classes/class-1');
+    });
+  });
+
+  test('TD-011: Messages quick action link exists', async () => {
+    (getTeacherDashboard as jest.Mock).mockResolvedValue(mockDashboard);
+    renderWithProvider(<TeacherDashboardPage />);
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: /Messages/i })).toHaveAttribute('href', '/teacher/messages');
     });
   });
 });
