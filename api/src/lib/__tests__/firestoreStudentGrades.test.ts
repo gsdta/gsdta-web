@@ -2,12 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   createOrUpdateGrade,
+  bulkCreateGrades,
   getGradeById,
   getGradesByAssignment,
   getGradesByStudent,
+  getGradesByStudentAndClass,
+  getGrades,
   updateGrade,
   deleteGrade,
   getGradebook,
+  calculateStudentClassGrade,
   __setAdminDbForTests,
 } from '../firestoreStudentGrades';
 import { __setAdminDbForTests as setClassesDbForTests } from '../firestoreClasses';
@@ -80,10 +84,11 @@ function makeFakeDb(storage: Map<string, StoredDoc> = new Map(), counterRef: { v
             });
           }
 
-          return {
+          const queryResult = {
             where: (f2: string, o2: string, v2: unknown) => {
               return buildQuery([...filters, { field: f2, op: o2, value: v2 }]);
             },
+            orderBy: () => queryResult,
             limit: (n: number) => ({
               get: async () => ({ docs: docs.slice(0, n), empty: docs.length === 0 }),
             }),
@@ -97,6 +102,8 @@ function makeFakeDb(storage: Map<string, StoredDoc> = new Map(), counterRef: { v
             }),
             get: async () => ({ docs, empty: docs.length === 0 }),
           };
+
+          return queryResult;
         };
 
         return buildQuery([{ field, op, value }]);
@@ -412,6 +419,625 @@ test('deleteGrade: should return false for non-existent grade', async () => {
   try {
     const result = await deleteGrade('non-existent-id');
     assert.equal(result, false);
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+// ============================================
+// createOrUpdateGrade edge cases
+// ============================================
+
+test('createOrUpdateGrade: should throw when assignment not found', async () => {
+  setupTestDb();
+
+  try {
+    await createOrUpdateGrade(
+      'non-existent-assignment',
+      { studentId: 'student-1', pointsEarned: 85 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+    assert.fail('Should have thrown');
+  } catch (err) {
+    assert.ok(err instanceof Error);
+    assert.ok((err as Error).message.includes('Assignment not found'));
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+test('createOrUpdateGrade: should throw when class not found', async () => {
+  const { storage } = setupTestDb();
+  // Create assignment with non-existent class
+  storage.set('assignments/assignment-bad-class', {
+    classId: 'non-existent-class',
+    title: 'Bad Assignment',
+    type: 'homework',
+    maxPoints: 100,
+    status: 'published',
+    docStatus: 'active',
+  });
+
+  try {
+    await createOrUpdateGrade(
+      'assignment-bad-class',
+      { studentId: 'student-1', pointsEarned: 85 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+    assert.fail('Should have thrown');
+  } catch (err) {
+    assert.ok(err instanceof Error);
+    assert.ok((err as Error).message.includes('Class not found'));
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+test('createOrUpdateGrade: should throw when student not found', async () => {
+  setupTestDb();
+
+  try {
+    await createOrUpdateGrade(
+      'assignment-1',
+      { studentId: 'non-existent-student', pointsEarned: 85 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+    assert.fail('Should have thrown');
+  } catch (err) {
+    assert.ok(err instanceof Error);
+    assert.ok((err as Error).message.includes('Student not found'));
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+test('createOrUpdateGrade: should include feedback when provided', async () => {
+  setupTestDb();
+
+  try {
+    const grade = await createOrUpdateGrade(
+      'assignment-1',
+      { studentId: 'student-1', pointsEarned: 85, feedback: 'Great work!' },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    assert.equal(grade.feedback, 'Great work!');
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+test('createOrUpdateGrade: should limit edit history entries', async () => {
+  setupTestDb();
+
+  try {
+    // Create initial grade
+    await createOrUpdateGrade(
+      'assignment-1',
+      { studentId: 'student-1', pointsEarned: 1 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    // Update many times to exceed MAX_EDIT_HISTORY (50)
+    for (let i = 2; i <= 55; i++) {
+      await createOrUpdateGrade(
+        'assignment-1',
+        { studentId: 'student-1', pointsEarned: i },
+        'teacher-uid',
+        'Teacher Name'
+      );
+    }
+
+    const grade = await createOrUpdateGrade(
+      'assignment-1',
+      { studentId: 'student-1', pointsEarned: 100 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    // Edit history should be limited to 50
+    assert.ok(grade.editHistory);
+    assert.ok(grade.editHistory!.length <= 50);
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+// ============================================
+// bulkCreateGrades tests
+// ============================================
+
+test('bulkCreateGrades: should create multiple grades', async () => {
+  setupTestDb();
+
+  try {
+    const grades = await bulkCreateGrades(
+      'assignment-1',
+      [
+        { studentId: 'student-1', pointsEarned: 85 },
+        { studentId: 'student-2', pointsEarned: 92 },
+      ],
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    assert.equal(grades.length, 2);
+    assert.equal(grades[0].studentId, 'student-1');
+    assert.equal(grades[0].pointsEarned, 85);
+    assert.equal(grades[1].studentId, 'student-2');
+    assert.equal(grades[1].pointsEarned, 92);
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+// ============================================
+// getGradesByStudentAndClass tests
+// ============================================
+
+test('getGradesByStudentAndClass: should return grades for student in class', async () => {
+  const { storage } = setupTestDb();
+
+  // Add second assignment
+  storage.set('assignments/assignment-2', {
+    classId: 'class-1',
+    title: 'Quiz 1',
+    type: 'quiz',
+    maxPoints: 50,
+    status: 'published',
+    docStatus: 'active',
+  });
+
+  try {
+    await createOrUpdateGrade(
+      'assignment-1',
+      { studentId: 'student-1', pointsEarned: 85 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    await createOrUpdateGrade(
+      'assignment-2',
+      { studentId: 'student-1', pointsEarned: 45 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    const grades = await getGradesByStudentAndClass('student-1', 'class-1');
+
+    assert.equal(grades.length, 2);
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+// ============================================
+// getGrades with filters tests
+// ============================================
+
+test('getGrades: should return paginated grades', async () => {
+  setupTestDb();
+
+  try {
+    await createOrUpdateGrade(
+      'assignment-1',
+      { studentId: 'student-1', pointsEarned: 85 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    await createOrUpdateGrade(
+      'assignment-1',
+      { studentId: 'student-2', pointsEarned: 92 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    const result = await getGrades({ limit: 1, offset: 0 });
+
+    assert.ok(result.grades.length <= 1);
+    assert.ok(result.total >= 2);
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+test('getGrades: should filter by assignmentId', async () => {
+  const { storage } = setupTestDb();
+
+  storage.set('assignments/assignment-2', {
+    classId: 'class-1',
+    title: 'Quiz 1',
+    type: 'quiz',
+    maxPoints: 50,
+    status: 'published',
+    docStatus: 'active',
+  });
+
+  try {
+    await createOrUpdateGrade(
+      'assignment-1',
+      { studentId: 'student-1', pointsEarned: 85 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    await createOrUpdateGrade(
+      'assignment-2',
+      { studentId: 'student-1', pointsEarned: 45 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    const result = await getGrades({ assignmentId: 'assignment-1' });
+
+    assert.ok(result.grades.every(g => g.assignmentId === 'assignment-1'));
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+test('getGrades: should filter by studentId', async () => {
+  setupTestDb();
+
+  try {
+    await createOrUpdateGrade(
+      'assignment-1',
+      { studentId: 'student-1', pointsEarned: 85 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    await createOrUpdateGrade(
+      'assignment-1',
+      { studentId: 'student-2', pointsEarned: 92 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    const result = await getGrades({ studentId: 'student-1' });
+
+    assert.ok(result.grades.every(g => g.studentId === 'student-1'));
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+test('getGrades: should filter by classId', async () => {
+  setupTestDb();
+
+  try {
+    await createOrUpdateGrade(
+      'assignment-1',
+      { studentId: 'student-1', pointsEarned: 85 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    const result = await getGrades({ classId: 'class-1' });
+
+    assert.ok(result.grades.every(g => g.classId === 'class-1'));
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+// ============================================
+// updateGrade edge cases
+// ============================================
+
+test('updateGrade: should return null for deleted grade', async () => {
+  setupTestDb();
+
+  try {
+    const created = await createOrUpdateGrade(
+      'assignment-1',
+      { studentId: 'student-1', pointsEarned: 75 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    await deleteGrade(created.id);
+
+    const result = await updateGrade(
+      created.id,
+      { pointsEarned: 88 },
+      'editor-uid',
+      'Editor Name'
+    );
+
+    assert.equal(result, null);
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+test('updateGrade: should update feedback only', async () => {
+  setupTestDb();
+
+  try {
+    const created = await createOrUpdateGrade(
+      'assignment-1',
+      { studentId: 'student-1', pointsEarned: 75 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    const updated = await updateGrade(
+      created.id,
+      { feedback: 'New feedback' },
+      'editor-uid',
+      'Editor Name'
+    );
+
+    assert.ok(updated);
+    assert.equal(updated.pointsEarned, 75); // Unchanged
+    assert.equal(updated.feedback, 'New feedback');
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+test('updateGrade: should limit edit history entries', async () => {
+  setupTestDb();
+
+  try {
+    const created = await createOrUpdateGrade(
+      'assignment-1',
+      { studentId: 'student-1', pointsEarned: 1 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    // Update many times to exceed MAX_EDIT_HISTORY (50)
+    let lastGrade = created;
+    for (let i = 2; i <= 55; i++) {
+      const updated = await updateGrade(
+        created.id,
+        { pointsEarned: i },
+        'editor-uid',
+        'Editor Name'
+      );
+      if (updated) lastGrade = updated;
+    }
+
+    // Edit history should be limited to 50
+    assert.ok(lastGrade.editHistory);
+    assert.ok(lastGrade.editHistory!.length <= 50);
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+// ============================================
+// deleteGrade edge cases
+// ============================================
+
+test('deleteGrade: should return false for already deleted grade', async () => {
+  setupTestDb();
+
+  try {
+    const created = await createOrUpdateGrade(
+      'assignment-1',
+      { studentId: 'student-1', pointsEarned: 80 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    await deleteGrade(created.id);
+    const result = await deleteGrade(created.id);
+
+    assert.equal(result, false);
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+// ============================================
+// getGradeById edge cases
+// ============================================
+
+test('getGradeById: should return null for deleted grade', async () => {
+  setupTestDb();
+
+  try {
+    const created = await createOrUpdateGrade(
+      'assignment-1',
+      { studentId: 'student-1', pointsEarned: 80 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    await deleteGrade(created.id);
+    const result = await getGradeById(created.id);
+
+    assert.equal(result, null);
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+// ============================================
+// getGradebook tests
+// ============================================
+
+test('getGradebook: should return null for non-existent class', async () => {
+  setupTestDb();
+
+  try {
+    const result = await getGradebook('non-existent-class');
+    assert.equal(result, null);
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+test('getGradebook: should return gradebook for class', async () => {
+  setupTestDb();
+
+  try {
+    await createOrUpdateGrade(
+      'assignment-1',
+      { studentId: 'student-1', pointsEarned: 85 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    await createOrUpdateGrade(
+      'assignment-1',
+      { studentId: 'student-2', pointsEarned: 92 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    const gradebook = await getGradebook('class-1');
+
+    assert.ok(gradebook);
+    assert.equal(gradebook.classId, 'class-1');
+    assert.equal(gradebook.className, 'KG Class A');
+    assert.ok(Array.isArray(gradebook.students));
+    assert.ok(Array.isArray(gradebook.assignments));
+    assert.ok(typeof gradebook.classAverage === 'number');
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+test('getGradebook: should calculate student averages', async () => {
+  const { storage } = setupTestDb();
+
+  // Add second assignment
+  storage.set('assignments/assignment-2', {
+    classId: 'class-1',
+    title: 'Quiz 1',
+    type: 'quiz',
+    maxPoints: 50,
+    status: 'published',
+    docStatus: 'active',
+  });
+
+  try {
+    await createOrUpdateGrade(
+      'assignment-1',
+      { studentId: 'student-1', pointsEarned: 80 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    await createOrUpdateGrade(
+      'assignment-2',
+      { studentId: 'student-1', pointsEarned: 40 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    const gradebook = await getGradebook('class-1');
+
+    assert.ok(gradebook);
+    const student1Row = gradebook.students.find(s => s.studentId === 'student-1');
+    assert.ok(student1Row);
+    // 80/100 + 40/50 = 120/150 = 80%
+    assert.equal(student1Row.averagePercentage, 80);
+    assert.equal(student1Row.letterGrade, 'B');
+    assert.equal(student1Row.totalPoints, 120);
+    assert.equal(student1Row.maxPoints, 150);
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+test('getGradebook: should sort students by name', async () => {
+  setupTestDb();
+
+  try {
+    await createOrUpdateGrade(
+      'assignment-1',
+      { studentId: 'student-2', pointsEarned: 92 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    await createOrUpdateGrade(
+      'assignment-1',
+      { studentId: 'student-1', pointsEarned: 85 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    const gradebook = await getGradebook('class-1');
+
+    assert.ok(gradebook);
+    // Students should be sorted by name (Jane Smith before John Doe)
+    if (gradebook.students.length >= 2) {
+      const names = gradebook.students.map(s => s.studentName);
+      const sortedNames = [...names].sort((a, b) => a.localeCompare(b));
+      assert.deepEqual(names, sortedNames);
+    }
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+// ============================================
+// calculateStudentClassGrade tests
+// ============================================
+
+test('calculateStudentClassGrade: should calculate overall grade', async () => {
+  const { storage } = setupTestDb();
+
+  storage.set('assignments/assignment-2', {
+    classId: 'class-1',
+    title: 'Quiz 1',
+    type: 'quiz',
+    maxPoints: 50,
+    status: 'published',
+    docStatus: 'active',
+  });
+
+  try {
+    await createOrUpdateGrade(
+      'assignment-1',
+      { studentId: 'student-1', pointsEarned: 90 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    await createOrUpdateGrade(
+      'assignment-2',
+      { studentId: 'student-1', pointsEarned: 45 },
+      'teacher-uid',
+      'Teacher Name'
+    );
+
+    const result = await calculateStudentClassGrade('student-1', 'class-1');
+
+    // 90/100 + 45/50 = 135/150 = 90%
+    assert.equal(result.percentage, 90);
+    assert.equal(result.letterGrade, 'A');
+    assert.equal(result.totalPoints, 135);
+    assert.equal(result.maxPoints, 150);
+    assert.equal(result.gradeCount, 2);
+  } finally {
+    cleanupTestDb();
+  }
+});
+
+test('calculateStudentClassGrade: should return zero for no grades', async () => {
+  setupTestDb();
+
+  try {
+    const result = await calculateStudentClassGrade('student-1', 'class-1');
+
+    assert.equal(result.percentage, 0);
+    assert.equal(result.letterGrade, 'F');
+    assert.equal(result.totalPoints, 0);
+    assert.equal(result.maxPoints, 0);
+    assert.equal(result.gradeCount, 0);
   } finally {
     cleanupTestDb();
   }

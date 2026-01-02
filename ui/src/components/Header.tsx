@@ -62,11 +62,6 @@ export function Header() {
                             {t(item.labelKey)}
                         </Link>
                     ))}
-                    {user && (
-                        <Link href={getDashboardUrl(user.role)} className="hover:underline text-gray-900 font-medium">
-                            {t("nav.dashboard")}
-                        </Link>
-                    )}
                     {/* Contact intentionally removed from header */}
                     <LanguageSwitcher />
                     {user ? (
@@ -117,11 +112,6 @@ export function Header() {
                                 {t(item.labelKey)}
                             </Link>
                         ))}
-                        {user && (
-                            <Link href={getDashboardUrl(user.role)} className="hover:underline text-gray-900 font-medium" onClick={close}>
-                                {t("nav.dashboard")}
-                            </Link>
-                        )}
                         {user ? (
                             <UserDropdownMobile onItemClick={close} />
                         ) : (

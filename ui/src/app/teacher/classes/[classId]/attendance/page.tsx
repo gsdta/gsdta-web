@@ -16,15 +16,21 @@ export default function TeacherAttendanceHistoryPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  const loadData = useCallback(async () => {
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 50;
+
+  const loadData = useCallback(async (page: number = currentPage) => {
     try {
       setLoading(true);
+      const offset = (page - 1) * pageSize;
       const [cls, att] = await Promise.all([
         getTeacherClass(classId),
         getClassAttendance(classId, {
           startDate: startDate || undefined,
           endDate: endDate || undefined,
-          limit: 50,
+          limit: pageSize,
+          offset,
         }),
       ]);
       setClassData(cls);
@@ -34,11 +40,24 @@ export default function TeacherAttendanceHistoryPage() {
     } finally {
       setLoading(false);
     }
-  }, [classId, startDate, endDate]);
+  }, [classId, startDate, endDate, currentPage, pageSize]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [startDate, endDate]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    loadData(page);
+  };
+
+  const totalPages = attendance ? Math.ceil(attendance.total / pageSize) : 0;
+  const hasMore = attendance ? (attendance.offset + attendance.records.length) < attendance.total : false;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -235,6 +254,59 @@ export default function TeacherAttendanceHistoryPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+              <div className="text-sm text-gray-500">
+                Showing {(currentPage - 1) * pageSize + 1} to{' '}
+                {Math.min(currentPage * pageSize, attendance?.total || 0)} of {attendance?.total || 0} records
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  Previous
+                </button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum: number;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`px-3 py-1 text-sm rounded-md ${
+                          currentPage === pageNum
+                            ? 'bg-green-600 text-white'
+                            : 'border border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={!hasMore}
+                  className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

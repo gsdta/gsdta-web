@@ -25,6 +25,12 @@ export default function AdminStudentsPage() {
   const [admittingId, setAdmittingId] = useState<string | null>(null);
   const { selectedItem, menuPosition, handleRowClick, closeMenu, isMenuOpen } = useTableRowActions<Student>();
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalStudents, setTotalStudents] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const pageSize = 50;
+
   const handleAdmit = async (studentId: string) => {
     if (!confirm('Are you sure you want to admit this student?')) return;
 
@@ -58,16 +64,23 @@ export default function AdminStudentsPage() {
     },
   ];
 
-  const fetchStudents = useCallback(async () => {
+  const fetchStudents = useCallback(async (page: number = currentPage) => {
     try {
       setLoading(true);
+      const offset = (page - 1) * pageSize;
       const result = await adminGetStudents(getIdToken, {
         status: statusFilter,
         search: searchQuery || undefined,
+        limit: pageSize,
+        offset,
       });
       setStudents(result.students);
       if (result.counts) {
         setCounts(result.counts);
+      }
+      if (result.pagination) {
+        setTotalStudents(result.pagination.total);
+        setHasMore(result.pagination.hasMore);
       }
     } catch (err) {
       console.error('Failed to fetch students:', err);
@@ -75,14 +88,20 @@ export default function AdminStudentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [getIdToken, statusFilter, searchQuery]);
+  }, [getIdToken, statusFilter, searchQuery, currentPage, pageSize]);
 
   useEffect(() => {
     fetchStudents();
   }, [fetchStudents]);
 
+  // Reset to first page when search query changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
   const handleStatusFilterChange = (status: StatusFilter) => {
     setStatusFilter(status);
+    setCurrentPage(1); // Reset to first page when filter changes
     // Update URL without reloading
     const params = new URLSearchParams(searchParams.toString());
     if (status === 'all') {
@@ -92,6 +111,13 @@ export default function AdminStudentsPage() {
     }
     router.push(`/admin/students${params.toString() ? `?${params.toString()}` : ''}`);
   };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    fetchStudents(page);
+  };
+
+  const totalPages = Math.ceil(totalStudents / pageSize);
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '-';
@@ -222,84 +248,139 @@ export default function AdminStudentsPage() {
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Student
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Parent
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Class
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Registered
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {students.map((student) => {
-                  const status = statusConfig[student.status] || statusConfig.pending;
-                  return (
-                    <tr
-                      key={student.id}
-                      onClick={(e) => handleRowClick(e, student)}
-                      className="hover:bg-blue-50 cursor-pointer transition-colors"
-                      tabIndex={0}
-                      role="button"
-                      onKeyDown={(e) => e.key === 'Enter' && handleRowClick(e as unknown as React.MouseEvent, student)}
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                            <span className="text-green-600 font-medium">
-                              {student.firstName.charAt(0)}
-                            </span>
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {student.firstName} {student.lastName}
+          <>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Student
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Parent
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Class
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Registered
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {students.map((student) => {
+                    const status = statusConfig[student.status] || statusConfig.pending;
+                    return (
+                      <tr
+                        key={student.id}
+                        onClick={(e) => handleRowClick(e, student)}
+                        className="hover:bg-blue-50 cursor-pointer transition-colors"
+                        tabIndex={0}
+                        role="button"
+                        onKeyDown={(e) => e.key === 'Enter' && handleRowClick(e as unknown as React.MouseEvent, student)}
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                              <span className="text-green-600 font-medium">
+                                {student.firstName.charAt(0)}
+                              </span>
                             </div>
-                            {student.dateOfBirth && (
-                              <div className="text-sm text-gray-500">
-                                DOB: {formatDate(student.dateOfBirth)}
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">
+                                {student.firstName} {student.lastName}
                               </div>
+                              {student.dateOfBirth && (
+                                <div className="text-sm text-gray-500">
+                                  DOB: {formatDate(student.dateOfBirth)}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{student.parentEmail || '-'}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 py-1 text-xs font-medium rounded-full ${status.bgColor} ${status.color}`}
+                          >
+                            {status.label}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {student.className || (
+                              <span className="text-gray-400">Not assigned</span>
                             )}
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{student.parentEmail || '-'}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-1 text-xs font-medium rounded-full ${status.bgColor} ${status.color}`}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {formatDate(student.createdAt)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                <div className="text-sm text-gray-500">
+                  Showing {(currentPage - 1) * pageSize + 1} to{' '}
+                  {Math.min(currentPage * pageSize, totalStudents)} of {totalStudents} students
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    Previous
+                  </button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum: number;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`px-3 py-1 text-sm rounded-md ${
+                            currentPage === pageNum
+                              ? 'bg-blue-600 text-white'
+                              : 'border border-gray-300 hover:bg-gray-50'
+                          }`}
                         >
-                          {status.label}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {student.className || (
-                            <span className="text-gray-400">Not assigned</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(student.createdAt)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={!hasMore}
+                    className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 

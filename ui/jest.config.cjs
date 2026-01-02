@@ -12,6 +12,27 @@ const config = {
     },
     testPathIgnorePatterns: ['<rootDir>/tests/e2e/'],
     testTimeout: 15000,
+    // Coverage configuration
+    collectCoverageFrom: [
+        'src/**/*.{ts,tsx}',
+        '!src/**/*.d.ts',
+        '!src/**/__tests__/**',
+        '!src/**/types/**',
+        '!src/app/layout.tsx',
+        '!src/app/**/layout.tsx',
+        '!src/app/**/page.tsx',
+        '!src/middleware.ts',
+    ],
+    coverageThreshold: {
+        global: {
+            branches: 15,
+            functions: 20,
+            lines: 25,
+            statements: 25,
+        },
+    },
+    coverageReporters: ['text', 'text-summary', 'html', 'lcov'],
+    coverageDirectory: '<rootDir>/coverage',
 }
 
 module.exports = createJestConfig(config)
