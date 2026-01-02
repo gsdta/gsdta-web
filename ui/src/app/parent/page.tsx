@@ -88,10 +88,6 @@ export default function ParentDashboard() {
     );
   }, [isFeatureEnabled]);
 
-  // Check if specific features are enabled
-  const canRegisterStudent = shouldShowNavItem('parent', '/parent/students/register', isFeatureEnabled);
-  const canViewStudents = shouldShowNavItem('parent', '/parent/students', isFeatureEnabled);
-
   useEffect(() => {
     async function fetchStudents() {
       if (!user) return;
