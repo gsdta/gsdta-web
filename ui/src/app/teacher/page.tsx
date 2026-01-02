@@ -1,13 +1,78 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { getTeacherDashboard, TeacherDashboard } from '@/lib/teacher-api';
+import { useFeatureFlags } from '@/context/FeatureFlagsContext';
+import { shouldShowNavItem } from '@/lib/featureMapping';
+
+interface TileItem {
+  label: string;
+  description: string;
+  href: string;
+  icon: string;
+  color: 'blue' | 'green' | 'yellow' | 'purple' | 'gray';
+}
+
+const colorStyles = {
+  blue: 'border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-900',
+  green: 'border-green-200 bg-green-50 hover:bg-green-100 text-green-900',
+  yellow: 'border-yellow-200 bg-yellow-50 hover:bg-yellow-100 text-yellow-900',
+  purple: 'border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-900',
+  gray: 'border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-900',
+};
+
+const descriptionStyles = {
+  blue: 'text-blue-600',
+  green: 'text-green-600',
+  yellow: 'text-yellow-600',
+  purple: 'text-purple-600',
+  gray: 'text-gray-500',
+};
+
+const allTiles: TileItem[] = [
+  {
+    label: 'My Classes',
+    description: 'View all assigned classes',
+    href: '/teacher/classes',
+    icon: '📚',
+    color: 'green',
+  },
+  {
+    label: 'Mark Attendance',
+    description: "Record today's attendance",
+    href: '/teacher/attendance/mark',
+    icon: '✅',
+    color: 'blue',
+  },
+  {
+    label: 'Attendance History',
+    description: 'View past records',
+    href: '/teacher/attendance',
+    icon: '📋',
+    color: 'purple',
+  },
+  {
+    label: 'Messages',
+    description: 'Communicate with parents',
+    href: '/teacher/messages',
+    icon: '💬',
+    color: 'yellow',
+  },
+];
 
 export default function TeacherDashboardPage() {
   const [dashboard, setDashboard] = useState<TeacherDashboard | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isFeatureEnabled } = useFeatureFlags();
+
+  // Filter tiles based on feature flags
+  const filteredTiles = useMemo(() => {
+    return allTiles.filter((tile) =>
+      shouldShowNavItem('teacher', tile.href, isFeatureEnabled)
+    );
+  }, [isFeatureEnabled]);
 
   useEffect(() => {
     async function loadDashboard() {
@@ -119,44 +184,29 @@ export default function TeacherDashboardPage() {
         </div>
       )}
 
-      {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Link
-            href="/teacher/classes"
-            className="flex items-center p-4 border-2 border-green-200 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
-          >
-            <span className="text-2xl mr-3">📚</span>
-            <div>
-              <p className="font-medium text-green-900">My Classes</p>
-              <p className="text-sm text-green-600">View all assigned classes</p>
-            </div>
-          </Link>
-
-          <Link
-            href="/teacher/attendance/mark"
-            className="flex items-center p-4 border-2 border-blue-200 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
-          >
-            <span className="text-2xl mr-3">✅</span>
-            <div>
-              <p className="font-medium text-blue-900">Mark Attendance</p>
-              <p className="text-sm text-blue-600">Record today&apos;s attendance</p>
-            </div>
-          </Link>
-
-          <Link
-            href="/teacher/attendance"
-            className="flex items-center p-4 border-2 border-purple-200 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
-          >
-            <span className="text-2xl mr-3">📋</span>
-            <div>
-              <p className="font-medium text-purple-900">Attendance History</p>
-              <p className="text-sm text-purple-600">View past records</p>
-            </div>
-          </Link>
+      {/* Quick Actions - All Navigation Tiles */}
+      {filteredTiles.length > 0 && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {filteredTiles.map((tile) => (
+              <Link
+                key={tile.href}
+                href={tile.href}
+                className={`flex items-center p-4 border-2 rounded-lg transition-colors ${colorStyles[tile.color]}`}
+              >
+                <span className="text-2xl mr-3">{tile.icon}</span>
+                <div>
+                  <p className="font-medium">{tile.label}</p>
+                  <p className={`text-sm ${descriptionStyles[tile.color]}`}>
+                    {tile.description}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* My Classes */}
       <div className="bg-white rounded-lg shadow p-6">
