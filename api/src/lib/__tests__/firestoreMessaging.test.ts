@@ -538,8 +538,8 @@ test('createConversation: should throw error if initiator not found', async () =
       initialMessage: 'Hello',
     });
     assert.fail('Should have thrown');
-  } catch (err: any) {
-    assert.ok(err.message.includes('Initiator user not found'));
+  } catch (err: unknown) {
+    assert.ok((err as Error).message.includes('Initiator user not found'));
   }
 
   __setAdminDbForTests(null);
@@ -568,8 +568,8 @@ test('createConversation: should throw error if target not found', async () => {
       initialMessage: 'Hello',
     });
     assert.fail('Should have thrown');
-  } catch (err: any) {
-    assert.ok(err.message.includes('Target user not found'));
+  } catch (err: unknown) {
+    assert.ok((err as Error).message.includes('Target user not found'));
   }
 
   __setAdminDbForTests(null);
@@ -605,8 +605,8 @@ test('createConversation: should throw error if parent targets non-teacher', asy
       initialMessage: 'Hello',
     });
     assert.fail('Should have thrown');
-  } catch (err: any) {
-    assert.ok(err.message.includes('Target user is not a teacher'));
+  } catch (err: unknown) {
+    assert.ok((err as Error).message.includes('Target user is not a teacher'));
   }
 
   __setAdminDbForTests(null);
@@ -642,8 +642,8 @@ test('createConversation: should throw error if teacher targets non-parent', asy
       initialMessage: 'Hello',
     });
     assert.fail('Should have thrown');
-  } catch (err: any) {
-    assert.ok(err.message.includes('Target user is not a parent'));
+  } catch (err: unknown) {
+    assert.ok((err as Error).message.includes('Target user is not a parent'));
   }
 
   __setAdminDbForTests(null);
@@ -870,8 +870,8 @@ test('sendMessage: should throw error for non-existent conversation', async () =
   try {
     await sendMessage('nonexistent', 'parent-1', 'parent', 'Hello');
     assert.fail('Should have thrown');
-  } catch (err: any) {
-    assert.ok(err.message.includes('Conversation not found'));
+  } catch (err: unknown) {
+    assert.ok((err as Error).message.includes('Conversation not found'));
   }
 
   __setAdminDbForTests(null);
@@ -894,8 +894,8 @@ test('sendMessage: should throw error for non-participant', async () => {
   try {
     await sendMessage('conv-1', 'other-user', 'parent', 'Hello');
     assert.fail('Should have thrown');
-  } catch (err: any) {
-    assert.ok(err.message.includes('User is not a participant'));
+  } catch (err: unknown) {
+    assert.ok((err as Error).message.includes('User is not a participant'));
   }
 
   __setAdminDbForTests(null);
@@ -965,8 +965,8 @@ test('markMessagesAsRead: should throw for non-existent conversation', async () 
   try {
     await markMessagesAsRead('nonexistent', 'parent-1', 'parent');
     assert.fail('Should have thrown');
-  } catch (err: any) {
-    assert.ok(err.message.includes('Conversation not found'));
+  } catch (err: unknown) {
+    assert.ok((err as Error).message.includes('Conversation not found'));
   }
 
   __setAdminDbForTests(null);
@@ -988,8 +988,8 @@ test('markMessagesAsRead: should throw for non-participant', async () => {
   try {
     await markMessagesAsRead('conv-1', 'other-user', 'parent');
     assert.fail('Should have thrown');
-  } catch (err: any) {
-    assert.ok(err.message.includes('User is not a participant'));
+  } catch (err: unknown) {
+    assert.ok((err as Error).message.includes('User is not a participant'));
   }
 
   __setAdminDbForTests(null);
@@ -1015,7 +1015,7 @@ test('markMessagesAsRead: should mark messages as read for parent', async () => 
 
   await markMessagesAsRead('conv-1', 'parent-1', 'parent');
 
-  const conv = storage.get('conversations/conv-1') as any;
+  const conv = storage.get('conversations/conv-1') as { parentUnreadCount: number };
   assert.equal(conv.parentUnreadCount, 0);
 
   __setAdminDbForTests(null);
@@ -1036,7 +1036,7 @@ test('markMessagesAsRead: should mark messages as read for teacher', async () =>
 
   await markMessagesAsRead('conv-1', 'teacher-1', 'teacher');
 
-  const conv = storage.get('conversations/conv-1') as any;
+  const conv = storage.get('conversations/conv-1') as { teacherUnreadCount: number };
   assert.equal(conv.teacherUnreadCount, 0);
 
   __setAdminDbForTests(null);
