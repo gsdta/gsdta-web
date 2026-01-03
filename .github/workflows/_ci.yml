@@ -1,5 +1,6 @@
 # Reusable workflow for running tests
 # Called by deploy-qa.yml and deploy-prod.yml
+# Optimized: uses pnpm for fast installs, parallelized checks
 
 name: CI Tests
 
@@ -13,7 +14,7 @@ on:
     outputs:
       tests_passed:
         description: 'Whether all tests passed'
-        value: ${{ jobs.summary.outputs.passed }}
+        value: ${{ jobs.e2e-tests.result == 'success' && jobs.unit-tests.result == 'success' }}
 
 env:
   NODE_VERSION: 20
@@ -24,15 +25,17 @@ jobs:
     runs-on: ${{ inputs.runner }}
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      - run: npm ci || npm ci || npm ci
-      - name: API Tests
-        run: cd api && npm run lint && npm run typecheck && npm test
-      - name: UI Tests
-        run: cd ui && npm run lint && npm run typecheck && npm test
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      # Run lint, typecheck, and test in parallel for each package
+      - name: API Checks
+        run: cd api && pnpm lint & pnpm typecheck & pnpm test; wait
+      - name: UI Checks
+        run: cd ui && pnpm lint & pnpm typecheck & pnpm test; wait
 
   e2e-tests:
     name: E2E Tests
@@ -56,35 +59,35 @@ jobs:
       NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST: localhost:8889
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: 'pnpm'
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
-      - run: npm install -g firebase-tools
-      - run: npm ci
+      - run: pnpm add -g firebase-tools
+      - run: pnpm install --frozen-lockfile
       - name: Install native binaries
         run: |
           cd ui
-          if npm run ensure:native; then
+          if pnpm ensure:native; then
             echo "✅ ensure:native succeeded"
           else
-            npm install --no-save lightningcss-linux-x64-gnu @tailwindcss/oxide-linux-x64-gnu
+            pnpm add --save-dev lightningcss-linux-x64-gnu @tailwindcss/oxide-linux-x64-gnu
           fi
-          [ -f "node_modules/lightningcss-linux-x64-gnu/lightningcss.linux-x64-gnu.node" ] && \
-            cp node_modules/lightningcss-linux-x64-gnu/lightningcss.linux-x64-gnu.node node_modules/lightningcss/
-          [ -f "node_modules/@tailwindcss/oxide-linux-x64-gnu/oxide.linux-x64-gnu.node" ] && \
-            cp node_modules/@tailwindcss/oxide-linux-x64-gnu/oxide.linux-x64-gnu.node node_modules/@tailwindcss/oxide/
-          rm -rf ../node_modules/canvas node_modules/canvas 2>/dev/null || true
+          [ -f "../node_modules/lightningcss-linux-x64-gnu/lightningcss.linux-x64-gnu.node" ] && \
+            cp ../node_modules/lightningcss-linux-x64-gnu/lightningcss.linux-x64-gnu.node ../node_modules/lightningcss/ || true
+          [ -f "../node_modules/@tailwindcss/oxide-linux-x64-gnu/oxide.linux-x64-gnu.node" ] && \
+            cp ../node_modules/@tailwindcss/oxide-linux-x64-gnu/oxide.linux-x64-gnu.node ../node_modules/@tailwindcss/oxide/ || true
+          rm -rf ../node_modules/canvas 2>/dev/null || true
       - name: Verify bindings
         run: cd ui && node -e "require('lightningcss')" && node -e "require('@tailwindcss/oxide')"
       - name: Start emulators
         run: |
           firebase emulators:start --project demo-gsdta --only auth,firestore &
-          # Wait for emulators to be ready (up to 60 seconds)
           for i in {1..60}; do
             if curl -s http://localhost:9099 >/dev/null 2>&1; then
               echo "✅ Emulators ready after ${i}s"
@@ -92,37 +95,17 @@ jobs:
             fi
             sleep 1
           done
-      - run: npm run seed
+      - run: pnpm seed
       - name: API E2E (Cucumber)
-        run: cd api && npm run test:e2e
+        run: cd api && pnpm test:e2e
       - name: Build UI for E2E
-        run: cd ui && npm run build
+        run: cd ui && pnpm build
       - name: Re-seed for UI E2E
-        run: npm run seed:clear && npm run seed
+        run: pnpm seed:clear && pnpm seed
       - name: UI E2E (Playwright)
-        run: cd ui && npm run e2e:ci
+        run: cd ui && pnpm e2e:ci
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: playwright-report
           path: ui/playwright-report/
-
-  summary:
-    name: Test Summary
-    runs-on: ubuntu-latest
-    needs: [unit-tests, e2e-tests]
-    if: always()
-    outputs:
-      passed: ${{ steps.check.outputs.passed }}
-    steps:
-      - name: Check test results
-        id: check
-        run: |
-          if [ "${{ needs.unit-tests.result }}" = "success" ] && [ "${{ needs.e2e-tests.result }}" = "success" ]; then
-            echo "passed=true" >> $GITHUB_OUTPUT
-            echo "✅ All tests passed"
-          else
-            echo "passed=false" >> $GITHUB_OUTPUT
-            echo "❌ Some tests failed"
-            exit 1
-          fi

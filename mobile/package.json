@@ -9,8 +9,8 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "@gsdta/shared-core": "*",
-    "@gsdta/shared-firebase": "*",
+    "@gsdta/shared-core": "workspace:*",
+    "@gsdta/shared-firebase": "workspace:*",
     "@expo/vector-icons": "^15.0.3",
     "@react-native-async-storage/async-storage": "^2.1.2",
     "@react-navigation/native": "^7.1.8",

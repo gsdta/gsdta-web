@@ -9,8 +9,11 @@ WORKDIR /app
 # Common packages
 RUN apk add --no-cache libc6-compat
 
-# Copy workspace package files
-COPY package.json package-lock.json ./
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@10.27.0 --activate
+
+# Copy workspace config files
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY ui/package.json ./ui/
 COPY api/package.json ./api/
 COPY scripts/package.json ./scripts/
@@ -22,16 +25,15 @@ COPY packages/shared-core/ ./packages/shared-core/
 COPY packages/shared-firebase/ ./packages/shared-firebase/
 
 # Install all workspace dependencies at once
-RUN npm ci --ignore-scripts
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Install platform-specific native binaries for Linux Alpine (musl)
-# Use --ignore-scripts to avoid triggering postinstall scripts that need source files
 RUN if [ "$(uname -m)" = "x86_64" ]; then \
-      npm install --no-save --ignore-scripts \
+      pnpm add -w --save-dev \
         lightningcss-linux-x64-musl \
         @tailwindcss/oxide-linux-x64-musl; \
     elif [ "$(uname -m)" = "aarch64" ]; then \
-      npm install --no-save --ignore-scripts \
+      pnpm add -w --save-dev \
         lightningcss-linux-arm64-musl \
         @tailwindcss/oxide-linux-arm64-musl; \
     fi
@@ -42,12 +44,15 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
 FROM node:20-alpine AS ui-builder
 WORKDIR /app
 
-# Copy all node_modules from deps stage
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/ui/node_modules ./ui/node_modules
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@10.27.0 --activate
 
-# Copy root package.json for workspace resolution
+# Copy node_modules from deps stage (hoisted at root)
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copy workspace config for resolution
 COPY --from=deps /app/package.json ./package.json
+COPY --from=deps /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 
 # Copy shared packages (workspace dependencies)
 COPY --from=deps /app/packages ./packages
@@ -92,7 +97,7 @@ RUN set -eu \
 
 WORKDIR /app/ui
 
-RUN npm run build
+RUN pnpm build
 
 # =============================================================================
 # Stage 3: Build API
@@ -100,9 +105,11 @@ RUN npm run build
 FROM node:20-alpine AS api-builder
 WORKDIR /app
 
-# Copy all node_modules from deps stage
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@10.27.0 --activate
+
+# Copy node_modules from deps stage (hoisted at root)
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/api/node_modules ./api/node_modules
 
 # Copy API source
 COPY api/ ./api/
@@ -114,7 +121,7 @@ ENV NEXT_OUTPUT=standalone
 ENV NODE_ENV=production
 
 WORKDIR /app/api
-RUN npm run build
+RUN pnpm build
 
 # =============================================================================
 # Stage 4: Production runtime image
