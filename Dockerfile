@@ -111,6 +111,11 @@ RUN corepack enable && corepack prepare pnpm@10.27.0 --activate
 # Copy node_modules from deps stage (hoisted at root)
 COPY --from=deps /app/node_modules ./node_modules
 
+# Copy workspace config for pnpm resolution
+COPY --from=deps /app/package.json ./package.json
+COPY --from=deps /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY --from=deps /app/.npmrc ./.npmrc
+
 # Copy API source
 COPY api/ ./api/
 
