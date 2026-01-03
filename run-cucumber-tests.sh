@@ -124,18 +124,21 @@ echo ""
 
 # Step 3: Seed test data
 print_step "Seeding test data..."
-npm run seed
+pnpm run seed
 print_success "Test data seeded"
 
 # Step 4: Check if dependencies are installed
 print_step "Checking API dependencies..."
 cd api
-if [ ! -d "node_modules" ]; then
-    print_step "Installing API dependencies..."
-    npm ci
-    print_success "API dependencies installed"
+# With pnpm hoisted node_modules, check root node_modules
+if [ ! -d "../node_modules" ]; then
+    print_step "Installing dependencies..."
+    cd ..
+    pnpm install --frozen-lockfile
+    cd api
+    print_success "Dependencies installed"
 else
-    print_success "API dependencies already installed"
+    print_success "Dependencies already installed"
 fi
 
 # Step 5: Run Cucumber tests
@@ -150,7 +153,7 @@ export FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
 if [ -n "$SPECIFIC_FEATURE" ]; then
     print_step "Running feature: $SPECIFIC_FEATURE"
     # Run cucumber with specific feature
-    if npm run test:e2e:seed -- tests/e2e/features/$SPECIFIC_FEATURE; then
+    if pnpm run test:e2e:seed -- tests/e2e/features/$SPECIFIC_FEATURE; then
         cd ..
         echo ""
         print_success "Cucumber tests completed successfully!"
@@ -191,7 +194,7 @@ elif [ -n "$TAG" ]; then
     fi
 else
     # Run all tests
-    if npm run test:e2e; then
+    if pnpm run test:e2e; then
         cd ..
         echo ""
         print_success "All Cucumber tests completed successfully!"

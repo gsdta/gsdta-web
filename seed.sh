@@ -9,7 +9,7 @@ if ! curl -s http://localhost:4445 > /dev/null 2>&1; then
     echo "❌ Firebase emulators are not running!"
     echo ""
     echo "Please start emulators first:"
-    echo "  Option 1: npm run emulators"
+    echo "  Option 1: pnpm run emulators"
     echo "  Option 2: firebase emulators:start --project demo-gsdta"
     echo "  Option 3: ./start-dev-local.sh"
     echo ""
@@ -19,10 +19,10 @@ fi
 echo "✅ Emulators detected at http://localhost:4445"
 echo ""
 
-# Check if seed script dependencies are installed (check for firebase-admin specifically)
-if [ ! -d "scripts/node_modules/firebase-admin" ]; then
-    echo "📦 Installing seed script dependencies..."
-    cd scripts && npm install && cd ..
+# Check if seed script dependencies are installed (with pnpm hoisted, check root node_modules)
+if [ ! -d "node_modules/firebase-admin" ]; then
+    echo "📦 Installing dependencies..."
+    pnpm install --frozen-lockfile
     if [ $? -ne 0 ]; then
         echo "❌ Failed to install dependencies"
         exit 1
