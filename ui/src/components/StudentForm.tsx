@@ -2,11 +2,15 @@
 import React from "react";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
-import {studentSchema, type Student, newStudentDefaults} from "@/lib/student-types";
+import {z} from "zod";
+import {createStudentSchema, type CreateStudentInput, newStudentDefaults} from "@/lib/student-types";
+
+// For zod 4, use z.input for form values (before transforms/defaults applied)
+type FormInput = z.input<typeof createStudentSchema>;
 
 export interface StudentFormProps {
-    initial?: Partial<Student>;
-    onSubmit: (values: Omit<Student, "id">) => Promise<void> | void;
+    initial?: Partial<FormInput>;
+    onSubmit: (values: CreateStudentInput) => Promise<void> | void;
     submitLabel?: string;
 }
 
@@ -15,8 +19,8 @@ export function StudentForm({initial, onSubmit, submitLabel = "Save"}: StudentFo
         register,
         handleSubmit,
         formState: {errors, isSubmitting},
-    } = useForm<Omit<Student, "id">>({
-        resolver: zodResolver(studentSchema),
+    } = useForm<FormInput>({
+        resolver: zodResolver(createStudentSchema),
         defaultValues: {...newStudentDefaults, ...(initial ?? {})},
         mode: "onBlur",
     });
@@ -24,7 +28,8 @@ export function StudentForm({initial, onSubmit, submitLabel = "Save"}: StudentFo
     return (
         <form
             onSubmit={handleSubmit(async (values) => {
-                await onSubmit(values);
+                // After zod validation, values are fully validated CreateStudentInput
+                await onSubmit(values as CreateStudentInput);
             })}
             className="not-prose grid gap-3 max-w-xl"
             noValidate

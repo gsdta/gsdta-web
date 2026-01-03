@@ -79,9 +79,9 @@ export default function RegisterStudentPage() {
     } catch (err) {
       if (err instanceof z.ZodError) {
         const fieldErrors: Record<string, string> = {};
-        err.errors.forEach((error) => {
-          if (error.path.length > 0) {
-            fieldErrors[error.path.join('.')] = error.message;
+        err.issues.forEach((issue) => {
+          if (issue.path.length > 0) {
+            fieldErrors[issue.path.join('.')] = issue.message;
           }
         });
         setErrors(fieldErrors);
