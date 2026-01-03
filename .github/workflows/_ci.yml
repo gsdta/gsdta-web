@@ -31,6 +31,8 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
+      # Remove canvas (optional jsdom dep that breaks without native binaries)
+      - run: rm -rf node_modules/canvas
       # Run lint, typecheck, and test in parallel for each package
       - name: API Checks
         working-directory: api
