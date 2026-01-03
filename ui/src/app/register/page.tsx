@@ -48,13 +48,13 @@ const baseSchema = z.object({
   // Student
   studentName: z.string().min(2, "Enter student name"),
   studentDob: dateISO,
-  studentGender: z.enum(GENDERS, { required_error: "Select gender" }),
+  studentGender: z.enum(GENDERS, { error: "Select gender" }),
   currentPublicSchool: z.string().min(1, "Select a school"),
-  schoolDistrict: z.enum(SCHOOL_DISTRICTS, { required_error: "Select a district" }),
+  schoolDistrict: z.enum(SCHOOL_DISTRICTS, { error: "Select a district" }),
   schoolDistrictOther: z.string().optional(),
-  currentPublicGrade: z.enum(PUBLIC_GRADES, { required_error: "Select a grade" }),
-  lastTamilGrade: z.enum([...TAMIL_GRADES, "Was not enrolled in Tamil school last year"] as const, { required_error: "Select a grade" }),
-  enrollingTamilGrade: z.enum(TAMIL_GRADES, { required_error: "Select a grade" }),
+  currentPublicGrade: z.enum(PUBLIC_GRADES, { error: "Select a grade" }),
+  lastTamilGrade: z.enum([...TAMIL_GRADES, "Was not enrolled in Tamil school last year"] as const, { error: "Select a grade" }),
+  enrollingTamilGrade: z.enum(TAMIL_GRADES, { error: "Select a grade" }),
 
   // Parents
   motherName: z.string().min(2, "Enter mother's name"),
