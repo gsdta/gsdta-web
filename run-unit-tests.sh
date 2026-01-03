@@ -92,14 +92,14 @@ if [ "$RUN_UI" = true ]; then
     cd "$SCRIPT_DIR/ui"
 
     if [ "$COVERAGE" = true ]; then
-        if npm test -- --coverage --passWithNoTests; then
+        if pnpm test -- --coverage --passWithNoTests; then
             print_success "UI unit tests passed"
         else
             UI_PASSED=false
             print_error "UI unit tests failed"
         fi
     else
-        if npm test -- --passWithNoTests; then
+        if pnpm test -- --passWithNoTests; then
             print_success "UI unit tests passed"
         else
             UI_PASSED=false
@@ -117,7 +117,7 @@ if [ "$RUN_API" = true ]; then
     echo ""
     cd "$SCRIPT_DIR/api"
 
-    if npm test; then
+    if pnpm test; then
         print_success "API unit tests passed"
     else
         API_PASSED=false

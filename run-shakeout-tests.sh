@@ -131,10 +131,10 @@ echo ""
 print_step "Checking dependencies..."
 cd "$SCRIPT_DIR/uat"
 
-if [ ! -d "node_modules" ]; then
-    print_step "Installing UAT dependencies..."
+if [ ! -d "../node_modules" ]; then
+    print_step "Installing dependencies..."
     cd "$SCRIPT_DIR"
-    npm install
+    pnpm install --frozen-lockfile
     cd "$SCRIPT_DIR/uat"
     print_success "Dependencies installed"
 else

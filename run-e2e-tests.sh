@@ -112,10 +112,10 @@ else
     exit 1
 fi
 
-# Check if already installed
-if [ ! -f "node_modules/$LIGHTNINGCSS_PKG/package.json" ]; then
+# Check if already installed (check both local and hoisted node_modules for pnpm)
+if [ ! -f "node_modules/$LIGHTNINGCSS_PKG/package.json" ] && [ ! -f "../node_modules/$LIGHTNINGCSS_PKG/package.json" ]; then
     print_step "Installing $LIGHTNINGCSS_PKG..."
-    npm install --no-save "$LIGHTNINGCSS_PKG"
+    pnpm add --save-dev "$LIGHTNINGCSS_PKG"
     print_success "Installed $LIGHTNINGCSS_PKG"
 else
     print_success "$LIGHTNINGCSS_PKG already installed"
@@ -125,7 +125,7 @@ cd ..
 
 # Step 4: Seed test data
 print_step "Seeding test data..."
-npm run seed
+pnpm run seed
 print_success "Test data seeded"
 
 # Set environment variables for build
@@ -145,13 +145,13 @@ export ALLOW_TEST_INVITES=1
 # Step 5: Build API and UI
 print_step "Building API..."
 cd api
-npm run build
+pnpm run build
 cd ..
 print_success "API built"
 
 print_step "Building UI..."
 cd ui
-npm run build
+pnpm run build
 cd ..
 print_success "UI built"
 
@@ -165,7 +165,7 @@ export FIRESTORE_EMULATOR_HOST=localhost:8889
 export FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
 
 # Run tests
-if npm run test:e2e; then
+if pnpm run test:e2e; then
     cd ..
     echo ""
     print_success "All e2e tests completed successfully!"
