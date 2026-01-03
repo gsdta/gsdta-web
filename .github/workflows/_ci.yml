@@ -33,9 +33,11 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # Run lint, typecheck, and test in parallel for each package
       - name: API Checks
-        run: cd api && pnpm lint & pnpm typecheck & pnpm test; wait
+        working-directory: api
+        run: pnpm lint & pnpm typecheck & pnpm test; wait
       - name: UI Checks
-        run: cd ui && pnpm lint & pnpm typecheck & pnpm test; wait
+        working-directory: ui
+        run: pnpm lint & pnpm typecheck & pnpm test; wait
 
   e2e-tests:
     name: E2E Tests
