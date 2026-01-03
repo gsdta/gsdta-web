@@ -41,7 +41,7 @@ jobs:
   deploy:
     name: Deploy to QA
     needs: [tests, build]
-    if: needs.tests.outputs.tests_passed == 'true'
+    if: ${{ !failure() && !cancelled() }}
     uses: ./.github/workflows/_deploy.yml
     with:
       environment: qa

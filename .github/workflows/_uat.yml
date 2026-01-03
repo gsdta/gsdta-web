@@ -64,10 +64,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Wait for environment to be ready
         run: |
@@ -84,7 +85,7 @@ jobs:
           exit 1
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browsers
         run: cd uat && npx playwright install chromium
