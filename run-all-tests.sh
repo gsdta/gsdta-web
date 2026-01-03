@@ -363,7 +363,7 @@ if [ $FAILED -gt 0 ]; then
     print_error "Some tests failed!"
     echo ""
     echo "To debug:"
-    echo "  - Unit tests:     npm run test:ui / npm run test:api"
+    echo "  - Unit tests:     pnpm run test:ui / pnpm run test:api"
     echo "  - Cucumber tests: ./run-cucumber-tests.sh --feature <file>"
     echo "  - E2E tests:      cd ui && npx playwright show-report"
     echo "  - UAT tests:      ./run-uat-tests.sh --headed"

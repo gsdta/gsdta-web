@@ -1,0 +1,7 @@
+packages:
+  - 'packages/*'
+  - 'ui'
+  - 'api'
+  - 'scripts'
+  - 'uat'
+  - 'mobile'

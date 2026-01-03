@@ -45,7 +45,7 @@ echo ""
 
 # Start Firebase emulators in background
 echo "🔥 Starting Firebase Emulators..."
-npm run emulators > /tmp/gsdta-emulators.log 2>&1 &
+pnpm run emulators > /tmp/gsdta-emulators.log 2>&1 &
 EMULATOR_PID=$!
 echo "   Emulator PID: $EMULATOR_PID"
 
@@ -71,10 +71,10 @@ echo "🌱 Seeding test data..."
 export FIRESTORE_EMULATOR_HOST=localhost:8889
 export FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
 
-# Install seed dependencies if needed
-if [ ! -d "scripts/node_modules/firebase-admin" ]; then
-    echo "   Installing seed dependencies..."
-    (cd scripts && npm install)
+# Install dependencies if needed (with pnpm hoisted, check root node_modules)
+if [ ! -d "node_modules/firebase-admin" ]; then
+    echo "   Installing dependencies..."
+    pnpm install --frozen-lockfile
 fi
 
 # Run seed
@@ -84,7 +84,7 @@ echo ""
 
 # Start API in background
 echo "🚀 Starting API Server..."
-FIRESTORE_EMULATOR_HOST=localhost:8889 FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 npm run dev:api > /tmp/gsdta-api.log 2>&1 &
+FIRESTORE_EMULATOR_HOST=localhost:8889 FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 pnpm run dev:api > /tmp/gsdta-api.log 2>&1 &
 API_PID=$!
 echo "   API PID: $API_PID"
 
