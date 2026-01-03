@@ -32,8 +32,8 @@
     "ensure:native": "node scripts/ensure-native-binaries.mjs"
   },
   "dependencies": {
-    "@gsdta/shared-core": "*",
-    "@gsdta/shared-firebase": "*",
+    "@gsdta/shared-core": "workspace:*",
+    "@gsdta/shared-firebase": "workspace:*",
     "@hookform/resolvers": "^5.2.2",
     "@react-pdf-viewer/core": "^3.12.0",
     "firebase": "^11.9.0",

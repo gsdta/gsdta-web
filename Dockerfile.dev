@@ -4,16 +4,28 @@ FROM node:20-alpine
 # Install dependencies for development
 RUN apk add --no-cache libc6-compat
 
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@10.27.0 --activate
+
 WORKDIR /app
 
-# Copy package files
-COPY ui/package.json ui/package-lock.json* ./
+# Copy workspace config files
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY ui/package.json ./ui/
+COPY packages/shared-core/package.json ./packages/shared-core/
+COPY packages/shared-firebase/package.json ./packages/shared-firebase/
+
+# Copy shared packages source
+COPY packages/shared-core/ ./packages/shared-core/
+COPY packages/shared-firebase/ ./packages/shared-firebase/
 
 # Install all dependencies (including dev dependencies)
-RUN npm ci
+RUN pnpm install --frozen-lockfile
 
-# Copy source code
-COPY ui/ .
+# Copy UI source code
+COPY ui/ ./ui/
+
+WORKDIR /app/ui
 
 # Expose port
 EXPOSE 3000
@@ -22,4 +34,4 @@ EXPOSE 3000
 ENV NODE_ENV=development
 
 # Start development server
-CMD ["npm", "run", "dev"]
+CMD ["pnpm", "dev"]

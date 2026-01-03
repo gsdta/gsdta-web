@@ -87,7 +87,8 @@ jobs:
           context: .
           push: true
           tags: ${{ steps.meta.outputs.image_uri }}
-          no-cache: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           build-args: |
             VERSION=${{ steps.meta.outputs.tag }}
             COMMIT=${{ github.sha }}
