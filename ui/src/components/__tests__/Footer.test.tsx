@@ -101,8 +101,7 @@ describe("Footer", () => {
   test("renders GSDTA logo linking to home", () => {
     render(<Footer />);
 
-    const logoLink = screen.getByRole("link", { name: "" });
-    // The logo link should go to home
+    // Check that there's a link to the home page (logo)
     const homeLinks = screen.getAllByRole("link").filter(
       (link) => (link as HTMLAnchorElement).getAttribute("href") === "/"
     );
