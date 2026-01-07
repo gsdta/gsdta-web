@@ -1,6 +1,6 @@
 # Implemented Features
 
-**Last Updated**: December 28, 2025
+**Last Updated**: January 7, 2026
 
 This document tracks all implemented features in the GSDTA web application. For complete role-based capability descriptions, see [ROLES.md](./ROLES.md).
 
@@ -617,7 +617,21 @@ All UI features are:
 
 ## 🔗 Related Documents
 
+### Core Documentation
 - [ROLES.md](./ROLES.md) - Complete role-based capability matrix
 - [PROJECT-STATUS.md](./PROJECT-STATUS.md) - Overall project status
-- [TESTING-SUMMARY.md](../TESTING-SUMMARY.md) - Test coverage summary
-- [TECH-STACK.md](../TECH-STACK.md) - Technology choices
+- [TECH-STACK.md](./TECH-STACK.md) - Technology choices
+
+### Infrastructure & Deployment
+- [DEPLOYMENT-GUIDE.md](./DEPLOYMENT-GUIDE.md) - QA and Production deployment guide
+- [INFRASTRUCTURE-SETUP.md](./INFRASTRUCTURE-SETUP.md) - Infrastructure setup from scratch
+- [proposals/QA-ENVIRONMENT-PROPOSAL.md](./proposals/QA-ENVIRONMENT-PROPOSAL.md) - QA environment architecture
+
+### Implementation Plans
+- [TEACHER-PORTAL-PLAN.md](./TEACHER-PORTAL-PLAN.md) - Teacher portal implementation details
+- [GRADES-CLASSES-IMPLEMENTATION.md](./GRADES-CLASSES-IMPLEMENTATION.md) - Grades and classes system
+- [SUPER-ADMIN-IMPLEMENTATION-PLAN.md](./SUPER-ADMIN-IMPLEMENTATION-PLAN.md) - Super admin features
+
+### Testing
+- [TESTING.md](./TESTING.md) - Test suite documentation
+- [TEST-PLAN-STUDENT-REGISTRATION.md](./TEST-PLAN-STUDENT-REGISTRATION.md) - Student registration tests

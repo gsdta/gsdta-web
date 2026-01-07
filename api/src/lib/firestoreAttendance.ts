@@ -201,12 +201,14 @@ export async function getAttendanceRecords(
 
 /**
  * Update an attendance record
+ * @param editWindowDays - Optional number of days within which editing is allowed (default: 30)
  */
 export async function updateAttendanceRecord(
   id: string,
   data: UpdateAttendanceDto,
   editorUid: string,
-  editorName: string
+  editorName: string,
+  editWindowDays: number = 30
 ): Promise<AttendanceRecord | null> {
   const doc = await getDb().collection(ATTENDANCE_COLLECTION).doc(id).get();
 
@@ -215,13 +217,13 @@ export async function updateAttendanceRecord(
   const existingData = doc.data()!;
   if (existingData.docStatus === 'deleted') return null;
 
-  // Check if edit is within allowed window
+  // Check if edit is within allowed window (configurable)
   const recordDate = new Date(existingData.date);
   const now = new Date();
   const daysDiff = Math.floor((now.getTime() - recordDate.getTime()) / (1000 * 60 * 60 * 24));
 
-  if (daysDiff > 7) {
-    throw new Error('Cannot edit attendance records older than 7 days');
+  if (daysDiff > editWindowDays) {
+    throw new Error(`Cannot edit attendance records older than ${editWindowDays} days`);
   }
 
   const updateData: Record<string, unknown> = {

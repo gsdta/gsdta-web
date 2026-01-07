@@ -5,6 +5,7 @@ import { requireAuth } from '@/lib/guard';
 import { requireFeature } from '@/lib/featureFlags';
 import { verifyTeacherAssignment } from '@/lib/teacherGuard';
 import { getAttendanceById, updateAttendanceRecord } from '@/lib/firestoreAttendance';
+import { getAttendanceConfig } from '@/lib/systemConfig';
 import { randomUUID } from 'crypto';
 
 export const runtime = 'nodejs';
@@ -177,13 +178,18 @@ export async function PUT(
       return jsonError(400, 'validation/invalid-input', errorMessage, origin);
     }
 
+    // Get configurable edit window from system config
+    const attendanceConfig = await getAttendanceConfig();
+    const editWindowDays = attendanceConfig.editWindowDays;
+
     // Update the record
     const teacherName = profile.name || `${profile.firstName} ${profile.lastName}`.trim();
     const updatedRecord = await updateAttendanceRecord(
       recordId,
       parseResult.data,
       token.uid,
-      teacherName
+      teacherName,
+      editWindowDays
     );
 
     if (!updatedRecord) {
@@ -225,7 +231,7 @@ export async function PUT(
     }
     // Handle specific errors
     if (err instanceof Error) {
-      if (err.message.includes('older than 7 days')) {
+      if (err.message.includes('older than') && err.message.includes('days')) {
         return jsonError(400, 'attendance/edit-window-expired', err.message, origin);
       }
     }

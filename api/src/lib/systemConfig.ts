@@ -32,10 +32,18 @@ export type BackupConfig = {
   lastBackupAt?: Date;
 };
 
+export type AttendanceConfig = {
+  /** Number of days in the past that teachers can mark new attendance */
+  markWindowDays: number;
+  /** Number of days in the past that teachers can edit existing attendance */
+  editWindowDays: number;
+};
+
 export type SystemConfig = {
   maintenance: MaintenanceConfig;
   rateLimits: RateLimitConfig;
   backup: BackupConfig;
+  attendance: AttendanceConfig;
   updatedAt: Date;
   updatedBy: string;
 };
@@ -55,6 +63,10 @@ const DEFAULT_CONFIG: Omit<SystemConfig, 'updatedAt' | 'updatedBy'> = {
     enabled: false,
     frequency: 'daily',
     retentionDays: 30,
+  },
+  attendance: {
+    markWindowDays: 7, // Default: Teachers can mark attendance for past 7 days
+    editWindowDays: 30, // Default: Teachers can edit attendance for past 30 days
   },
 };
 
@@ -99,6 +111,10 @@ export async function getSystemConfig(): Promise<SystemConfig> {
       frequency: data.backup?.frequency ?? 'daily',
       retentionDays: data.backup?.retentionDays ?? 30,
       lastBackupAt: data.backup?.lastBackupAt?.toDate?.(),
+    },
+    attendance: {
+      markWindowDays: data.attendance?.markWindowDays ?? DEFAULT_CONFIG.attendance.markWindowDays,
+      editWindowDays: data.attendance?.editWindowDays ?? DEFAULT_CONFIG.attendance.editWindowDays,
     },
     updatedAt: data.updatedAt?.toDate?.() ?? new Date(),
     updatedBy: data.updatedBy ?? 'system',
@@ -145,6 +161,13 @@ export async function updateSystemConfig(
     updateData.backup = {
       ...currentConfig.backup,
       ...updates.backup,
+    };
+  }
+
+  if (updates.attendance !== undefined) {
+    updateData.attendance = {
+      ...currentConfig.attendance,
+      ...updates.attendance,
     };
   }
 
@@ -226,4 +249,13 @@ export async function isMaintenanceMode(): Promise<{
     message: config.maintenance.message,
     allowedRoles: config.maintenance.allowedRoles || ['super_admin', 'admin'],
   };
+}
+
+/**
+ * Get attendance configuration
+ * Returns the configured window for marking and editing attendance
+ */
+export async function getAttendanceConfig(): Promise<AttendanceConfig> {
+  const config = await getSystemConfig();
+  return config.attendance;
 }

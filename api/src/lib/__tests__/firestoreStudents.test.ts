@@ -1047,3 +1047,118 @@ test('bulkAssignClass: should handle batch commit failure', async () => {
   assert.equal(result.failed.length, 1);
   assert.ok(result.failed[0].reason.includes('Batch update failed'));
 });
+
+// ============================================
+// Tests for search + pagination fix (Issue: search was applied AFTER pagination)
+// ============================================
+
+test('getAllStudents: search should return correct total count matching search results', async () => {
+  const storage = new Map<string, StoredDoc>();
+  // Create 10 students, only 3 have "Smith" in their name
+  for (let i = 0; i < 10; i++) {
+    const isSmith = i < 3;
+    storage.set(`students/s${i}`, {
+      firstName: isSmith ? 'John' : 'Jane',
+      lastName: isSmith ? 'Smith' : 'Doe',
+      parentEmail: `parent${i}@test.com`,
+      status: 'pending',
+    });
+  }
+
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as any;
+  __setAdminDbForTests(fakeProvider);
+
+  const result = await getAllStudents({ search: 'Smith' });
+
+  // Total should match the number of search results, not the pre-search count
+  assert.equal(result.total, 3, 'Total should be 3 (only Smith students)');
+  assert.equal(result.students.length, 3, 'Should return all 3 Smith students');
+});
+
+test('getAllStudents: search with pagination should paginate search results correctly', async () => {
+  const storage = new Map<string, StoredDoc>();
+  // Create 100 students, 25 have "Smith" in their name
+  for (let i = 0; i < 100; i++) {
+    const isSmith = i < 25;
+    storage.set(`students/s${i}`, {
+      firstName: isSmith ? `John${i}` : `Jane${i}`,
+      lastName: isSmith ? 'Smith' : 'Doe',
+      parentEmail: `parent${i}@test.com`,
+      status: 'pending',
+    });
+  }
+
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as any;
+  __setAdminDbForTests(fakeProvider);
+
+  // Request page 1 with limit 10
+  const page1 = await getAllStudents({ search: 'Smith', limit: 10, offset: 0 });
+  assert.equal(page1.total, 25, 'Total should be 25 (all Smith students)');
+  assert.equal(page1.students.length, 10, 'Page 1 should have 10 students');
+
+  // Request page 2 with limit 10
+  const page2 = await getAllStudents({ search: 'Smith', limit: 10, offset: 10 });
+  assert.equal(page2.total, 25, 'Total should still be 25');
+  assert.equal(page2.students.length, 10, 'Page 2 should have 10 students');
+
+  // Request page 3 with limit 10 (should only have 5 remaining)
+  const page3 = await getAllStudents({ search: 'Smith', limit: 10, offset: 20 });
+  assert.equal(page3.total, 25, 'Total should still be 25');
+  assert.equal(page3.students.length, 5, 'Page 3 should have only 5 remaining students');
+});
+
+test('getAllStudents: search results should not include non-matching students from pagination', async () => {
+  const storage = new Map<string, StoredDoc>();
+  // Create 60 students, only 5 have "Unique" in their name
+  for (let i = 0; i < 60; i++) {
+    const isUnique = i >= 55;
+    storage.set(`students/s${i}`, {
+      firstName: isUnique ? 'Unique' : 'Common',
+      lastName: `Student${i}`,
+      parentEmail: `parent${i}@test.com`,
+      status: 'pending',
+    });
+  }
+
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as any;
+  __setAdminDbForTests(fakeProvider);
+
+  // Search for "Unique" with default pagination (limit 50)
+  const result = await getAllStudents({ search: 'Unique' });
+
+  // Should find all 5 "Unique" students, not limited by pagination
+  assert.equal(result.total, 5, 'Total should be 5 (all Unique students)');
+  assert.equal(result.students.length, 5, 'Should return all 5 Unique students');
+
+  // Verify all returned students actually match the search
+  for (const student of result.students) {
+    assert.ok(
+      student.firstName.toLowerCase().includes('unique') ||
+      student.lastName.toLowerCase().includes('unique'),
+      'Each returned student should match the search term'
+    );
+  }
+});
+
+test('getAllStudents: without search should use efficient Firestore pagination', async () => {
+  const storage = new Map<string, StoredDoc>();
+  // Create 30 students (less than default limit of 50)
+  for (let i = 0; i < 30; i++) {
+    storage.set(`students/s${i}`, {
+      firstName: `Student${i}`,
+      lastName: 'Test',
+      status: 'pending',
+    });
+  }
+
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as any;
+  __setAdminDbForTests(fakeProvider);
+
+  // Without search, should use Firestore's count and pagination
+  // Note: Mock doesn't implement actual pagination, just verifies the query path
+  const result = await getAllStudents({ limit: 50, offset: 0 });
+
+  assert.equal(result.total, 30, 'Total should be 30 (all students)');
+  assert.equal(result.limit, 50, 'Limit should be 50');
+  assert.equal(result.offset, 0, 'Offset should be 0');
+});
