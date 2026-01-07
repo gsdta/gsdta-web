@@ -8,6 +8,7 @@ import { useAuth } from '@/components/AuthProvider';
 import ProfileCompletionModal from '@/components/ProfileCompletionModal';
 import { useFeatureFlags } from '@/context/FeatureFlagsContext';
 import { filterNavSections } from '@/lib/featureMapping';
+import { UserDropdown, UserDropdownMobile } from '@/components/UserDropdown';
 
 interface NavItem {
   label: string;
@@ -136,6 +137,11 @@ export default function ParentLayoutClient({ children }: { children: React.React
                 Parent Portal
               </Link>
 
+              {/* Desktop: User dropdown */}
+              <div className="hidden md:flex items-center gap-4">
+                <UserDropdown />
+              </div>
+
               {/* Mobile menu button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -171,6 +177,10 @@ export default function ParentLayoutClient({ children }: { children: React.React
                     ))}
                   </div>
                 ))}
+                {/* User menu for mobile */}
+                <div className="px-4">
+                  <UserDropdownMobile onItemClick={() => setMobileMenuOpen(false)} />
+                </div>
               </div>
             )}
           </div>

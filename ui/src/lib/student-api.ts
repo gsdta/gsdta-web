@@ -133,6 +133,7 @@ export async function updateStudent(
 interface AdminStudentsListParams {
   status?: 'pending' | 'admitted' | 'active' | 'inactive' | 'withdrawn' | 'all';
   search?: string;
+  classId?: string;
   limit?: number;
   offset?: number;
 }
@@ -150,6 +151,7 @@ export async function adminGetStudents(
   const queryParams = new URLSearchParams();
   if (params.status) queryParams.set('status', params.status);
   if (params.search) queryParams.set('search', params.search);
+  if (params.classId) queryParams.set('classId', params.classId);
   if (params.limit) queryParams.set('limit', params.limit.toString());
   if (params.offset) queryParams.set('offset', params.offset.toString());
 

@@ -7,6 +7,7 @@ import { Protected } from '@/components/Protected';
 import { useAuth } from '@/components/AuthProvider';
 import { useFeatureFlags } from '@/context/FeatureFlagsContext';
 import { filterNavSections } from '@/lib/featureMapping';
+import { UserDropdown, UserDropdownMobile } from '@/components/UserDropdown';
 
 interface NavItem {
   label: string;
@@ -130,6 +131,11 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
                 Admin Portal
               </Link>
 
+              {/* Desktop: User dropdown */}
+              <div className="hidden md:flex items-center gap-4">
+                <UserDropdown />
+              </div>
+
               {/* Mobile menu button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -165,6 +171,10 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
                     ))}
                   </div>
                 ))}
+                {/* User menu for mobile */}
+                <div className="px-4">
+                  <UserDropdownMobile onItemClick={() => setMobileMenuOpen(false)} />
+                </div>
               </div>
             )}
           </div>
