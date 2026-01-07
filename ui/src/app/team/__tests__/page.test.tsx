@@ -72,12 +72,11 @@ describe("TeamPage", () => {
     expect(screen.getByText("Rajaraman Krishnan")).toBeInTheDocument();
   });
 
-  test("switches to Executives section when clicked", () => {
+  test("shows Executives section content when tab=executives", () => {
+    mockSearchParams.set("tab", "executives");
     render(<TeamPage />);
+
     const executivesButton = screen.getByRole("button", { name: "Executives" });
-
-    fireEvent.click(executivesButton);
-
     expect(executivesButton).toHaveClass("bg-green-700");
     expect(screen.getByText("Technology Committee")).toBeInTheDocument();
     expect(screen.getByText("Administration Committee")).toBeInTheDocument();
@@ -105,19 +104,15 @@ describe("TeamPage", () => {
   });
 
   test("shows coming soon message for Volunteers section", () => {
+    mockSearchParams.set("tab", "volunteers");
     render(<TeamPage />);
-    const volunteersButton = screen.getByRole("button", { name: "Volunteers" });
-
-    fireEvent.click(volunteersButton);
 
     expect(screen.getByText(/Volunteers are not available yet/i)).toBeInTheDocument();
   });
 
   test("shows coming soon message for FAQ section", () => {
+    mockSearchParams.set("tab", "faq");
     render(<TeamPage />);
-    const faqButton = screen.getByRole("button", { name: "FAQ" });
-
-    fireEvent.click(faqButton);
 
     expect(screen.getByText(/FAQ are not available yet/i)).toBeInTheDocument();
   });
@@ -203,10 +198,8 @@ describe("TeamPage", () => {
   });
 
   test("committee tiles display all members", () => {
+    mockSearchParams.set("tab", "executives");
     render(<TeamPage />);
-    const executivesButton = screen.getByRole("button", { name: "Executives" });
-
-    fireEvent.click(executivesButton);
 
     // Check Technology Committee members
     expect(screen.getByText("Sriram Hariharan")).toBeInTheDocument();
