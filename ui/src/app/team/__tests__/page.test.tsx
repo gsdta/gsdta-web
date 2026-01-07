@@ -2,6 +2,19 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import TeamPage from "../page";
 import "@testing-library/jest-dom";
 
+// Mock Next.js navigation hooks
+const mockPush = jest.fn();
+const mockSearchParams = new URLSearchParams();
+
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: mockPush,
+    replace: jest.fn(),
+    back: jest.fn(),
+  }),
+  useSearchParams: () => mockSearchParams,
+}));
+
 // Mock i18n provider
 jest.mock("@/i18n/LanguageProvider", () => ({
   useI18n: () => ({
@@ -15,6 +28,8 @@ jest.mock("@/i18n/LanguageProvider", () => ({
         "team.faq": "FAQ",
         "team.more": "More...",
         "team.close": "Close",
+        "team.ourTeachers": "Our Teachers",
+        "team.assistantTeachers": "Assistant Teachers",
       };
       return translations[key] || key;
     },
@@ -24,6 +39,12 @@ jest.mock("@/i18n/LanguageProvider", () => ({
 }));
 
 describe("TeamPage", () => {
+  beforeEach(() => {
+    mockPush.mockClear();
+    // Reset search params
+    mockSearchParams.delete("tab");
+  });
+
   test("renders team page title", () => {
     render(<TeamPage />);
     expect(screen.getByTestId("page-title")).toHaveTextContent("Team");
@@ -191,5 +212,50 @@ describe("TeamPage", () => {
     expect(screen.getByText("Sriram Hariharan")).toBeInTheDocument();
     expect(screen.getByText("Ashok Annamalai")).toBeInTheDocument();
     expect(screen.getByText("Vinoth Deivasigamani")).toBeInTheDocument();
+  });
+
+  // Tests for URL-based tab navigation (fix for issue #237)
+  describe("URL-based tab navigation", () => {
+    test("shows executives tab when tab=executives is in URL", () => {
+      mockSearchParams.set("tab", "executives");
+      render(<TeamPage />);
+
+      const executivesButton = screen.getByRole("button", { name: "Executives" });
+      expect(executivesButton).toHaveClass("bg-green-700");
+      expect(screen.getByText("Technology Committee")).toBeInTheDocument();
+    });
+
+    test("shows teachers tab when tab=teachers is in URL", () => {
+      mockSearchParams.set("tab", "teachers");
+      render(<TeamPage />);
+
+      const teachersButton = screen.getByRole("button", { name: "Teachers" });
+      expect(teachersButton).toHaveClass("bg-green-700");
+      expect(screen.getByText("Our Teachers")).toBeInTheDocument();
+    });
+
+    test("shows board tab by default when no tab param", () => {
+      render(<TeamPage />);
+
+      const boardButton = screen.getByRole("button", { name: "Board" });
+      expect(boardButton).toHaveClass("bg-green-700");
+      expect(screen.getByText("Bala Jayaseelan")).toBeInTheDocument();
+    });
+
+    test("handles case-insensitive tab parameter", () => {
+      mockSearchParams.set("tab", "EXECUTIVES");
+      render(<TeamPage />);
+
+      const executivesButton = screen.getByRole("button", { name: "Executives" });
+      expect(executivesButton).toHaveClass("bg-green-700");
+    });
+
+    test("falls back to board for invalid tab parameter", () => {
+      mockSearchParams.set("tab", "invalid");
+      render(<TeamPage />);
+
+      const boardButton = screen.getByRole("button", { name: "Board" });
+      expect(boardButton).toHaveClass("bg-green-700");
+    });
   });
 });
