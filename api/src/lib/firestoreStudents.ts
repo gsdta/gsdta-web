@@ -114,6 +114,10 @@ export async function getStudentsByParentId(parentId: string): Promise<LinkedStu
 
 /**
  * Get all students with filters (for admin)
+ *
+ * Note: When search is provided, we fetch all matching records first,
+ * apply the search filter, then paginate. This is because Firestore
+ * doesn't support full-text search natively.
  */
 export async function getAllStudents(filters: StudentListFilters = {}): Promise<StudentListResponse> {
   const { status = 'all', search, parentId, classId, limit = 50, offset = 0 } = filters;
@@ -134,6 +138,45 @@ export async function getAllStudents(filters: StudentListFilters = {}): Promise<
   // Order by creation date (newest first)
   query = query.orderBy('createdAt', 'desc');
 
+  // If search is provided, we need to fetch all records, filter, then paginate
+  // This is because Firestore doesn't support full-text search
+  if (search) {
+    const searchLower = search.toLowerCase();
+
+    // Fetch all matching records (without pagination)
+    const snap = await query.get();
+
+    let allStudents = snap.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+      } as Student;
+    });
+
+    // Apply search filter
+    allStudents = allStudents.filter(
+      (s) =>
+        s.firstName.toLowerCase().includes(searchLower) ||
+        s.lastName.toLowerCase().includes(searchLower) ||
+        (s.parentEmail?.toLowerCase().includes(searchLower) ?? false)
+    );
+
+    // Get total after search filter
+    const total = allStudents.length;
+
+    // Apply pagination to filtered results
+    const students = allStudents.slice(offset, offset + limit);
+
+    return {
+      students,
+      total,
+      limit,
+      offset,
+    };
+  }
+
+  // No search - use efficient Firestore pagination
   // Get total count (before pagination)
   const countSnap = await query.count().get();
   const total = countSnap.data().count;
@@ -143,24 +186,13 @@ export async function getAllStudents(filters: StudentListFilters = {}): Promise<
 
   const snap = await query.get();
 
-  let students = snap.docs.map((doc) => {
+  const students = snap.docs.map((doc) => {
     const data = doc.data();
     return {
       id: doc.id,
       ...data,
     } as Student;
   });
-
-  // Apply search filter in memory (Firestore doesn't support full-text search)
-  if (search) {
-    const searchLower = search.toLowerCase();
-    students = students.filter(
-      (s) =>
-        s.firstName.toLowerCase().includes(searchLower) ||
-        s.lastName.toLowerCase().includes(searchLower) ||
-        (s.parentEmail?.toLowerCase().includes(searchLower) ?? false)
-    );
-  }
 
   return {
     students,
