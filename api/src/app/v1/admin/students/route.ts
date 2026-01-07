@@ -79,6 +79,11 @@ export async function OPTIONS(req: NextRequest) {
  *           type: string
  *         description: Search by student name or parent email
  *       - in: query
+ *         name: classId
+ *         schema:
+ *           type: string
+ *         description: Filter by class ID
+ *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
@@ -110,6 +115,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status') as StudentStatus | 'all' | null;
     const search = searchParams.get('search') || undefined;
+    const classId = searchParams.get('classId') || undefined;
     const limit = parseInt(searchParams.get('limit') || '50', 10);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
 
@@ -117,6 +123,7 @@ export async function GET(req: NextRequest) {
     const result = await getAllStudents({
       status: status || 'all',
       search,
+      classId,
       limit,
       offset,
     });

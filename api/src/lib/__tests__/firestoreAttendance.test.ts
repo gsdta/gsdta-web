@@ -334,7 +334,7 @@ test('updateAttendanceRecord: updates status and tracks history', async () => {
   setAttendanceDb(null);
 });
 
-test('updateAttendanceRecord: throws error for records older than 7 days', async () => {
+test('updateAttendanceRecord: throws error for records older than edit window', async () => {
   const storage = new Map();
   const fakeProvider = (() => makeFakeDb(storage)) as unknown as any;
   setAttendanceDb(fakeProvider);
@@ -352,12 +352,47 @@ test('updateAttendanceRecord: throws error for records older than 7 days', async
     docStatus: 'active',
   });
 
+  // Test with a 7-day edit window (record is 10 days old, so should fail)
   try {
-    await updateAttendanceRecord('a1', { status: 'excused' }, 't1', 'Teacher 1');
+    await updateAttendanceRecord('a1', { status: 'excused' }, 't1', 'Teacher 1', 7);
     assert.fail('Should have thrown');
   } catch (err: any) {
     assert.ok(err.message.includes('older than 7 days'));
   }
+
+  setAttendanceDb(null);
+});
+
+test('updateAttendanceRecord: allows editing within configurable window', async () => {
+  const storage = new Map();
+  const fakeProvider = (() => makeFakeDb(storage)) as unknown as any;
+  setAttendanceDb(fakeProvider);
+
+  // Create a record from 10 days ago
+  const oldDate = new Date();
+  oldDate.setDate(oldDate.getDate() - 10);
+  const dateStr = oldDate.toISOString().split('T')[0];
+
+  storage.set('attendance/a1', {
+    id: 'a1',
+    classId: 'c1',
+    date: dateStr,
+    status: 'absent',
+    docStatus: 'active',
+    studentId: 's1',
+    studentName: 'Student 1',
+    recordedBy: 't1',
+    recordedByName: 'Teacher 1',
+    recordedAt: { toDate: () => new Date() },
+    updatedAt: { toDate: () => new Date() },
+    createdAt: { toDate: () => new Date() },
+  });
+
+  // Test with a 30-day edit window (record is 10 days old, so should succeed)
+  const updated = await updateAttendanceRecord('a1', { status: 'excused' }, 't1', 'Teacher 1', 30);
+
+  assert.ok(updated);
+  assert.equal(updated?.status, 'excused');
 
   setAttendanceDb(null);
 });

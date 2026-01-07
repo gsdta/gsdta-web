@@ -9,22 +9,27 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const CACHE_KEY = 'hero_content_cache';
 
 interface CachedData {
-  content: HeroContent | null;
+  contents: HeroContent[];
   timestamp: number;
 }
 
 /**
  * Hook to fetch and cache active hero content with real-time updates
- * 
+ *
  * Client-side caching strategy:
  * 1. Check localStorage for cached data (5-min TTL)
  * 2. If cache valid, use it immediately
  * 3. Subscribe to Firestore real-time updates in background
  * 4. Update cache when data changes
- * 
- * This minimizes Firestore reads while ensuring fresh data
+ *
+ * Returns ALL active hero content items within their date range,
+ * sorted by priority (highest first). This allows the UI to rotate
+ * through multiple events.
  */
 export function useHeroContent() {
+  // Return all matching content items, not just one
+  const [contents, setContents] = useState<HeroContent[]>([]);
+  // Keep single content for backward compatibility
   const [content, setContent] = useState<HeroContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,8 +41,9 @@ export function useHeroContent() {
       try {
         // Check cache first
         const cached = loadFromCache();
-        if (cached) {
-          setContent(cached);
+        if (cached && cached.length > 0) {
+          setContents(cached);
+          setContent(cached[0]);
           setLoading(false);
         }
 
@@ -60,36 +66,36 @@ export function useHeroContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function loadFromCache(): HeroContent | null {
-    if (typeof window === 'undefined') return null;
+  function loadFromCache(): HeroContent[] {
+    if (typeof window === 'undefined') return [];
 
     try {
       const cached = localStorage.getItem(CACHE_KEY);
-      if (!cached) return null;
+      if (!cached) return [];
 
       const data: CachedData = JSON.parse(cached);
       const now = Date.now();
 
       // Check if cache is still valid
       if (now - data.timestamp < CACHE_TTL) {
-        return data.content;
+        return data.contents || [];
       }
 
       // Cache expired, remove it
       localStorage.removeItem(CACHE_KEY);
-      return null;
+      return [];
     } catch (err) {
       console.error('Error reading cache:', err);
-      return null;
+      return [];
     }
   }
 
-  function saveToCache(heroContent: HeroContent | null) {
+  function saveToCache(heroContents: HeroContent[]) {
     if (typeof window === 'undefined') return;
 
     try {
       const data: CachedData = {
-        content: heroContent,
+        contents: heroContents,
         timestamp: Date.now(),
       };
       localStorage.setItem(CACHE_KEY, JSON.stringify(data));
@@ -100,7 +106,7 @@ export function useHeroContent() {
 
   async function subscribeToHeroContent(): Promise<() => void> {
     const db = getFirebaseDb();
-    
+
     // Query for active hero content
     const q = query(
       collection(db, 'heroContent'),
@@ -113,24 +119,24 @@ export function useHeroContent() {
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        let activeContent: HeroContent | null = null;
+        const activeContents: HeroContent[] = [];
         const now = new Date();
 
-        // Find the first content that matches date range
+        // Find ALL content that matches date range
         for (const doc of snapshot.docs) {
           const data = doc.data();
-          
+
           // Convert Firestore Timestamps to ISO strings
           const startDate = data.startDate ? new Date(data.startDate.seconds * 1000) : null;
           const endDate = data.endDate ? new Date(data.endDate.seconds * 1000) : null;
 
           // Check if within date range
-          const isWithinRange = 
+          const isWithinRange =
             (!startDate || startDate <= now) &&
             (!endDate || endDate >= now);
 
           if (isWithinRange) {
-            activeContent = {
+            activeContents.push({
               id: doc.id,
               type: data.type,
               title: data.title,
@@ -147,17 +153,18 @@ export function useHeroContent() {
               updatedAt: new Date(data.updatedAt.seconds * 1000).toISOString(),
               createdBy: data.createdBy,
               updatedBy: data.updatedBy,
-            };
-            break; // Take first match (highest priority)
+            });
           }
         }
 
-        setContent(activeContent);
+        setContents(activeContents);
+        // Keep backward compatibility - first item is highest priority
+        setContent(activeContents.length > 0 ? activeContents[0] : null);
         setLoading(false);
         setError(null);
-        
+
         // Update cache
-        saveToCache(activeContent);
+        saveToCache(activeContents);
       },
       (err) => {
         console.error('Error in hero content subscription:', err);
@@ -169,5 +176,6 @@ export function useHeroContent() {
     return unsubscribe;
   }
 
-  return { content, loading, error };
+  // Return both single content (backward compatible) and all contents
+  return { content, contents, loading, error };
 }

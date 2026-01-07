@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ThirukkuralDisplay } from "@/components/ThirukkuralDisplay";
@@ -8,41 +8,69 @@ import { HeroEventBanner } from "@/components/home/HeroEventBanner";
 import { useI18n } from "@/i18n/LanguageProvider";
 import { useHeroContent } from "@/hooks/useHeroContent";
 
+// Base interval for rotation (higher priority items get shorter intervals)
+const BASE_INTERVAL_MS = 8000;
+
 export function HeroThirukkural() {
   const { t } = useI18n();
-  const { content, loading } = useHeroContent();
-  const [showEvent, setShowEvent] = useState(true);
+  const { contents, loading } = useHeroContent();
+  const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Auto-slide between event and thirukkural every 10 seconds
+  // Total slides = all events + 1 for Thirukkural
+  const totalSlides = contents.length + 1;
+  const thirukkuralIndex = contents.length; // Last slide is always Thirukkural
+
+  // Calculate interval based on priority (higher priority = longer display time)
+  const getIntervalForSlide = useCallback(
+    (slideIndex: number) => {
+      if (slideIndex >= contents.length) {
+        // Thirukkural gets base interval
+        return BASE_INTERVAL_MS;
+      }
+      const content = contents[slideIndex];
+      // Higher priority (e.g., 100) = longer display time
+      // Priority 10 = 8s, Priority 50 = 12s, Priority 100 = 16s
+      const priorityMultiplier = 1 + (content.priority || 10) / 50;
+      return Math.round(BASE_INTERVAL_MS * priorityMultiplier);
+    },
+    [contents]
+  );
+
+  // Auto-rotate through all slides
   useEffect(() => {
-    if (!content || loading) return;
+    if (contents.length === 0 || loading) return;
 
-    const interval = setInterval(() => {
-      setShowEvent((prev) => !prev);
-    }, 10000); // 10 seconds
+    const interval = getIntervalForSlide(currentSlide);
 
-    return () => clearInterval(interval);
-  }, [content, loading]);
+    const timer = setTimeout(() => {
+      setCurrentSlide((prev) => (prev + 1) % totalSlides);
+    }, interval);
 
-  // If there's an active event banner, alternate between event and Thirukkural
-  if (content && !loading) {
+    return () => clearTimeout(timer);
+  }, [contents.length, loading, currentSlide, totalSlides, getIntervalForSlide]);
+
+  // If there are active event banners, show carousel with all events + Thirukkural
+  if (contents.length > 0 && !loading) {
     return (
       <>
         <AnnouncementBanner />
         <div className="relative">
           {/* Slide indicators */}
           <div className="absolute top-4 right-4 z-10 flex gap-2">
+            {contents.map((_, index) => (
+              <button
+                key={`event-${index}`}
+                onClick={() => setCurrentSlide(index)}
+                className={`h-2 rounded-full transition-all ${
+                  currentSlide === index ? 'bg-rose-600 w-6' : 'bg-gray-300 w-2'
+                }`}
+                aria-label={`Show event ${index + 1}`}
+              />
+            ))}
             <button
-              onClick={() => setShowEvent(true)}
-              className={`h-2 w-2 rounded-full transition-all ${
-                showEvent ? 'bg-rose-600 w-6' : 'bg-gray-300'
-              }`}
-              aria-label="Show event banner"
-            />
-            <button
-              onClick={() => setShowEvent(false)}
-              className={`h-2 w-2 rounded-full transition-all ${
-                !showEvent ? 'bg-orange-500 w-6' : 'bg-gray-300'
+              onClick={() => setCurrentSlide(thirukkuralIndex)}
+              className={`h-2 rounded-full transition-all ${
+                currentSlide === thirukkuralIndex ? 'bg-orange-500 w-6' : 'bg-gray-300 w-2'
               }`}
               aria-label="Show Thirukkural"
             />
@@ -52,14 +80,16 @@ export function HeroThirukkural() {
           <div className="relative overflow-hidden rounded-xl">
             <div
               className="flex transition-transform duration-500 ease-in-out"
-              style={{ transform: `translateX(-${showEvent ? 0 : 100}%)` }}
+              style={{ transform: `translateX(-${currentSlide * 100}%)` }}
             >
-              {/* Slide 1: Event Banner */}
-              <div className="min-w-full">
-                <HeroEventBanner content={content} />
-              </div>
+              {/* Event Slides */}
+              {contents.map((content, index) => (
+                <div key={content.id || index} className="min-w-full">
+                  <HeroEventBanner content={content} />
+                </div>
+              ))}
 
-              {/* Slide 2: Thirukkural */}
+              {/* Thirukkural Slide (always last) */}
               <div className="min-w-full">
                 <ThirukkuralSection t={t} />
               </div>
@@ -70,7 +100,7 @@ export function HeroThirukkural() {
     );
   }
 
-  // Default: Show Thirukkural only
+  // Default: Show Thirukkural only (no events)
   return (
     <>
       <AnnouncementBanner />

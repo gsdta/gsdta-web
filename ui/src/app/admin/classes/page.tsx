@@ -44,6 +44,7 @@ export default function ClassesPage() {
   };
 
   const getClassActions = (cls: Class): TableAction[] => [
+    { label: 'View Details', onClick: () => router.push(`/admin/classes/${cls.id}`) },
     { label: 'Edit', onClick: () => router.push(`/admin/classes/${cls.id}/edit`) },
     {
       label: togglingId === cls.id ? '...' : (cls.status === 'active' ? 'Deactivate' : 'Activate'),
@@ -52,6 +53,10 @@ export default function ClassesPage() {
       disabled: togglingId === cls.id,
     },
   ];
+
+  const handleRowDoubleClick = (cls: Class) => {
+    router.push(`/admin/classes/${cls.id}`);
+  };
 
   const fetchGrades = useCallback(async () => {
     try {
@@ -227,10 +232,11 @@ export default function ClassesPage() {
                   <tr
                     key={cls.id}
                     onClick={(e) => handleRowClick(e, cls)}
+                    onDoubleClick={() => handleRowDoubleClick(cls)}
                     className="hover:bg-blue-50 cursor-pointer transition-colors"
                     tabIndex={0}
                     role="button"
-                    onKeyDown={(e) => e.key === 'Enter' && handleRowClick(e as unknown as React.MouseEvent, cls)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleRowDoubleClick(cls)}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{cls.name}</div>

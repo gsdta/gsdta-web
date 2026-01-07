@@ -10,6 +10,7 @@ import {
   getAttendanceSummary,
   attendanceExistsForDate,
 } from '@/lib/firestoreAttendance';
+import { getAttendanceConfig } from '@/lib/systemConfig';
 import { randomUUID } from 'crypto';
 
 export const runtime = 'nodejs';
@@ -205,11 +206,15 @@ export async function POST(
       return jsonError(400, 'validation/invalid-date', 'Cannot mark attendance for future dates', origin);
     }
 
-    // Validate date is within 7 days
-    const sevenDaysAgo = new Date(today);
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    if (attendanceDate < sevenDaysAgo) {
-      return jsonError(400, 'validation/date-too-old', 'Cannot mark attendance for dates older than 7 days', origin);
+    // Get configurable attendance window from system config
+    const attendanceConfig = await getAttendanceConfig();
+    const markWindowDays = attendanceConfig.markWindowDays;
+
+    // Validate date is within the configured window
+    const windowStart = new Date(today);
+    windowStart.setDate(windowStart.getDate() - markWindowDays);
+    if (attendanceDate < windowStart) {
+      return jsonError(400, 'validation/date-too-old', `Cannot mark attendance for dates older than ${markWindowDays} days`, origin);
     }
 
     // Create attendance records
