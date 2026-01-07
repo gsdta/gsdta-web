@@ -92,9 +92,7 @@ export function Footer() {
                             </div>
                             <div className="flex items-center gap-2 justify-center md:justify-start">
                                 <span className="text-rose-600">☎</span>
-                                <a href="tel:619-630-8499" className="hover:text-rose-600:text-rose-400 transition-colors">
-                                    619-630-8499
-                                </a>
+                                <span>619-630-8499</span>
                             </div>
                         </div>
 

@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import people from "@/data/people.json";
 import { useI18n } from "@/i18n/LanguageProvider";
@@ -219,51 +220,33 @@ function CommitteeTile({
   );
 }
 
-function readTabFromUrl<T extends string>(allowed: readonly T[]): T | null {
-  if (typeof window === "undefined") return null;
-  // In test environment, avoid reading from URL to prevent cross-test bleed
-  if (process.env.NODE_ENV === "test") return null;
-  try {
-    const url = new URL(window.location.href);
-    const hash = url.hash?.slice(1).toLowerCase();
-    const qp = (url.searchParams.get("tab") || url.searchParams.get("section") || "").toLowerCase();
-    const candidate = (hash || qp) as T | "";
-    if (candidate && (allowed as readonly string[]).includes(candidate)) return candidate as T;
-  } catch {}
-  return null;
-}
-
 export default function TeamPage() {
   const { t } = useI18n();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const keys = useMemo(() => SECTIONS.map((s) => s.key) as readonly SectionKey[], []);
-  const [active, setActive] = useState<SectionKey>(() => readTabFromUrl(keys) || SECTIONS[0].key);
   const [expandedPersonId, setExpandedPersonId] = useState<string | null>(null);
 
-  // Initialize from URL and listen to URL changes
-  useEffect(() => {
-    const applyFromUrl = () => {
-      const from = readTabFromUrl(keys);
-      if (from) setActive(from);
-    };
-    applyFromUrl();
-    window.addEventListener("hashchange", applyFromUrl);
-    window.addEventListener("popstate", applyFromUrl);
-    return () => {
-      window.removeEventListener("hashchange", applyFromUrl);
-      window.removeEventListener("popstate", applyFromUrl);
-    };
-  }, [keys]);
+  // Get active tab from URL search params (reactive to Next.js navigation)
+  const active = useMemo<SectionKey>(() => {
+    const tabParam = searchParams.get("tab")?.toLowerCase();
+    if (tabParam && (keys as readonly string[]).includes(tabParam)) {
+      return tabParam as SectionKey;
+    }
+    // Fallback: check hash from URL (for direct navigation)
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash?.slice(1).toLowerCase();
+      if (hash && (keys as readonly string[]).includes(hash)) {
+        return hash as SectionKey;
+      }
+    }
+    return SECTIONS[0].key;
+  }, [searchParams, keys]);
 
   const onTabClick = (k: SectionKey) => {
-    setActive(k);
-    if (typeof window !== "undefined") {
-      // Don't mutate URL during unit tests to avoid affecting other tests
-      if (process.env.NODE_ENV !== "test") {
-        const url = new URL(window.location.href);
-        url.searchParams.set("tab", k);
-        url.hash = `#${k}`;
-        window.history.replaceState(null, "", url.toString());
-      }
+    // Don't mutate URL during unit tests to avoid affecting other tests
+    if (process.env.NODE_ENV !== "test") {
+      router.push(`/team?tab=${k}#${k}`, { scroll: false });
     }
   };
 
