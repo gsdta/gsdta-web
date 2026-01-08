@@ -108,7 +108,7 @@ export default function TeacherClassDetailPage() {
       {/* Quick Actions */}
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Link
             href={`/teacher/classes/${classId}/roster`}
             className="flex items-center p-4 border-2 border-blue-200 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
@@ -139,6 +139,28 @@ export default function TeacherClassDetailPage() {
             <div>
               <p className="font-medium text-purple-900">Attendance History</p>
               <p className="text-sm text-purple-600">View past records</p>
+            </div>
+          </Link>
+
+          <Link
+            href={`/teacher/classes/${classId}/assignments`}
+            className="flex items-center p-4 border-2 border-orange-200 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
+          >
+            <span className="text-2xl mr-3">📝</span>
+            <div>
+              <p className="font-medium text-orange-900">Assignments</p>
+              <p className="text-sm text-orange-600">Create and manage assignments</p>
+            </div>
+          </Link>
+
+          <Link
+            href={`/teacher/classes/${classId}/gradebook`}
+            className="flex items-center p-4 border-2 border-indigo-200 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+          >
+            <span className="text-2xl mr-3">📊</span>
+            <div>
+              <p className="font-medium text-indigo-900">Gradebook</p>
+              <p className="text-sm text-indigo-600">View and edit grades</p>
             </div>
           </Link>
         </div>
