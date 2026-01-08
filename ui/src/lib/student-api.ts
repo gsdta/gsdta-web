@@ -130,10 +130,16 @@ export async function updateStudent(
 
 // Admin API functions
 
-interface AdminStudentsListParams {
+export interface AdminStudentsListParams {
   status?: 'pending' | 'admitted' | 'active' | 'inactive' | 'withdrawn' | 'all';
   search?: string;
   classId?: string;
+  enrollingGrade?: string;
+  schoolDistrict?: string;
+  unassigned?: boolean;
+  dateField?: 'createdAt' | 'admittedAt';
+  dateFrom?: string;
+  dateTo?: string;
   limit?: number;
   offset?: number;
 }
@@ -152,6 +158,12 @@ export async function adminGetStudents(
   if (params.status) queryParams.set('status', params.status);
   if (params.search) queryParams.set('search', params.search);
   if (params.classId) queryParams.set('classId', params.classId);
+  if (params.enrollingGrade) queryParams.set('enrollingGrade', params.enrollingGrade);
+  if (params.schoolDistrict) queryParams.set('schoolDistrict', params.schoolDistrict);
+  if (params.unassigned) queryParams.set('unassigned', 'true');
+  if (params.dateField) queryParams.set('dateField', params.dateField);
+  if (params.dateFrom) queryParams.set('dateFrom', params.dateFrom);
+  if (params.dateTo) queryParams.set('dateTo', params.dateTo);
   if (params.limit) queryParams.set('limit', params.limit.toString());
   if (params.offset) queryParams.set('offset', params.offset.toString());
 
