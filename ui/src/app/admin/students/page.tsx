@@ -3,9 +3,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
-import { adminGetStudents, adminAdmitStudent } from '@/lib/student-api';
+import { adminGetStudents, adminAdmitStudent, type AdminStudentsListParams } from '@/lib/student-api';
 import { statusConfig, type Student, type StudentStatus, type StudentStatusCounts } from '@/lib/student-types';
 import { TableRowActionMenu, useTableRowActions, type TableAction } from '@/components/TableRowActionMenu';
+import { AdvancedSearchPanel } from './AdvancedSearchPanel';
 
 type StatusFilter = StudentStatus | 'all';
 
@@ -18,12 +19,22 @@ export default function AdminStudentsPage() {
   const [counts, setCounts] = useState<StudentStatusCounts | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(
     (searchParams.get('status') as StatusFilter) || 'all'
   );
   const [admittingId, setAdmittingId] = useState<string | null>(null);
   const { selectedItem, menuPosition, handleRowClick, closeMenu, isMenuOpen } = useTableRowActions<Student>();
+
+  // Advanced filters state
+  const [advancedFilters, setAdvancedFilters] = useState<AdminStudentsListParams>({
+    enrollingGrade: searchParams.get('enrollingGrade') || undefined,
+    schoolDistrict: searchParams.get('schoolDistrict') || undefined,
+    unassigned: searchParams.get('unassigned') === 'true' || undefined,
+    dateField: (searchParams.get('dateField') as 'createdAt' | 'admittedAt') || undefined,
+    dateFrom: searchParams.get('dateFrom') || undefined,
+    dateTo: searchParams.get('dateTo') || undefined,
+  });
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -71,6 +82,12 @@ export default function AdminStudentsPage() {
       const result = await adminGetStudents(getIdToken, {
         status: statusFilter,
         search: searchQuery || undefined,
+        enrollingGrade: advancedFilters.enrollingGrade,
+        schoolDistrict: advancedFilters.schoolDistrict,
+        unassigned: advancedFilters.unassigned,
+        dateField: advancedFilters.dateField,
+        dateFrom: advancedFilters.dateFrom,
+        dateTo: advancedFilters.dateTo,
         limit: pageSize,
         offset,
       });
@@ -88,28 +105,57 @@ export default function AdminStudentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [getIdToken, statusFilter, searchQuery, currentPage, pageSize]);
+  }, [getIdToken, statusFilter, searchQuery, advancedFilters, currentPage, pageSize]);
 
   useEffect(() => {
     fetchStudents();
   }, [fetchStudents]);
 
-  // Reset to first page when search query changes
+  // Reset to first page when search query or filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery]);
+  }, [searchQuery, advancedFilters]);
+
+  // Update URL when filters change
+  const updateUrlWithFilters = useCallback((newFilters: AdminStudentsListParams, newStatus?: StatusFilter, newSearch?: string) => {
+    const params = new URLSearchParams();
+    const status = newStatus ?? statusFilter;
+    const search = newSearch ?? searchQuery;
+
+    if (status !== 'all') params.set('status', status);
+    if (search) params.set('search', search);
+    if (newFilters.enrollingGrade) params.set('enrollingGrade', newFilters.enrollingGrade);
+    if (newFilters.schoolDistrict) params.set('schoolDistrict', newFilters.schoolDistrict);
+    if (newFilters.unassigned) params.set('unassigned', 'true');
+    if (newFilters.dateField) params.set('dateField', newFilters.dateField);
+    if (newFilters.dateFrom) params.set('dateFrom', newFilters.dateFrom);
+    if (newFilters.dateTo) params.set('dateTo', newFilters.dateTo);
+
+    router.push(`/admin/students${params.toString() ? `?${params.toString()}` : ''}`);
+  }, [router, statusFilter, searchQuery]);
+
+  const handleAdvancedFiltersChange = (newFilters: AdminStudentsListParams) => {
+    setAdvancedFilters(newFilters);
+    updateUrlWithFilters(newFilters);
+  };
+
+  const handleClearAdvancedFilters = () => {
+    const clearedFilters: AdminStudentsListParams = {
+      enrollingGrade: undefined,
+      schoolDistrict: undefined,
+      unassigned: undefined,
+      dateField: undefined,
+      dateFrom: undefined,
+      dateTo: undefined,
+    };
+    setAdvancedFilters(clearedFilters);
+    updateUrlWithFilters(clearedFilters);
+  };
 
   const handleStatusFilterChange = (status: StatusFilter) => {
     setStatusFilter(status);
     setCurrentPage(1); // Reset to first page when filter changes
-    // Update URL without reloading
-    const params = new URLSearchParams(searchParams.toString());
-    if (status === 'all') {
-      params.delete('status');
-    } else {
-      params.set('status', status);
-    }
-    router.push(`/admin/students${params.toString() ? `?${params.toString()}` : ''}`);
+    updateUrlWithFilters(advancedFilters, status);
   };
 
   const handlePageChange = (page: number) => {
@@ -221,6 +267,13 @@ export default function AdminStudentsPage() {
           </div>
         </div>
       </div>
+
+      {/* Advanced Search Panel */}
+      <AdvancedSearchPanel
+        filters={advancedFilters}
+        onFiltersChange={handleAdvancedFiltersChange}
+        onClear={handleClearAdvancedFilters}
+      />
 
       {/* Error Alert */}
       {error && (
