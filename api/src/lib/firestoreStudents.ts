@@ -115,16 +115,33 @@ export async function getStudentsByParentId(parentId: string): Promise<LinkedStu
 /**
  * Get all students with filters (for admin)
  *
- * Note: When search is provided, we fetch all matching records first,
- * apply the search filter, then paginate. This is because Firestore
- * doesn't support full-text search natively.
+ * Note: Some filters require client-side filtering:
+ * - search: Firestore doesn't support full-text search
+ * - unassigned: Firestore can't query for null/undefined fields
+ * - dateFrom/dateTo: Client-side for flexibility with multiple date fields
+ *
+ * These filters require fetching all matching records first,
+ * applying the filter, then paginating.
  */
 export async function getAllStudents(filters: StudentListFilters = {}): Promise<StudentListResponse> {
-  const { status = 'all', search, parentId, classId, limit = 50, offset = 0 } = filters;
+  const {
+    status = 'all',
+    search,
+    parentId,
+    classId,
+    enrollingGrade,
+    schoolDistrict,
+    unassigned,
+    dateField,
+    dateFrom,
+    dateTo,
+    limit = 50,
+    offset = 0,
+  } = filters;
 
   let query = getDb().collection(STUDENTS_COLLECTION) as FirebaseFirestore.Query;
 
-  // Apply filters
+  // Apply Firestore-native filters
   if (status !== 'all') {
     query = query.where('status', '==', status);
   }
@@ -134,15 +151,20 @@ export async function getAllStudents(filters: StudentListFilters = {}): Promise<
   if (classId) {
     query = query.where('classId', '==', classId);
   }
+  if (enrollingGrade) {
+    query = query.where('enrollingGrade', '==', enrollingGrade);
+  }
+  if (schoolDistrict) {
+    query = query.where('schoolDistrict', '==', schoolDistrict);
+  }
 
   // Order by creation date (newest first)
   query = query.orderBy('createdAt', 'desc');
 
-  // If search is provided, we need to fetch all records, filter, then paginate
-  // This is because Firestore doesn't support full-text search
-  if (search) {
-    const searchLower = search.toLowerCase();
+  // Check if we need client-side filtering
+  const needsClientFiltering = search || unassigned || (dateField && (dateFrom || dateTo));
 
+  if (needsClientFiltering) {
     // Fetch all matching records (without pagination)
     const snap = await query.get();
 
@@ -155,14 +177,44 @@ export async function getAllStudents(filters: StudentListFilters = {}): Promise<
     });
 
     // Apply search filter
-    allStudents = allStudents.filter(
-      (s) =>
-        s.firstName.toLowerCase().includes(searchLower) ||
-        s.lastName.toLowerCase().includes(searchLower) ||
-        (s.parentEmail?.toLowerCase().includes(searchLower) ?? false)
-    );
+    if (search) {
+      const searchLower = search.toLowerCase();
+      allStudents = allStudents.filter(
+        (s) =>
+          s.firstName.toLowerCase().includes(searchLower) ||
+          s.lastName.toLowerCase().includes(searchLower) ||
+          (s.parentEmail?.toLowerCase().includes(searchLower) ?? false)
+      );
+    }
 
-    // Get total after search filter
+    // Apply unassigned filter
+    if (unassigned) {
+      allStudents = allStudents.filter((s) => !s.classId);
+    }
+
+    // Apply date range filter
+    if (dateField && (dateFrom || dateTo)) {
+      const fromDate = dateFrom ? new Date(dateFrom) : null;
+      const toDate = dateTo ? new Date(dateTo) : null;
+      // Set toDate to end of day for inclusive comparison
+      if (toDate) {
+        toDate.setHours(23, 59, 59, 999);
+      }
+
+      allStudents = allStudents.filter((s) => {
+        const fieldValue = s[dateField];
+        if (!fieldValue) return false;
+        // Firestore Timestamps have a toDate() method
+        const studentDate = typeof fieldValue.toDate === 'function'
+          ? fieldValue.toDate()
+          : new Date(fieldValue as unknown as string);
+        if (fromDate && studentDate < fromDate) return false;
+        if (toDate && studentDate > toDate) return false;
+        return true;
+      });
+    }
+
+    // Get total after all filters
     const total = allStudents.length;
 
     // Apply pagination to filtered results
@@ -176,7 +228,7 @@ export async function getAllStudents(filters: StudentListFilters = {}): Promise<
     };
   }
 
-  // No search - use efficient Firestore pagination
+  // No client-side filtering needed - use efficient Firestore pagination
   // Get total count (before pagination)
   const countSnap = await query.count().get();
   const total = countSnap.data().count;

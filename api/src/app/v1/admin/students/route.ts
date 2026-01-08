@@ -84,6 +84,39 @@ export async function OPTIONS(req: NextRequest) {
  *           type: string
  *         description: Filter by class ID
  *       - in: query
+ *         name: enrollingGrade
+ *         schema:
+ *           type: string
+ *         description: Filter by Tamil school grade (e.g., grade-3)
+ *       - in: query
+ *         name: schoolDistrict
+ *         schema:
+ *           type: string
+ *         description: Filter by school district
+ *       - in: query
+ *         name: unassigned
+ *         schema:
+ *           type: boolean
+ *         description: Filter for students without a class assigned
+ *       - in: query
+ *         name: dateField
+ *         schema:
+ *           type: string
+ *           enum: [createdAt, admittedAt]
+ *         description: Which date field to filter on
+ *       - in: query
+ *         name: dateFrom
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date for date range filter (ISO format)
+ *       - in: query
+ *         name: dateTo
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date for date range filter (ISO format)
+ *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
@@ -116,6 +149,12 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get('status') as StudentStatus | 'all' | null;
     const search = searchParams.get('search') || undefined;
     const classId = searchParams.get('classId') || undefined;
+    const enrollingGrade = searchParams.get('enrollingGrade') || undefined;
+    const schoolDistrict = searchParams.get('schoolDistrict') || undefined;
+    const unassigned = searchParams.get('unassigned') === 'true' ? true : undefined;
+    const dateField = searchParams.get('dateField') as 'createdAt' | 'admittedAt' | null;
+    const dateFrom = searchParams.get('dateFrom') || undefined;
+    const dateTo = searchParams.get('dateTo') || undefined;
     const limit = parseInt(searchParams.get('limit') || '50', 10);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
 
@@ -124,6 +163,12 @@ export async function GET(req: NextRequest) {
       status: status || 'all',
       search,
       classId,
+      enrollingGrade,
+      schoolDistrict,
+      unassigned,
+      dateField: dateField || undefined,
+      dateFrom,
+      dateTo,
       limit,
       offset,
     });

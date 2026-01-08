@@ -55,6 +55,24 @@ export const COMMON_SCHOOL_DISTRICTS = [
 ] as const;
 
 /**
+ * Tamil school grades for dropdown filters
+ * Matches the DEFAULT_GRADES in api/src/types/grade.ts
+ */
+export const TAMIL_GRADES = [
+  { id: 'ps-1', name: 'Pre-School 1', displayOrder: 1 },
+  { id: 'ps-2', name: 'Pre-School 2', displayOrder: 2 },
+  { id: 'kg', name: 'Kindergarten', displayOrder: 3 },
+  { id: 'grade-1', name: 'Grade 1', displayOrder: 4 },
+  { id: 'grade-2', name: 'Grade 2', displayOrder: 5 },
+  { id: 'grade-3', name: 'Grade 3', displayOrder: 6 },
+  { id: 'grade-4', name: 'Grade 4', displayOrder: 7 },
+  { id: 'grade-5', name: 'Grade 5', displayOrder: 8 },
+  { id: 'grade-6', name: 'Grade 6', displayOrder: 9 },
+  { id: 'grade-7', name: 'Grade 7', displayOrder: 10 },
+  { id: 'grade-8', name: 'Grade 8', displayOrder: 11 },
+] as const;
+
+/**
  * Gender options for dropdown
  */
 export const genderOptions = [

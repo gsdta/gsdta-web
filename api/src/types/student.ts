@@ -162,12 +162,16 @@ export interface AssignClassDto {
  */
 export interface StudentListFilters {
   status?: StudentStatus | 'all';
-  search?: string;                  // Search by name
+  search?: string;                  // Search by name or parent email
   parentId?: string;                // Filter by parent
   classId?: string;                 // Filter by class
-  gradeId?: string;                 // Filter by enrolling grade
+  enrollingGrade?: string;          // Filter by Tamil school grade (e.g., "grade-3")
   schoolDistrict?: string;          // Filter by school district
   gender?: Gender;                  // Filter by gender
+  unassigned?: boolean;             // Filter for students without a class assigned
+  dateField?: 'createdAt' | 'admittedAt'; // Which date field to filter on
+  dateFrom?: string;                // ISO date string for date range start
+  dateTo?: string;                  // ISO date string for date range end
   limit?: number;
   offset?: number;
 }
