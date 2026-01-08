@@ -36,6 +36,14 @@
       "collectionGroup": "students",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "classId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "students",
+      "queryScope": "COLLECTION",
+      "fields": [
         { "fieldPath": "status", "order": "ASCENDING" },
         { "fieldPath": "enrollingGrade", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
