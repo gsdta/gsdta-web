@@ -37,7 +37,12 @@ function allowedOrigin(origin: string | null): string | null {
     }
     return null;
   }
-  const prodAllowed = new Set<string>(['https://www.gsdta.com']);
+  const prodAllowed = new Set<string>([
+    'https://gsdta.com',
+    'https://www.gsdta.com',
+    'https://app.gsdta.com',
+    'https://app.qa.gsdta.com',
+  ]);
   return prodAllowed.has(origin) ? origin : null;
 }
 
