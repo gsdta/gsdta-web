@@ -150,7 +150,8 @@ When deploying to `app.gsdta.com`, ensure all API routes include it in the allow
 const prodAllowed = new Set<string>([
   'https://gsdta.com',
   'https://www.gsdta.com',
-  'https://app.gsdta.com',  // Don't forget this!
+  'https://app.gsdta.com',
+  'https://app.qa.gsdta.com',  // QA environment
 ]);
 ```
 
