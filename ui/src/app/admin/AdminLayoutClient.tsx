@@ -70,6 +70,7 @@ const adminNav: NavSection[] = [
     items: [
       { label: 'Hero Content', href: '/admin/content/hero', icon: '🖼️' },
       { label: 'Flash News', href: '/admin/flash-news', icon: '📢' },
+      { label: 'News Posts', href: '/admin/news-posts', icon: '📰' },
     ],
   },
   {
