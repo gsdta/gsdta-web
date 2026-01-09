@@ -123,7 +123,7 @@ test("renders dashboard link for authenticated parent user", () => {
   render(<Header />);
 
   // Dashboard link should be visible and point to parent dashboard
-  expect(hasLinkTo("/parent/dashboard")).toBe(true);
+  expect(hasLinkTo("/parent")).toBe(true);
 });
 
 test("renders dashboard link for authenticated admin user", () => {
@@ -151,7 +151,7 @@ test("renders dashboard link for authenticated teacher user", () => {
   render(<Header />);
 
   // Dashboard link should be visible and point to teacher dashboard
-  expect(hasLinkTo("/teacher/dashboard")).toBe(true);
+  expect(hasLinkTo("/teacher")).toBe(true);
 });
 
 test("does not render dashboard link for anonymous users", () => {
@@ -166,6 +166,6 @@ test("does not render dashboard link for anonymous users", () => {
 
   // Dashboard links should not be present
   expect(hasLinkTo("/admin")).toBe(false);
-  expect(hasLinkTo("/teacher/dashboard")).toBe(false);
-  expect(hasLinkTo("/parent/dashboard")).toBe(false);
+  expect(hasLinkTo("/teacher")).toBe(false);
+  expect(hasLinkTo("/parent")).toBe(false);
 });

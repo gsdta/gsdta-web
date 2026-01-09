@@ -70,6 +70,12 @@ export interface Student {
   // Class Assignment (admin sets)
   classId?: string;                 // Assigned class ID
   className?: string;               // Denormalized class name
+  teacherId?: string;               // Primary teacher's user ID (denormalized)
+  teacherName?: string;             // Primary teacher's name (denormalized)
+
+  // Denormalized parent names for search
+  motherName?: string;              // From contacts.mother.name (denormalized)
+  fatherName?: string;              // From contacts.father.name (denormalized)
 
   // Medical/Safety
   medicalNotes?: string;
@@ -158,13 +164,32 @@ export interface AssignClassDto {
 }
 
 /**
+ * DTO for transferring a student to a different class
+ */
+export interface TransferClassDto {
+  newClassId: string;
+}
+
+/**
+ * Result of a class transfer operation
+ */
+export interface TransferClassResult {
+  student: Student;
+  previousClassId?: string;
+  previousClassName?: string;
+  newClassId: string;
+  newClassName: string;
+}
+
+/**
  * Student list query filters
  */
 export interface StudentListFilters {
   status?: StudentStatus | 'all';
-  search?: string;                  // Search by name or parent email
+  search?: string;                  // Search by name, parent email, parent names, or teacher name
   parentId?: string;                // Filter by parent
   classId?: string;                 // Filter by class
+  teacherId?: string;               // Filter by teacher (primary teacher of assigned class)
   enrollingGrade?: string;          // Filter by Tamil school grade (e.g., "grade-3")
   schoolDistrict?: string;          // Filter by school district
   gender?: Gender;                  // Filter by gender

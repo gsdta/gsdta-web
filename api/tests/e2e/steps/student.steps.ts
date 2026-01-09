@@ -54,3 +54,36 @@ Given('the class {string} has {int} students enrolled', async function (classId:
     updatedAt: Timestamp.now(),
   }, { merge: true });
 });
+
+Given('there is an active student with id {string} assigned to class {string}', async function (id: string, classId: string) {
+  const db = adminDb();
+  await db.collection(STUDENTS_COLLECTION).doc(id).set({
+    id,
+    firstName: 'Test',
+    lastName: 'Student',
+    dateOfBirth: '2015-01-01',
+    grade: '1st Grade',
+    status: 'active',
+    classId,
+    className: 'Test Class',
+    parentId: 'test-parent-uid',
+    parentEmail: 'parent@test.com',
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+  });
+});
+
+Given('there is an active class {string} with name {string} and capacity {int}', async function (classId: string, name: string, capacity: number) {
+  const db = adminDb();
+  await db.collection(CLASSES_COLLECTION).doc(classId).set({
+    id: classId,
+    name,
+    level: 'Beginner',
+    status: 'active',
+    enrolled: 0,
+    capacity,
+    teachers: [],
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+  });
+});

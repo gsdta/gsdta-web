@@ -10,9 +10,10 @@ import type { Role } from "@/lib/auth-types";
 // Get dashboard URL based on user role
 function getDashboardUrl(role: Role): string {
     switch (role) {
+        case "super_admin": return "/admin";
         case "admin": return "/admin";
-        case "teacher": return "/teacher/dashboard";
-        case "parent": return "/parent/dashboard";
+        case "teacher": return "/teacher";
+        case "parent": return "/parent";
         default: return "/";
     }
 }

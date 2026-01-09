@@ -14,6 +14,7 @@ export type AdminFeature =
   | 'Volunteers'
   | 'AttendanceAnalytics'
   | 'HeroContent'
+  | 'FlashNews'
   | 'Calendar';
 
 export type TeacherFeature =
@@ -70,6 +71,7 @@ export const ADMIN_FEATURES: AdminFeature[] = [
   'Volunteers',
   'AttendanceAnalytics',
   'HeroContent',
+  'FlashNews',
   'Calendar',
 ];
 

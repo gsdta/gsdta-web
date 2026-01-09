@@ -9,6 +9,7 @@ import type {
   StudentListResponse,
   LinkedStudentView,
   StudentStatus,
+  TransferClassResult,
 } from '@/types/student';
 import type {
   ValidatedStudentData,
@@ -17,6 +18,7 @@ import type {
   ImportedStudent,
 } from '@/types/bulkImport';
 import { getUserByEmail, findOrCreateParentByEmail } from './firestoreUsers';
+import { getClassById, incrementEnrolled, decrementEnrolled, getPrimaryTeacher } from './firestoreClasses';
 
 // Test hook: allow overriding adminDb provider during tests
 let getDb = adminDb;
@@ -36,6 +38,10 @@ export async function createStudent(
 ): Promise<Student> {
   const now = Timestamp.now();
 
+  // Extract parent names for search (denormalized)
+  const motherName = data.contacts?.mother?.name?.trim() || undefined;
+  const fatherName = data.contacts?.father?.name?.trim() || undefined;
+
   const studentData: Omit<Student, 'id'> = {
     firstName: data.firstName,
     lastName: data.lastName,
@@ -52,6 +58,9 @@ export async function createStudent(
     contacts: data.contacts,
     medicalNotes: data.medicalNotes,
     photoConsent: data.photoConsent ?? false,
+    // Denormalized parent names for search
+    motherName,
+    fatherName,
     status: 'pending',
     createdAt: now,
     updatedAt: now,
@@ -129,6 +138,7 @@ export async function getAllStudents(filters: StudentListFilters = {}): Promise<
     search,
     parentId,
     classId,
+    teacherId,
     enrollingGrade,
     schoolDistrict,
     unassigned,
@@ -150,6 +160,9 @@ export async function getAllStudents(filters: StudentListFilters = {}): Promise<
   }
   if (classId) {
     query = query.where('classId', '==', classId);
+  }
+  if (teacherId) {
+    query = query.where('teacherId', '==', teacherId);
   }
   if (enrollingGrade) {
     query = query.where('enrollingGrade', '==', enrollingGrade);
@@ -176,14 +189,17 @@ export async function getAllStudents(filters: StudentListFilters = {}): Promise<
       } as Student;
     });
 
-    // Apply search filter
+    // Apply search filter - now includes parent names and teacher name
     if (search) {
       const searchLower = search.toLowerCase();
       allStudents = allStudents.filter(
         (s) =>
           s.firstName.toLowerCase().includes(searchLower) ||
           s.lastName.toLowerCase().includes(searchLower) ||
-          (s.parentEmail?.toLowerCase().includes(searchLower) ?? false)
+          (s.parentEmail?.toLowerCase().includes(searchLower) ?? false) ||
+          (s.motherName?.toLowerCase().includes(searchLower) ?? false) ||
+          (s.fatherName?.toLowerCase().includes(searchLower) ?? false) ||
+          (s.teacherName?.toLowerCase().includes(searchLower) ?? false)
       );
     }
 
@@ -314,15 +330,26 @@ export async function adminUpdateStudent(
   if (data.firstName !== undefined) updateData.firstName = data.firstName;
   if (data.lastName !== undefined) updateData.lastName = data.lastName;
   if (data.dateOfBirth !== undefined) updateData.dateOfBirth = data.dateOfBirth;
+  if (data.gender !== undefined) updateData.gender = data.gender;
   if (data.grade !== undefined) updateData.grade = data.grade;
   if (data.schoolName !== undefined) updateData.schoolName = data.schoolName;
+  if (data.schoolDistrict !== undefined) updateData.schoolDistrict = data.schoolDistrict;
   if (data.priorTamilLevel !== undefined) updateData.priorTamilLevel = data.priorTamilLevel;
+  if (data.enrollingGrade !== undefined) updateData.enrollingGrade = data.enrollingGrade;
+  if (data.address !== undefined) updateData.address = data.address;
   if (data.medicalNotes !== undefined) updateData.medicalNotes = data.medicalNotes;
   if (data.photoConsent !== undefined) updateData.photoConsent = data.photoConsent;
   if (data.status !== undefined) updateData.status = data.status;
   if (data.classId !== undefined) updateData.classId = data.classId;
   if (data.className !== undefined) updateData.className = data.className;
   if (data.notes !== undefined) updateData.notes = data.notes;
+
+  // Sync denormalized parent names when contacts are updated
+  if (data.contacts !== undefined) {
+    updateData.contacts = data.contacts;
+    updateData.motherName = data.contacts?.mother?.name?.trim() || null;
+    updateData.fatherName = data.contacts?.father?.name?.trim() || null;
+  }
 
   await doc.ref.update(updateData);
 
@@ -378,11 +405,24 @@ export async function assignClassToStudent(
     throw new Error('Can only assign class to admitted or active students');
   }
 
+  // Get the primary teacher for the class (for search denormalization)
+  const primaryTeacher = await getPrimaryTeacher(classId);
+
   const updateData: Record<string, unknown> = {
     classId,
     className,
     updatedAt: Timestamp.now(),
   };
+
+  // Add teacher info if available
+  if (primaryTeacher) {
+    updateData.teacherId = primaryTeacher.teacherId;
+    updateData.teacherName = primaryTeacher.teacherName;
+  } else {
+    // Clear teacher info if no primary teacher
+    updateData.teacherId = null;
+    updateData.teacherName = null;
+  }
 
   // If student was admitted, change to active when assigning class
   if (existing.status === 'admitted') {
@@ -606,6 +646,9 @@ export async function bulkAssignClass(
     return result;
   }
 
+  // Get the primary teacher for the class (for search denormalization)
+  const primaryTeacher = await getPrimaryTeacher(classId);
+
   // Validate all students first
   const studentsToUpdate: Student[] = [];
 
@@ -654,6 +697,16 @@ export async function bulkAssignClass(
         updatedAt: now,
       };
 
+      // Add teacher info if available
+      if (primaryTeacher) {
+        updateData.teacherId = primaryTeacher.teacherId;
+        updateData.teacherName = primaryTeacher.teacherName;
+      } else {
+        // Clear teacher info if no primary teacher
+        updateData.teacherId = null;
+        updateData.teacherName = null;
+      }
+
       // Transition admitted → active when assigning class
       if (student.status === 'admitted') {
         updateData.status = 'active';
@@ -680,4 +733,141 @@ export async function bulkAssignClass(
   }
 
   return result;
+}
+
+/**
+ * Transfer a student from one class to another.
+ * Updates enrollment counts for both old and new classes.
+ *
+ * @param studentId - Student ID to transfer
+ * @param newClassId - New class ID to transfer to
+ * @returns TransferClassResult with updated student and class info
+ */
+export async function transferClassForStudent(
+  studentId: string,
+  newClassId: string
+): Promise<TransferClassResult> {
+  const student = await getStudentById(studentId);
+
+  if (!student) {
+    throw new Error('Student not found');
+  }
+
+  // Only allow transferring active students
+  if (student.status !== 'active') {
+    throw new Error('Can only transfer active students');
+  }
+
+  // Validate new class exists and is active
+  const newClass = await getClassById(newClassId);
+  if (!newClass) {
+    throw new Error('New class not found');
+  }
+
+  if (newClass.status !== 'active') {
+    throw new Error('Cannot transfer to inactive class');
+  }
+
+  // Check capacity (don't count if same class)
+  const isSameClass = student.classId === newClassId;
+  if (!isSameClass && newClass.enrolled >= newClass.capacity) {
+    throw new Error('New class is at full capacity');
+  }
+
+  // If same class, nothing to do
+  if (isSameClass) {
+    return {
+      student,
+      previousClassId: student.classId,
+      previousClassName: student.className,
+      newClassId,
+      newClassName: newClass.name,
+    };
+  }
+
+  const previousClassId = student.classId;
+  const previousClassName = student.className;
+
+  // Get the primary teacher for the new class (for search denormalization)
+  const primaryTeacher = await getPrimaryTeacher(newClassId);
+
+  // Update student record
+  const updateData: Record<string, unknown> = {
+    classId: newClassId,
+    className: newClass.name,
+    updatedAt: Timestamp.now(),
+  };
+
+  // Add teacher info if available
+  if (primaryTeacher) {
+    updateData.teacherId = primaryTeacher.teacherId;
+    updateData.teacherName = primaryTeacher.teacherName;
+  } else {
+    // Clear teacher info if no primary teacher
+    updateData.teacherId = null;
+    updateData.teacherName = null;
+  }
+
+  await getDb().collection(STUDENTS_COLLECTION).doc(studentId).update(updateData);
+
+  // Update enrollment counts
+  if (previousClassId) {
+    await decrementEnrolled(previousClassId);
+  }
+  await incrementEnrolled(newClassId, 1);
+
+  // Fetch updated student
+  const updatedStudent = await getStudentById(studentId);
+
+  return {
+    student: updatedStudent!,
+    previousClassId,
+    previousClassName,
+    newClassId,
+    newClassName: newClass.name,
+  };
+}
+
+/**
+ * Unassign a student from their current class.
+ * Decrements the class enrollment count.
+ *
+ * @param studentId - Student ID to unassign
+ * @returns Updated student or null if not found
+ */
+export async function unassignClassFromStudent(
+  studentId: string
+): Promise<Student | null> {
+  const student = await getStudentById(studentId);
+
+  if (!student) {
+    return null;
+  }
+
+  // Only allow unassigning active students
+  if (student.status !== 'active') {
+    throw new Error('Can only unassign active students');
+  }
+
+  if (!student.classId) {
+    throw new Error('Student is not assigned to any class');
+  }
+
+  const previousClassId = student.classId;
+
+  // Update student record - remove class and teacher assignment but keep active status
+  const updateData = {
+    classId: null,
+    className: null,
+    teacherId: null,
+    teacherName: null,
+    updatedAt: Timestamp.now(),
+  };
+
+  await getDb().collection(STUDENTS_COLLECTION).doc(studentId).update(updateData);
+
+  // Decrement old class enrollment
+  await decrementEnrolled(previousClassId);
+
+  return getStudentById(studentId);
 }

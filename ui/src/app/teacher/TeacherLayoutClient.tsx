@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Protected } from '@/components/Protected';
 import { useFeatureFlags } from '@/context/FeatureFlagsContext';
 import { filterNavSections } from '@/lib/featureMapping';
+import { UserDropdown, UserDropdownMobile } from '@/components/UserDropdown';
 
 interface NavItem {
   label: string;
@@ -63,13 +64,18 @@ export default function TeacherLayoutClient({ children }: { children: React.Reac
     <Protected roles={['teacher']}>
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-20">
+        <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
           <div className="max-w-full px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               {/* Brand */}
               <Link href="/teacher" className="text-xl font-bold text-gray-900">
                 Teacher Portal
               </Link>
+
+              {/* Desktop: User dropdown */}
+              <div className="hidden md:flex items-center gap-4">
+                <UserDropdown />
+              </div>
 
               {/* Mobile menu button */}
               <button
@@ -106,6 +112,10 @@ export default function TeacherLayoutClient({ children }: { children: React.Reac
                     ))}
                   </div>
                 ))}
+                {/* User menu for mobile */}
+                <div className="px-4">
+                  <UserDropdownMobile onItemClick={() => setMobileMenuOpen(false)} />
+                </div>
               </div>
             )}
           </div>

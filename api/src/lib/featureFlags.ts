@@ -20,6 +20,7 @@ export type AdminFeature =
   | 'Volunteers'
   | 'AttendanceAnalytics'
   | 'HeroContent'
+  | 'FlashNews'
   | 'Calendar';
 
 export type TeacherFeature =
@@ -64,6 +65,7 @@ export const FEATURE_DESCRIPTIONS: Record<FeatureFlagRole, Record<string, string
     Volunteers: 'Manage volunteer registrations and assignments',
     AttendanceAnalytics: 'View attendance reports and analytics dashboard',
     HeroContent: 'Manage homepage hero banners and announcements',
+    FlashNews: 'Manage scrolling news marquee announcements',
     Calendar: 'Manage school calendar events',
   },
   teacher: {
@@ -91,6 +93,7 @@ const DEFAULT_CONFIG: Omit<FeatureFlagsConfig, 'updatedAt' | 'updatedBy'> = {
     Volunteers: { enabled: true },
     AttendanceAnalytics: { enabled: true },
     HeroContent: { enabled: true },
+    FlashNews: { enabled: true },
     Calendar: { enabled: true },
   },
   teacher: {
@@ -162,6 +165,7 @@ export async function getFeatureFlags(): Promise<FeatureFlagsConfig> {
       Volunteers: { enabled: data.admin?.Volunteers?.enabled ?? true },
       AttendanceAnalytics: { enabled: data.admin?.AttendanceAnalytics?.enabled ?? true },
       HeroContent: { enabled: data.admin?.HeroContent?.enabled ?? true },
+      FlashNews: { enabled: data.admin?.FlashNews?.enabled ?? true },
       Calendar: { enabled: data.admin?.Calendar?.enabled ?? true },
     },
     teacher: {
