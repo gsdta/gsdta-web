@@ -65,9 +65,10 @@ Feature: Production Shakeout
 
   # =============================================================================
   # SECTION 3: AUTHENTICATION FLOWS
+  # Skipped: Production does not have test accounts
   # =============================================================================
 
-  @shakeout @auth
+  @shakeout @auth @skip
   Scenario: PS-020 - Admin can sign in successfully
     Given I am on the sign in page
     When I enter admin credentials
@@ -75,21 +76,21 @@ Feature: Production Shakeout
     Then I should be redirected to the admin dashboard
     And I should see the admin navigation menu
 
-  @shakeout @auth
+  @shakeout @auth @skip
   Scenario: PS-021 - Teacher can sign in successfully
     Given I am on the sign in page
     When I enter teacher credentials
     And I click the sign in button
     Then I should be redirected to the teacher dashboard
 
-  @shakeout @auth
+  @shakeout @auth @skip
   Scenario: PS-022 - Parent can sign in successfully
     Given I am on the sign in page
     When I enter parent credentials
     And I click the sign in button
     Then I should be redirected to the parent dashboard
 
-  @shakeout @auth
+  @shakeout @auth @skip
   Scenario: PS-023 - Logout works correctly
     Given I am logged in as admin
     When I log out
@@ -99,20 +100,20 @@ Feature: Production Shakeout
   # SECTION 4: DASHBOARD ACCESS VERIFICATION
   # =============================================================================
 
-  @shakeout @dashboard @admin @auth
+  @shakeout @dashboard @admin @auth @skip
   Scenario: PS-030 - Admin dashboard loads correctly
     Given I am logged in as admin
     Then the page should load without errors
     And I should see the admin navigation menu
     And I should see the "Students" link in the navigation
 
-  @shakeout @dashboard @teacher @auth
+  @shakeout @dashboard @teacher @auth @skip
   Scenario: PS-031 - Teacher dashboard loads correctly
     Given I am logged in as teacher
     Then the page should load without errors
     And I should see my classes section
 
-  @shakeout @dashboard @parent @auth
+  @shakeout @dashboard @parent @auth @skip
   Scenario: PS-032 - Parent dashboard loads correctly
     Given I am logged in as parent
     Then the page should load without errors
