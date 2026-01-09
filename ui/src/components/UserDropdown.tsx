@@ -64,7 +64,7 @@ export function UserDropdown() {
 
             {open && (
                 <div
-                    className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 py-1 z-50"
+                    className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 py-1 z-[100]"
                     role="menu"
                     aria-orientation="vertical"
                 >
