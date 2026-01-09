@@ -139,7 +139,7 @@ export async function GET(req: NextRequest) {
  *                 enum: [admin, teacher, parent]
  *               flags:
  *                 type: object
- *                 description: Object with feature names as keys and { enabled: boolean } as values
+ *                 description: "Object with feature names as keys and { enabled: boolean } as values"
  *     responses:
  *       200:
  *         description: Feature flags updated
