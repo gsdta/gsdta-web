@@ -60,8 +60,59 @@ export class AuthHelper {
    * This is the preferred method for UAT as it tests the actual login experience
    */
   async loginViaUI(email: string, password: string): Promise<void> {
-    console.log(`[AUTH] Starting login for: ${email}`);
+    console.log(`[AUTH] ========== LOGIN ATTEMPT START ==========`);
+    console.log(`[AUTH] Email: "${email}"`);
+    console.log(`[AUTH] Password: "${password}"`);
+    console.log(`[AUTH] Password length: ${password?.length || 0}`);
+    console.log(`[AUTH] Password char codes: ${password ? Array.from(password).map(c => c.charCodeAt(0)).join(',') : 'N/A'}`);
     console.log(`[AUTH] Current URL before navigation: ${this.page.url()}`);
+
+    // Set up network request/response logging
+    const apiResponses: { url: string; status: number; body: string }[] = [];
+
+    this.page.on('request', (request) => {
+      const url = request.url();
+      if (url.includes('/api/') || url.includes('identitytoolkit') || url.includes('securetoken')) {
+        console.log(`[AUTH] >> REQUEST: ${request.method()} ${url}`);
+        const postData = request.postData();
+        if (postData) {
+          // Mask password in logs but show structure
+          const sanitized = postData.replace(/"password":"[^"]*"/, '"password":"***"');
+          console.log(`[AUTH]    Body: ${sanitized}`);
+        }
+      }
+    });
+
+    this.page.on('response', async (response) => {
+      const url = response.url();
+      if (url.includes('/api/') || url.includes('identitytoolkit') || url.includes('securetoken')) {
+        const status = response.status();
+        console.log(`[AUTH] << RESPONSE: ${status} ${url}`);
+        try {
+          const body = await response.text();
+          // Truncate long responses
+          const truncated = body.length > 500 ? body.substring(0, 500) + '...' : body;
+          console.log(`[AUTH]    Body: ${truncated}`);
+          apiResponses.push({ url, status, body: truncated });
+        } catch (e) {
+          console.log(`[AUTH]    Body: (could not read)`);
+        }
+      }
+    });
+
+    // Listen for ALL console messages
+    this.page.on('console', (msg) => {
+      const type = msg.type();
+      const text = msg.text();
+      if (type === 'error' || type === 'warning' || text.includes('Auth') || text.includes('Firebase') || text.includes('login')) {
+        console.log(`[AUTH] Browser ${type}: ${text}`);
+      }
+    });
+
+    // Listen for page errors
+    this.page.on('pageerror', (error) => {
+      console.log(`[AUTH] Page error: ${error.message}`);
+    });
 
     // Navigate to signin page
     console.log('[AUTH] Navigating to /signin...');
@@ -82,8 +133,6 @@ export class AuthHelper {
 
     // Clear and fill in credentials with explicit waits for stability
     console.log('[AUTH] Filling in credentials...');
-    console.log(`[AUTH] Email to enter: "${email}"`);
-    console.log(`[AUTH] Password to enter: "${password}"`);
 
     // Fill email with explicit focus and verification
     const emailInput = this.page.locator('input[type="email"]');
@@ -92,6 +141,7 @@ export class AuthHelper {
     await emailInput.fill(email);
     const emailValue = await emailInput.inputValue();
     console.log(`[AUTH] Email input value after fill: "${emailValue}"`);
+    console.log(`[AUTH] Email match: ${emailValue === email}`);
 
     // Fill password with explicit focus
     const passwordInput = this.page.locator('input[type="password"]');
@@ -100,6 +150,7 @@ export class AuthHelper {
     await passwordInput.fill(password);
     const passwordValue = await passwordInput.inputValue();
     console.log(`[AUTH] Password input value after fill: "${passwordValue}"`);
+    console.log(`[AUTH] Password match: ${passwordValue === password}`);
     console.log('[AUTH] Credentials filled');
 
     // Verify email wasn't cleared (sometimes happens with React forms)
@@ -117,13 +168,6 @@ export class AuthHelper {
     const buttonText = await submitButton.textContent();
     console.log(`[AUTH] Submit button text: "${buttonText}"`);
 
-    // Listen for console errors
-    this.page.on('console', (msg) => {
-      if (msg.type() === 'error') {
-        console.log(`[AUTH] Console error: ${msg.text()}`);
-      }
-    });
-
     // Click and start waiting for URL change
     await submitButton.click();
     console.log('[AUTH] Submit button clicked, waiting for URL change...');
@@ -136,13 +180,27 @@ export class AuthHelper {
     while (Date.now() - startTime < maxWait) {
       await this.page.waitForTimeout(checkInterval);
       const currentUrl = this.page.url();
-      console.log(`[AUTH] Current URL after ${Math.round((Date.now() - startTime) / 1000)}s: ${currentUrl}`);
+      const elapsed = Math.round((Date.now() - startTime) / 1000);
+      console.log(`[AUTH] [${elapsed}s] Current URL: ${currentUrl}`);
 
-      // Check for error messages on page
-      const errorElement = await this.page.locator('[class*="error"], [class*="Error"], [role="alert"]').first();
-      if (await errorElement.isVisible().catch(() => false)) {
-        const errorText = await errorElement.textContent();
-        console.log(`[AUTH] Error message found on page: "${errorText}"`);
+      // Check for error messages on page - multiple selectors
+      const errorSelectors = [
+        '[class*="error"]',
+        '[class*="Error"]',
+        '[role="alert"]',
+        '.text-red-500',
+        '.text-red-600',
+        '[data-testid="error"]',
+      ];
+
+      for (const selector of errorSelectors) {
+        const errorElement = this.page.locator(selector).first();
+        if (await errorElement.isVisible().catch(() => false)) {
+          const errorText = await errorElement.textContent();
+          if (errorText && errorText.trim()) {
+            console.log(`[AUTH] Error element (${selector}): "${errorText.trim()}"`);
+          }
+        }
       }
 
       // Check if we've reached the expected URL
@@ -153,30 +211,54 @@ export class AuthHelper {
 
       // Check if still on signin page
       if (currentUrl.includes('/signin')) {
-        console.log('[AUTH] Still on signin page, checking for errors...');
+        console.log('[AUTH] Still on signin page, checking page content...');
 
-        // Look for specific error messages
-        const pageContent = await this.page.content();
-        if (pageContent.includes('Invalid') || pageContent.includes('incorrect') || pageContent.includes('failed')) {
-          console.log('[AUTH] Page contains error keywords');
+        // Get all visible text content for error detection
+        const bodyText = await this.page.locator('body').innerText();
+        const errorKeywords = ['Invalid', 'incorrect', 'failed', 'error', 'wrong', 'denied', 'unauthorized'];
+        for (const keyword of errorKeywords) {
+          if (bodyText.toLowerCase().includes(keyword.toLowerCase())) {
+            // Find the line containing the keyword
+            const lines = bodyText.split('\n').filter(l => l.toLowerCase().includes(keyword.toLowerCase()));
+            if (lines.length > 0) {
+              console.log(`[AUTH] Found "${keyword}" in page: ${lines[0].trim().substring(0, 100)}`);
+            }
+          }
         }
       }
     }
 
     const finalUrl = this.page.url();
     console.log(`[AUTH] Final URL: ${finalUrl}`);
+    console.log(`[AUTH] API responses captured: ${apiResponses.length}`);
+    apiResponses.forEach((r, i) => {
+      console.log(`[AUTH] API Response ${i + 1}: ${r.status} ${r.url}`);
+    });
 
     if (!/\/(admin|teacher|parent)/.test(finalUrl)) {
       // Take a screenshot for debugging
       const screenshot = await this.page.screenshot();
       console.log('[AUTH] Login failed - URL did not change to expected dashboard');
       console.log(`[AUTH] Screenshot captured (${screenshot.length} bytes)`);
+
+      // Log full page HTML for debugging
+      const pageHtml = await this.page.content();
+      console.log(`[AUTH] Page HTML length: ${pageHtml.length}`);
+
+      // Extract just the main content area
+      const mainContent = await this.page.locator('main, [role="main"], .container, #__next').first().innerHTML().catch(() => '');
+      if (mainContent) {
+        console.log(`[AUTH] Main content (first 1000 chars): ${mainContent.substring(0, 1000)}`);
+      }
+
+      console.log(`[AUTH] ========== LOGIN ATTEMPT FAILED ==========`);
       throw new Error(`Login failed: Expected URL to contain /admin, /teacher, or /parent, but got ${finalUrl}`);
     }
 
     // Wait for page to stabilize
     await this.page.waitForLoadState('domcontentloaded');
     console.log('[AUTH] Login complete, page stabilized');
+    console.log(`[AUTH] ========== LOGIN ATTEMPT SUCCESS ==========`);
   }
 
   /**
