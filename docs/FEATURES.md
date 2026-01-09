@@ -1,6 +1,6 @@
 # Implemented Features
 
-**Last Updated**: January 7, 2026
+**Last Updated**: January 8, 2026
 
 This document tracks all implemented features in the GSDTA web application. For complete role-based capability descriptions, see [ROLES.md](./ROLES.md).
 
@@ -464,7 +464,7 @@ Super admins can enable/disable UI features per role (admin, teacher, parent). D
 
 | Role | Features |
 |------|----------|
-| **Admin** | Students, Teachers, Classes, Grades, Textbooks, Volunteers, AttendanceAnalytics, HeroContent, Calendar |
+| **Admin** | Students, Teachers, Classes, Grades, Textbooks, Volunteers, AttendanceAnalytics, HeroContent, FlashNews, Calendar |
 | **Teacher** | Classes, Attendance, Messaging |
 | **Parent** | Students, StudentRegistration, Messaging, Profile, Settings |
 
@@ -513,20 +513,89 @@ Super admins can enable/disable UI features per role (admin, teacher, parent). D
 
 ---
 
+### 16. Student Management Enhancements
+
+**Status**: Complete
+**Date**: January 2026
+
+#### Student Transfer & Unassign
+- ✅ Transfer students between classes
+- ✅ Unassign students from classes
+- ✅ Enrollment count management (auto increment/decrement)
+- ✅ Transfer modal with available class selection
+
+#### Advanced Search
+- ✅ Search by student name
+- ✅ Search by parent email
+- ✅ Search by parent name (mother/father)
+- ✅ Search by teacher name
+- ✅ Filter by teacher (teacherId parameter)
+
+#### Denormalized Fields
+- ✅ Parent names (motherName, fatherName) for search
+- ✅ Teacher info (teacherId, teacherName) on class assignment
+
+**API Endpoints**:
+- `PATCH /api/v1/admin/students/[id]/transfer-class` - Transfer to new class
+- `PATCH /api/v1/admin/students/[id]/unassign-class` - Remove from class
+
+---
+
+### 17. Flash News Marquee
+
+**Status**: Complete
+**Date**: January 2026
+
+#### Backend
+- ✅ Firestore `flashNews` collection
+- ✅ Admin CRUD API endpoints (list, create, get, update, delete)
+- ✅ Public API endpoint for active flash news
+- ✅ Date range scheduling (startDate, endDate)
+- ✅ Priority-based ordering (1-100)
+- ✅ Bilingual support (Tamil + English)
+- ✅ Feature flag integration (FlashNews)
+
+#### Admin UI
+- ✅ Flash news list page with status filter
+- ✅ Create flash news page
+- ✅ Edit flash news page
+- ✅ Delete functionality
+- ✅ Activate/deactivate toggle
+- ✅ Schedule configuration (start/end date)
+- ✅ Priority setting
+- ✅ Optional link URL
+
+#### Public UI
+- ✅ Scrolling marquee banner
+- ✅ Auto-fetch and refresh (5-min interval)
+- ✅ Language-aware display (Tamil/English)
+- ✅ Clickable links
+- ✅ Hidden when no active news
+- ✅ Smooth CSS animation
+
+**Routes**:
+- `/admin/flash-news` - Admin flash news list
+- `/admin/flash-news/new` - Create flash news
+- `/admin/flash-news/[id]` - Edit flash news
+
+**API Endpoints**:
+- `GET/POST /api/v1/admin/flash-news` - List/create flash news
+- `GET/PATCH/DELETE /api/v1/admin/flash-news/[id]` - Get/update/delete
+- `GET /api/v1/public/flash-news` - Public active flash news
+
+**Technical Files**:
+- `/api/src/app/v1/admin/flash-news/route.ts` - Admin list/create routes
+- `/api/src/app/v1/admin/flash-news/[id]/route.ts` - Admin CRUD routes
+- `/api/src/app/v1/public/flash-news/route.ts` - Public endpoint
+- `/ui/src/components/FlashNewsBanner.tsx` - Marquee component
+- `/ui/src/lib/flash-news-api.ts` - API client
+- `/api/src/types/flashNews.ts` - TypeScript types
+
+---
+
 ## 🚧 In Progress
 
-### 1. Student Management Enhancements
-
-**Status**: Partially complete
-**Next Steps**: Transfer between classes, advanced search
-
-- ✅ Student CRUD operations
-- ✅ Bulk import from CSV
-- ✅ Bulk class assignment
-- ✅ Grade management (via grades collection)
-- ✅ Parent associations
-- ⏳ Transfer students between classes
-- ⏳ Advanced search (parent name, teacher name)
+*No features currently in progress*
 
 ---
 
@@ -534,13 +603,7 @@ Super admins can enable/disable UI features per role (admin, teacher, parent). D
 
 ### High Priority
 
-1. **Flash News Marquee**
-   - Short text announcements (bilingual)
-   - Display priority/order
-   - Auto-show/hide by date
-   - *Note: Previous implementation reverted - needs rework*
-
-2. **Payment Integration**
+1. **Payment Integration**
    - Tuition fee payments
    - Payment history
    - Receipt generation
@@ -582,10 +645,10 @@ Super admins can enable/disable UI features per role (admin, teacher, parent). D
 
 ## 📊 Feature Statistics
 
-**Total Features**: 15 completed, 1 in progress
-**Completion Rate**: 94%
-**Last Feature**: Feature Flags System (Dec 28, 2025)
-**Next Feature**: Flash News Marquee
+**Total Features**: 17 completed
+**Completion Rate**: 100%
+**Last Feature**: Flash News Marquee (Jan 8, 2026)
+**Next Feature**: Payment Integration
 
 ---
 

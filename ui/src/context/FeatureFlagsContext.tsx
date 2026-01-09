@@ -27,6 +27,7 @@ const DEFAULT_FLAGS: FeatureFlagsConfig = {
     Volunteers: { enabled: true },
     AttendanceAnalytics: { enabled: true },
     HeroContent: { enabled: true },
+    FlashNews: { enabled: true },
     Calendar: { enabled: true },
   },
   teacher: {
@@ -55,6 +56,7 @@ const DEFAULT_DESCRIPTIONS: FeatureDescriptions = {
     Volunteers: "Manage volunteer registrations and assignments",
     AttendanceAnalytics: "View attendance reports and analytics dashboard",
     HeroContent: "Manage homepage hero banners and announcements",
+    FlashNews: "Manage scrolling news marquee announcements",
     Calendar: "Manage school calendar events",
   },
   teacher: {

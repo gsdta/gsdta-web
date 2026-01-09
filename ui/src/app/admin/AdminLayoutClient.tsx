@@ -68,7 +68,10 @@ const adminNav: NavSection[] = [
   },
   {
     label: 'Content',
-    items: [{ label: 'Hero Content', href: '/admin/content/hero', icon: '🖼️' }],
+    items: [
+      { label: 'Hero Content', href: '/admin/content/hero', icon: '🖼️' },
+      { label: 'Flash News', href: '/admin/flash-news', icon: '📢' },
+    ],
   },
   {
     label: 'Calendar',
