@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
-import { adminGetStudents, adminAdmitStudent, type AdminStudentsListParams } from '@/lib/student-api';
+import { adminGetStudents, adminAdmitStudent, adminTransferClass, adminUnassignClass, type AdminStudentsListParams } from '@/lib/student-api';
+import { adminGetClassOptions, type ClassOption } from '@/lib/class-api';
 import { statusConfig, type Student, type StudentStatus, type StudentStatusCounts } from '@/lib/student-types';
 import { TableRowActionMenu, useTableRowActions, type TableAction } from '@/components/TableRowActionMenu';
 import { AdvancedSearchPanel } from './AdvancedSearchPanel';
@@ -24,6 +25,12 @@ export default function AdminStudentsPage() {
     (searchParams.get('status') as StatusFilter) || 'all'
   );
   const [admittingId, setAdmittingId] = useState<string | null>(null);
+  const [transferringStudent, setTransferringStudent] = useState<Student | null>(null);
+  const [unassigningId, setUnassigningId] = useState<string | null>(null);
+  const [classOptions, setClassOptions] = useState<ClassOption[]>([]);
+  const [selectedClassId, setSelectedClassId] = useState<string>('');
+  const [transferLoading, setTransferLoading] = useState(false);
+  const [transferError, setTransferError] = useState<string | null>(null);
   const { selectedItem, menuPosition, handleRowClick, closeMenu, isMenuOpen } = useTableRowActions<Student>();
 
   // Advanced filters state
@@ -58,6 +65,53 @@ export default function AdminStudentsPage() {
     }
   };
 
+  const openTransferModal = async (student: Student) => {
+    setTransferringStudent(student);
+    setSelectedClassId('');
+    setTransferError(null);
+    try {
+      const classes = await adminGetClassOptions(getIdToken);
+      // Filter out the student's current class
+      setClassOptions(classes.filter(c => c.id !== student.classId && c.available > 0));
+    } catch (err) {
+      console.error('Failed to load classes:', err);
+      setTransferError('Failed to load class options');
+    }
+  };
+
+  const handleTransfer = async () => {
+    if (!transferringStudent || !selectedClassId) return;
+
+    setTransferLoading(true);
+    setTransferError(null);
+    try {
+      await adminTransferClass(getIdToken, transferringStudent.id, selectedClassId);
+      setTransferringStudent(null);
+      setSelectedClassId('');
+      fetchStudents();
+    } catch (err) {
+      console.error('Failed to transfer student:', err);
+      setTransferError(err instanceof Error ? err.message : 'Failed to transfer student');
+    } finally {
+      setTransferLoading(false);
+    }
+  };
+
+  const handleUnassign = async (studentId: string, studentName: string) => {
+    if (!confirm(`Are you sure you want to remove ${studentName} from their class? They will remain active but without a class assignment.`)) return;
+
+    setUnassigningId(studentId);
+    try {
+      await adminUnassignClass(getIdToken, studentId);
+      fetchStudents();
+    } catch (err) {
+      console.error('Failed to unassign student:', err);
+      alert(err instanceof Error ? err.message : 'Failed to unassign student from class');
+    } finally {
+      setUnassigningId(null);
+    }
+  };
+
   const getStudentActions = (student: Student): TableAction[] => [
     { label: 'View Details', onClick: () => router.push(`/admin/students/${student.id}`) },
     { label: 'Edit', onClick: () => router.push(`/admin/students/${student.id}/edit`) },
@@ -72,6 +126,18 @@ export default function AdminStudentsPage() {
       label: 'Assign Class',
       onClick: () => router.push(`/admin/students/${student.id}?action=assign`),
       hidden: student.status !== 'admitted',
+    },
+    {
+      label: 'Transfer Class',
+      onClick: () => openTransferModal(student),
+      hidden: student.status !== 'active' || !student.classId,
+    },
+    {
+      label: unassigningId === student.id ? 'Removing...' : 'Remove from Class',
+      onClick: () => handleUnassign(student.id, `${student.firstName} ${student.lastName}`),
+      variant: 'danger',
+      hidden: student.status !== 'active' || !student.classId,
+      disabled: unassigningId === student.id,
     },
   ];
 
@@ -239,7 +305,7 @@ export default function AdminStudentsPage() {
           <div className="flex-1">
             <input
               type="text"
-              placeholder="Search by name or parent email..."
+              placeholder="Search by student name, parent email, parent name, or teacher..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -444,6 +510,74 @@ export default function AdminStudentsPage() {
           position={menuPosition}
           onClose={closeMenu}
         />
+      )}
+
+      {/* Transfer Class Modal */}
+      {transferringStudent && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4">
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black bg-opacity-25 transition-opacity"
+              onClick={() => setTransferringStudent(null)}
+            />
+            {/* Modal */}
+            <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Transfer Student to New Class
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Transfer <strong>{transferringStudent.firstName} {transferringStudent.lastName}</strong> from{' '}
+                <strong>{transferringStudent.className}</strong> to a different class.
+              </p>
+
+              {transferError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-md text-sm mb-4">
+                  {transferError}
+                </div>
+              )}
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Select New Class
+                </label>
+                <select
+                  value={selectedClassId}
+                  onChange={(e) => setSelectedClassId(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Choose a class...</option>
+                  {classOptions.map((cls) => (
+                    <option key={cls.id} value={cls.id}>
+                      {cls.name} - {cls.day} {cls.time} ({cls.available} slots available)
+                    </option>
+                  ))}
+                </select>
+                {classOptions.length === 0 && !transferError && (
+                  <p className="text-sm text-gray-500 mt-2">
+                    No classes with available capacity found.
+                  </p>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setTransferringStudent(null)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleTransfer}
+                  disabled={!selectedClassId || transferLoading}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {transferLoading ? 'Transferring...' : 'Transfer'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
