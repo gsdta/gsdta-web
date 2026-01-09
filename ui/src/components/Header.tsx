@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { useI18n } from "@/i18n/LanguageProvider";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -33,10 +34,16 @@ export function Header() {
     const { user } = useAuth();
     const { t } = useI18n();
     const [open, setOpen] = useState(false);
+    const pathname = usePathname();
     const authMode = process.env.NEXT_PUBLIC_AUTH_MODE === "firebase" ? "firebase" : "mock" as const;
 
     const toggle = () => setOpen((v) => !v);
     const close = () => setOpen(false);
+
+    // Hide header on portal pages (they have their own headers)
+    if (pathname?.startsWith("/admin") || pathname?.startsWith("/teacher") || pathname?.startsWith("/parent")) {
+        return null;
+    }
 
     return (
         <header className="border-b border-gray-200 bg-white/70 supports-[backdrop-filter]:bg-white/50 backdrop-blur sticky top-0 z-10">
