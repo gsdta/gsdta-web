@@ -21,12 +21,14 @@ export type AdminFeature =
   | 'AttendanceAnalytics'
   | 'HeroContent'
   | 'FlashNews'
-  | 'Calendar';
+  | 'Calendar'
+  | 'NewsPosts';
 
 export type TeacherFeature =
   | 'Classes'
   | 'Attendance'
-  | 'Messaging';
+  | 'Messaging'
+  | 'NewsPosts';
 
 export type ParentFeature =
   | 'Students'
@@ -67,11 +69,13 @@ export const FEATURE_DESCRIPTIONS: Record<FeatureFlagRole, Record<string, string
     HeroContent: 'Manage homepage hero banners and announcements',
     FlashNews: 'Manage scrolling news marquee announcements',
     Calendar: 'Manage school calendar events',
+    NewsPosts: 'Manage news articles with rich text and images',
   },
   teacher: {
     Classes: 'View assigned classes and student rosters',
     Attendance: 'Mark and manage student attendance',
     Messaging: 'Send and receive messages with parents',
+    NewsPosts: 'Create and submit news articles for review',
   },
   parent: {
     Students: 'View linked student information and progress',
@@ -95,11 +99,13 @@ const DEFAULT_CONFIG: Omit<FeatureFlagsConfig, 'updatedAt' | 'updatedBy'> = {
     HeroContent: { enabled: true },
     FlashNews: { enabled: true },
     Calendar: { enabled: true },
+    NewsPosts: { enabled: true },
   },
   teacher: {
     Classes: { enabled: true },
     Attendance: { enabled: true },
     Messaging: { enabled: true },
+    NewsPosts: { enabled: true },
   },
   parent: {
     Students: { enabled: true },
@@ -167,11 +173,13 @@ export async function getFeatureFlags(): Promise<FeatureFlagsConfig> {
       HeroContent: { enabled: data.admin?.HeroContent?.enabled ?? true },
       FlashNews: { enabled: data.admin?.FlashNews?.enabled ?? true },
       Calendar: { enabled: data.admin?.Calendar?.enabled ?? true },
+      NewsPosts: { enabled: data.admin?.NewsPosts?.enabled ?? true },
     },
     teacher: {
       Classes: { enabled: data.teacher?.Classes?.enabled ?? true },
       Attendance: { enabled: data.teacher?.Attendance?.enabled ?? true },
       Messaging: { enabled: data.teacher?.Messaging?.enabled ?? true },
+      NewsPosts: { enabled: data.teacher?.NewsPosts?.enabled ?? true },
     },
     parent: {
       Students: { enabled: data.parent?.Students?.enabled ?? true },
