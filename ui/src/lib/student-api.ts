@@ -134,6 +134,7 @@ export interface AdminStudentsListParams {
   status?: 'pending' | 'admitted' | 'active' | 'inactive' | 'withdrawn' | 'all';
   search?: string;
   classId?: string;
+  teacherId?: string;
   enrollingGrade?: string;
   schoolDistrict?: string;
   unassigned?: boolean;
@@ -158,6 +159,7 @@ export async function adminGetStudents(
   if (params.status) queryParams.set('status', params.status);
   if (params.search) queryParams.set('search', params.search);
   if (params.classId) queryParams.set('classId', params.classId);
+  if (params.teacherId) queryParams.set('teacherId', params.teacherId);
   if (params.enrollingGrade) queryParams.set('enrollingGrade', params.enrollingGrade);
   if (params.schoolDistrict) queryParams.set('schoolDistrict', params.schoolDistrict);
   if (params.unassigned) queryParams.set('unassigned', 'true');
@@ -402,6 +404,84 @@ export async function adminBulkAssignClass(
   }
 
   return json as BulkAssignClassResult;
+}
+
+// Transfer Class Types and Functions
+
+export interface TransferClassResult {
+  success: boolean;
+  message: string;
+  data: {
+    student: {
+      id: string;
+      firstName: string;
+      lastName: string;
+      name: string;
+      status: string;
+      classId: string;
+      className: string;
+    };
+    previousClassId?: string;
+    previousClassName?: string;
+    newClassId: string;
+    newClassName: string;
+  };
+}
+
+/**
+ * Transfer a student to a different class (admin)
+ */
+export async function adminTransferClass(
+  getIdToken: TokenGetter,
+  studentId: string,
+  newClassId: string
+): Promise<TransferClassResult> {
+  const token = await getIdToken();
+  if (!token) throw new Error('Not authenticated');
+
+  const res = await fetch(`/api/v1/admin/students/${studentId}/transfer-class/`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ newClassId }),
+  });
+
+  const json = await res.json();
+
+  if (!res.ok) {
+    throw new Error(json.message || 'Failed to transfer student');
+  }
+
+  return json as TransferClassResult;
+}
+
+/**
+ * Unassign a student from their current class (admin)
+ */
+export async function adminUnassignClass(
+  getIdToken: TokenGetter,
+  studentId: string
+): Promise<Student> {
+  const token = await getIdToken();
+  if (!token) throw new Error('Not authenticated');
+
+  const res = await fetch(`/api/v1/admin/students/${studentId}/unassign-class/`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const json = await res.json() as ApiResponse<StudentResponse>;
+
+  if (!res.ok) {
+    throw new Error(json.message || 'Failed to unassign student from class');
+  }
+
+  return json.data!.student;
 }
 
 // Aliases for legacy/refactored components

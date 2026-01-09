@@ -44,6 +44,10 @@ export const adminFeatureMap: Record<string, AdminFeature> = {
   // Hero Content
   "/admin/content/hero": "HeroContent",
 
+  // Flash News
+  "/admin/flash-news": "FlashNews",
+  "/admin/flash-news/new": "FlashNews",
+
   // Calendar
   "/admin/calendar": "Calendar",
   "/admin/calendar/new": "Calendar",

@@ -185,3 +185,136 @@ Feature: Admin Students Management API
       """
     Then the response status should be 200
     And the JSON path "success" should equal true
+
+  # Transfer Class Endpoint Tests
+
+  Scenario: Transfer class requires authentication
+    When I send a PATCH request to "/api/v1/admin/students/some-student-id/transfer-class/" with JSON body:
+      """
+      {"newClassId": "class-2"}
+      """
+    Then the response status should be 401
+    And the JSON path "code" should equal "auth/missing-token"
+
+  Scenario: Non-admin cannot transfer student class
+    Given I am authenticated as a parent
+    When I send a PATCH request to "/api/v1/admin/students/some-student-id/transfer-class/" with JSON body:
+      """
+      {"newClassId": "class-2"}
+      """
+    Then the response status should be 403
+    And the JSON path "code" should equal "auth/forbidden"
+
+  Scenario: Transfer non-existent student returns 404
+    Given I am authenticated as an admin
+    When I send a PATCH request to "/api/v1/admin/students/non-existent-student/transfer-class/" with JSON body:
+      """
+      {"newClassId": "class-2"}
+      """
+    Then the response status should be 404
+    And the JSON path "code" should equal "student/not-found"
+
+  Scenario: Transfer requires newClassId
+    Given I am authenticated as an admin
+    Given there is an active student with id "test-transfer-student" assigned to class "class-1"
+    When I send a PATCH request to "/api/v1/admin/students/test-transfer-student/transfer-class/" with JSON body:
+      """
+      {}
+      """
+    Then the response status should be 400
+    And the JSON path "code" should equal "validation/invalid-input"
+
+  Scenario: Transfer to non-existent class returns 404
+    Given I am authenticated as an admin
+    Given there is an active student with id "test-transfer-notfound" assigned to class "class-1"
+    When I send a PATCH request to "/api/v1/admin/students/test-transfer-notfound/transfer-class/" with JSON body:
+      """
+      {"newClassId": "non-existent-class"}
+      """
+    Then the response status should be 404
+    And the JSON path "code" should equal "not-found"
+
+  Scenario: Transfer pending student is rejected
+    Given I am authenticated as an admin
+    Given there is a student with id "test-transfer-pending" with status "pending"
+    When I send a PATCH request to "/api/v1/admin/students/test-transfer-pending/transfer-class/" with JSON body:
+      """
+      {"newClassId": "class-2"}
+      """
+    Then the response status should be 400
+    And the JSON path "code" should equal "transfer/invalid"
+
+  Scenario: Admin can transfer active student to new class
+    Given I am authenticated as an admin
+    Given there is an active student with id "test-transfer-success" assigned to class "class-old"
+    Given there is an active class "class-new" with name "New Class" and capacity 20
+    Given the class "class-old" has 5 students enrolled
+    When I send a PATCH request to "/api/v1/admin/students/test-transfer-success/transfer-class/" with JSON body:
+      """
+      {"newClassId": "class-new"}
+      """
+    Then the response status should be 200
+    And the JSON path "success" should equal true
+    And the JSON path "data.student.classId" should equal "class-new"
+    And the JSON path "data.newClassId" should equal "class-new"
+    And the JSON path "data.previousClassId" should equal "class-old"
+
+  # Unassign Class Endpoint Tests
+
+  Scenario: Unassign class requires authentication
+    When I send a PATCH request to "/api/v1/admin/students/some-student-id/unassign-class/" with JSON body:
+      """
+      {}
+      """
+    Then the response status should be 401
+    And the JSON path "code" should equal "auth/missing-token"
+
+  Scenario: Non-admin cannot unassign student from class
+    Given I am authenticated as a parent
+    When I send a PATCH request to "/api/v1/admin/students/some-student-id/unassign-class/" with JSON body:
+      """
+      {}
+      """
+    Then the response status should be 403
+    And the JSON path "code" should equal "auth/forbidden"
+
+  Scenario: Unassign non-existent student returns 404
+    Given I am authenticated as an admin
+    When I send a PATCH request to "/api/v1/admin/students/non-existent-student/unassign-class/" with JSON body:
+      """
+      {}
+      """
+    Then the response status should be 404
+    And the JSON path "code" should equal "student/not-found"
+
+  Scenario: Unassign pending student is rejected
+    Given I am authenticated as an admin
+    Given there is a student with id "test-unassign-pending" with status "pending"
+    When I send a PATCH request to "/api/v1/admin/students/test-unassign-pending/unassign-class/" with JSON body:
+      """
+      {}
+      """
+    Then the response status should be 400
+    And the JSON path "code" should equal "unassign/invalid-status"
+
+  Scenario: Unassign student with no class is rejected
+    Given I am authenticated as an admin
+    Given there is a student with id "test-unassign-noclass" with status "active"
+    When I send a PATCH request to "/api/v1/admin/students/test-unassign-noclass/unassign-class/" with JSON body:
+      """
+      {}
+      """
+    Then the response status should be 400
+    And the JSON path "code" should equal "unassign/not-assigned"
+
+  Scenario: Admin can unassign active student from class
+    Given I am authenticated as an admin
+    Given there is an active student with id "test-unassign-success" assigned to class "class-remove"
+    Given the class "class-remove" has 5 students enrolled
+    When I send a PATCH request to "/api/v1/admin/students/test-unassign-success/unassign-class/" with JSON body:
+      """
+      {}
+      """
+    Then the response status should be 200
+    And the JSON path "success" should equal true
+    And the JSON path "message" should equal "Student unassigned from class successfully"

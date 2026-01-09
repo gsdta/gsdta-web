@@ -17,6 +17,7 @@ import {
   __setAdminDbForTests,
 } from '../firestoreStudents';
 import { __setAdminDbForTests as setUsersDb } from '../firestoreUsers';
+import { __setAdminDbForTests as setClassesDb } from '../firestoreClasses';
 
 type StoredDoc = Record<string, unknown>;
 
@@ -115,6 +116,7 @@ function makeFakeDb(storage: Map<string, StoredDoc> = new Map()) {
 test.afterEach(() => {
   __setAdminDbForTests(null);
   setUsersDb(null);
+  setClassesDb(null);
 });
 
 test('createStudent: should create a new student', async () => {
@@ -545,9 +547,15 @@ test('assignClassToStudent: should assign class to admitted student', async () =
     firstName: 'John',
     status: 'admitted',
   });
+  // Set up class with a primary teacher
+  storage.set('classes/c1', {
+    name: 'Class 1',
+    teachers: [{ teacherId: 't1', teacherName: 'Teacher One', role: 'primary' }],
+  });
 
   const fakeProvider = (() => makeFakeDb(storage)) as unknown as any;
   __setAdminDbForTests(fakeProvider);
+  setClassesDb(fakeProvider);
 
   const assigned = await assignClassToStudent('s1', 'c1', 'Class 1');
 
@@ -556,6 +564,8 @@ test('assignClassToStudent: should assign class to admitted student', async () =
   assert.equal(storedData.classId, 'c1');
   assert.equal(storedData.className, 'Class 1');
   assert.equal(storedData.status, 'active'); // Should transition to active
+  assert.equal(storedData.teacherId, 't1'); // Should have teacher info
+  assert.equal(storedData.teacherName, 'Teacher One');
 });
 
 test('assignClassToStudent: should assign class to active student', async () => {
@@ -565,9 +575,15 @@ test('assignClassToStudent: should assign class to active student', async () => 
     status: 'active',
     classId: 'c1',
   });
+  // Set up class without a primary teacher
+  storage.set('classes/c2', {
+    name: 'Class 2',
+    teachers: [],
+  });
 
   const fakeProvider = (() => makeFakeDb(storage)) as unknown as any;
   __setAdminDbForTests(fakeProvider);
+  setClassesDb(fakeProvider);
 
   const assigned = await assignClassToStudent('s1', 'c2', 'Class 2');
 
@@ -581,6 +597,7 @@ test('assignClassToStudent: should return null for non-existent student', async 
   const storage = new Map<string, StoredDoc>();
   const fakeProvider = (() => makeFakeDb(storage)) as unknown as any;
   __setAdminDbForTests(fakeProvider);
+  setClassesDb(fakeProvider);
 
   const assigned = await assignClassToStudent('nonexistent', 'c1', 'Class 1');
 
@@ -596,6 +613,7 @@ test('assignClassToStudent: should throw error for pending student', async () =>
 
   const fakeProvider = (() => makeFakeDb(storage)) as unknown as any;
   __setAdminDbForTests(fakeProvider);
+  setClassesDb(fakeProvider);
 
   await assert.rejects(
     () => assignClassToStudent('s1', 'c1', 'Class 1'),
@@ -699,6 +717,7 @@ test('bulkAssignClass: should return empty result for empty input', async () => 
   const storage = new Map<string, StoredDoc>();
   const fakeProvider = (() => makeFakeDb(storage)) as unknown as any;
   __setAdminDbForTests(fakeProvider);
+  setClassesDb(fakeProvider);
 
   const result = await bulkAssignClass([], 'c1', 'Class 1');
 
@@ -708,8 +727,15 @@ test('bulkAssignClass: should return empty result for empty input', async () => 
 
 test('bulkAssignClass: should fail for non-existent students', async () => {
   const storage = new Map<string, StoredDoc>();
+  // Set up class for getPrimaryTeacher
+  storage.set('classes/c1', {
+    name: 'Class 1',
+    teachers: [],
+  });
+
   const fakeProvider = (() => makeFakeDb(storage)) as unknown as any;
   __setAdminDbForTests(fakeProvider);
+  setClassesDb(fakeProvider);
 
   const result = await bulkAssignClass(['nonexistent'], 'c1', 'Class 1');
 
@@ -725,9 +751,14 @@ test('bulkAssignClass: should fail for students with invalid status', async () =
     lastName: 'Doe',
     status: 'pending',
   });
+  storage.set('classes/c1', {
+    name: 'Class 1',
+    teachers: [],
+  });
 
   const fakeProvider = (() => makeFakeDb(storage)) as unknown as any;
   __setAdminDbForTests(fakeProvider);
+  setClassesDb(fakeProvider);
 
   const result = await bulkAssignClass(['s1'], 'c1', 'Class 1');
 
@@ -743,9 +774,14 @@ test('bulkAssignClass: should assign class to admitted students', async () => {
     lastName: 'Doe',
     status: 'admitted',
   });
+  storage.set('classes/c1', {
+    name: 'Class 1',
+    teachers: [{ teacherId: 't1', teacherName: 'Teacher One', role: 'primary' }],
+  });
 
   const fakeProvider = (() => makeFakeDb(storage)) as unknown as any;
   __setAdminDbForTests(fakeProvider);
+  setClassesDb(fakeProvider);
 
   const result = await bulkAssignClass(['s1'], 'c1', 'Class 1');
 
@@ -755,6 +791,8 @@ test('bulkAssignClass: should assign class to admitted students', async () => {
   const storedData = storage.get('students/s1') as any;
   assert.equal(storedData.classId, 'c1');
   assert.equal(storedData.status, 'active');
+  assert.equal(storedData.teacherId, 't1');
+  assert.equal(storedData.teacherName, 'Teacher One');
 });
 
 test('bulkAssignClass: should assign class to active students', async () => {
@@ -765,9 +803,14 @@ test('bulkAssignClass: should assign class to active students', async () => {
     status: 'active',
     classId: 'c1',
   });
+  storage.set('classes/c2', {
+    name: 'Class 2',
+    teachers: [],
+  });
 
   const fakeProvider = (() => makeFakeDb(storage)) as unknown as any;
   __setAdminDbForTests(fakeProvider);
+  setClassesDb(fakeProvider);
 
   const result = await bulkAssignClass(['s1'], 'c2', 'Class 2');
 
@@ -783,9 +826,14 @@ test('bulkAssignClass: should handle multiple students', async () => {
   storage.set('students/s1', { firstName: 'John', lastName: 'Doe', status: 'admitted' });
   storage.set('students/s2', { firstName: 'Jane', lastName: 'Smith', status: 'active' });
   storage.set('students/s3', { firstName: 'Bob', lastName: 'Brown', status: 'pending' });
+  storage.set('classes/c1', {
+    name: 'Class 1',
+    teachers: [],
+  });
 
   const fakeProvider = (() => makeFakeDb(storage)) as unknown as any;
   __setAdminDbForTests(fakeProvider);
+  setClassesDb(fakeProvider);
 
   const result = await bulkAssignClass(['s1', 's2', 's3'], 'c1', 'Class 1');
 
@@ -1036,9 +1084,14 @@ test('bulkAssignClass: should handle batch commit failure', async () => {
     lastName: 'Doe',
     status: 'admitted',
   });
+  storage.set('classes/c1', {
+    name: 'Class 1',
+    teachers: [],
+  });
 
   const fakeProvider = (() => makeFakeDbWithBatchError(storage)) as unknown as any;
   __setAdminDbForTests(fakeProvider);
+  setClassesDb(fakeProvider);
 
   const result = await bulkAssignClass(['s1'], 'c1', 'Class 1');
 
