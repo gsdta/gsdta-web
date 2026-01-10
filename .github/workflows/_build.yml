@@ -22,12 +22,12 @@ on:
         description: 'Docker image tag (defaults to commit SHA)'
         type: string
         default: ''
+      secrets_project_id:
+        description: 'GCP Project ID where Firebase secrets are stored'
+        type: string
+        required: true
     secrets:
       GCP_SA_KEY:
-        required: true
-      GCP_PROJECT_ID:
-        required: true
-      SECRETS_PROJECT_ID:
         required: true
     outputs:
       image_uri:
@@ -62,7 +62,7 @@ jobs:
           TAG="${{ inputs.image_tag }}"
           [ -z "$TAG" ] && TAG="${GITHUB_SHA::7}"
 
-          IMAGE_URI="${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.GAR_REPO }}/gsdta-web:${{ inputs.environment }}-${TAG}"
+          IMAGE_URI="${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ env.GAR_REPO }}/gsdta-web:${{ inputs.environment }}-${TAG}"
 
           echo "image_uri=$IMAGE_URI" >> $GITHUB_OUTPUT
           echo "tag=$TAG" >> $GITHUB_OUTPUT
@@ -71,10 +71,10 @@ jobs:
       - name: Fetch Firebase secrets
         id: secrets
         run: |
-          echo "api_key=$(gcloud secrets versions access latest --secret=FIREBASE_API_KEY --project=${{ secrets.SECRETS_PROJECT_ID }})" >> $GITHUB_OUTPUT
-          echo "auth_domain=$(gcloud secrets versions access latest --secret=FIREBASE_AUTH_DOMAIN --project=${{ secrets.SECRETS_PROJECT_ID }})" >> $GITHUB_OUTPUT
-          echo "project_id=$(gcloud secrets versions access latest --secret=FIREBASE_PROJECT_ID --project=${{ secrets.SECRETS_PROJECT_ID }})" >> $GITHUB_OUTPUT
-          echo "app_id=$(gcloud secrets versions access latest --secret=FIREBASE_APP_ID --project=${{ secrets.SECRETS_PROJECT_ID }})" >> $GITHUB_OUTPUT
+          echo "api_key=$(gcloud secrets versions access latest --secret=FIREBASE_API_KEY --project=${{ inputs.secrets_project_id }})" >> $GITHUB_OUTPUT
+          echo "auth_domain=$(gcloud secrets versions access latest --secret=FIREBASE_AUTH_DOMAIN --project=${{ inputs.secrets_project_id }})" >> $GITHUB_OUTPUT
+          echo "project_id=$(gcloud secrets versions access latest --secret=FIREBASE_PROJECT_ID --project=${{ inputs.secrets_project_id }})" >> $GITHUB_OUTPUT
+          echo "app_id=$(gcloud secrets versions access latest --secret=FIREBASE_APP_ID --project=${{ inputs.secrets_project_id }})" >> $GITHUB_OUTPUT
 
       - uses: docker/setup-buildx-action@v3
 

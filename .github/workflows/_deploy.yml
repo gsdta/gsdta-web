@@ -26,10 +26,12 @@ on:
         description: 'Runner to use'
         type: string
         default: 'ubuntu-latest'
+      firebase_project_id:
+        description: 'Firebase Project ID for runtime config'
+        type: string
+        required: true
     secrets:
       GCP_SA_KEY:
-        required: true
-      FIREBASE_PROJECT_ID:
         required: true
 
 env:
@@ -66,7 +68,7 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --port 3000 \
-            --set-env-vars "NEXT_TELEMETRY_DISABLED=1,NODE_ENV=production,NEXT_PUBLIC_API_BASE_URL=/api,GOOGLE_CLOUD_PROJECT=${{ secrets.FIREBASE_PROJECT_ID }},FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }},NEXT_PUBLIC_AUTH_MODE=firebase,NEXT_PUBLIC_USE_MSW=false,NEXT_PUBLIC_SITE_URL=${{ inputs.site_url }}"
+            --set-env-vars "NEXT_TELEMETRY_DISABLED=1,NODE_ENV=production,NEXT_PUBLIC_API_BASE_URL=/api,GOOGLE_CLOUD_PROJECT=${{ inputs.firebase_project_id }},FIREBASE_PROJECT_ID=${{ inputs.firebase_project_id }},NEXT_PUBLIC_AUTH_MODE=firebase,NEXT_PUBLIC_USE_MSW=false,NEXT_PUBLIC_SITE_URL=${{ inputs.site_url }}"
 
       - name: Health check
         run: |

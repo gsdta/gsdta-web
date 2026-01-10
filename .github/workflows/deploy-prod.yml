@@ -21,10 +21,9 @@ jobs:
       environment: production
       site_url: https://app.gsdta.com
       runner: ubuntu-latest
+      secrets_project_id: ${{ vars.GCP_PROJECT_ID }}
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-      SECRETS_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
 
   # Step 2: Deploy to Production
   deploy:
@@ -37,9 +36,9 @@ jobs:
       site_url: https://app.gsdta.com
       image_uri: ${{ needs.build.outputs.image_uri }}
       runner: ubuntu-latest
+      firebase_project_id: ${{ vars.GCP_PROJECT_ID }}
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-      FIREBASE_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
 
   # Step 3: Run shakeout tests to validate deployment
   shakeout:
