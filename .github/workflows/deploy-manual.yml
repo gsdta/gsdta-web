@@ -55,13 +55,13 @@ jobs:
       environment: production
       service_name: gsdta-web
       site_url: https://app.gsdta.com
-      secrets_project_id: ${{ secrets.GCP_PROJECT_ID }}
-      firebase_project_id: ${{ secrets.GCP_PROJECT_ID }}
       runner: ${{ inputs.runner }}
       image_tag: ${{ inputs.image_tag }}
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
       GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      SECRETS_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      FIREBASE_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
 
   # Step 2: Deploy to QA
   deploy-qa:
@@ -75,10 +75,10 @@ jobs:
       environment: qa
       service_name: gsdta-web-qa
       site_url: https://app.qa.gsdta.com
-      secrets_project_id: gsdta-qa
-      firebase_project_id: gsdta-qa
       runner: ${{ inputs.runner }}
       image_tag: ${{ inputs.image_tag }}
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
       GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID_QA }}
+      SECRETS_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID_QA }}
+      FIREBASE_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID_QA }}

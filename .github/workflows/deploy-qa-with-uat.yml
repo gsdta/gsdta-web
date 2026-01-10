@@ -30,12 +30,12 @@ jobs:
     uses: ./.github/workflows/_build.yml
     with:
       environment: qa
-      secrets_project_id: gsdta-qa
       site_url: https://app.qa.gsdta.com
       runner: ubuntu-latest
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
       GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID_QA }}
+      SECRETS_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID_QA }}
 
   # Step 2: Deploy to QA (only if tests pass, uses pre-built image)
   deploy:
@@ -47,11 +47,11 @@ jobs:
       environment: qa
       service_name: gsdta-web-qa
       site_url: https://app.qa.gsdta.com
-      firebase_project_id: gsdta-qa
       image_uri: ${{ needs.build.outputs.image_uri }}
       runner: ubuntu-latest
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+      FIREBASE_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID_QA }}
 
   # Step 3: Run UAT tests against live QA environment
   uat-tests:

@@ -10,10 +10,6 @@ on:
         description: 'Target environment (qa or production)'
         type: string
         required: true
-      secrets_project_id:
-        description: 'GCP Project ID where secrets are stored'
-        type: string
-        required: true
       site_url:
         description: 'Site URL for the environment'
         type: string
@@ -31,7 +27,8 @@ on:
         required: true
       GCP_PROJECT_ID:
         required: true
-        description: 'GCP Project ID for this environment'
+      SECRETS_PROJECT_ID:
+        required: true
     outputs:
       image_uri:
         description: 'Full URI of the built Docker image'
@@ -74,10 +71,10 @@ jobs:
       - name: Fetch Firebase secrets
         id: secrets
         run: |
-          echo "api_key=$(gcloud secrets versions access latest --secret=FIREBASE_API_KEY --project=${{ inputs.secrets_project_id }})" >> $GITHUB_OUTPUT
-          echo "auth_domain=$(gcloud secrets versions access latest --secret=FIREBASE_AUTH_DOMAIN --project=${{ inputs.secrets_project_id }})" >> $GITHUB_OUTPUT
-          echo "project_id=$(gcloud secrets versions access latest --secret=FIREBASE_PROJECT_ID --project=${{ inputs.secrets_project_id }})" >> $GITHUB_OUTPUT
-          echo "app_id=$(gcloud secrets versions access latest --secret=FIREBASE_APP_ID --project=${{ inputs.secrets_project_id }})" >> $GITHUB_OUTPUT
+          echo "api_key=$(gcloud secrets versions access latest --secret=FIREBASE_API_KEY --project=${{ secrets.SECRETS_PROJECT_ID }})" >> $GITHUB_OUTPUT
+          echo "auth_domain=$(gcloud secrets versions access latest --secret=FIREBASE_AUTH_DOMAIN --project=${{ secrets.SECRETS_PROJECT_ID }})" >> $GITHUB_OUTPUT
+          echo "project_id=$(gcloud secrets versions access latest --secret=FIREBASE_PROJECT_ID --project=${{ secrets.SECRETS_PROJECT_ID }})" >> $GITHUB_OUTPUT
+          echo "app_id=$(gcloud secrets versions access latest --secret=FIREBASE_APP_ID --project=${{ secrets.SECRETS_PROJECT_ID }})" >> $GITHUB_OUTPUT
 
       - uses: docker/setup-buildx-action@v3
 
