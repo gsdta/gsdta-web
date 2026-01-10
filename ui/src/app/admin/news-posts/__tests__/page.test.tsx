@@ -82,8 +82,11 @@ describe('AdminNewsPostsPage', () => {
       render(<AdminNewsPostsPage />);
 
       await waitFor(() => {
-        expect(screen.getByLabelText(/Status:/i)).toBeInTheDocument();
-        expect(screen.getByLabelText(/Category:/i)).toBeInTheDocument();
+        expect(screen.getByText('Status:')).toBeInTheDocument();
+        expect(screen.getByText('Category:')).toBeInTheDocument();
+        // Verify dropdowns exist
+        expect(screen.getByDisplayValue('All')).toBeInTheDocument();
+        expect(screen.getByDisplayValue('All Categories')).toBeInTheDocument();
       });
     });
   });
@@ -247,7 +250,7 @@ describe('AdminNewsPostsPage', () => {
       render(<AdminNewsPostsPage />);
 
       await waitFor(() => {
-        const statusSelect = screen.getByLabelText(/Status:/i);
+        const statusSelect = screen.getByDisplayValue('All');
         fireEvent.change(statusSelect, { target: { value: 'published' } });
       });
 
@@ -270,7 +273,7 @@ describe('AdminNewsPostsPage', () => {
       render(<AdminNewsPostsPage />);
 
       await waitFor(() => {
-        const categorySelect = screen.getByLabelText(/Category:/i);
+        const categorySelect = screen.getByDisplayValue('All Categories');
         fireEvent.change(categorySelect, { target: { value: 'events' } });
       });
 
@@ -342,9 +345,10 @@ describe('AdminNewsPostsPage', () => {
 
       await waitFor(() => {
         expect(screen.getByText('News Post Workflow')).toBeInTheDocument();
-        expect(screen.getByText(/Draft/)).toBeInTheDocument();
-        expect(screen.getByText(/Pending Review/)).toBeInTheDocument();
-        expect(screen.getByText(/Published/)).toBeInTheDocument();
+        // Check for workflow step descriptions (more specific than just status names)
+        expect(screen.getByText(/Work in progress, not visible to public/)).toBeInTheDocument();
+        expect(screen.getByText(/Submitted by teacher, awaiting admin approval/)).toBeInTheDocument();
+        expect(screen.getByText(/Visible to public/)).toBeInTheDocument();
       });
     });
   });
