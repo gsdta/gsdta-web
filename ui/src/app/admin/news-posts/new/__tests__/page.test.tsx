@@ -28,17 +28,21 @@ jest.mock('next/navigation', () => ({
 
 // Mock RichTextEditor
 jest.mock('@/components/RichTextEditor', () => ({
-  RichTextEditor: ({ value, onChange, label, error }: any) => (
-    <div data-testid="rich-text-editor">
-      <label>{label}</label>
-      <textarea
-        data-testid={`editor-${label?.toLowerCase().replace(/[^a-z]/g, '-')}`}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
-      {error && <span className="error">{error}</span>}
-    </div>
-  ),
+  RichTextEditor: ({ value, onChange, label, error }: any) => {
+    // Create a stable testid from the label
+    const testId = label?.includes('English') ? 'editor-body-en' : 'editor-body-ta';
+    return (
+      <div data-testid="rich-text-editor">
+        <label>{label}</label>
+        <textarea
+          data-testid={testId}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+        {error && <span className="error">{error}</span>}
+      </div>
+    );
+  },
 }));
 
 // Mock ImageUpload
@@ -262,7 +266,7 @@ describe('NewNewsPostPage', () => {
       fireEvent.change(summaryInput, { target: { value: 'This is a test summary' } });
 
       // Fill body (mocked editor)
-      const bodyEditor = screen.getByTestId('editor-body--english----');
+      const bodyEditor = screen.getByTestId('editor-body-en');
       fireEvent.change(bodyEditor, { target: { value: '<p>Test content</p>' } });
 
       // Submit
@@ -298,7 +302,7 @@ describe('NewNewsPostPage', () => {
       const summaryInput = screen.getByLabelText(/Summary \(English\)/);
       fireEvent.change(summaryInput, { target: { value: 'This is a test summary' } });
 
-      const bodyEditor = screen.getByTestId('editor-body--english----');
+      const bodyEditor = screen.getByTestId('editor-body-en');
       fireEvent.change(bodyEditor, { target: { value: '<p>Test content</p>' } });
 
       // Submit
@@ -324,7 +328,7 @@ describe('NewNewsPostPage', () => {
       const summaryInput = screen.getByLabelText(/Summary \(English\)/);
       fireEvent.change(summaryInput, { target: { value: 'This is a test summary' } });
 
-      const bodyEditor = screen.getByTestId('editor-body--english----');
+      const bodyEditor = screen.getByTestId('editor-body-en');
       fireEvent.change(bodyEditor, { target: { value: '<p>Test content</p>' } });
 
       // Submit

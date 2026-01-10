@@ -99,7 +99,8 @@ describe('AdminNewsPostsPage', () => {
 
       render(<AdminNewsPostsPage />);
 
-      expect(screen.getByRole('status') || document.querySelector('.animate-spin')).toBeTruthy();
+      // The component uses an animate-spin class for the loading spinner
+      expect(document.querySelector('.animate-spin')).toBeTruthy();
     });
   });
 
@@ -185,8 +186,11 @@ describe('AdminNewsPostsPage', () => {
       render(<AdminNewsPostsPage />);
 
       await waitFor(() => {
-        expect(screen.getByText('Published')).toBeInTheDocument();
-        expect(screen.getByText('Pending Review')).toBeInTheDocument();
+        // Find status badges specifically (in spans with rounded-full class)
+        const statusBadges = document.querySelectorAll('span.rounded-full');
+        const statusTexts = Array.from(statusBadges).map(el => el.textContent);
+        expect(statusTexts).toContain('Published');
+        expect(statusTexts).toContain('Pending Review');
       });
     });
 
