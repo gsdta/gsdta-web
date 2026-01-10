@@ -19,12 +19,12 @@ jobs:
     uses: ./.github/workflows/_build.yml
     with:
       environment: production
-      gcp_project_id: YOUR_PROJECT_ID
-      secrets_project_id: YOUR_PROJECT_ID
+      secrets_project_id: ${{ secrets.GCP_PROJECT_ID }}
       site_url: https://app.gsdta.com
       runner: ubuntu-latest
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
 
   # Step 2: Deploy to Production
   deploy:
@@ -35,7 +35,7 @@ jobs:
       environment: production
       service_name: gsdta-web
       site_url: https://app.gsdta.com
-      firebase_project_id: YOUR_PROJECT_ID
+      firebase_project_id: ${{ secrets.GCP_PROJECT_ID }}
       image_uri: ${{ needs.build.outputs.image_uri }}
       runner: ubuntu-latest
     secrets:

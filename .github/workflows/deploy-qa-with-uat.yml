@@ -30,12 +30,12 @@ jobs:
     uses: ./.github/workflows/_build.yml
     with:
       environment: qa
-      gcp_project_id: YOUR_PROJECT_ID
       secrets_project_id: gsdta-qa
       site_url: https://app.qa.gsdta.com
       runner: ubuntu-latest
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID_QA }}
 
   # Step 2: Deploy to QA (only if tests pass, uses pre-built image)
   deploy:
