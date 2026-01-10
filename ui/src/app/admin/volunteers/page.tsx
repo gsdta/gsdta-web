@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/components/AuthProvider';
+import { useAdminWriteAccess } from '@/hooks/useAdminWriteAccess';
 import { adminGetVolunteers, adminCreateVolunteer, adminUpdateVolunteer, adminDeleteVolunteer } from '@/lib/volunteer-api';
 import type { Volunteer, VolunteerStatus, VolunteerType, CreateVolunteerInput } from '@/lib/volunteer-types';
 import { VOLUNTEER_TYPES, GRADE_LEVELS, DAYS_OF_WEEK, CURRENT_ACADEMIC_YEAR } from '@/lib/volunteer-types';
@@ -9,6 +10,7 @@ import { TableRowActionMenu, useTableRowActions, type TableAction } from '@/comp
 
 export default function AdminVolunteersPage() {
   const { getIdToken } = useAuth();
+  const canWrite = useAdminWriteAccess();
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,11 +52,13 @@ export default function AdminVolunteersPage() {
       label: volunteer.status === 'active' ? 'Deactivate' : 'Activate',
       onClick: () => handleToggleStatus(volunteer),
       variant: volunteer.status === 'active' ? 'warning' : 'success',
+      hidden: !canWrite,
     },
     {
       label: 'Remove',
       onClick: () => handleDelete(volunteer),
       variant: 'danger',
+      hidden: !canWrite,
     },
   ];
 
@@ -166,12 +170,14 @@ export default function AdminVolunteersPage() {
             Manage high school and parent volunteers
           </p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-        >
-          Add Volunteer
-        </button>
+{canWrite && (
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+          >
+            Add Volunteer
+          </button>
+        )}
       </div>
 
       {/* Error Message */}
@@ -235,12 +241,14 @@ export default function AdminVolunteersPage() {
       ) : volunteers.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-lg border">
           <p className="text-gray-500">No volunteers found.</p>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="mt-4 text-blue-600 hover:text-blue-800"
-          >
-            Add your first volunteer
-          </button>
+          {canWrite && (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="mt-4 text-blue-600 hover:text-blue-800"
+            >
+              Add your first volunteer
+            </button>
+          )}
         </div>
       ) : (
         <div className="bg-white shadow overflow-hidden rounded-lg">

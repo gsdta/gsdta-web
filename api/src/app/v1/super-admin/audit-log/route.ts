@@ -138,9 +138,9 @@ export async function GET(req: NextRequest) {
   const origin = req.headers.get('origin');
 
   try {
-    // Require super_admin role
+    // Require super_admin or admin_readonly role (view-only access)
     const authz = req.headers.get('authorization');
-    await requireAuth(authz, { requireRoles: ['super_admin'] });
+    await requireAuth(authz, { requireRoles: ['super_admin', 'admin_readonly'] });
 
     // Parse query parameters
     const { searchParams } = new URL(req.url);

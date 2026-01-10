@@ -235,7 +235,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
   try {
     const authz = req.headers.get('authorization');
-    const { profile } = await requireAuth(authz, { requireRoles: ['admin'] });
+    const { profile } = await requireAuth(authz, { requireRoles: ['admin'], requireWriteAccess: true });
     await requireFeature('admin', 'NewsPosts');
 
     const existingPost = await getNewsPostById(id);
@@ -314,7 +314,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
 
   try {
     const authz = req.headers.get('authorization');
-    await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireAuth(authz, { requireRoles: ['admin'], requireWriteAccess: true });
     await requireFeature('admin', 'NewsPosts');
 
     const deleted = await deleteNewsPost(id);

@@ -1,4 +1,4 @@
-export type Role = "super_admin" | "admin" | "teacher" | "parent";
+export type Role = "super_admin" | "admin" | "admin_readonly" | "teacher" | "parent";
 
 export type AuthProvider = "password" | "google" | null;
 

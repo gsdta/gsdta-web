@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { apiFetch } from '@/lib/api-client';
+import { useAdminWriteAccess } from '@/hooks/useAdminWriteAccess';
 import type { HeroContent } from '@/types/heroContent';
 
 interface HeroContentResponse {
@@ -12,6 +13,7 @@ interface HeroContentResponse {
 }
 
 export default function AdminHeroContentPage() {
+  const canWrite = useAdminWriteAccess();
   const [items, setItems] = useState<HeroContent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -174,12 +176,14 @@ export default function AdminHeroContentPage() {
             Manage event banners that appear on the homepage
           </p>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-        >
-          {showForm ? 'Cancel' : '+ Create New'}
-        </button>
+{canWrite && (
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            {showForm ? 'Cancel' : '+ Create New'}
+          </button>
+        )}
       </div>
 
       {/* Create Form */}
@@ -398,7 +402,7 @@ export default function AdminHeroContentPage() {
           {items.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
               <p>No hero content found</p>
-              {!showForm && (
+              {!showForm && canWrite && (
                 <button
                   onClick={() => setShowForm(true)}
                   className="mt-4 text-blue-600 hover:text-blue-700"
@@ -450,20 +454,22 @@ export default function AdminHeroContentPage() {
                         </p>
                       )}
                     </div>
-                    <div className="flex gap-2 ml-4">
-                      <button
-                        onClick={() => toggleActive(item.id, item.isActive)}
-                        className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
-                      >
-                        {item.isActive ? 'Deactivate' : 'Activate'}
-                      </button>
-                      <button
-                        onClick={() => deleteItem(item.id)}
-                        className="px-3 py-1 text-sm text-red-600 border border-red-300 rounded-md hover:bg-red-50"
-                      >
-                        Delete
-                      </button>
-                    </div>
+{canWrite && (
+                      <div className="flex gap-2 ml-4">
+                        <button
+                          onClick={() => toggleActive(item.id, item.isActive)}
+                          className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
+                        >
+                          {item.isActive ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button
+                          onClick={() => deleteItem(item.id)}
+                          className="px-3 py-1 text-sm text-red-600 border border-red-300 rounded-md hover:bg-red-50"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </li>
               ))}

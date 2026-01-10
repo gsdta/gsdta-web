@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
+import { useAdminWriteAccess } from '@/hooks/useAdminWriteAccess';
 import { adminGetClasses, adminUpdateClass, formatTeachersDisplay, type Class } from '@/lib/class-api';
 import { adminGetGradeOptions } from '@/lib/grade-api';
 import type { GradeOption } from '@/lib/grade-types';
@@ -12,6 +13,7 @@ import { TableRowActionMenu, useTableRowActions, type TableAction } from '@/comp
 export default function ClassesPage() {
   const router = useRouter();
   const { getIdToken } = useAuth();
+  const canWrite = useAdminWriteAccess();
   const [classes, setClasses] = useState<Class[]>([]);
   const [grades, setGrades] = useState<GradeOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,12 +47,13 @@ export default function ClassesPage() {
 
   const getClassActions = (cls: Class): TableAction[] => [
     { label: 'View Details', onClick: () => router.push(`/admin/classes/${cls.id}`) },
-    { label: 'Edit', onClick: () => router.push(`/admin/classes/${cls.id}/edit`) },
+    { label: 'Edit', onClick: () => router.push(`/admin/classes/${cls.id}/edit`), hidden: !canWrite },
     {
       label: togglingId === cls.id ? '...' : (cls.status === 'active' ? 'Deactivate' : 'Activate'),
       onClick: () => handleToggleStatus(cls),
       variant: cls.status === 'active' ? 'danger' : 'success',
       disabled: togglingId === cls.id,
+      hidden: !canWrite,
     },
   ];
 
@@ -118,15 +121,17 @@ export default function ClassesPage() {
             Manage Tamil class schedules and assignments.
           </p>
         </div>
-        <Link
-          href="/admin/classes/create"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Create Class
-        </Link>
+{canWrite && (
+          <Link
+            href="/admin/classes/create"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Create Class
+          </Link>
+        )}
       </div>
 
       {/* Filters */}
@@ -195,12 +200,14 @@ export default function ClassesPage() {
               </svg>
             </div>
             <div className="text-gray-500 mb-2">No classes found</div>
-            <Link
-              href="/admin/classes/create"
-              className="text-blue-600 hover:underline"
-            >
-              Create your first class
-            </Link>
+            {canWrite && (
+              <Link
+                href="/admin/classes/create"
+                className="text-blue-600 hover:underline"
+              >
+                Create your first class
+              </Link>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">

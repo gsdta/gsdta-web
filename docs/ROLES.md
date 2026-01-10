@@ -11,13 +11,14 @@ This document describes the role-based access control system for the GSDTA web a
 1. [Overview](#overview)
 2. [Super Admin Role](#super-admin-role)
 3. [Admin Role](#admin-role)
-4. [Teacher Role](#teacher-role)
-5. [Parent Role](#parent-role)
-6. [Student Role](#student-role-future)
-7. [Firestore Collections](#firestore-collections)
-8. [Permission Matrix](#permission-matrix)
-9. [UI Dashboard Layouts](#ui-dashboard-layouts)
-10. [Implementation Phases](#implementation-phases)
+4. [Admin Readonly Role](#admin-readonly-role)
+5. [Teacher Role](#teacher-role)
+6. [Parent Role](#parent-role)
+7. [Student Role](#student-role-future)
+8. [Firestore Collections](#firestore-collections)
+9. [Permission Matrix](#permission-matrix)
+10. [UI Dashboard Layouts](#ui-dashboard-layouts)
+11. [Implementation Phases](#implementation-phases)
 
 ---
 
@@ -27,6 +28,7 @@ The application implements a hierarchical role-based access control system with 
 
 - **Super Admin** - Highest privileges, can manage admins and system settings
 - **Admin** - Manage users, content, and school operations (cannot add/remove other admins)
+- **Admin Readonly** - View-only access to all admin sections without edit capabilities
 - **Teacher** - Invite-only role for instructors, manage classes and students
 - **Parent** - Default role for new users, access to their children's information
 - **Student** - (Future) Direct portal access for students
@@ -982,6 +984,95 @@ Direct portal access for students to engage with their learning.
 ├── /calendar               - My schedule and events
 ├── /messages               - Teacher communications
 └── /profile                - Profile settings
+```
+
+---
+
+## Admin Readonly Role
+
+Admin Readonly is a restricted administrative role with view-only access to all admin and select super admin sections. This role is useful for auditors, observers, or stakeholders who need visibility into school operations without the ability to modify data.
+
+### Key Characteristics
+
+- **Onboarding**: Assigned by super admin (set `roles: ['admin_readonly']`)
+- **Routing**: UI routes to `/admin` (same as regular admin)
+- **Distinguisher**: `roles: ['admin_readonly']`
+
+### Capabilities - IMPLEMENTED (Jan 2025)
+
+#### View-Only Access
+- [x] View all admin dashboard sections
+- [x] View all students (list with search/filter)
+- [x] View student details
+- [x] View all teachers (list with search/filter)
+- [x] View teacher details
+- [x] View all classes
+- [x] View class details and rosters
+- [x] View grades configuration
+- [x] View hero content
+- [x] View flash news
+- [x] View news posts
+- [x] View calendar events
+- [x] View textbooks
+- [x] View volunteers
+- [x] View attendance analytics
+
+#### Super Admin View Access
+- [x] View audit logs (read-only)
+- [x] View security events (read-only)
+- [x] View feature flags (read-only)
+
+#### Export Capabilities
+- [x] Export attendance data
+- [x] Export audit logs (CSV)
+
+### Restrictions
+
+Admin Readonly users **CANNOT**:
+- Create, edit, or delete students
+- Create, edit, or delete teachers
+- Send teacher invitations
+- Create, edit, or delete classes
+- Assign teachers to classes
+- Create, edit, or delete content (hero, flash news, news posts)
+- Create, edit, or delete calendar events
+- Create, edit, or delete textbooks
+- Create, edit, or delete volunteers
+- Modify grades configuration
+- Access super admin management features (promote/demote, settings, recovery)
+
+### API Authorization
+
+Admin Readonly users are granted access via:
+```typescript
+// Read endpoints - admin_readonly can access
+await requireAuth(authz, { requireRoles: ['admin'] });
+
+// Write endpoints - admin_readonly is blocked
+await requireAuth(authz, { requireRoles: ['admin'], requireWriteAccess: true });
+
+// Super admin view endpoints - explicitly allowed
+await requireAuth(authz, { requireRoles: ['super_admin', 'admin_readonly'] });
+```
+
+### UI Behavior
+
+When logged in as admin_readonly:
+- Navigation hides "Create" and "Invite" links
+- Edit/Delete buttons are hidden on all list pages
+- Super Admin section shows only view-only items (Audit Log, Security, Feature Flags)
+- Form pages redirect to list views if accessed directly
+
+### Test User
+
+```json
+// For development/testing
+{
+  "email": "adminreadonly@test.com",
+  "roles": ["admin_readonly"],
+  "status": "active"
+}
+// Test token: test-admin-readonly-token
 ```
 
 ---

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
+import { useAdminWriteAccess } from '@/hooks/useAdminWriteAccess';
 import { adminGetCalendarEvents, adminUpdateCalendarEvent, adminDeleteCalendarEvent } from '@/lib/calendar-api';
 import type { CalendarEvent, EventType, EventStatus, CalendarEventFilters } from '@/lib/calendar-types';
 import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS, RECURRENCE_LABELS } from '@/lib/calendar-types';
@@ -10,6 +11,7 @@ import { TableRowActionMenu, useTableRowActions, type TableAction } from '@/comp
 
 export default function AdminCalendarPage() {
   const { getIdToken } = useAuth();
+  const canWrite = useAdminWriteAccess();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -88,16 +90,19 @@ export default function AdminCalendarPage() {
         window.location.href = `/admin/calendar/${event.id}/edit`;
       },
       variant: 'default' as const,
+      hidden: !canWrite,
     },
     {
       label: event.status === 'active' ? 'Deactivate' : 'Activate',
       onClick: () => handleToggleStatus(event),
       variant: event.status === 'active' ? 'warning' : ('success' as const),
+      hidden: !canWrite,
     },
     {
       label: 'Delete',
       onClick: () => handleDelete(event),
       variant: 'danger' as const,
+      hidden: !canWrite,
     },
   ];
 
@@ -126,12 +131,14 @@ export default function AdminCalendarPage() {
             Manage school calendar events, holidays, and GSDTA events
           </p>
         </div>
-        <Link
-          href="/admin/calendar/new"
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-        >
-          Add Event
-        </Link>
+{canWrite && (
+          <Link
+            href="/admin/calendar/new"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+          >
+            Add Event
+          </Link>
+        )}
       </div>
 
       {/* Error Message */}
@@ -189,12 +196,14 @@ export default function AdminCalendarPage() {
       ) : events.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-lg border">
           <p className="text-gray-500">No calendar events found.</p>
-          <Link
-            href="/admin/calendar/new"
-            className="mt-4 inline-block text-blue-600 hover:text-blue-800"
-          >
-            Add your first event
-          </Link>
+          {canWrite && (
+            <Link
+              href="/admin/calendar/new"
+              className="mt-4 inline-block text-blue-600 hover:text-blue-800"
+            >
+              Add your first event
+            </Link>
+          )}
         </div>
       ) : (
         <div className="bg-white shadow overflow-hidden rounded-lg">

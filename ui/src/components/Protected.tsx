@@ -14,6 +14,7 @@ function routeForRole(role: Role): string {
     switch (role) {
         case "super_admin": return "/admin";  // Super admin uses admin dashboard
         case "admin": return "/admin";
+        case "admin_readonly": return "/admin";  // Read-only admin uses admin dashboard
         case "teacher": return "/teacher";
         default: return "/parent";
     }
@@ -22,12 +23,15 @@ function routeForRole(role: Role): string {
 /**
  * Check if user has required role, with role hierarchy:
  * - super_admin can access anything requiring 'admin'
+ * - admin_readonly can access anything requiring 'admin' (read-only)
  */
 function hasRequiredRole(userRole: Role, requiredRoles: Role[]): boolean {
     // Direct match
     if (requiredRoles.includes(userRole)) return true;
     // Role hierarchy: super_admin has admin privileges
     if (userRole === "super_admin" && requiredRoles.includes("admin")) return true;
+    // Role hierarchy: admin_readonly has admin read privileges
+    if (userRole === "admin_readonly" && requiredRoles.includes("admin")) return true;
     return false;
 }
 

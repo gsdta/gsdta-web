@@ -98,7 +98,7 @@ export async function PATCH(
 
   try {
     const authz = req.headers.get('authorization');
-    const authContext = await requireAuth(authz, { requireRoles: ['admin'] });
+    const authContext = await requireAuth(authz, { requireRoles: ['admin'], requireWriteAccess: true });
     await requireFeature('admin', 'Students');
     const { token } = authContext;
 

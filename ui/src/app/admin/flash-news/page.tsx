@@ -3,12 +3,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
+import { useAdminWriteAccess } from '@/hooks/useAdminWriteAccess';
 import { adminGetFlashNews, adminUpdateFlashNews, adminDeleteFlashNews, type FlashNewsFilters } from '@/lib/flash-news-api';
 import type { FlashNews } from '@/types/flashNews';
 import { TableRowActionMenu, useTableRowActions, type TableAction } from '@/components/TableRowActionMenu';
 
 export default function AdminFlashNewsPage() {
   const { getIdToken } = useAuth();
+  const canWrite = useAdminWriteAccess();
   const [items, setItems] = useState<FlashNews[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,16 +63,19 @@ export default function AdminFlashNewsPage() {
         window.location.href = `/admin/flash-news/${item.id}`;
       },
       variant: 'default' as const,
+      hidden: !canWrite,
     },
     {
       label: item.isActive ? 'Deactivate' : 'Activate',
       onClick: () => handleToggleStatus(item),
       variant: item.isActive ? 'warning' : ('success' as const),
+      hidden: !canWrite,
     },
     {
       label: 'Delete',
       onClick: () => handleDelete(item),
       variant: 'danger' as const,
+      hidden: !canWrite,
     },
   ];
 
@@ -106,12 +111,14 @@ export default function AdminFlashNewsPage() {
             Manage scrolling news marquee announcements
           </p>
         </div>
-        <Link
-          href="/admin/flash-news/new"
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-        >
-          Add Flash News
-        </Link>
+{canWrite && (
+          <Link
+            href="/admin/flash-news/new"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+          >
+            Add Flash News
+          </Link>
+        )}
       </div>
 
       {/* Error Message */}
@@ -154,12 +161,14 @@ export default function AdminFlashNewsPage() {
       ) : items.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-lg border">
           <p className="text-gray-500">No flash news items found.</p>
-          <Link
-            href="/admin/flash-news/new"
-            className="mt-4 inline-block text-blue-600 hover:text-blue-800"
-          >
-            Add your first flash news
-          </Link>
+          {canWrite && (
+            <Link
+              href="/admin/flash-news/new"
+              className="mt-4 inline-block text-blue-600 hover:text-blue-800"
+            >
+              Add your first flash news
+            </Link>
+          )}
         </div>
       ) : (
         <div className="bg-white shadow overflow-hidden rounded-lg">

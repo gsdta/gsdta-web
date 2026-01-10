@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
+import { useAdminWriteAccess } from '@/hooks/useAdminWriteAccess';
 import { adminGetStudents, adminAdmitStudent, adminTransferClass, adminUnassignClass, type AdminStudentsListParams } from '@/lib/student-api';
 import { adminGetClassOptions, type ClassOption } from '@/lib/class-api';
 import { statusConfig, type Student, type StudentStatus, type StudentStatusCounts } from '@/lib/student-types';
@@ -15,6 +16,7 @@ export default function AdminStudentsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { getIdToken } = useAuth();
+  const canWrite = useAdminWriteAccess();
 
   const [students, setStudents] = useState<Student[]>([]);
   const [counts, setCounts] = useState<StudentStatusCounts | null>(null);
@@ -114,29 +116,29 @@ export default function AdminStudentsPage() {
 
   const getStudentActions = (student: Student): TableAction[] => [
     { label: 'View Details', onClick: () => router.push(`/admin/students/${student.id}`) },
-    { label: 'Edit', onClick: () => router.push(`/admin/students/${student.id}/edit`) },
+    { label: 'Edit', onClick: () => router.push(`/admin/students/${student.id}/edit`), hidden: !canWrite },
     {
       label: admittingId === student.id ? 'Admitting...' : 'Admit',
       onClick: () => handleAdmit(student.id),
       variant: 'success',
-      hidden: student.status !== 'pending',
+      hidden: student.status !== 'pending' || !canWrite,
       disabled: admittingId === student.id,
     },
     {
       label: 'Assign Class',
       onClick: () => router.push(`/admin/students/${student.id}?action=assign`),
-      hidden: student.status !== 'admitted',
+      hidden: student.status !== 'admitted' || !canWrite,
     },
     {
       label: 'Transfer Class',
       onClick: () => openTransferModal(student),
-      hidden: student.status !== 'active' || !student.classId,
+      hidden: student.status !== 'active' || !student.classId || !canWrite,
     },
     {
       label: unassigningId === student.id ? 'Removing...' : 'Remove from Class',
       onClick: () => handleUnassign(student.id, `${student.firstName} ${student.lastName}`),
       variant: 'danger',
-      hidden: student.status !== 'active' || !student.classId,
+      hidden: student.status !== 'active' || !student.classId || !canWrite,
       disabled: unassigningId === student.id,
     },
   ];

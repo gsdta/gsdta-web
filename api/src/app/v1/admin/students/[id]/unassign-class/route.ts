@@ -116,7 +116,7 @@ export async function PATCH(
 
   try {
     const authz = req.headers.get('authorization');
-    await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireAuth(authz, { requireRoles: ['admin'], requireWriteAccess: true });
     await requireFeature('admin', 'Students');
 
     // Check if student exists

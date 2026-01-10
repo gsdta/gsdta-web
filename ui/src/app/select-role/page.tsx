@@ -20,6 +20,12 @@ const roleConfig: Record<Role, { labelKey: string; descriptionKey: string; color
     color: 'bg-blue-50 border-blue-200 hover:bg-blue-100 text-blue-800',
     dashboard: '/admin',
   },
+  admin_readonly: {
+    labelKey: 'roles.adminReadonly',
+    descriptionKey: 'roles.adminReadonlyDescription',
+    color: 'bg-gray-50 border-gray-200 hover:bg-gray-100 text-gray-800',
+    dashboard: '/admin',
+  },
   teacher: {
     labelKey: 'roles.teacher',
     descriptionKey: 'roles.teacherDescription',

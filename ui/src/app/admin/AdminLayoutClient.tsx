@@ -96,17 +96,55 @@ const superAdminNav: NavSection = {
   ],
 };
 
+// Super Admin navigation for admin_readonly (view-only sections)
+const superAdminNavReadonly: NavSection = {
+  label: 'Super Admin (View Only)',
+  items: [
+    { label: 'Audit Log', href: '/admin/super-admin/audit-log', icon: '📋' },
+    { label: 'Security', href: '/admin/super-admin/security', icon: '🛡️' },
+    { label: 'Feature Flags', href: '/admin/super-admin/feature-flags', icon: '🚩' },
+  ],
+};
+
 export default function AdminLayoutClient({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user } = useAuth();
   const { isFeatureEnabled } = useFeatureFlags();
 
-  // Check if user is super_admin
+  // Check if user is super_admin or admin_readonly
   const isSuperAdmin = user?.roles?.includes('super_admin') ?? false;
+  const isAdminReadonly = (user?.roles?.includes('admin_readonly') ?? false) &&
+    !user?.roles?.includes('admin') &&
+    !user?.roles?.includes('super_admin');
+
+  // Filter out create/invite items for admin_readonly users
+  const filteredAdminNav = useMemo(() => {
+    if (!isAdminReadonly) return adminNav;
+
+    // Items to hide for admin_readonly
+    const hiddenHrefs = new Set([
+      '/admin/teachers/invite',
+      '/admin/classes/create',
+      '/admin/calendar/new',
+    ]);
+
+    return adminNav.map(section => ({
+      ...section,
+      items: section.items.filter(item => !hiddenHrefs.has(item.href)),
+    })).filter(section => section.items.length > 0);
+  }, [isAdminReadonly]);
 
   // Build navigation with super admin section if applicable
-  const baseNavigation = isSuperAdmin ? [...adminNav, superAdminNav] : adminNav;
+  const baseNavigation = useMemo(() => {
+    if (isSuperAdmin) {
+      return [...filteredAdminNav, superAdminNav];
+    }
+    if (isAdminReadonly) {
+      return [...filteredAdminNav, superAdminNavReadonly];
+    }
+    return filteredAdminNav;
+  }, [isSuperAdmin, isAdminReadonly, filteredAdminNav]);
 
   // Filter navigation based on feature flags
   const navigation = useMemo(() => {

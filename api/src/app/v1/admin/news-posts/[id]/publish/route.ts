@@ -128,7 +128,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
 
   try {
     const authz = req.headers.get('authorization');
-    const { profile } = await requireAuth(authz, { requireRoles: ['admin'] });
+    const { profile } = await requireAuth(authz, { requireRoles: ['admin'], requireWriteAccess: true });
     await requireFeature('admin', 'NewsPosts');
 
     // Check if post exists and can be published

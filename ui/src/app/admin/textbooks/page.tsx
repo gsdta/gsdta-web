@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/components/AuthProvider';
+import { useAdminWriteAccess } from '@/hooks/useAdminWriteAccess';
 import { adminGetTextbooks, adminCreateTextbook, adminUpdateTextbook, adminDeleteTextbook } from '@/lib/textbook-api';
 import { adminGetGrades } from '@/lib/grade-api';
 import type { Textbook, TextbookStatus, TextbookType, CreateTextbookInput } from '@/lib/textbook-types';
@@ -11,6 +12,7 @@ import { TableRowActionMenu, useTableRowActions, type TableAction } from '@/comp
 
 export default function AdminTextbooksPage() {
   const { getIdToken } = useAuth();
+  const canWrite = useAdminWriteAccess();
   const [textbooks, setTextbooks] = useState<Textbook[]>([]);
   const [grades, setGrades] = useState<Grade[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,11 +54,13 @@ export default function AdminTextbooksPage() {
       label: textbook.status === 'active' ? 'Deactivate' : 'Activate',
       onClick: () => handleToggleStatus(textbook),
       variant: textbook.status === 'active' ? 'warning' : 'success',
+      hidden: !canWrite,
     },
     {
       label: 'Delete',
       onClick: () => handleDelete(textbook),
       variant: 'danger',
+      hidden: !canWrite,
     },
   ];
 
@@ -166,12 +170,14 @@ export default function AdminTextbooksPage() {
             Manage textbooks and homework materials
           </p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-        >
-          Add Textbook
-        </button>
+{canWrite && (
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+          >
+            Add Textbook
+          </button>
+        )}
       </div>
 
       {/* Error Message */}
@@ -226,12 +232,14 @@ export default function AdminTextbooksPage() {
       ) : textbooks.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-lg border">
           <p className="text-gray-500">No textbooks found.</p>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="mt-4 text-blue-600 hover:text-blue-800"
-          >
-            Add your first textbook
-          </button>
+          {canWrite && (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="mt-4 text-blue-600 hover:text-blue-800"
+            >
+              Add your first textbook
+            </button>
+          )}
         </div>
       ) : (
         <div className="bg-white shadow overflow-hidden rounded-lg">

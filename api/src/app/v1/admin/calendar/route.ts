@@ -153,7 +153,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const authz = req.headers.get('authorization');
-    const { token, profile } = await requireAuth(authz, { requireRoles: ['admin'] });
+    const { token, profile } = await requireAuth(authz, { requireRoles: ['admin'], requireWriteAccess: true });
     await requireFeature('admin', 'Calendar');
 
     // Parse and validate request body

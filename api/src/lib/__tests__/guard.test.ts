@@ -151,3 +151,56 @@ test('requireAuth: malformed bearer token throws', async () => {
     }
   );
 });
+
+// admin_readonly role tests
+test('requireAuth: admin_readonly can access admin endpoints (read-only)', async () => {
+  const ctx = await requireAuth('Bearer test-admin-readonly-token', { requireRoles: ['admin'] });
+  assert.equal(ctx.token.uid, 'test-admin-readonly-uid');
+  assert.ok(ctx.profile.roles.includes('admin_readonly'));
+});
+
+test('requireAuth: admin_readonly blocked from write endpoints', async () => {
+  await assert.rejects(
+    () => requireAuth('Bearer test-admin-readonly-token', { requireRoles: ['admin'], requireWriteAccess: true }),
+    (err) => {
+      assert.ok(err instanceof AuthError);
+      const e = err as AuthError;
+      assert.equal(e.status, 403);
+      assert.equal(e.code, 'auth/forbidden');
+      assert.ok(e.message.includes('Read-only access'));
+      return true;
+    }
+  );
+});
+
+test('requireAuth: admin_readonly can access allowed super_admin view endpoints', async () => {
+  // admin_readonly is explicitly allowed in some super_admin endpoints via requireRoles array
+  const ctx = await requireAuth('Bearer test-admin-readonly-token', { requireRoles: ['super_admin', 'admin_readonly'] });
+  assert.equal(ctx.token.uid, 'test-admin-readonly-uid');
+  assert.ok(ctx.profile.roles.includes('admin_readonly'));
+});
+
+test('requireAuth: admin_readonly cannot access super_admin-only endpoints', async () => {
+  await assert.rejects(
+    () => requireAuth('Bearer test-admin-readonly-token', { requireRoles: ['super_admin'] }),
+    (err) => {
+      assert.ok(err instanceof AuthError);
+      const e = err as AuthError;
+      assert.equal(e.status, 403);
+      assert.equal(e.code, 'auth/forbidden');
+      return true;
+    }
+  );
+});
+
+test('requireAuth: admin can still write even with requireWriteAccess', async () => {
+  const ctx = await requireAuth('Bearer test-admin-token', { requireRoles: ['admin'], requireWriteAccess: true });
+  assert.equal(ctx.token.uid, 'test-admin-uid');
+  assert.ok(ctx.profile.roles.includes('admin'));
+});
+
+test('requireAuth: super_admin can still write even with requireWriteAccess', async () => {
+  const ctx = await requireAuth('Bearer test-super-admin-token', { requireRoles: ['admin'], requireWriteAccess: true });
+  assert.equal(ctx.token.uid, 'test-super-admin-uid');
+  assert.ok(ctx.profile.roles.includes('super_admin'));
+});

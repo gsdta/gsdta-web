@@ -126,7 +126,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
   try {
     const authz = req.headers.get('authorization');
-    await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireAuth(authz, { requireRoles: ['admin'], requireWriteAccess: true });
     await requireFeature('admin', 'Grades');
 
     const body = await req.json();

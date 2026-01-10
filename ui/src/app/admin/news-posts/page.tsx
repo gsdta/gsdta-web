@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
+import { useAdminWriteAccess } from '@/hooks/useAdminWriteAccess';
 import {
   adminGetNewsPosts,
   adminDeleteNewsPost,
@@ -21,6 +22,7 @@ import { TableRowActionMenu, useTableRowActions, type TableAction } from '@/comp
 
 export default function AdminNewsPostsPage() {
   const { getIdToken } = useAuth();
+  const canWrite = useAdminWriteAccess();
   const [items, setItems] = useState<NewsPost[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -89,6 +91,7 @@ export default function AdminNewsPostsPage() {
           window.location.href = `/admin/news-posts/${item.id}`;
         },
         variant: 'default' as const,
+        hidden: !canWrite,
       },
     ];
 
@@ -98,6 +101,7 @@ export default function AdminNewsPostsPage() {
         label: 'Publish',
         onClick: () => handlePublish(item),
         variant: 'success' as const,
+        hidden: !canWrite,
       });
     }
 
@@ -106,6 +110,7 @@ export default function AdminNewsPostsPage() {
         label: 'Unpublish',
         onClick: () => handleUnpublish(item),
         variant: 'warning' as const,
+        hidden: !canWrite,
       });
     }
 
@@ -116,6 +121,7 @@ export default function AdminNewsPostsPage() {
           window.location.href = `/admin/news-posts/${item.id}`;
         },
         variant: 'default' as const,
+        hidden: !canWrite,
       });
     }
 
@@ -123,6 +129,7 @@ export default function AdminNewsPostsPage() {
       label: 'Delete',
       onClick: () => handleDelete(item),
       variant: 'danger' as const,
+      hidden: !canWrite,
     });
 
     return actions;
@@ -156,12 +163,14 @@ export default function AdminNewsPostsPage() {
             Manage news articles with rich text and images
           </p>
         </div>
-        <Link
-          href="/admin/news-posts/new"
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-        >
-          Create News Post
-        </Link>
+{canWrite && (
+          <Link
+            href="/admin/news-posts/new"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+          >
+            Create News Post
+          </Link>
+        )}
       </div>
 
       {/* Pending Review Alert */}
@@ -237,12 +246,14 @@ export default function AdminNewsPostsPage() {
       ) : items.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-lg border">
           <p className="text-gray-500">No news posts found.</p>
-          <Link
-            href="/admin/news-posts/new"
-            className="mt-4 inline-block text-blue-600 hover:text-blue-800"
-          >
-            Create your first news post
-          </Link>
+          {canWrite && (
+            <Link
+              href="/admin/news-posts/new"
+              className="mt-4 inline-block text-blue-600 hover:text-blue-800"
+            >
+              Create your first news post
+            </Link>
+          )}
         </div>
       ) : (
         <div className="bg-white shadow overflow-hidden rounded-lg">

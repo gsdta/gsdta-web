@@ -204,7 +204,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const authz = req.headers.get('authorization');
-    const { profile } = await requireAuth(authz, { requireRoles: ['admin'] });
+    const { profile } = await requireAuth(authz, { requireRoles: ['admin'], requireWriteAccess: true });
     await requireFeature('admin', 'FlashNews');
 
     const body = await req.json();

@@ -268,7 +268,7 @@ export async function POST(req: NextRequest) {
 
   try {
     // Require admin role
-    await requireAuth(authz, { requireRoles: ['admin'] });
+    await requireAuth(authz, { requireRoles: ['admin'], requireWriteAccess: true });
     await requireFeature('admin', 'Students');
 
     // Parse request body

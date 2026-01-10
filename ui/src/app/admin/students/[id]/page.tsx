@@ -4,6 +4,7 @@ import { useEffect, useState, use } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
+import { useAdminWriteAccess } from '@/hooks/useAdminWriteAccess';
 import { adminGetStudent, adminAdmitStudent, adminAssignClass } from '@/lib/student-api';
 import { adminGetClassOptions, type ClassOption } from '@/lib/class-api';
 import { statusConfig, type Student } from '@/lib/student-types';
@@ -16,6 +17,7 @@ export default function AdminStudentDetailsPage({
   const { id } = use(params);
   const searchParams = useSearchParams();
   const { getIdToken } = useAuth();
+  const canWrite = useAdminWriteAccess();
 
   const [student, setStudent] = useState<Student | null>(null);
   const [classes, setClasses] = useState<ClassOption[]>([]);
@@ -159,31 +161,33 @@ export default function AdminStudentDetailsPage({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2">
-          <Link
-            href={`/admin/students/${id}/edit`}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-          >
-            Edit
-          </Link>
-          {student.status === 'pending' && (
-            <button
-              onClick={handleAdmit}
-              disabled={actionLoading}
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:bg-green-400"
+        {canWrite && (
+          <div className="flex gap-2">
+            <Link
+              href={`/admin/students/${id}/edit`}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >
-              {actionLoading ? 'Admitting...' : 'Admit Student'}
-            </button>
-          )}
-          {(student.status === 'admitted' || student.status === 'active') && (
-            <button
-              onClick={() => setShowAssignModal(true)}
-              className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
-            >
-              {student.classId ? 'Change Class' : 'Assign Class'}
-            </button>
-          )}
-        </div>
+              Edit
+            </Link>
+            {student.status === 'pending' && (
+              <button
+                onClick={handleAdmit}
+                disabled={actionLoading}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:bg-green-400"
+              >
+                {actionLoading ? 'Admitting...' : 'Admit Student'}
+              </button>
+            )}
+            {(student.status === 'admitted' || student.status === 'active') && (
+              <button
+                onClick={() => setShowAssignModal(true)}
+                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
+              >
+                {student.classId ? 'Change Class' : 'Assign Class'}
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Student Details */}

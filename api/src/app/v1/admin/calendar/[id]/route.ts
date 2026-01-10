@@ -148,7 +148,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 
   try {
     const authz = req.headers.get('authorization');
-    const { token, profile } = await requireAuth(authz, { requireRoles: ['admin'] });
+    const { token, profile } = await requireAuth(authz, { requireRoles: ['admin'], requireWriteAccess: true });
     await requireFeature('admin', 'Calendar');
 
     // Parse and validate request body
@@ -199,7 +199,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
 
   try {
     const authz = req.headers.get('authorization');
-    const { token } = await requireAuth(authz, { requireRoles: ['admin'] });
+    const { token } = await requireAuth(authz, { requireRoles: ['admin'], requireWriteAccess: true });
     await requireFeature('admin', 'Calendar');
 
     const deleted = await deleteCalendarEvent(id, token.uid);

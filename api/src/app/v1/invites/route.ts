@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
       return res;
     }
     const authz = req.headers.get('authorization');
-    const { token } = await requireAuth(authz, { requireRoles: ['admin'] });
+    const { token } = await requireAuth(authz, { requireRoles: ['admin'], requireWriteAccess: true });
 
     const body = await req.json().catch(() => ({}));
     const emailRaw = typeof body.email === 'string' ? body.email : '';

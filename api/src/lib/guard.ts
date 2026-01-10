@@ -4,6 +4,7 @@ import { getUserProfile, UserProfile } from './firestoreUsers';
 export type RequireAuthOptions = {
   requireActive?: boolean; // default true
   requireRoles?: string[]; // require caller to have at least one of these roles
+  requireWriteAccess?: boolean; // if true, blocks admin_readonly role from write operations
 };
 
 export type AuthContext = {
@@ -103,6 +104,24 @@ const testUsers: Record<string, { token: VerifiedToken; profile: UserProfile }> 
       updatedAt: new Date().toISOString(),
     },
   },
+  adminReadonly: {
+    token: {
+      uid: 'test-admin-readonly-uid',
+      email: 'adminreadonly@test.com',
+      emailVerified: true,
+    },
+    profile: {
+      uid: 'test-admin-readonly-uid',
+      email: 'adminreadonly@test.com',
+      name: 'Test Admin Readonly',
+      firstName: 'Test',
+      lastName: 'AdminReadonly',
+      roles: ['admin_readonly'],
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  },
 };
 
 // Mock verify function for tests
@@ -129,6 +148,8 @@ async function mockVerify(authHeader: string | null | undefined): Promise<Verifi
     return testUsers.parent.token;
   } else if (token === 'test-parent-no-students-token') {
     return testUsers.parentNoStudents.token;
+  } else if (token === 'test-admin-readonly-token') {
+    return testUsers.adminReadonly.token;
   }
 
   throw new AuthError(401, 'auth/invalid-token', 'Invalid token');
@@ -174,7 +195,7 @@ export async function requireAuth(
   authorizationHeader: string | null | undefined,
   options: RequireAuthOptions = {}
 ): Promise<AuthContext> {
-  const { requireActive = true, requireRoles } = options;
+  const { requireActive = true, requireRoles, requireWriteAccess = false } = options;
 
   // Get functions based on runtime environment
   const verify = getVerifyFunction();
@@ -193,13 +214,27 @@ export async function requireAuth(
 
   if (Array.isArray(requireRoles) && requireRoles.length > 0) {
     const userRoles = profile.roles || [];
-    // Role hierarchy: super_admin implicitly has admin privileges
+    // Role hierarchy:
+    // - super_admin implicitly has admin privileges
+    // - admin_readonly can access admin endpoints (read-only, checked separately)
     const hasRole = requireRoles.some((required) =>
       userRoles.includes(required) ||
-      (required === 'admin' && userRoles.includes('super_admin'))
+      (required === 'admin' && userRoles.includes('super_admin')) ||
+      (required === 'admin' && userRoles.includes('admin_readonly'))
     );
     if (!hasRole) {
       throw new AuthError(403, 'auth/forbidden', 'Insufficient privileges');
+    }
+  }
+
+  // Block admin_readonly from write operations
+  if (requireWriteAccess) {
+    const userRoles = profile.roles || [];
+    const isReadOnly = userRoles.includes('admin_readonly') &&
+      !userRoles.includes('admin') &&
+      !userRoles.includes('super_admin');
+    if (isReadOnly) {
+      throw new AuthError(403, 'auth/forbidden', 'Read-only access - write operations not permitted');
     }
   }
 
