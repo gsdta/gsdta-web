@@ -23,7 +23,7 @@ This proposal introduces a **QA/Staging environment** (`app.qa.gsdta.com`) to pr
 
 | Environment | Domain | Branch | GCP Service | Firebase Project | Purpose |
 |------------|--------|--------|-------------|------------------|---------|
-| **Production** | `app.gsdta.com` | `main` | `gsdta-web` | `gsdta-prod` (existing: `YOUR_PROJECT_ID`) | Live users |
+| **Production** | `app.gsdta.com` | `main` | `gsdta-web` | `gsdta-prod` (existing: `YOUR_PROD_PROJECT_ID`) | Live users |
 | **QA/Staging** | `app.qa.gsdta.com` | `develop` | `gsdta-web-qa` | `gsdta-qa` (new) | Testing |
 
 ---
@@ -132,7 +132,7 @@ main branch    → Tests + Build + Deploy to app.gsdta.com
 
 ```bash
 # Environment variables
-export PROJECT_ID="YOUR_PROJECT_ID"
+export PROJECT_ID="YOUR_PROD_PROJECT_ID"
 export REGION="us-central1"
 export QA_SERVICE_NAME="gsdta-web-qa"
 
@@ -256,7 +256,7 @@ firebase apps:sdkconfig web <WEB_APP_ID> --project $QA_PROJECT_ID
   "projectId": "gsdta-qa",
   "appId": "1:YOUR_QA_PROJECT_NUMBER:web:8f37a323522a6649678ac7",
   "storageBucket": "gsdta-qa.firebasestorage.app",
-  "apiKey": "REDACTED_FIREBASE_API_KEY",
+  "apiKey": "YOUR_FIREBASE_API_KEY",
   "authDomain": "gsdta-qa.firebaseapp.com",
   "messagingSenderId": "YOUR_QA_PROJECT_NUMBER"
 }
@@ -267,17 +267,17 @@ firebase apps:sdkconfig web <WEB_APP_ID> --project $QA_PROJECT_ID
 #### 3.2 Create QA Secrets in QA GCP Project
 
 Secrets are stored in their respective projects for better organization and security:
-- **Production secrets** → `YOUR_PROJECT_ID` (existing)
+- **Production secrets** → `YOUR_PROD_PROJECT_ID` (existing)
 - **QA secrets** → `gsdta-qa` (new)
 
 The CI service account and Cloud Run service account both need cross-project access to read secrets.
 
 ```bash
 export QA_PROJECT_ID="gsdta-qa"
-export PROD_PROJECT_ID="YOUR_PROJECT_ID"
+export PROD_PROJECT_ID="YOUR_PROD_PROJECT_ID"
 
 # Create secrets in QA project (use values from SDK config in step 3.1)
-echo -n "REDACTED_FIREBASE_API_KEY" | gcloud secrets create FIREBASE_API_KEY --data-file=- --project=$QA_PROJECT_ID
+echo -n "YOUR_FIREBASE_API_KEY" | gcloud secrets create FIREBASE_API_KEY --data-file=- --project=$QA_PROJECT_ID
 echo -n "gsdta-qa.firebaseapp.com" | gcloud secrets create FIREBASE_AUTH_DOMAIN --data-file=- --project=$QA_PROJECT_ID
 echo -n "gsdta-qa" | gcloud secrets create FIREBASE_PROJECT_ID --data-file=- --project=$QA_PROJECT_ID
 echo -n "1:YOUR_QA_PROJECT_NUMBER:web:8f37a323522a6649678ac7" | gcloud secrets create FIREBASE_APP_ID --data-file=- --project=$QA_PROJECT_ID
@@ -676,7 +676,7 @@ jobs:
       environment: qa
       service_name: gsdta-web-qa
       site_url: https://app.qa.gsdta.com
-      gcp_project_id: YOUR_PROJECT_ID
+      gcp_project_id: YOUR_PROD_PROJECT_ID
       secrets_project_id: gsdta-qa          # QA secrets in QA project
       firebase_project_id: gsdta-qa
       runner: ubuntu-latest
@@ -720,9 +720,9 @@ jobs:
       environment: production
       service_name: gsdta-web
       site_url: https://app.gsdta.com
-      gcp_project_id: YOUR_PROJECT_ID
-      secrets_project_id: YOUR_PROJECT_ID  # Prod secrets in prod project
-      firebase_project_id: YOUR_PROJECT_ID
+      gcp_project_id: YOUR_PROD_PROJECT_ID
+      secrets_project_id: YOUR_PROD_PROJECT_ID  # Prod secrets in prod project
+      firebase_project_id: YOUR_PROD_PROJECT_ID
       runner: ubuntu-latest
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
@@ -794,8 +794,8 @@ jobs:
           if [ "${{ inputs.environment }}" = "production" ]; then
             echo "service_name=gsdta-web" >> $GITHUB_OUTPUT
             echo "site_url=https://app.gsdta.com" >> $GITHUB_OUTPUT
-            echo "firebase_project_id=YOUR_PROJECT_ID" >> $GITHUB_OUTPUT
-            echo "secrets_project_id=YOUR_PROJECT_ID" >> $GITHUB_OUTPUT
+            echo "firebase_project_id=YOUR_PROD_PROJECT_ID" >> $GITHUB_OUTPUT
+            echo "secrets_project_id=YOUR_PROD_PROJECT_ID" >> $GITHUB_OUTPUT
           else
             echo "service_name=gsdta-web-qa" >> $GITHUB_OUTPUT
             echo "site_url=https://app.qa.gsdta.com" >> $GITHUB_OUTPUT
@@ -815,7 +815,7 @@ jobs:
       environment: ${{ inputs.environment }}
       service_name: ${{ needs.setup.outputs.service_name }}
       site_url: ${{ needs.setup.outputs.site_url }}
-      gcp_project_id: YOUR_PROJECT_ID
+      gcp_project_id: YOUR_PROD_PROJECT_ID
       secrets_project_id: ${{ needs.setup.outputs.secrets_project_id }}
       firebase_project_id: ${{ needs.setup.outputs.firebase_project_id }}
       runner: ${{ inputs.runner }}
@@ -832,7 +832,7 @@ Go to: **Repository Settings** → **Secrets and variables** → **Actions** →
 
 | Secret Name | Description | Already Exists? |
 |-------------|-------------|-----------------|
-| `GCP_SA_KEY` | Service account JSON key for `gsdta-web-ci@YOUR_PROJECT_ID.iam.gserviceaccount.com` | ✅ Yes (existing) |
+| `GCP_SA_KEY` | Service account JSON key for `gsdta-web-ci@YOUR_PROD_PROJECT_ID.iam.gserviceaccount.com` | ✅ Yes (existing) |
 
 **Note**: No new secrets needed! The existing `GCP_SA_KEY` is used for both QA and Production deployments. The CI service account has been granted cross-project access to read secrets from both GCP projects.
 
@@ -1013,7 +1013,7 @@ In Firebase Console for `gsdta-qa`:
 ### Step 3: Create QA Secrets in Production GCP
 
 ```bash
-export PROD_PROJECT_ID="YOUR_PROJECT_ID"
+export PROD_PROJECT_ID="YOUR_PROD_PROJECT_ID"
 
 # Create QA secrets (replace with actual values from Step 1)
 echo -n "YOUR_QA_API_KEY" | gcloud secrets create QA_FIREBASE_API_KEY --data-file=- --project=$PROD_PROJECT_ID
@@ -1054,7 +1054,7 @@ firebase deploy --only firestore:rules,firestore:indexes --project gsdta-qa
 
 ```bash
 # This needs to happen AFTER the first deployment creates the service
-export PROJECT_ID="YOUR_PROJECT_ID"
+export PROJECT_ID="YOUR_PROD_PROJECT_ID"
 export REGION="us-central1"
 
 gcloud run domain-mappings create \
@@ -1178,11 +1178,11 @@ gcloud run domain-mappings list --region=us-central1
 gcloud run domain-mappings delete app.qa.gsdta.com --region=us-central1
 
 # List secrets
-gcloud secrets list --project=YOUR_PROJECT_ID
+gcloud secrets list --project=YOUR_PROD_PROJECT_ID
 
 # Switch between Firebase projects
 firebase use gsdta-qa      # QA
-firebase use YOUR_PROJECT_ID  # Production
+firebase use YOUR_PROD_PROJECT_ID  # Production
 ```
 
 ### AWS CLI Commands (if configured)
@@ -1216,8 +1216,8 @@ If issues arise with QA environment:
 |--------------|-----|------------|
 | **Domain** | `app.qa.gsdta.com` | `app.gsdta.com` |
 | **Cloud Run Service** | `gsdta-web-qa` | `gsdta-web` |
-| **GCP Project (Cloud Run)** | `YOUR_PROJECT_ID` | `YOUR_PROJECT_ID` |
-| **Firebase/Secrets Project** | `gsdta-qa` | `YOUR_PROJECT_ID` |
+| **GCP Project (Cloud Run)** | `YOUR_PROD_PROJECT_ID` | `YOUR_PROD_PROJECT_ID` |
+| **Firebase/Secrets Project** | `gsdta-qa` | `YOUR_PROD_PROJECT_ID` |
 | **Branch Trigger** | `develop` | `main` |
 | **Workflow File** | `deploy-qa.yml` | `deploy-prod.yml` |
 | **Docker Tag Format** | `qa-<sha>` | `prod-<sha>` |
