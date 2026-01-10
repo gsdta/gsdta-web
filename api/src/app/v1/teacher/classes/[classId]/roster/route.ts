@@ -88,7 +88,7 @@ export async function OPTIONS(req: NextRequest) {
  *         schema:
  *           type: string
  *           enum: [active, all]
- *         description: "Filter by student status (default: active)"
+ *         description: Filter by student status (default: active)
  *     responses:
  *       200:
  *         description: List of students in the class
