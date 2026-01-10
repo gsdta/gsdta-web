@@ -3,12 +3,14 @@
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth, GoogleAuthProvider, connectAuthEmulator } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator, type Firestore } from "firebase/firestore";
+import { getStorage, connectStorageEmulator, type FirebaseStorage } from "firebase/storage";
 
 // Read config from public env vars
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET!,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
 };
 
@@ -24,8 +26,10 @@ if (typeof window !== 'undefined') {
 let appInstance: FirebaseApp | null = null;
 let authInstance: Auth | null = null;
 let dbInstance: Firestore | null = null;
+let storageInstance: FirebaseStorage | null = null;
 let authEmulatorConnected = false;
 let firestoreEmulatorConnected = false;
+let storageEmulatorConnected = false;
 
 export function getFirebaseApp(): FirebaseApp {
   if (!appInstance) {
@@ -80,6 +84,26 @@ export function getFirebaseDb(): Firestore {
     }
   }
   return dbInstance;
+}
+
+export function getFirebaseStorage(): FirebaseStorage {
+  if (!storageInstance) {
+    const app = getFirebaseApp();
+    storageInstance = getStorage(app);
+
+    // Connect to Storage emulator if configured (only once)
+    if (!storageEmulatorConnected) {
+      const storageEmulatorHost = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_EMULATOR_HOST;
+      if (storageEmulatorHost) {
+        const [host, portStr] = storageEmulatorHost.split(':');
+        const port = parseInt(portStr || '9199', 10);
+        connectStorageEmulator(storageInstance, host!, port);
+        storageEmulatorConnected = true;
+        console.log(`[Firebase] Connected to Storage emulator: ${host}:${port}`);
+      }
+    }
+  }
+  return storageInstance;
 }
 
 export const googleProvider = new GoogleAuthProvider();
