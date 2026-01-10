@@ -2,6 +2,14 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import AdminHeroContentPage from '../page';
 import * as apiClient from '@/lib/api-client';
 
+// Mock useAuth
+jest.mock('@/components/AuthProvider', () => ({
+  useAuth: jest.fn(() => ({
+    user: { email: 'admin@test.com', roles: ['admin'] },
+    getIdToken: jest.fn().mockResolvedValue('test-token'),
+  })),
+}));
+
 // Mock the API client
 jest.mock('@/lib/api-client', () => ({
   apiFetch: jest.fn(),

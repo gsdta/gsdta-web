@@ -70,7 +70,7 @@ describe("AdminTextbooksPage", () => {
     jest.clearAllMocks();
 
     mockUseAuth.mockReturnValue({
-      user: { email: "admin@example.com" },
+      user: { email: "admin@example.com", roles: ["admin"] },
       getIdToken: mockGetIdToken,
     } as any);
 

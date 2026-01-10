@@ -98,6 +98,7 @@ describe('AdminStudentDetailsPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useAuth as jest.Mock).mockReturnValue({
+      user: { email: 'admin@test.com', roles: ['admin'] },
       getIdToken: mockGetIdToken,
     });
     (useRouter as jest.Mock).mockReturnValue({

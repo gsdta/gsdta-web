@@ -47,6 +47,7 @@ describe('ClassesPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useAuth as jest.Mock).mockReturnValue({
+      user: { email: 'admin@test.com', roles: ['admin'] },
       getIdToken: mockGetIdToken,
     });
     // Mock window.confirm
