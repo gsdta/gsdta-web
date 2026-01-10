@@ -34,7 +34,7 @@ jobs:
       runner: ubuntu-latest
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID_QA }}
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
       SECRETS_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID_QA }}
 
   # Step 2: Deploy to QA (only if tests pass, uses pre-built image)

@@ -79,6 +79,6 @@ jobs:
       image_tag: ${{ inputs.image_tag }}
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID_QA }}
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
       SECRETS_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID_QA }}
       FIREBASE_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID_QA }}
