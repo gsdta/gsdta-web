@@ -57,9 +57,6 @@ jobs:
       cloudfront_distribution_id: E29Z870ACEZREK
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID_QA }}
 
   # Step 3: Run UAT tests against live QA environment
   uat-tests:
