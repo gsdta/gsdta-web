@@ -12,6 +12,11 @@ concurrency:
   group: deploy-qa-uat
   cancel-in-progress: true
 
+permissions:
+  contents: write        # Required for merge-to-main
+  pull-requests: write   # Required for creating PR
+  id-token: write        # Required for AWS OIDC
+
 env:
   NODE_VERSION: 20
   UAT_BASE_URL: https://app.qa.gsdta.com
@@ -49,6 +54,7 @@ jobs:
       image_uri: ${{ needs.build.outputs.image_uri }}
       runner: ubuntu-latest
       firebase_project_id: ${{ vars.GCP_PROJECT_ID_QA }}
+      cloudfront_distribution_id: E29Z870ACEZREK
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}

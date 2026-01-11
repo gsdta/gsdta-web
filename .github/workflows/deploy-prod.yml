@@ -12,6 +12,10 @@ concurrency:
   group: deploy-production
   cancel-in-progress: false  # Never cancel production deployments
 
+permissions:
+  contents: read
+  id-token: write  # Required for AWS OIDC
+
 jobs:
   # Step 1: Build Docker image
   build:
@@ -37,6 +41,7 @@ jobs:
       image_uri: ${{ needs.build.outputs.image_uri }}
       runner: ubuntu-latest
       firebase_project_id: ${{ vars.GCP_PROJECT_ID }}
+      cloudfront_distribution_id: EUA0NSC2UBRER
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
