@@ -33,6 +33,12 @@ on:
     secrets:
       GCP_SA_KEY:
         required: true
+      AWS_ACCESS_KEY_ID:
+        required: false
+      AWS_SECRET_ACCESS_KEY:
+        required: false
+      CLOUDFRONT_DISTRIBUTION_ID:
+        required: false
 
 env:
   GAR_LOCATION: us-central1
@@ -82,3 +88,20 @@ jobs:
           echo ""
           echo "✅ Deployed successfully!"
           echo "🌐 URL: $URL"
+
+      - name: Invalidate CloudFront cache
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+          CF_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
+        run: |
+          if [ -z "$CF_DISTRIBUTION_ID" ]; then
+            echo "⏭️ Skipping CloudFront invalidation (no distribution ID configured)"
+            exit 0
+          fi
+          echo "🔄 Invalidating CloudFront cache..."
+          aws cloudfront create-invalidation \
+            --distribution-id "$CF_DISTRIBUTION_ID" \
+            --paths "/*"
+          echo "✅ CloudFront cache invalidation initiated"

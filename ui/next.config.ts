@@ -10,6 +10,46 @@ const nextConfig: NextConfig = {
     outputFileTracingRoot: path.join(__dirname, '..'),
     images: {unoptimized: true},
     trailingSlash: true,
+    async headers() {
+        return [
+            {
+                // Immutable static assets (hashed filenames) - cache for 1 year
+                // These have content hashes in filenames, safe to cache long-term
+                source: '/_next/static/:path*',
+                headers: [
+                    { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }
+                ]
+            },
+            {
+                // Public images - cache for 5 minutes with stale-while-revalidate
+                source: '/images/:path*',
+                headers: [
+                    { key: 'Cache-Control', value: 'public, max-age=300, stale-while-revalidate=600' }
+                ]
+            },
+            {
+                // Static documents - cache for 5 minutes
+                source: '/docs/:path*',
+                headers: [
+                    { key: 'Cache-Control', value: 'public, max-age=300' }
+                ]
+            },
+            {
+                // Templates - cache for 5 minutes
+                source: '/templates/:path*',
+                headers: [
+                    { key: 'Cache-Control', value: 'public, max-age=300' }
+                ]
+            },
+            {
+                // Root static files (favicon, robots.txt, etc.) - cache for 5 minutes
+                source: '/:path(favicon.ico|robots.txt|sitemap.xml|pdf.worker.min.js)',
+                headers: [
+                    { key: 'Cache-Control', value: 'public, max-age=300' }
+                ]
+            }
+        ];
+    },
     async rewrites() {
         // Use API_PROXY_URL env var for Docker, fallback to localhost for local dev
         const apiProxyUrl = process.env.API_PROXY_URL || 'http://localhost:8080';
