@@ -90,13 +90,16 @@ jobs:
           echo "🌐 URL: $URL"
 
       - name: Invalidate CloudFront cache
-        if: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID != '' }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: us-east-1
           CF_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
         run: |
+          if [ -z "$CF_DISTRIBUTION_ID" ]; then
+            echo "⏭️ Skipping CloudFront invalidation (no distribution ID configured)"
+            exit 0
+          fi
           echo "🔄 Invalidating CloudFront cache..."
           aws cloudfront create-invalidation \
             --distribution-id "$CF_DISTRIBUTION_ID" \
