@@ -12,6 +12,10 @@ concurrency:
   group: deploy-production
   cancel-in-progress: false  # Never cancel production deployments
 
+permissions:
+  contents: read
+  id-token: write  # Required for AWS OIDC
+
 jobs:
   # Step 1: Build Docker image
   build:

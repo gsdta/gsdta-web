@@ -12,6 +12,11 @@ concurrency:
   group: deploy-qa-uat
   cancel-in-progress: true
 
+permissions:
+  contents: write        # Required for merge-to-main
+  pull-requests: write   # Required for creating PR
+  id-token: write        # Required for AWS OIDC
+
 env:
   NODE_VERSION: 20
   UAT_BASE_URL: https://app.qa.gsdta.com
