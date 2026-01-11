@@ -49,11 +49,9 @@ jobs:
       image_uri: ${{ needs.build.outputs.image_uri }}
       runner: ubuntu-latest
       firebase_project_id: ${{ vars.GCP_PROJECT_ID_QA }}
+      cloudfront_distribution_id: E29Z870ACEZREK
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID_QA }}
 
   # Step 3: Run UAT tests against live QA environment
   uat-tests:

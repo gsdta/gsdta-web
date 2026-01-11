@@ -30,17 +30,17 @@ on:
         description: 'Firebase Project ID for runtime config'
         type: string
         required: true
+      cloudfront_distribution_id:
+        description: 'CloudFront distribution ID for cache invalidation'
+        type: string
+        required: false
+        default: ''
     secrets:
       GCP_SA_KEY:
         required: true
-      AWS_ACCESS_KEY_ID:
-        required: false
-      AWS_SECRET_ACCESS_KEY:
-        required: false
-      CLOUDFRONT_DISTRIBUTION_ID:
-        required: false
 
 env:
+  AWS_ROLE_ARN: arn:aws:iam::801490935983:role/github-actions-cloudfront
   GAR_LOCATION: us-central1
 
 jobs:
@@ -48,6 +48,9 @@ jobs:
     name: Deploy to ${{ inputs.environment }}
     runs-on: ${{ inputs.runner }}
     environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      id-token: write  # Required for OIDC
     steps:
       - uses: google-github-actions/auth@v2
         with:
@@ -89,19 +92,18 @@ jobs:
           echo "✅ Deployed successfully!"
           echo "🌐 URL: $URL"
 
+      - name: Configure AWS credentials (OIDC)
+        if: ${{ inputs.cloudfront_distribution_id != '' }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
       - name: Invalidate CloudFront cache
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-1
-          CF_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
+        if: ${{ inputs.cloudfront_distribution_id != '' }}
         run: |
-          if [ -z "$CF_DISTRIBUTION_ID" ]; then
-            echo "⏭️ Skipping CloudFront invalidation (no distribution ID configured)"
-            exit 0
-          fi
           echo "🔄 Invalidating CloudFront cache..."
           aws cloudfront create-invalidation \
-            --distribution-id "$CF_DISTRIBUTION_ID" \
+            --distribution-id "${{ inputs.cloudfront_distribution_id }}" \
             --paths "/*"
           echo "✅ CloudFront cache invalidation initiated"
