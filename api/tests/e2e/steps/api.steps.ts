@@ -78,6 +78,10 @@ Given('I am authenticated as a parent', async function () {
   authToken = process.env.TEST_PARENT_TOKEN || 'test-parent-token';
 });
 
+Given('I am authenticated as a super admin', async function () {
+  authToken = process.env.TEST_SUPER_ADMIN_TOKEN || 'test-super-admin-token';
+});
+
 Given('I am not authenticated', async function () {
   authToken = undefined;
 });
