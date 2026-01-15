@@ -511,7 +511,7 @@ export async function teacherSubmitNewsPost(
  */
 export async function getPublicNewsPosts(
   filters: { category?: NewsPostCategory | 'all'; limit?: number; offset?: number } = {}
-): Promise<{ items: NewsPostPublic[]; total: number }> {
+): Promise<{ items: NewsPostPublic[]; total: number; hasMore: boolean }> {
   const params = new URLSearchParams();
   if (filters.category && filters.category !== 'all') params.set('category', filters.category);
   if (filters.limit) params.set('limit', filters.limit.toString());
@@ -526,8 +526,9 @@ export async function getPublicNewsPosts(
 
   const data = await res.json();
   return {
-    items: data.data.posts,
+    items: data.data.items,
     total: data.data.total,
+    hasMore: data.data.hasMore ?? false,
   };
 }
 
