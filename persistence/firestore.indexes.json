@@ -484,6 +484,71 @@
         { "fieldPath": "academicYear", "order": "ASCENDING" },
         { "fieldPath": "docStatus", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "newsPosts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "docStatus", "order": "ASCENDING" },
+        { "fieldPath": "priority", "order": "DESCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "newsPosts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "docStatus", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "priority", "order": "DESCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "newsPosts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "docStatus", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "priority", "order": "DESCENDING" },
+        { "fieldPath": "publishedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "newsPosts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "docStatus", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "category", "order": "ASCENDING" },
+        { "fieldPath": "priority", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "newsPosts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "docStatus", "order": "ASCENDING" },
+        { "fieldPath": "authorId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "newsPosts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "docStatus", "order": "ASCENDING" },
+        { "fieldPath": "authorRole", "order": "ASCENDING" },
+        { "fieldPath": "priority", "order": "DESCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "newsPosts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "slug", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
