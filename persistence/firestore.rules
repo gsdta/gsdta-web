@@ -143,6 +143,51 @@ service cloud.firestore {
       // No delete - export job records are preserved
     }
 
+    // Flash News: public read, admin write
+    match /flashNews/{newsId} {
+      // Anyone can read active flash news
+      allow get, list: if true;
+
+      // Only admins can create, update, delete
+      allow create, update, delete: if isAdmin();
+    }
+
+    // News Posts: public read for published, admin/teacher write
+    match /newsPosts/{postId} {
+      // Helper to check if user is a teacher
+      function isTeacherRole() {
+        return isSignedIn() &&
+               'teacher' in userDoc(request.auth.uid).data.roles &&
+               userDoc(request.auth.uid).data.status == 'active';
+      }
+
+      // Public can read published and active posts
+      allow get: if resource.data.status == 'published' && resource.data.docStatus == 'active';
+      allow list: if resource.data.status == 'published' && resource.data.docStatus == 'active';
+
+      // Admin can read all posts
+      allow get, list: if isAdmin();
+
+      // Teacher can read their own posts
+      allow get, list: if isTeacherRole() && resource.data.authorId == request.auth.uid;
+
+      // Admin can create, update, delete all posts
+      allow create, update, delete: if isAdmin();
+
+      // Teacher can create new draft posts
+      allow create: if isTeacherRole() && request.resource.data.status == 'draft';
+
+      // Teacher can update their own draft/rejected posts
+      allow update: if isTeacherRole() &&
+                       resource.data.authorId == request.auth.uid &&
+                       resource.data.status in ['draft', 'rejected'];
+
+      // Teacher can delete their own draft posts
+      allow delete: if isTeacherRole() &&
+                       resource.data.authorId == request.auth.uid &&
+                       resource.data.status == 'draft';
+    }
+
     // Attendance collection: teachers can manage attendance for their classes
     match /attendance/{recordId} {
       // Helper to check if user is a teacher
