@@ -92,9 +92,13 @@ export async function createNewsPost(
     images: processImages(data.images),
     status: data.status || 'draft',
     docStatus: 'active',
+    isPinned: data.isPinned ?? false,
     startDate: data.startDate ? Timestamp.fromDate(new Date(data.startDate)) : undefined,
     endDate: data.endDate ? Timestamp.fromDate(new Date(data.endDate)) : undefined,
     priority: data.priority ?? NEWS_POST_CONSTANTS.DEFAULT_PRIORITY,
+    views: 0,
+    metaDescription: data.metaDescription,
+    metaKeywords: data.metaKeywords?.slice(0, NEWS_POST_CONSTANTS.MAX_META_KEYWORDS),
     authorId: authorUid,
     authorName: authorName,
     authorRole: authorRole,
@@ -260,7 +264,8 @@ export async function getPublishedNewsPosts(
     query = query.where('category', '==', category);
   }
 
-  query = query.orderBy('priority', 'desc').orderBy('publishedAt', 'desc');
+  // Order by isPinned first (desc so true comes first), then priority, then publishedAt
+  query = query.orderBy('isPinned', 'desc').orderBy('priority', 'desc').orderBy('publishedAt', 'desc');
 
   const snap = await query.get();
 
@@ -294,6 +299,10 @@ export async function getPublishedNewsPosts(
       authorName: data.authorName,
       publishedAt: data.publishedAt?.toDate().toISOString() ?? data.createdAt.toDate().toISOString(),
       priority: data.priority,
+      isPinned: data.isPinned ?? false,
+      views: data.views ?? 0,
+      metaDescription: data.metaDescription,
+      metaKeywords: data.metaKeywords,
     });
   }
 
@@ -339,6 +348,10 @@ export async function getPublishedNewsPostBySlug(slug: string): Promise<NewsPost
     authorName: post.authorName,
     publishedAt: post.publishedAt?.toDate().toISOString() ?? post.createdAt.toDate().toISOString(),
     priority: post.priority,
+    isPinned: post.isPinned ?? false,
+    views: post.views ?? 0,
+    metaDescription: post.metaDescription,
+    metaKeywords: post.metaKeywords,
   };
 }
 
@@ -394,6 +407,19 @@ export async function updateNewsPost(
     updateData.endDate = data.endDate === null
       ? null
       : Timestamp.fromDate(new Date(data.endDate));
+  }
+
+  // Handle isPinned (admin only)
+  if (data.isPinned !== undefined) {
+    updateData.isPinned = data.isPinned;
+  }
+
+  // Handle SEO metadata
+  if (data.metaDescription !== undefined) {
+    updateData.metaDescription = data.metaDescription === null ? null : data.metaDescription;
+  }
+  if (data.metaKeywords !== undefined) {
+    updateData.metaKeywords = data.metaKeywords.slice(0, NEWS_POST_CONSTANTS.MAX_META_KEYWORDS);
   }
 
   await doc.ref.update(updateData);
@@ -611,4 +637,44 @@ export async function getPendingReviewPosts(
     limit,
     offset,
   });
+}
+
+/**
+ * Increment view count for a news post
+ */
+export async function incrementNewsPostViews(id: string): Promise<boolean> {
+  const doc = await getDb().collection(NEWS_POSTS_COLLECTION).doc(id).get();
+
+  if (!doc.exists) return false;
+
+  const data = doc.data()!;
+  if (data.docStatus === 'deleted' || data.status !== 'published') return false;
+
+  await doc.ref.update({
+    views: (data.views ?? 0) + 1,
+  });
+
+  return true;
+}
+
+/**
+ * Toggle pin status for a news post (admin only)
+ */
+export async function toggleNewsPostPin(
+  id: string,
+  isPinned: boolean
+): Promise<NewsPost | null> {
+  const doc = await getDb().collection(NEWS_POSTS_COLLECTION).doc(id).get();
+
+  if (!doc.exists) return null;
+
+  const data = doc.data()!;
+  if (data.docStatus === 'deleted') return null;
+
+  await doc.ref.update({
+    isPinned,
+    updatedAt: Timestamp.now(),
+  });
+
+  return getNewsPostById(id);
 }

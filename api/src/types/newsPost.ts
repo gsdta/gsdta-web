@@ -72,11 +72,19 @@ export interface NewsPost {
   // Status & Workflow
   status: NewsPostStatus;
   docStatus: NewsPostDocStatus;
+  isPinned: boolean;               // Pin to top of list
 
   // Scheduling
   startDate?: Timestamp;           // When to start showing (optional)
   endDate?: Timestamp;             // When to stop showing (optional)
   priority: number;                // Display order (1-100, higher = first)
+
+  // Analytics
+  views: number;                   // View count
+
+  // SEO Metadata
+  metaDescription?: BilingualText; // SEO meta description
+  metaKeywords?: string[];         // SEO keywords
 
   // Author tracking
   authorId: string;                // Teacher/Admin UID who created
@@ -117,6 +125,9 @@ export interface CreateNewsPostDto {
   startDate?: string;              // ISO 8601
   endDate?: string;                // ISO 8601
   status?: 'draft' | 'pending_review'; // Initial status (teachers can only set these)
+  isPinned?: boolean;              // Admin only - pin to top
+  metaDescription?: BilingualText; // SEO meta description
+  metaKeywords?: string[];         // SEO keywords
 }
 
 /**
@@ -133,6 +144,9 @@ export interface UpdateNewsPostDto {
   priority?: number;
   startDate?: string | null;       // null to clear
   endDate?: string | null;         // null to clear
+  isPinned?: boolean;              // Admin only - pin to top
+  metaDescription?: BilingualText | null; // null to clear
+  metaKeywords?: string[];         // SEO keywords
 }
 
 /**
@@ -159,6 +173,10 @@ export interface NewsPostPublic {
   authorName: string;
   publishedAt: string;             // ISO 8601
   priority: number;
+  isPinned: boolean;               // Whether pinned to top
+  views: number;                   // View count
+  metaDescription?: BilingualText; // SEO meta description
+  metaKeywords?: string[];         // SEO keywords
 }
 
 /**
@@ -226,6 +244,8 @@ export const NEWS_POST_CONSTANTS = {
   MIN_PRIORITY: 1,
   MAX_PRIORITY: 100,
   DEFAULT_PRIORITY: 50,
+  MAX_META_DESCRIPTION_LENGTH: 160, // SEO best practice
+  MAX_META_KEYWORDS: 10,
   VALID_CATEGORIES: ['school-news', 'events', 'announcements', 'academic'] as const,
   VALID_STATUSES: ['draft', 'pending_review', 'approved', 'rejected', 'published', 'unpublished'] as const,
 };

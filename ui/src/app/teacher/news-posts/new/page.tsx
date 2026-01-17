@@ -4,13 +4,26 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
-import { adminCreateNewsPost } from '@/lib/news-posts-api';
+import { teacherCreateNewsPost } from '@/lib/news-posts-api';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { ImageUpload } from '@/components/ImageUpload';
-import type { NewsPostFormData, NewsPostImage } from '@/types/newsPost';
+import type { NewsPostImage, NewsPostCategory } from '@/types/newsPost';
 import { NEWS_POST_CATEGORIES, NEWS_POST_CONSTANTS } from '@/types/newsPost';
 
-const initialFormData: NewsPostFormData = {
+interface TeacherNewsPostFormData {
+  titleEn: string;
+  titleTa: string;
+  summaryEn: string;
+  summaryTa: string;
+  bodyEn: string;
+  bodyTa: string;
+  category: NewsPostCategory;
+  tags: string[];
+  featuredImage?: Omit<NewsPostImage, 'id'>;
+  images: Omit<NewsPostImage, 'id'>[];
+}
+
+const initialFormData: TeacherNewsPostFormData = {
   titleEn: '',
   titleTa: '',
   summaryEn: '',
@@ -21,65 +34,29 @@ const initialFormData: NewsPostFormData = {
   tags: [],
   featuredImage: undefined,
   images: [],
-  priority: NEWS_POST_CONSTANTS.DEFAULT_PRIORITY,
-  startDate: '',
-  endDate: '',
-  isPinned: false,
-  metaDescriptionEn: '',
-  metaDescriptionTa: '',
-  metaKeywords: [],
 };
 
-export default function NewNewsPostPage() {
+export default function TeacherNewNewsPostPage() {
   const router = useRouter();
   const { getIdToken } = useAuth();
 
-  const [formData, setFormData] = useState<NewsPostFormData>(initialFormData);
+  const [formData, setFormData] = useState<TeacherNewsPostFormData>(initialFormData);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [tagInput, setTagInput] = useState('');
-  const [keywordInput, setKeywordInput] = useState('');
   const [activeTab, setActiveTab] = useState<'en' | 'ta'>('en');
   const [showPreview, setShowPreview] = useState(false);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
-    const { name, value, type } = e.target;
-    const target = e.target as HTMLInputElement;
-
-    if (type === 'checkbox') {
-      setFormData((prev) => ({ ...prev, [name]: target.checked }));
-    } else if (type === 'number') {
-      setFormData((prev) => ({ ...prev, [name]: parseInt(value) || 0 }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
 
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }));
     }
-  };
-
-  const handleAddKeyword = () => {
-    const keyword = keywordInput.trim().toLowerCase();
-    if (
-      keyword &&
-      keyword.length <= 50 &&
-      formData.metaKeywords.length < NEWS_POST_CONSTANTS.MAX_META_KEYWORDS &&
-      !formData.metaKeywords.includes(keyword)
-    ) {
-      setFormData((prev) => ({ ...prev, metaKeywords: [...prev.metaKeywords, keyword] }));
-      setKeywordInput('');
-    }
-  };
-
-  const handleRemoveKeyword = (keywordToRemove: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      metaKeywords: prev.metaKeywords.filter((kw) => kw !== keywordToRemove),
-    }));
   };
 
   const handleBodyChange = (lang: 'en' | 'ta', html: string) => {
@@ -148,19 +125,6 @@ export default function NewNewsPostPage() {
       newErrors.bodyEn = 'English body content is required';
     }
 
-    if (
-      formData.priority < NEWS_POST_CONSTANTS.MIN_PRIORITY ||
-      formData.priority > NEWS_POST_CONSTANTS.MAX_PRIORITY
-    ) {
-      newErrors.priority = `Priority must be between ${NEWS_POST_CONSTANTS.MIN_PRIORITY} and ${NEWS_POST_CONSTANTS.MAX_PRIORITY}`;
-    }
-
-    if (formData.startDate && formData.endDate) {
-      if (new Date(formData.startDate) > new Date(formData.endDate)) {
-        newErrors.endDate = 'End date must be after start date';
-      }
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -174,8 +138,18 @@ export default function NewNewsPostPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await adminCreateNewsPost(getIdToken, formData);
-      router.push(`/admin/news-posts/${result.id}?created=true`);
+      // Convert to the expected format for the API
+      const result = await teacherCreateNewsPost(getIdToken, {
+        ...formData,
+        priority: NEWS_POST_CONSTANTS.DEFAULT_PRIORITY,
+        startDate: '',
+        endDate: '',
+        isPinned: false,
+        metaDescriptionEn: '',
+        metaDescriptionTa: '',
+        metaKeywords: [],
+      });
+      router.push(`/teacher/news-posts/${result.id}?created=true`);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Failed to create news post');
     } finally {
@@ -188,17 +162,17 @@ export default function NewNewsPostPage() {
       {/* Header */}
       <div className="mb-6">
         <Link
-          href="/admin/news-posts"
-          className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+          href="/teacher/news-posts"
+          className="text-sm text-green-600 hover:text-green-800 flex items-center gap-1"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Back to News Posts
+          Back to My News Posts
         </Link>
         <h1 className="text-2xl font-bold text-gray-900 mt-2">Create News Post</h1>
         <p className="mt-1 text-gray-600">
-          Create a new article with rich text and images.
+          Create a draft post that will be submitted for admin review.
         </p>
       </div>
 
@@ -219,7 +193,7 @@ export default function NewNewsPostPage() {
               onClick={() => setActiveTab('en')}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'en'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-green-500 text-green-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -230,7 +204,7 @@ export default function NewNewsPostPage() {
               onClick={() => setActiveTab('ta')}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'ta'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-green-500 text-green-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -252,7 +226,7 @@ export default function NewNewsPostPage() {
                 value={formData.titleEn}
                 onChange={handleInputChange}
                 maxLength={NEWS_POST_CONSTANTS.MAX_TITLE_LENGTH}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${
                   errors.titleEn ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="Enter news post title"
@@ -281,7 +255,7 @@ export default function NewNewsPostPage() {
                 onChange={handleInputChange}
                 rows={2}
                 maxLength={NEWS_POST_CONSTANTS.MAX_SUMMARY_LENGTH}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${
                   errors.summaryEn ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="Brief summary of the news post..."
@@ -325,7 +299,7 @@ export default function NewNewsPostPage() {
                 value={formData.titleTa}
                 onChange={handleInputChange}
                 maxLength={NEWS_POST_CONSTANTS.MAX_TITLE_LENGTH}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${
                   errors.titleTa ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="தலைப்பை உள்ளிடவும்"
@@ -354,7 +328,7 @@ export default function NewNewsPostPage() {
                 onChange={handleInputChange}
                 rows={2}
                 maxLength={NEWS_POST_CONSTANTS.MAX_SUMMARY_LENGTH}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${
                   errors.summaryTa ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="சுருக்கத்தை உள்ளிடவும்..."
@@ -399,7 +373,7 @@ export default function NewNewsPostPage() {
               name="category"
               value={formData.category}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
             >
               {Object.entries(NEWS_POST_CATEGORIES).map(([key, value]) => (
                 <option key={key} value={key}>
@@ -426,7 +400,7 @@ export default function NewNewsPostPage() {
                   }
                 }}
                 maxLength={NEWS_POST_CONSTANTS.MAX_TAG_LENGTH}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="Add a tag..."
                 disabled={formData.tags.length >= NEWS_POST_CONSTANTS.MAX_TAGS}
               />
@@ -444,13 +418,13 @@ export default function NewNewsPostPage() {
                 {formData.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
+                    className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-sm rounded-full"
                   >
                     {tag}
                     <button
                       type="button"
                       onClick={() => handleRemoveTag(tag)}
-                      className="ml-1 text-blue-600 hover:text-blue-800"
+                      className="ml-1 text-green-600 hover:text-green-800"
                     >
                       &times;
                     </button>
@@ -485,194 +459,10 @@ export default function NewNewsPostPage() {
           />
         </div>
 
-        {/* Priority and Schedule */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Publishing Options</h2>
-
-          {/* Pin to Top */}
-          <div className="mb-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                name="isPinned"
-                checked={formData.isPinned}
-                onChange={handleInputChange}
-                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-              />
-              <span className="text-sm font-medium text-gray-700">Pin to Top</span>
-            </label>
-            <p className="mt-1 text-xs text-gray-500 ml-6">
-              Pinned posts always appear at the top of the news list
-            </p>
-          </div>
-
-          {/* Priority */}
-          <div className="mb-4">
-            <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-1">
-              Priority ({NEWS_POST_CONSTANTS.MIN_PRIORITY}-{NEWS_POST_CONSTANTS.MAX_PRIORITY})
-            </label>
-            <input
-              type="number"
-              id="priority"
-              name="priority"
-              min={NEWS_POST_CONSTANTS.MIN_PRIORITY}
-              max={NEWS_POST_CONSTANTS.MAX_PRIORITY}
-              value={formData.priority}
-              onChange={handleInputChange}
-              className={`w-32 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.priority ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
-            <p className="mt-1 text-xs text-gray-500">Higher priority items appear first</p>
-            {errors.priority && <p className="mt-1 text-sm text-red-600">{errors.priority}</p>}
-          </div>
-
-          {/* Schedule */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
-                Start Date (optional)
-              </label>
-              <input
-                type="datetime-local"
-                id="startDate"
-                name="startDate"
-                value={formData.startDate}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">
-                End Date (optional)
-              </label>
-              <input
-                type="datetime-local"
-                id="endDate"
-                name="endDate"
-                value={formData.endDate}
-                onChange={handleInputChange}
-                min={formData.startDate}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.endDate ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-              {errors.endDate && <p className="mt-1 text-sm text-red-600">{errors.endDate}</p>}
-            </div>
-          </div>
-          <p className="mt-2 text-xs text-gray-500">
-            Schedule when this post should be visible. Leave empty to show always when published.
-          </p>
-        </div>
-
-        {/* SEO Metadata */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">SEO Metadata</h2>
-          <p className="text-sm text-gray-500 mb-4">
-            Optimize this post for search engines. These fields are optional but recommended.
-          </p>
-
-          {/* Meta Description (English) */}
-          <div className="mb-4">
-            <label htmlFor="metaDescriptionEn" className="block text-sm font-medium text-gray-700 mb-1">
-              Meta Description (English)
-            </label>
-            <textarea
-              id="metaDescriptionEn"
-              name="metaDescriptionEn"
-              value={formData.metaDescriptionEn}
-              onChange={handleInputChange}
-              rows={2}
-              maxLength={NEWS_POST_CONSTANTS.MAX_META_DESCRIPTION_LENGTH}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Brief description for search engines..."
-            />
-            <div className="flex justify-end mt-1">
-              <span className="text-xs text-gray-500">
-                {formData.metaDescriptionEn.length}/{NEWS_POST_CONSTANTS.MAX_META_DESCRIPTION_LENGTH}
-              </span>
-            </div>
-          </div>
-
-          {/* Meta Description (Tamil) */}
-          <div className="mb-4">
-            <label htmlFor="metaDescriptionTa" className="block text-sm font-medium text-gray-700 mb-1">
-              Meta Description (Tamil)
-            </label>
-            <textarea
-              id="metaDescriptionTa"
-              name="metaDescriptionTa"
-              value={formData.metaDescriptionTa}
-              onChange={handleInputChange}
-              rows={2}
-              maxLength={NEWS_POST_CONSTANTS.MAX_META_DESCRIPTION_LENGTH}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="தேடுபொறிகளுக்கான சுருக்கமான விளக்கம்..."
-            />
-            <div className="flex justify-end mt-1">
-              <span className="text-xs text-gray-500">
-                {formData.metaDescriptionTa.length}/{NEWS_POST_CONSTANTS.MAX_META_DESCRIPTION_LENGTH}
-              </span>
-            </div>
-          </div>
-
-          {/* Meta Keywords */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Keywords ({formData.metaKeywords.length}/{NEWS_POST_CONSTANTS.MAX_META_KEYWORDS})
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={keywordInput}
-                onChange={(e) => setKeywordInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddKeyword();
-                  }
-                }}
-                maxLength={50}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Add a keyword..."
-                disabled={formData.metaKeywords.length >= NEWS_POST_CONSTANTS.MAX_META_KEYWORDS}
-              />
-              <button
-                type="button"
-                onClick={handleAddKeyword}
-                disabled={formData.metaKeywords.length >= NEWS_POST_CONSTANTS.MAX_META_KEYWORDS || !keywordInput.trim()}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Add
-              </button>
-            </div>
-            {formData.metaKeywords.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {formData.metaKeywords.map((keyword) => (
-                  <span
-                    key={keyword}
-                    className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-sm rounded-full"
-                  >
-                    {keyword}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveKeyword(keyword)}
-                      className="ml-1 text-green-600 hover:text-green-800"
-                    >
-                      &times;
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* Submit Buttons */}
         <div className="flex justify-end gap-3 pt-4">
           <Link
-            href="/admin/news-posts"
+            href="/teacher/news-posts"
             className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
           >
             Cancel
@@ -687,7 +477,7 @@ export default function NewNewsPostPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700 transition-colors disabled:bg-green-400 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isSubmitting ? (
               <>
@@ -714,7 +504,7 @@ export default function NewNewsPostPage() {
                 Creating...
               </>
             ) : (
-              'Create as Draft'
+              'Save as Draft'
             )}
           </button>
         </div>
@@ -731,7 +521,7 @@ export default function NewNewsPostPage() {
                   onClick={() => setActiveTab('en')}
                   className={`px-3 py-1 text-sm rounded ${
                     activeTab === 'en'
-                      ? 'bg-blue-100 text-blue-700'
+                      ? 'bg-green-100 text-green-700'
                       : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
@@ -741,7 +531,7 @@ export default function NewNewsPostPage() {
                   onClick={() => setActiveTab('ta')}
                   className={`px-3 py-1 text-sm rounded ${
                     activeTab === 'ta'
-                      ? 'bg-blue-100 text-blue-700'
+                      ? 'bg-green-100 text-green-700'
                       : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
@@ -769,14 +559,9 @@ export default function NewNewsPostPage() {
 
               {/* Category Badge */}
               <div className="mb-4">
-                <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
                   {NEWS_POST_CATEGORIES[formData.category][activeTab]}
                 </span>
-                {formData.isPinned && (
-                  <span className="ml-2 inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">
-                    Pinned
-                  </span>
-                )}
               </div>
 
               {/* Title */}
@@ -830,7 +615,7 @@ export default function NewNewsPostPage() {
             <div className="p-4 border-t bg-gray-50">
               <button
                 onClick={() => setShowPreview(false)}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
               >
                 Close Preview
               </button>

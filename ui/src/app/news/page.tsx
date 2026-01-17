@@ -140,27 +140,40 @@ export default function NewsPage() {
             <Link
               key={post.id}
               href={`/news/${post.slug}`}
-              className="group bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+              className={`group bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow ${
+                post.isPinned ? 'border-green-400 ring-1 ring-green-200' : 'border-gray-200'
+              }`}
             >
               {/* Featured Image */}
-              {post.featuredImage ? (
-                <div className="aspect-video bg-gray-100 overflow-hidden">
-                  <img
-                    src={post.featuredImage.url}
-                    alt={getText(post.featuredImage.alt || post.title)}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-              ) : (
-                <div className="aspect-video bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center">
-                  <span className="text-4xl text-green-600">
-                    {post.category === 'events' && '📅'}
-                    {post.category === 'school-news' && '📰'}
-                    {post.category === 'announcements' && '📢'}
-                    {post.category === 'academic' && '📚'}
-                  </span>
-                </div>
-              )}
+              <div className="relative">
+                {post.featuredImage ? (
+                  <div className="aspect-video bg-gray-100 overflow-hidden">
+                    <img
+                      src={post.featuredImage.url}
+                      alt={getText(post.featuredImage.alt || post.title)}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                ) : (
+                  <div className="aspect-video bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center">
+                    <span className="text-4xl text-green-600">
+                      {post.category === 'events' && '📅'}
+                      {post.category === 'school-news' && '📰'}
+                      {post.category === 'announcements' && '📢'}
+                      {post.category === 'academic' && '📚'}
+                    </span>
+                  </div>
+                )}
+                {/* Pinned Badge */}
+                {post.isPinned && (
+                  <div className="absolute top-2 right-2 bg-green-600 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M10 2a1 1 0 011 1v1.323l3.954.993A2 2 0 0116.5 7.25V8.5a.5.5 0 01-.5.5h-1v4.758a2 2 0 01-.595 1.423l-3.358 3.358a1 1 0 01-1.414 0l-3.358-3.358A2 2 0 015.68 13.758V9H4.5a.5.5 0 01-.5-.5V7.25a2 2 0 011.546-1.934L9 4.323V3a1 1 0 011-1z" />
+                    </svg>
+                    {lang === 'ta' ? 'பின்' : 'Pinned'}
+                  </div>
+                )}
+              </div>
 
               {/* Content */}
               <div className="p-4">

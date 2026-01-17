@@ -5,6 +5,7 @@ import * as newsPostsApi from '@/lib/news-posts-api';
 // Mock the news-posts API
 jest.mock('@/lib/news-posts-api', () => ({
   getPublicNewsPost: jest.fn(),
+  recordNewsPostView: jest.fn().mockResolvedValue(undefined),
 }));
 
 // Mock the i18n provider

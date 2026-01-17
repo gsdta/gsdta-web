@@ -62,9 +62,13 @@ export interface NewsPost {
   images?: NewsPostImage[];
   status: NewsPostStatus;
   docStatus: NewsPostDocStatus;
+  isPinned: boolean;               // Pin to top of list
   startDate?: string;              // ISO 8601
   endDate?: string;                // ISO 8601
   priority: number;
+  views: number;                   // View count
+  metaDescription?: BilingualText; // SEO meta description
+  metaKeywords?: string[];         // SEO keywords
   authorId: string;
   authorName: string;
   authorRole: 'teacher' | 'admin';
@@ -98,6 +102,10 @@ export interface NewsPostPublic {
   authorName: string;
   publishedAt: string;             // ISO 8601
   priority: number;
+  isPinned: boolean;               // Pin to top of list
+  views: number;                   // View count
+  metaDescription?: BilingualText; // SEO meta description
+  metaKeywords?: string[];         // SEO keywords
 }
 
 /**
@@ -117,6 +125,10 @@ export interface NewsPostFormData {
   priority: number;
   startDate: string;
   endDate: string;
+  isPinned: boolean;               // Admin only - pin to top
+  metaDescriptionEn: string;       // SEO meta description (English)
+  metaDescriptionTa: string;       // SEO meta description (Tamil)
+  metaKeywords: string[];          // SEO keywords
 }
 
 /**
@@ -176,4 +188,6 @@ export const NEWS_POST_CONSTANTS = {
   MIN_PRIORITY: 1,
   MAX_PRIORITY: 100,
   DEFAULT_PRIORITY: 50,
+  MAX_META_DESCRIPTION_LENGTH: 160,
+  MAX_META_KEYWORDS: 10,
 };

@@ -196,8 +196,9 @@ describe('NewNewsPostPage', () => {
       const tagInput = screen.getByPlaceholderText('Add a tag...');
       fireEvent.change(tagInput, { target: { value: 'test-tag' } });
 
-      const addButton = screen.getByText('Add');
-      fireEvent.click(addButton);
+      // Get the Add button for tags (first Add button in the form)
+      const addButtons = screen.getAllByText('Add');
+      fireEvent.click(addButtons[0]);
 
       expect(screen.getByText('test-tag')).toBeInTheDocument();
     });
@@ -218,7 +219,8 @@ describe('NewNewsPostPage', () => {
       // Add a tag first
       const tagInput = screen.getByPlaceholderText('Add a tag...');
       fireEvent.change(tagInput, { target: { value: 'removable-tag' } });
-      fireEvent.click(screen.getByText('Add'));
+      const addButtons = screen.getAllByText('Add');
+      fireEvent.click(addButtons[0]);
 
       // Verify tag is added
       expect(screen.getByText('removable-tag')).toBeInTheDocument();
@@ -237,11 +239,12 @@ describe('NewNewsPostPage', () => {
 
       // Add tag first time
       fireEvent.change(tagInput, { target: { value: 'unique-tag' } });
-      fireEvent.click(screen.getByText('Add'));
+      const addButtons = screen.getAllByText('Add');
+      fireEvent.click(addButtons[0]);
 
       // Try to add same tag
       fireEvent.change(tagInput, { target: { value: 'unique-tag' } });
-      fireEvent.click(screen.getByText('Add'));
+      fireEvent.click(addButtons[0]);
 
       // Should only appear once
       const tags = screen.getAllByText('unique-tag');

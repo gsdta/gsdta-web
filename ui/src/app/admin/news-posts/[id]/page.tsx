@@ -55,6 +55,10 @@ export default function EditNewsPostPage({ params }: { params: Promise<{ id: str
     priority: NEWS_POST_CONSTANTS.DEFAULT_PRIORITY,
     startDate: '',
     endDate: '',
+    isPinned: false,
+    metaDescriptionEn: '',
+    metaDescriptionTa: '',
+    metaKeywords: [],
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -63,9 +67,11 @@ export default function EditNewsPostPage({ params }: { params: Promise<{ id: str
   const [loadError, setLoadError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [tagInput, setTagInput] = useState('');
+  const [keywordInput, setKeywordInput] = useState('');
   const [activeTab, setActiveTab] = useState<'en' | 'ta'>('en');
   const [rejectionReason, setRejectionReason] = useState('');
   const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     // Show success message from URL params
@@ -110,6 +116,10 @@ export default function EditNewsPostPage({ params }: { params: Promise<{ id: str
           priority: data.priority,
           startDate: formatDateTimeLocal(data.startDate),
           endDate: formatDateTimeLocal(data.endDate),
+          isPinned: data.isPinned || false,
+          metaDescriptionEn: data.metaDescription?.en || '',
+          metaDescriptionTa: data.metaDescription?.ta || '',
+          metaKeywords: data.metaKeywords || [],
         });
       } catch (err) {
         setLoadError(err instanceof Error ? err.message : 'Failed to load news post');
@@ -125,8 +135,11 @@ export default function EditNewsPostPage({ params }: { params: Promise<{ id: str
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value, type } = e.target;
+    const target = e.target as HTMLInputElement;
 
-    if (type === 'number') {
+    if (type === 'checkbox') {
+      setFormData((prev) => ({ ...prev, [name]: target.checked }));
+    } else if (type === 'number') {
       setFormData((prev) => ({ ...prev, [name]: parseInt(value) || 0 }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
@@ -135,6 +148,26 @@ export default function EditNewsPostPage({ params }: { params: Promise<{ id: str
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }));
     }
+  };
+
+  const handleAddKeyword = () => {
+    const keyword = keywordInput.trim().toLowerCase();
+    if (
+      keyword &&
+      keyword.length <= 50 &&
+      formData.metaKeywords.length < NEWS_POST_CONSTANTS.MAX_META_KEYWORDS &&
+      !formData.metaKeywords.includes(keyword)
+    ) {
+      setFormData((prev) => ({ ...prev, metaKeywords: [...prev.metaKeywords, keyword] }));
+      setKeywordInput('');
+    }
+  };
+
+  const handleRemoveKeyword = (keywordToRemove: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      metaKeywords: prev.metaKeywords.filter((kw) => kw !== keywordToRemove),
+    }));
   };
 
   const handleBodyChange = (lang: 'en' | 'ta', html: string) => {
@@ -737,6 +770,23 @@ export default function EditNewsPostPage({ params }: { params: Promise<{ id: str
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Publishing Options</h2>
 
+          {/* Pin to Top */}
+          <div className="mb-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                name="isPinned"
+                checked={formData.isPinned}
+                onChange={handleInputChange}
+                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+              />
+              <span className="text-sm font-medium text-gray-700">Pin to Top</span>
+            </label>
+            <p className="mt-1 text-xs text-gray-500 ml-6">
+              Pinned posts always appear at the top of the news list
+            </p>
+          </div>
+
           {/* Priority */}
           <div className="mb-4">
             <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-1">
@@ -797,6 +847,109 @@ export default function EditNewsPostPage({ params }: { params: Promise<{ id: str
           </p>
         </div>
 
+        {/* SEO Metadata */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">SEO Metadata</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Optimize this post for search engines. These fields are optional but recommended.
+          </p>
+
+          {/* Meta Description (English) */}
+          <div className="mb-4">
+            <label htmlFor="metaDescriptionEn" className="block text-sm font-medium text-gray-700 mb-1">
+              Meta Description (English)
+            </label>
+            <textarea
+              id="metaDescriptionEn"
+              name="metaDescriptionEn"
+              value={formData.metaDescriptionEn}
+              onChange={handleInputChange}
+              rows={2}
+              maxLength={NEWS_POST_CONSTANTS.MAX_META_DESCRIPTION_LENGTH}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Brief description for search engines..."
+            />
+            <div className="flex justify-end mt-1">
+              <span className="text-xs text-gray-500">
+                {formData.metaDescriptionEn.length}/{NEWS_POST_CONSTANTS.MAX_META_DESCRIPTION_LENGTH}
+              </span>
+            </div>
+          </div>
+
+          {/* Meta Description (Tamil) */}
+          <div className="mb-4">
+            <label htmlFor="metaDescriptionTa" className="block text-sm font-medium text-gray-700 mb-1">
+              Meta Description (Tamil)
+            </label>
+            <textarea
+              id="metaDescriptionTa"
+              name="metaDescriptionTa"
+              value={formData.metaDescriptionTa}
+              onChange={handleInputChange}
+              rows={2}
+              maxLength={NEWS_POST_CONSTANTS.MAX_META_DESCRIPTION_LENGTH}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="தேடுபொறிகளுக்கான சுருக்கமான விளக்கம்..."
+            />
+            <div className="flex justify-end mt-1">
+              <span className="text-xs text-gray-500">
+                {formData.metaDescriptionTa.length}/{NEWS_POST_CONSTANTS.MAX_META_DESCRIPTION_LENGTH}
+              </span>
+            </div>
+          </div>
+
+          {/* Meta Keywords */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Keywords ({formData.metaKeywords.length}/{NEWS_POST_CONSTANTS.MAX_META_KEYWORDS})
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={keywordInput}
+                onChange={(e) => setKeywordInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddKeyword();
+                  }
+                }}
+                maxLength={50}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Add a keyword..."
+                disabled={formData.metaKeywords.length >= NEWS_POST_CONSTANTS.MAX_META_KEYWORDS}
+              />
+              <button
+                type="button"
+                onClick={handleAddKeyword}
+                disabled={formData.metaKeywords.length >= NEWS_POST_CONSTANTS.MAX_META_KEYWORDS || !keywordInput.trim()}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Add
+              </button>
+            </div>
+            {formData.metaKeywords.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {formData.metaKeywords.map((keyword) => (
+                  <span
+                    key={keyword}
+                    className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-sm rounded-full"
+                  >
+                    {keyword}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveKeyword(keyword)}
+                      className="ml-1 text-green-600 hover:text-green-800"
+                    >
+                      &times;
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Metadata */}
         {item && (
           <div className="bg-white rounded-lg shadow p-6">
@@ -807,6 +960,9 @@ export default function EditNewsPostPage({ params }: { params: Promise<{ id: str
               </p>
               <p>
                 <strong>Slug:</strong> {item.slug}
+              </p>
+              <p>
+                <strong>Views:</strong> {item.views ?? 0}
               </p>
               <p>
                 <strong>Created:</strong> {new Date(item.createdAt).toLocaleString()}
@@ -847,6 +1003,13 @@ export default function EditNewsPostPage({ params }: { params: Promise<{ id: str
               Cancel
             </Link>
             <button
+              type="button"
+              onClick={() => setShowPreview(true)}
+              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+            >
+              Preview
+            </button>
+            <button
               type="submit"
               disabled={isSubmitting}
               className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center gap-2"
@@ -882,6 +1045,125 @@ export default function EditNewsPostPage({ params }: { params: Promise<{ id: str
           </div>
         </div>
       </form>
+
+      {/* Preview Modal */}
+      {showPreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold">Preview</h2>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setActiveTab('en')}
+                  className={`px-3 py-1 text-sm rounded ${
+                    activeTab === 'en'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  English
+                </button>
+                <button
+                  onClick={() => setActiveTab('ta')}
+                  className={`px-3 py-1 text-sm rounded ${
+                    activeTab === 'ta'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  Tamil
+                </button>
+                <button
+                  onClick={() => setShowPreview(false)}
+                  className="ml-4 text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              {/* Featured Image */}
+              {formData.featuredImage && (
+                <img
+                  src={formData.featuredImage.url}
+                  alt=""
+                  className="w-full h-64 object-cover rounded-lg mb-6"
+                />
+              )}
+
+              {/* Category Badge */}
+              <div className="mb-4">
+                <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                  {NEWS_POST_CATEGORIES[formData.category][activeTab]}
+                </span>
+                {formData.isPinned && (
+                  <span className="ml-2 inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">
+                    Pinned
+                  </span>
+                )}
+              </div>
+
+              {/* Title */}
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                {activeTab === 'en' ? formData.titleEn || 'No title' : formData.titleTa || formData.titleEn || 'தலைப்பு இல்லை'}
+              </h1>
+
+              {/* Summary */}
+              <p className="text-lg text-gray-600 mb-6">
+                {activeTab === 'en' ? formData.summaryEn || 'No summary' : formData.summaryTa || formData.summaryEn || 'சுருக்கம் இல்லை'}
+              </p>
+
+              {/* Tags */}
+              {formData.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {formData.tags.map((tag) => (
+                    <span key={tag} className="px-2 py-1 bg-gray-100 text-gray-600 text-sm rounded">
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Body Content */}
+              <div
+                className="prose prose-lg max-w-none"
+                dangerouslySetInnerHTML={{
+                  __html: activeTab === 'en'
+                    ? formData.bodyEn || '<p>No content</p>'
+                    : formData.bodyTa || formData.bodyEn || '<p>உள்ளடக்கம் இல்லை</p>',
+                }}
+              />
+
+              {/* Gallery Images */}
+              {formData.images.length > 0 && (
+                <div className="mt-8">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Gallery</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {formData.images.map((img, index) => (
+                      <img
+                        key={index}
+                        src={img.url}
+                        alt=""
+                        className="w-full h-40 object-cover rounded-lg"
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="p-4 border-t bg-gray-50">
+              <button
+                onClick={() => setShowPreview(false)}
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
