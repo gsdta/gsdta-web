@@ -68,16 +68,9 @@ export function FlashNewsBanner() {
 
   return (
     <div className="relative overflow-hidden bg-gradient-to-r from-amber-600 to-orange-600 py-2 shadow-md">
-      <div className="flex">
-        <div className="flex animate-marquee whitespace-nowrap">
-          {/* Repeat the items to create seamless loop */}
-          {marqueeItems}
-          {marqueeItems}
-        </div>
-        <div className="flex animate-marquee whitespace-nowrap" aria-hidden="true">
-          {marqueeItems}
-          {marqueeItems}
-        </div>
+      <div className="animate-marquee flex whitespace-nowrap">
+        {marqueeItems}
+        {marqueeItems}
       </div>
     </div>
   );
