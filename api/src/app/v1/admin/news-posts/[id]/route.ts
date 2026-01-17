@@ -45,6 +45,11 @@ const imageSchema = z.object({
   order: z.number().min(0).default(0),
 });
 
+const bilingualMetaDescriptionSchema = z.object({
+  en: z.string().max(NEWS_POST_CONSTANTS.MAX_META_DESCRIPTION_LENGTH).default(''),
+  ta: z.string().max(NEWS_POST_CONSTANTS.MAX_META_DESCRIPTION_LENGTH).default(''),
+});
+
 const updateSchema = z.object({
   title: bilingualTextSchema.optional(),
   summary: bilingualSummarySchema.optional(),
@@ -56,6 +61,9 @@ const updateSchema = z.object({
   priority: z.number().min(NEWS_POST_CONSTANTS.MIN_PRIORITY).max(NEWS_POST_CONSTANTS.MAX_PRIORITY).optional(),
   startDate: z.string().datetime().optional().nullable(),
   endDate: z.string().datetime().optional().nullable(),
+  isPinned: z.boolean().optional(),
+  metaDescription: bilingualMetaDescriptionSchema.optional().nullable(),
+  metaKeywords: z.array(z.string().max(50)).max(NEWS_POST_CONSTANTS.MAX_META_KEYWORDS).optional(),
 });
 
 // CORS helpers
@@ -117,9 +125,13 @@ function postToResponse(post: NewsPost): Record<string, unknown> {
     images: post.images,
     status: post.status,
     docStatus: post.docStatus,
+    isPinned: post.isPinned ?? false,
     priority: post.priority,
+    views: post.views ?? 0,
     startDate: post.startDate?.toDate?.()?.toISOString(),
     endDate: post.endDate?.toDate?.()?.toISOString(),
+    metaDescription: post.metaDescription,
+    metaKeywords: post.metaKeywords,
     authorId: post.authorId,
     authorName: post.authorName,
     authorRole: post.authorRole,

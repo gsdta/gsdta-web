@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useRef } from 'react';
 import Link from 'next/link';
 import { useI18n } from '@/i18n/LanguageProvider';
-import { getPublicNewsPost } from '@/lib/news-posts-api';
+import { getPublicNewsPost, recordNewsPostView } from '@/lib/news-posts-api';
 import type { NewsPostPublic } from '@/types/newsPost';
 import { NEWS_POST_CATEGORIES, NEWS_POST_CATEGORY_COLORS } from '@/types/newsPost';
 
@@ -13,6 +13,7 @@ export default function NewsArticlePage({ params }: { params: Promise<{ slug: st
   const [post, setPost] = useState<NewsPostPublic | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const viewRecorded = useRef(false);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -30,6 +31,48 @@ export default function NewsArticlePage({ params }: { params: Promise<{ slug: st
 
     fetchPost();
   }, [slug]);
+
+  // Record view once when post is loaded
+  useEffect(() => {
+    if (post && !viewRecorded.current) {
+      viewRecorded.current = true;
+      recordNewsPostView(slug).catch(() => {
+        // Silently fail - view tracking is non-critical
+      });
+    }
+  }, [post, slug]);
+
+  // Update document title and meta tags
+  useEffect(() => {
+    if (post) {
+      const title = lang === 'ta' && post.title.ta ? post.title.ta : post.title.en;
+      document.title = `${title} | GSDTA News`;
+
+      // Update meta description if available
+      const description = post.metaDescription
+        ? (lang === 'ta' && post.metaDescription.ta ? post.metaDescription.ta : post.metaDescription.en)
+        : (lang === 'ta' && post.summary.ta ? post.summary.ta : post.summary.en);
+
+      let metaDesc = document.querySelector('meta[name="description"]');
+      if (!metaDesc) {
+        metaDesc = document.createElement('meta');
+        metaDesc.setAttribute('name', 'description');
+        document.head.appendChild(metaDesc);
+      }
+      metaDesc.setAttribute('content', description);
+
+      // Update meta keywords if available
+      if (post.metaKeywords && post.metaKeywords.length > 0) {
+        let metaKeywords = document.querySelector('meta[name="keywords"]');
+        if (!metaKeywords) {
+          metaKeywords = document.createElement('meta');
+          metaKeywords.setAttribute('name', 'keywords');
+          document.head.appendChild(metaKeywords);
+        }
+        metaKeywords.setAttribute('content', post.metaKeywords.join(', '));
+      }
+    }
+  }, [post, lang]);
 
   // Get text in current language with fallback to English
   const getText = (text: { en: string; ta: string } | undefined) => {
@@ -115,6 +158,15 @@ export default function NewsArticlePage({ params }: { params: Promise<{ slug: st
           </svg>
           {post.authorName}
         </span>
+        {post.views !== undefined && post.views > 0 && (
+          <span className="flex items-center">
+            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            {post.views.toLocaleString()} {lang === 'ta' ? 'பார்வைகள்' : 'views'}
+          </span>
+        )}
       </div>
 
       {/* Featured Image */}

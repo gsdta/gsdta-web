@@ -104,6 +104,11 @@ export async function adminCreateNewsPost(
     priority: formData.priority,
     startDate: formData.startDate || undefined,
     endDate: formData.endDate || undefined,
+    isPinned: formData.isPinned || false,
+    metaDescription: (formData.metaDescriptionEn || formData.metaDescriptionTa)
+      ? { en: formData.metaDescriptionEn || '', ta: formData.metaDescriptionTa || '' }
+      : undefined,
+    metaKeywords: formData.metaKeywords?.length > 0 ? formData.metaKeywords : undefined,
   };
 
   const res = await fetch(`${API_BASE}/admin/news-posts`, {
@@ -176,6 +181,20 @@ export async function adminUpdateNewsPost(
 
   if (formData.endDate !== undefined) {
     payload.endDate = formData.endDate || null;
+  }
+
+  if (formData.isPinned !== undefined) {
+    payload.isPinned = formData.isPinned;
+  }
+
+  if (formData.metaDescriptionEn !== undefined || formData.metaDescriptionTa !== undefined) {
+    payload.metaDescription = (formData.metaDescriptionEn || formData.metaDescriptionTa)
+      ? { en: formData.metaDescriptionEn ?? '', ta: formData.metaDescriptionTa ?? '' }
+      : null;
+  }
+
+  if (formData.metaKeywords !== undefined) {
+    payload.metaKeywords = formData.metaKeywords;
   }
 
   const res = await fetch(`${API_BASE}/admin/news-posts/${id}`, {
@@ -294,6 +313,35 @@ export async function adminUnpublishNewsPost(
   if (!res.ok) {
     const error = await res.json();
     throw new Error(error.message || 'Failed to unpublish news post');
+  }
+
+  const data = await res.json();
+  return data.data;
+}
+
+/**
+ * Admin: Toggle pin status for a news post
+ */
+export async function adminTogglePinNewsPost(
+  getIdToken: GetIdToken,
+  id: string,
+  isPinned: boolean
+): Promise<NewsPost> {
+  const token = await getIdToken();
+  if (!token) throw new Error('Not authenticated');
+
+  const res = await fetch(`${API_BASE}/admin/news-posts/${id}/pin`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ isPinned }),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || 'Failed to toggle pin status');
   }
 
   const data = await res.json();
@@ -545,4 +593,18 @@ export async function getPublicNewsPost(slug: string): Promise<NewsPostPublic> {
 
   const data = await res.json();
   return data.data;
+}
+
+/**
+ * Public: Record a view for a news post (no auth required)
+ */
+export async function recordNewsPostView(slug: string): Promise<void> {
+  try {
+    await fetch(`${API_BASE}/public/news-posts/${encodeURIComponent(slug)}/view`, {
+      method: 'POST',
+    });
+    // Silently fail if view recording fails - not critical
+  } catch {
+    // Ignore errors
+  }
 }
