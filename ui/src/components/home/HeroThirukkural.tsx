@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ThirukkuralDisplay } from "@/components/ThirukkuralDisplay";
-import { AnnouncementBanner } from "@/components/AnnouncementBanner";
+import { FlashNewsMarquee } from "@/components/FlashNewsMarquee";
 import { HeroEventBanner } from "@/components/home/HeroEventBanner";
 import { useI18n } from "@/i18n/LanguageProvider";
 import { useHeroContent } from "@/hooks/useHeroContent";
@@ -28,7 +28,7 @@ export function HeroThirukkural() {
   if (content && !loading) {
     return (
       <>
-        <AnnouncementBanner />
+        <FlashNewsMarquee />
         <div className="relative">
           {/* Slide indicators */}
           <div className="absolute top-4 right-4 z-10 flex gap-2">
@@ -73,7 +73,7 @@ export function HeroThirukkural() {
   // Default: Show Thirukkural only
   return (
     <>
-      <AnnouncementBanner />
+      <FlashNewsMarquee />
       <ThirukkuralSection t={t} />
     </>
   );

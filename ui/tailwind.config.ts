@@ -10,6 +10,7 @@ export default {
     extend: {
       animation: {
         marquee: "marquee 25s linear infinite",
+        "marquee-fast": "marquee 15s linear infinite",
       },
       keyframes: {
         marquee: {
